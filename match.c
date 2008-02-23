@@ -18,13 +18,24 @@
 
 hashTable knownHashes;
 int table_initialized = FALSE;
-
+int input_not_matched = FALSE;
 
 int file_type_without_header(int file_type)
 {
   return (file_type == TYPE_PLAIN ||
 	  file_type == TYPE_BSD);
 }
+
+
+void init_table(void)
+{
+  if (!table_initialized) 
+  {
+    hashTableInit(&knownHashes);
+    table_initialized = TRUE;
+  }
+}
+  
 
 
 int load_match_file(uint64_t mode, char *fn) 
@@ -37,11 +48,7 @@ int load_match_file(uint64_t mode, char *fn)
 
   /* We only need to initialize the table the first time through here.
      Otherwise, we'd erase all of the previous entries! */
-  if (!table_initialized) 
-  {
-    hashTableInit(&knownHashes);
-    table_initialized = TRUE;
-  }
+  init_table();
 
   if ((f = fopen(fn,"r")) == NULL) 
   {
@@ -85,6 +92,7 @@ int load_match_file(uint64_t mode, char *fn)
     } 
     else 
     {
+      // Invalid hashes are caught above
       if (hashTableAdd(&knownHashes,buf,known_fn))
       {
 	if (!(M_SILENT(mode)))
@@ -110,14 +118,50 @@ int load_match_file(uint64_t mode, char *fn)
 }
 
 
-void add_hash(char *h, char *fn)
+void add_hash(uint64_t mode, char *h, char *fn)
 {
-  hashTableAdd(&knownHashes,h,fn);
+  init_table();
+  switch (hashTableAdd(&knownHashes,h,fn))
+  {
+  case HASHTABLE_OK: break;
+  case HASHTABLE_OUT_OF_MEMORY: print_error(mode,h,"Out of memory"); break;
+  case HASHTABLE_INVALID_HASH: print_error(mode,h,"Invalid hash"); break;
+  }
 }
 
 
 int is_known_hash(char *h, char *known_fn) 
 {
-  return (hashTableContains(&knownHashes,h,known_fn));
+  int status;
+  if (!table_initialized)
+    internal_error("is_known_hash",
+		   "attempted to check hash before table was initialized");
+  
+  status = hashTableContains(&knownHashes,h,known_fn);
+  if (!status)
+    input_not_matched = TRUE;
+
+  return status;
+}
+
+
+/* Examines the hash table and determines if any known hashes have not
+   been used or if any input files did not match the known hashes. If
+   requested, displays any unused known hashes. Returns a status variable */   
+int finalize_matching(uint64_t mode)
+{
+  int status = STATUS_OK;
+
+  if (!table_initialized)
+    internal_error("display_not_matched",
+		   "attempted to display unmatched hashes before table was initialized");
+  
+  if (input_not_matched)
+    status |= STATUS_INPUT_DID_NOT_MATCH;
+
+  if (hashTableDisplayNotMatched(&knownHashes, M_NOT_MATCHED(mode)))
+    status |= STATUS_UNUSED_HASHES;
+
+  return status;
 }
 

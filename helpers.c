@@ -40,11 +40,13 @@ void shift_string(char *fn, int start, int new_start)
   fn[start] = 0;
 }
 
+
 /* Find the index of the next comma in the string s starting at index start.
    If there is no next comma, returns -1. */
 int find_next_comma(char *s, unsigned int start)
 {
-  unsigned int pos = start, size = strlen(s);
+  size_t size=strlen(s);
+  unsigned int pos = start; 
   int in_quote = FALSE;
   
   while (pos < size)
@@ -90,24 +92,24 @@ int find_comma_separated_string(char *s, unsigned int n)
   if ((end = find_next_comma(s,start)) == -1)
     end = strlen(s);
 
-  // Strip off the quotation marks, if necessary
-  // RBF - What if there is a leading quote but no trailing quote?
+  /* Strip off the quotation marks, if necessary. We don't have to worry
+     about uneven quotation marks (i.e quotes at the start but not the end
+     as they are handled by the the find_next_comma function. */
   if (s[start] == '"')
     ++start;
   if (s[end - 1] == '"')
     end--;
-  
+
   s[end] = 0;
-
   shift_string(s,0,start);
-
+  
   return FALSE;
 }
 
 
 void print_error(uint64_t mode, char *fn, char *msg) 
 {
-  if (!(M_SILENT(mode)))
+  if (!M_SILENT(mode))
     fprintf (stderr,"%s: %s: %s%s", __progname,fn,msg,NEWLINE);
 }   
 
@@ -116,7 +118,7 @@ void internal_error(char *fn, char *msg)
 {
   fprintf (stderr,"%s: %s: Internal error: %s CONTACT DEVELOPER!%s", 
 	   __progname,fn,msg,NEWLINE);
-  exit(2);
+  exit(STATUS_INTERNAL_ERROR);
 }
 
 

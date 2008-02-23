@@ -47,15 +47,12 @@ void usage(void)
 	  NEWLINE);
   fprintf(stderr,"-M and -X are the same as -m and -x but also print hashes of each file%s",NEWLINE);
   fprintf(stderr,"-w  - displays which known file generated a match%s", NEWLINE);
+  fprintf(stderr,"-n  - displays known hashes that did not match any input files%s", NEWLINE);
   fprintf(stderr,"-a and -A add a single hash to the positive or negative matching set%s", NEWLINE);
   fprintf(stderr,"-b  - prints only the bare name of files; all path information is omitted%s", NEWLINE);
   fprintf(stderr,"-l  - print relative paths for filenames%s", NEWLINE);
   fprintf(stderr,"-k  - print asterisk before hash%s", NEWLINE);
-  fprintf(stderr,"-o  - Only process certain types of files:%s",NEWLINE);
-  fprintf(stderr,"      f - Regular File       l - Symbolic Link%s",NEWLINE);
-  fprintf(stderr,"      b - Block Device       s - Socket%s",NEWLINE);
-  fprintf(stderr,"      c - Character Device   d - Solaris Door%s",NEWLINE);
-  fprintf(stderr,"      p - Named Pipe (FIFO)%s",NEWLINE);
+  fprintf(stderr,"-o  - Only process certain types of files. Ssee README/manpage%s",NEWLINE);
   fprintf(stderr,"-v  - display version number and exit%s",NEWLINE);
 }
 
@@ -88,7 +85,7 @@ void setup_expert_mode(char *arg, uint64_t *mode)
       *mode |= mode_door;
       break;
     default:
-      if (!(M_SILENT(*mode)))
+      if (!M_SILENT(*mode))
 	fprintf(stderr,
 		"%s: Unrecognized file type: %c%s"
 		, __progname,*(arg+i),NEWLINE);
@@ -102,12 +99,12 @@ void sanity_check(uint64_t mode, int condition, char *msg)
 {
   if (condition)
   {
-    if (!(M_SILENT(mode)))
+    if (!M_SILENT(mode))
     {
       fprintf(stderr,"%s: %s%s", __progname, msg, NEWLINE);
       try_msg();
     }
-    exit (1);
+    exit (STATUS_USER_ERROR);
   }
 }
       
@@ -122,6 +119,17 @@ void check_flags_okay(uint64_t mode, int hashes_loaded)
 	       (M_RELATIVE(mode) && (M_BARENAME(mode))),
 	       "Relative paths and bare filenames are mutally exclusive");
 
+
+  /* If we try to display non-matching files but haven't initialized the
+     list of matching files in the first place, bad things will happen. */
+  sanity_check(mode,
+	       (M_NOT_MATCHED(mode) && ! (M_MATCH(mode) || M_MATCHNEG(mode))),
+	       "Matching or negative matching must be enabled to display non-matching files");
+
+  sanity_check(mode,
+	       (M_WHICH(mode) && ! (M_MATCH(mode) || M_MATCHNEG(mode))),
+	       "Matching or negative matching must be enabled to display which file matched");
+  
   // Additional sanity checks will go here as needed... 
 }
 
@@ -138,8 +146,12 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
 
   int i, hashes_loaded = FALSE;
   
-  while ((i=getopt(argc,argv,"M:X:x:m:u:o:A:a:wzserhvV0lbk")) != -1) { 
+  while ((i=getopt(argc,argv,"M:X:x:m:u:o:A:a:nwzserhvV0lbk")) != -1) { 
     switch (i) {
+
+    case 'n':
+      *mode |= mode_not_matched;
+      break;
 
     case 'w':
       *mode |= mode_which;
@@ -148,14 +160,15 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
     case 'a':
       *mode |= mode_match;
       check_matching_modes(*mode);
-      add_hash(optarg,"(command line arg)");
+      add_hash(*mode,optarg,optarg);
       hashes_loaded = TRUE;
       break;
 
     case 'A':
       *mode |= mode_match_neg;
       check_matching_modes(*mode);
-      add_hash(optarg,"(command line arg)");
+
+      add_hash(*mode,optarg,optarg);
       hashes_loaded = TRUE;
       break;
       
@@ -212,18 +225,18 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
 
     case 'h':
       usage();
-      exit (0);
+      exit (STATUS_OK);
 
     case 'v':
       printf ("%s%s",VERSION,NEWLINE);
-      exit (0);
+      exit (STATUS_OK);
 
     case 'V':
       /* We could just say printf(COPYRIGHT), but that's a good way
 	 to introduce a format string vulnerability. Better to always
 	 use good programming practice... */
       printf ("%s", COPYRIGHT);
-      exit (0);
+      exit (STATUS_OK);
 
 
     case 'b':
@@ -232,7 +245,7 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
 
     default:
       try_msg();
-      exit (1);
+      exit (STATUS_USER_ERROR);
 
     }
   }
@@ -279,6 +292,7 @@ void generate_filename(uint64_t mode, char **argv, char *fn, char *cwd)
 
 int main(int argc, char **argv) 
 {
+  int return_value = STATUS_OK;
   char *fn;
   char *cwd;
   uint64_t mode = mode_none;
@@ -307,9 +321,18 @@ int main(int argc, char **argv)
       process(mode,fn);
       ++argv;
     }
+
     free(fn);
     free(cwd);
   }
 
-  return 0;
+  /* We only have to worry about checking for unused hashes if one 
+     of the matching modes was enabled. We let the display_not_matched
+     function determine if it needs to display anything. The function
+     also sets our return values in terms of inputs not being matched
+     or known hashes not being used */
+  if (M_MATCH(mode) || M_MATCHNEG(mode))
+    return_value = finalize_matching(mode);
+
+  return return_value;
 }

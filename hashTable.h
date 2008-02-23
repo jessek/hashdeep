@@ -27,11 +27,17 @@
 #define HASH_TABLE_SIZE   1048577
 
 typedef struct hashNode {
+  int been_matched;
   char *data, *filename;
   struct hashNode *next;
 } hashNode;
 
 typedef hashNode *hashTable[HASH_TABLE_SIZE + 1];
+
+#define HASHTABLE_OK            0
+#define HASHTABLE_INVALID_HASH  1
+#define HASHTABLE_OUT_OF_MEMORY 2
+
 
 
 /* --- Everything below this line is public --- */
@@ -48,6 +54,11 @@ int hashTableAdd(hashTable *knownHashes, char *n, char *fn);
    assumes that fn has already been malloc'ed to hold at least 
    PATH_MAX characters */
 int hashTableContains(hashTable *knownHashes, char *n, char *known);
+
+/* Find any hashes that have not been used. If there are any, and display
+   is TRUE, prints them to stdout. Regardless of display, then returns
+   TRUE. If there are no unused hashes, returns FALSE. */
+int hashTableDisplayNotMatched(hashTable *t, int display);
 
 /* This function is for debugging */
 void hashTableEvaluate(hashTable *knownHashes);

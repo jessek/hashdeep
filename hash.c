@@ -21,10 +21,8 @@
 typedef struct hash_info {
   char *full_name;
   char *short_name;
-  char *match_name;
 
-  /* We never use the total number of bytes in a file, 
-     only the number of megabytes when we display a time estimate */
+  // The size of the input file, in megabytes
   uint64_t total_megs;
   uint64_t bytes_read;
 
@@ -38,10 +36,18 @@ typedef struct hash_info {
 void update_display(time_t elapsed, hash_info *h)
 {
   char msg[LINE_LENGTH];
-  unsigned int hour,min;
-  uint64_t seconds, mb_read = h->bytes_read / ONE_MEGABYTE;
+  uint8_t hour,min;
+  uint64_t seconds, mb_read;
 
   memset(msg,0,LINE_LENGTH);
+  
+  /* If we've read less than one MB, then mb_read will be zero. Later on
+     we may need to divide the total file size, total_megs, by mb_read. 
+     Dividing by zero can create... problems */
+  if (h->bytes_read < ONE_MEGABYTE)
+    mb_read = 1;
+  else
+    mb_read = h->bytes_read / ONE_MEGABYTE;
 
   if (h->total_megs == 0) 
   {
@@ -66,7 +72,7 @@ void update_display(time_t elapsed, hash_info *h)
     seconds -= min * 60;
     
     snprintf(msg,LINE_LENGTH,
-	     "%s: %"PRIu64"MB of %"PRIu64"MB done, %02u:%02u:%02"PRIu64" left%s",
+	     "%s: %"PRIu64"MB of %"PRIu64"MB done, %02"PRIu8":%02"PRIu8":%02"PRIu64" left%s",
 	     h->short_name,mb_read,h->total_megs,hour,min,seconds,BLANK_LINE);
   }    
 
@@ -143,7 +149,7 @@ int compute_hash(uint64_t mode, hash_info *h, HASH_CONTEXT *md)
     /* If an error occured, display a message but still add this block */
     if (ferror(h->handle))
     {
-      if (!(M_SILENT(mode)))
+      if (!M_SILENT(mode))
 	fprintf(stderr,"%s: %s: error at offset %"PRIu64": %s%s", 
 		__progname,h->full_name,h->bytes_read,strerror(errno),NEWLINE);
       
@@ -204,6 +210,7 @@ void display_size(uint64_t mode, hash_info *h)
   }	
 }
 
+
 char display_asterisk(uint64_t mode)
 {
   if (M_ASTERISK(mode))
@@ -211,19 +218,20 @@ char display_asterisk(uint64_t mode)
   return ' ';
 }
 
-void display_match_result(uint64_t mode, hash_info *h)
+
+int display_match_result(uint64_t mode, hash_info *h)
 {  
-  int status;
+  int known_hash;
   char *known_fn;
 
   if ((known_fn = (char *)malloc(sizeof(char) * PATH_MAX)) == NULL)
   {
     print_error(mode,h->full_name,"Out of memory");
-    return;
+    return TRUE;;
   }
 
-  status = is_known_hash(h->result,known_fn);
-  if ((status && M_MATCH(mode)) || (!status && M_MATCHNEG(mode)))
+  known_hash = is_known_hash(h->result,known_fn);
+  if ((known_hash && M_MATCH(mode)) || (!known_hash && M_MATCHNEG(mode)))
   {
     display_size(mode,h);
 
@@ -234,44 +242,45 @@ void display_match_result(uint64_t mode, hash_info *h)
 
     if (M_WHICH(mode))
     {
-      if (status && M_MATCH(mode))
-	printf ("%s matched %s", h->match_name,known_fn);
+      if (known_hash && M_MATCH(mode))
+	printf ("%s matched %s", h->full_name,known_fn);
       else
-	printf ("%s does NOT match", h->match_name);
+	printf ("%s does NOT match", h->full_name);
     }
     else
-      printf ("%s", h->match_name);
+      printf ("%s", h->full_name);
 
     make_newline(mode);
   }
   
   free(known_fn);
+  return FALSE;;
 }
 
 
 
-void display_hash(uint64_t mode, hash_info *h)
+int display_hash(uint64_t mode, hash_info *h)
 {
   /* We can't call display_size here because we don't know if we're
      going to display *anything* yet. If we're in matching mode, we
      have to evaluate if there was a match first! */
   if (M_MATCH(mode) || M_MATCHNEG(mode))
-    display_match_result(mode,h);
+    return display_match_result(mode,h);
 
-  else 
-  {
-    display_size(mode,h);
-      
-    printf ("%s", h->result);
-    if (!(h->is_stdin))
-      printf(" %c%s", display_asterisk(mode),h->full_name);
-    make_newline(mode);
-  }
+  display_size(mode,h);
+  
+  printf ("%s", h->result);
+  if (!(h->is_stdin))
+    printf(" %c%s", display_asterisk(mode),h->full_name);
+  make_newline(mode);
+
+  return FALSE;
 }
 
 
-void hash(uint64_t mode, hash_info *h)
+int hash(uint64_t mode, hash_info *h)
 {
+  int status = FALSE;
   HASH_CONTEXT md;
   unsigned char sum[HASH_LENGTH];
   static char result[2 * HASH_LENGTH + 1];
@@ -283,7 +292,7 @@ void hash(uint64_t mode, hash_info *h)
   HASH_Init(&md);
 
   if (!compute_hash(mode,h,&md))
-    return;
+    return TRUE;
 
   HASH_Final(sum, &md);  
   for (i = 0; i < HASH_LENGTH; ++i) {
@@ -292,20 +301,34 @@ void hash(uint64_t mode, hash_info *h)
   }
   
   h->result = strdup(result);
-  display_hash(mode,h);
+  if (h->result == NULL)
+  {
+    print_error(mode,h->full_name,"Out of memory");
+    return TRUE;
+  }
+  
+  /* Under not matched mode, we only display those known hashes that
+     didn't match any input files. Thus, we don't display anything now.
+     The lookup is to mark those known hashes that we do encounter */
+  if (M_NOT_MATCHED(mode))
+    is_known_hash(h->result,NULL);
+  else
+    status = display_hash(mode,h);
+
   free(h->result);
+  return status;
 }
 
 
 /* The basename function kept misbehaving on OS X, so I rewrote it.
    This function isn't perfect, nor is it designed to be. Because
-   we're guarenteed to be working with a filename here, there's no way
+   we're guarenteed to be working with a file here, there's no way
    that s will end with a DIR_SEPARATOR (e.g. /foo/bar/). This function
    will not work properly for a string that ends in a DIR_SEPARATOR */
 int my_basename(char *s)
 {
   unsigned long pos = strlen(s);
-  if (pos == 0 || pos > PATH_MAX)
+  if (0 == pos || pos > PATH_MAX)
     return TRUE;
   
   while(s[pos] != DIR_SEPARATOR && pos > 0)
@@ -342,35 +365,37 @@ int setup_barename(uint64_t mode, hash_info *h, char *file_name)
 }
 
 
-void hash_file(uint64_t mode, char *file_name)
+int hash_file(uint64_t mode, char *file_name)
 {
+  int status = STATUS_OK;
   hash_info *h = (hash_info *)malloc(sizeof(hash_info));
+  if (h == NULL)
+  {
+    print_error(mode,file_name,"Out of memory");
+    return TRUE;
+  }
 
   h->is_stdin = FALSE;
 
   if (M_BARENAME(mode))
   {
     if (setup_barename(mode,h,file_name))
-      return;
+      return TRUE;
   }
   else
     h->full_name = file_name;
-
-  /* We have a separate 'match name' because the text to display in
-     matching mode is different from the filename when processing stdin */
-  h->match_name = h->full_name;
 
   if ((h->handle = fopen(file_name,"rb")) != NULL)
   {
     if (M_ESTIMATE(mode))
     {
-      // The find file size returns a value of type off_t 
+      // The find file size returns a value of type off_t, so we must cast it
       h->total_megs = (uint64_t)(find_file_size(h->handle) / ONE_MEGABYTE);
       h->short_name = (char *)malloc(sizeof(char) * MAX_FILENAME_LENGTH);
       shorten_filename(h->short_name,h->full_name);    
     }    
 
-    hash(mode,h);
+    status = hash(mode,h);
     fclose(h->handle);
 
     if (M_ESTIMATE(mode))
@@ -380,33 +405,39 @@ void hash_file(uint64_t mode, char *file_name)
       free(h->full_name);
   }
   else
+  {
     print_error(mode,file_name,strerror(errno));
+    status = TRUE;
+  }
   
   free(h);
+  return status;
 }
 
-void hash_stdin(uint64_t mode)
+
+int hash_stdin(uint64_t mode)
 {
+  int status;
   hash_info *h = (hash_info *)malloc(sizeof(hash_info));
+  if (h == NULL)
+  {
+    print_error(mode,"stdin","Out of memory");
+    return TRUE;
+  }
 
   h->full_name = strdup("stdin");
-  h->match_name = strdup("stdin matches");
-  h->is_stdin = TRUE;
-  h->handle = stdin;
+  h->is_stdin  = TRUE;
+  h->handle    = stdin;
 
   if (M_ESTIMATE(mode))
   {
-    h->short_name = strdup("stdin");
+    h->short_name = h->full_name;
     h->total_megs = 0LL;
   }
 
-  hash(mode,h);
+  status = hash(mode,h);
 
   free(h->full_name);
-  free(h->match_name);
-
-  if (M_ESTIMATE(mode))
-    free(h->short_name);
-
   free(h);
+  return status;
 }

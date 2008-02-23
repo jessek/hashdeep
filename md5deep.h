@@ -104,6 +104,7 @@
 
 #define TRUE   1
 #define FALSE  0
+
 #define ONE_MEGABYTE  1048576
 
 /* Strings have to be long enough to handle inputs from matched hashing files.
@@ -124,18 +125,19 @@
 
 
 #define mode_none             0
-#define mode_recursive     1<<1
-#define mode_estimate      1<<2
-#define mode_silent        1<<3
-#define mode_match         1<<4
-#define mode_match_neg     1<<5
-#define mode_display_hash  1<<6
-#define mode_display_size  1<<7
-#define mode_zero          1<<8
-#define mode_relative      1<<9
-#define mode_which        1<<10
-#define mode_barename     1<<11
-#define mode_asterisk     1<<12
+#define mode_recursive     1<<0
+#define mode_estimate      1<<1
+#define mode_silent        1<<2
+#define mode_match         1<<3
+#define mode_match_neg     1<<4
+#define mode_display_hash  1<<5
+#define mode_display_size  1<<6
+#define mode_zero          1<<7
+#define mode_relative      1<<8
+#define mode_which         1<<9
+#define mode_barename     1<<10
+#define mode_asterisk     1<<11
+#define mode_not_matched  1<<12
 
 /* Modes 13 to 22 and 32 to 63 are reserved for future use. 
    (Yes, I could move the expert file modes, below, up to the higher
@@ -164,29 +166,37 @@
 #define file_symlink    8
 #define file_unknown  254
 
-#define M_MATCH(A)         A & mode_match
-#define M_MATCHNEG(A)      A & mode_match_neg
-#define M_RECURSIVE(A)     A & mode_recursive
-#define M_ESTIMATE(A)      A & mode_estimate
-#define M_SILENT(A)        A & mode_silent
-#define M_DISPLAY_HASH(A)  A & mode_display_hash
-#define M_DISPLAY_SIZE(A)  A & mode_display_size
-#define M_ZERO(A)          A & mode_zero
-#define M_RELATIVE(A)      A & mode_relative
-#define M_WHICH(A)         A & mode_which
-#define M_BARENAME(A)      A & mode_barename
-#define M_ASTERISK(A)      A & mode_asterisk
+#define M_MATCH(A)         (A & mode_match)
+#define M_MATCHNEG(A)      (A & mode_match_neg)
+#define M_RECURSIVE(A)     (A & mode_recursive)
+#define M_ESTIMATE(A)      (A & mode_estimate)
+#define M_SILENT(A)        (A & mode_silent)
+#define M_DISPLAY_HASH(A)  (A & mode_display_hash)
+#define M_DISPLAY_SIZE(A)  (A & mode_display_size)
+#define M_ZERO(A)          (A & mode_zero)
+#define M_RELATIVE(A)      (A & mode_relative)
+#define M_WHICH(A)         (A & mode_which)
+#define M_BARENAME(A)      (A & mode_barename)
+#define M_ASTERISK(A)      (A & mode_asterisk)
+#define M_NOT_MATCHED(A)   (A & mode_not_matched)
 
-#define M_EXPERT(A)        A & mode_expert
-#define M_REGULAR(A)       A & mode_regular
-#define M_BLOCK(A)         A & mode_block
-#define M_CHARACTER(A)     A & mode_character
-#define M_PIPE(A)          A & mode_pipe
-#define M_SOCKET(A)        A & mode_socket
-#define M_DOOR(A)          A & mode_door
-#define M_SYMLINK(A)       A & mode_symlink
+#define M_EXPERT(A)        (A & mode_expert)
+#define M_REGULAR(A)       (A & mode_regular)
+#define M_BLOCK(A)         (A & mode_block)
+#define M_CHARACTER(A)     (A & mode_character)
+#define M_PIPE(A)          (A & mode_pipe)
+#define M_SOCKET(A)        (A & mode_socket)
+#define M_DOOR(A)          (A & mode_door)
+#define M_SYMLINK(A)       (A & mode_symlink)
 
 
+// Return values for the program
+#define STATUS_OK                      0
+#define STATUS_UNUSED_HASHES           1
+#define STATUS_INPUT_DID_NOT_MATCH     2
+
+#define STATUS_USER_ERROR             64
+#define STATUS_INTERNAL_ERROR        128 
 
 
 #ifdef __SOLARIS
@@ -303,20 +313,23 @@ int done_processing_dir(uint64_t mode, char *fn);
 /* Functions from matching (match.c) */
 int load_match_file(uint64_t mode, char *filename);
 int is_known_hash(char *h, char *known_fn);
+int was_input_not_matched(void);
+int finalize_matching(uint64_t mode);
 
 // Add a single hash to the matching set
-void add_hash(char *h, char *fn);
+void add_hash(uint64_t mode, char *h, char *fn);
 
 /* Functions for file evaluation (files.c) */
+int valid_hash(char *buf);
 int hash_file_type(FILE *f);
 int find_hash_in_line(char *buf, int fileType, char *filename);
 
 /* Dig into file hierarchies */
-void process(uint64_t mode, char *input);
+int process(uint64_t mode, char *input);
 
 /* Hashing functions */
-void hash_file(uint64_t mode, char *filename);
-void hash_stdin(uint64_t mode);
+int hash_file(uint64_t mode, char *filename);
+int hash_stdin(uint64_t mode);
 
 /* Miscellaneous helper functions */
 void shift_string(char *fn, int start, int new_start);

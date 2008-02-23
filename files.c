@@ -71,7 +71,7 @@ int valid_hash(char *buf) {
     return FALSE;
 
   for (pos = 0 ; pos < HASH_STRING_LENGTH ; pos++) 
-    if (!isxdigit((int)buf[pos])) 
+    if (!isxdigit(buf[pos]))
       return FALSE;
   return TRUE;
 }
@@ -103,7 +103,9 @@ int find_plain_hash(char *buf, char *known_fn)
   if (known_fn != NULL)
   {
     strncpy(known_fn,buf,PATH_MAX);
-    while(p < strlen(known_fn) && !(isalnum(known_fn[p])))
+
+    // Starting at the end of the hash, find the start of the filename
+    while(p < strlen(known_fn) && isspace(known_fn[p]))
       ++p;
     shift_string(known_fn,0,p);
     chop_line(known_fn);
@@ -120,21 +122,25 @@ int find_plain_hash(char *buf, char *known_fn)
 int find_bsd_hash(char *buf, char *fn)
 {
   char *temp;
-  unsigned int pos = 0, size = HASH_STRING_LENGTH, first_paren, second_paren;
+  size_t buf_len = strlen(buf);
+  unsigned int pos = 0, hash_len = HASH_STRING_LENGTH, 
+    first_paren, second_paren;
 
-  if (buf == NULL)
+  if (buf == NULL || buf_len < hash_len)
     return FALSE;
 
-  while (pos < strlen(buf) && buf[pos] != '(')
+  while (pos < buf_len && buf[pos] != '(')
     ++pos;
-  if (pos == strlen(buf))
+  /* The hash always comes after the file name, so there has to be 
+     enough room for the filename and *then* the hash. */
+  if (pos + hash_len + 1 > buf_len)
     return FALSE;
   first_paren = pos;
 
   /* We only need to check back as far as the opening parenethsis,
      not the start of the string. If the closing paren comes before
      the opening paren (e.g. )( ) then the line is not valid */
-  pos = strlen(buf) - size;
+  pos = buf_len - hash_len;
   while (pos > first_paren && buf[pos] != ')')
     --pos;
   if (pos == first_paren)

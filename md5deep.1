@@ -1,4 +1,4 @@
-.TH MD5DEEP "1" "v1.8 \- 8 Aug 2005" "AFOSI" "United States Air Force"
+.TH MD5DEEP "1" "v1.9 \- 7 Nov 2005" "AFOSI" "United States Air Force"
 
 .SH NAME
 md5deep \- Compute MD5 message digests
@@ -17,7 +17,7 @@ whirlpooldeep \- Compute Whirlpool message digests
 .br
 .B md5deep
 [\-m|\-M|\-x|\-X <file>]  [-a|-A <hash>]
-[\-wzres0lbk] [\-o <fbcplsd>] [\fBFILES\fR]
+[\-nwzres0lbk] [\-o <fbcplsd>] [\fBFILES\fR]
 
 .SH DESCRIPTION
 .PP
@@ -54,7 +54,7 @@ Hashkeeper files, iLook, and the National Software Reference Library
 (NSRL) as produced by the National Institute for Standards in Technology.
 .br
 \fB\fR
-If standard input is used with the -m flag, displays "stdin matches"
+If standard input is used with the -m flag, displays "stdin"
 if the input matches one of the hashes in the list of known hashes. If the
 hash does not match, the program displays no output.
 .br
@@ -65,6 +65,7 @@ This flag may not be used in conjunction with the \-x, \-X, or \-A flags.
 \fB\-x\fR <file>
 Same as the \-m flag above, but does negative matching. That is, only 
 those files NOT in the list of known hashes are displayed. 
+.br
 \fB\fR
 This flag may not be used in conjunction with the \-m, \-M, or \-a flags.
 
@@ -78,19 +79,26 @@ does (or does not) match the list of known hashes.
 Adds a single hash to the list of known hashes used for matching mode,
 and if not already enabled, enables matching mode. Adding single
 hashes cannot, by itself, be used to print the hashes of matching files
-like the \-M flag does.
+like the \-M flag does. When used in conjunction with the \-w flag, the
+filename displayed is just the hash submitted on the command line.
+.br
 \fB\fR
-This flag may not be used in conjunction with the \-x, \-X, or -A flags.
+This flag may not be used in conjunction with the \-x, \-X, or \-A flags.
 
 .TP
 \fB\-A\fR <hash>
 Same as \-a above, but does negative matching.
-This flag may not be used in conjunction with the \-m flag.
+This flag may not be used in conjunction with the \-m, \-M, or \-A flags.
 
 .TP
 \fB\-w\fR
 During any of the matching modes (\-m,\-M,\-x,or \-X), displays the filename
 of the known hash that matched the input file.
+
+.TP
+\fB\-n\fR
+During any of the matching modes (\-m,\-M,\-x,or \-X), displays only the 
+filenames of any known hashes that were not matched by any of the input files.
 
 .TP
 \fB\-s\fR
@@ -100,8 +108,7 @@ Enables silent mode. All error messages are supressed.
 \fB\-z\fR
 Enables file size mode. Prepends the hash with 
 a ten digit representation of the size of 
-each file processed.
-If the file size is greater than
+each file processed. If the file size is greater than
 9999999999 bytes (about 9.3GB)
 the program displays 9999999999 for the size.
 
@@ -120,6 +127,8 @@ line. This flag may not be used in conjunction with the \-b flag.
 \fB\-b\fR
 Enables bare mode. Strips any leading directory information from 
 displayed filenames.
+.br
+\fB\fR
 This flag may not be used in conjunction with the \-l flag.
 
 .TP
@@ -127,7 +136,6 @@ This flag may not be used in conjunction with the \-l flag.
 Enables asterisk mode. An asterisk is inserted in lieu of a second
 space between the filename and the hash, just like md5sum in 
 its binary (\-b) mode.
-
 
 .TP
 \fB\-o\fR <bcpflsd>
@@ -162,18 +170,40 @@ Show the version number and exit.
 Show copyright information and exit.
 
 .SH RETURN VALUE
-Returns zero on a successful operation. (Successful operations can 
-include permission denied, read errors, etc.) Returns one on a user
-error, such as trying to do both positive and negative matching at the
-same time. Returns two on an internal error. All internal errors should
+Returns a bit-wise value based on the success of the operation and the
+status of any matching operations.
+.PP
+.TP
+0
+Success. Note that the program considers itself successful even when it
+encounters read errors, permission denied errors, or finds directories
+when not in recursive mode.
+.TP
+1
+Unused hashes. Under any of the matching modes, returns this 
+value if one or more of the
+known hashes was not matched by any of the input files.
+.TP
+2
+Unmatched inputs. Under any of the matching modes, returns this value
+if one or more of the input values did not match any of the known hashes. 
+.TP
+64
+User error, such as trying to do both positive and negative matching at 
+the same time. 
+.TP
+128
+Internal error, such as memory corruption or uncaught cycle.
+All internal errors should
 be reported to the developer! See the section "Reporting Bugs" below.
+
 
 .SH AUTHOR
 md5deep was written by Jesse Kornblum, md5deep [at] jessekornblum [dot] com.
 
 .SH KNOWN ISSUES
 The Windows version is not able to process files with Unicode 
-characters in their filenames.
+characters in their filenames. 
 
 Using the \-r flag cannot be used to recursively process all files 
 of a given extension in a directory. This is a feature, not a bug. 
@@ -201,9 +231,7 @@ not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 .SH SEE ALSO
 More information and installation instructions can be found in the README 
-and Frequently Asked Questions files. Current versions of both documents
-can be found on the project homepage: 
-.br
+file. Current versions of both documents can be found on the project homepage: 
 http://md5deep.sourceforge.net/
 .PP
 The MD5 specification, RFC 1321, is available at

@@ -1,3 +1,25 @@
+Version 1.9 - 7 Nov 2005
+
+- Changed the existing return values and added ones for the matching modes 
+    to indicate if any of the input files did not match a known hash and 
+    if any hashes were unused. See "RETURN VALUES" section of the manpage.
+- Added -n mode to display which files from the list of known hashes did
+    not match any of the input files. 
+- Fixed dig.c code to correctly handle links to Solaris doors.
+- Fixed cosmetic bug that caused the leading slash to be omitted from the
+    output under 'which matching file', or -w mode.
+- Changed text displayed in matching modes for standard input. Now displays
+    just "stdin" in matching mode
+- Fixed bug in files.c:valid_hash that caused crash by casting
+    character value into a signed integer. 
+- Fixed bug in BSD hash file importing that caused crash when processing a 
+    line with two parenthesis but was shorter than a valid hash. 
+- Fixed cosmetic bug in hash.c:update_display to prevent the first time 
+    estimate to be wildly off if it takes more than one second to read
+    the first megabyte of each input file.
+- Simplified hash.c by removing match_name from hash_info structure
+- Minor changes to Makefile defines
+
 
 Version 1.8 - 8 Aug 2005
 

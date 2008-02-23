@@ -62,46 +62,59 @@ void hashTableInit(hashTable *knownHashes)
     (*knownHashes)[count] = NULL;
 }
 
+int initialize_node(hashNode *new, char *n, char *fn)
+{
+  new->been_matched = FALSE;
+  new->data         = strdup(n);
+  new->filename     = strdup(fn);
+  new->next         = NULL;
+
+  if (new->data == NULL || new->filename == NULL)
+    return TRUE;
+  return FALSE;
+}
+
 
 int hashTableAdd(hashTable *knownHashes, char *n, char *fn) 
 {
   uint64_t key = translate(n);
   hashNode *new, *temp;
 
+  if (!valid_hash(n))
+    return HASHTABLE_INVALID_HASH;
+
   if ((*knownHashes)[key] == NULL) 
   {
 
     if ((new = (hashNode*)malloc(sizeof(hashNode))) == NULL)
-      return TRUE;
+      return HASHTABLE_OUT_OF_MEMORY;
 
-    new->data     = strdup(n);
-    new->filename = strdup(fn);
-    new->next     = NULL;
+    if (initialize_node(new,n,fn))
+      return HASHTABLE_OUT_OF_MEMORY;
 
     (*knownHashes)[key] = new;
-    return FALSE;
+    return HASHTABLE_OK;
   }
 
   temp = (*knownHashes)[key];
 
   // If this value is already in the table, we don't need to add it again
   if (STRINGS_EQUAL(temp->data,n))
-    return FALSE;
+    return HASHTABLE_OK;;
   
   while (temp->next != NULL)
   {
     temp = temp->next;
     
     if (STRINGS_EQUAL(temp->data,n))
-      return FALSE;
+      return HASHTABLE_OK;
   }
   
   if ((new = (hashNode*)malloc(sizeof(hashNode))) == NULL)
-    return TRUE;
-  
-  new->data     = strdup(n);
-  new->filename = strdup(fn);
-  new->next     = NULL;
+    return HASHTABLE_OUT_OF_MEMORY;
+
+  if (initialize_node(new,n,fn))
+    return HASHTABLE_OUT_OF_MEMORY;
 
   temp->next = new;
   return FALSE;
@@ -123,7 +136,9 @@ int hashTableContains(hashTable *knownHashes, char *n, char *known)
   do {
     if (STRINGS_EQUAL(temp->data,n))
     {
-      strncpy(known,temp->filename,PATH_MAX);
+      temp->been_matched = TRUE;
+      if (known != NULL)
+	strncpy(known,temp->filename,PATH_MAX);
       return TRUE;
     }
 
@@ -132,6 +147,38 @@ int hashTableContains(hashTable *knownHashes, char *n, char *known)
 
   return FALSE;
 }
+
+
+int hashTableDisplayNotMatched(hashTable *t, int display)
+{
+  int status = FALSE;
+  uint64_t key;
+  hashNode *temp;
+
+  for (key = 0; key < HASH_TABLE_SIZE ; ++key)
+  {
+    if ((*t)[key] == NULL)
+      continue;
+
+    temp = (*t)[key];
+    while (temp != NULL)
+    {
+      if (!(temp->been_matched))
+      {
+	if (!display)
+	  return TRUE;
+
+	// The 'return' above allows us to disregard the if statement.
+	status = TRUE;
+	printf("%s\n", temp->filename);
+      }
+      temp = temp->next;
+    }
+  } 
+
+  return status;
+}  
+
 
 
 #ifdef __DEBUG

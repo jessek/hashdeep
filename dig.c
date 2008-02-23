@@ -213,10 +213,10 @@ int is_special_dir(char *d)
           (!strncmp(d,"..",2) && (strlen(d) == 2)));
 }
 
-void process(uint64_t mode, char *input);
 
-void process_dir(uint64_t mode, char *fn)
+int process_dir(uint64_t mode, char *fn)
 {
+  int return_value = STATUS_OK;
   char *new_file;
   DIR *current_dir;
   struct dirent *entry;
@@ -224,7 +224,7 @@ void process_dir(uint64_t mode, char *fn)
   if (have_processed_dir(mode,fn))
   {
     print_error(mode,fn,"symlink creates cycle");
-    return;
+    return STATUS_OK;
   }
 
   if (!processing_dir(mode,fn))
@@ -233,7 +233,7 @@ void process_dir(uint64_t mode, char *fn)
   if ((current_dir = opendir(fn)) == NULL) 
   {
     print_error(mode,fn,strerror(errno));
-    return;
+    return STATUS_OK;
   }    
   
   new_file = (char *)malloc(sizeof(char) * PATH_MAX);
@@ -243,13 +243,15 @@ void process_dir(uint64_t mode, char *fn)
       continue;
     
     snprintf(new_file,PATH_MAX,"%s%c%s", fn,DIR_SEPARATOR,entry->d_name);
-    process(mode,new_file);
+    return_value = process(mode,new_file);
   }
   free(new_file);
   closedir(current_dir);
   
   if (!done_processing_dir(mode,fn))
     internal_error(fn,"Cycle checking failed to unregister directory.");
+
+  return return_value;
 }
 
 
@@ -360,6 +362,9 @@ int should_hash_symlink(uint64_t mode, char *fn)
   
   type = file_type_helper(sb);
 
+  if (M_EXPERT(mode))
+    return (should_hash_expert(mode,fn,type));
+
   if (type != file_directory)
     return TRUE;
     
@@ -380,7 +385,7 @@ int should_hash_symlink(uint64_t mode, char *fn)
 
 int should_hash(uint64_t mode, char *fn)
 {
-  int type = file_type(mode,fn);
+  int tmp, type = file_type(mode,fn);
 
   if (type == file_directory)
   {
@@ -393,12 +398,14 @@ int should_hash(uint64_t mode, char *fn)
   }
   
   if (M_EXPERT(mode))
-    return should_hash_expert(mode,fn,type);
-
+  {
+    tmp = should_hash_expert(mode,fn,type);
 #ifndef _WIN32
-  if (type == file_symlink)
-    return should_hash_symlink(mode,fn);
+    if (tmp && type == file_symlink)
+      return should_hash_symlink(mode,fn);
 #endif
+    return tmp;
+  }
 
   if (type == file_unknown)
     return FALSE;
@@ -408,17 +415,14 @@ int should_hash(uint64_t mode, char *fn)
 }
 
 
-void process(uint64_t mode, char *fn)
+int process(uint64_t mode, char *fn)
 {
   /* On Windows, the special device files don't need to be cleaned up.
      We check them here so that we don't have to test their file types
      later on. (They don't appear to be normal files.) */
 #ifdef _WIN32
   if (is_win32_device_file(fn))
-  {
-    hash_file(mode,fn);
-    return;
-  }
+    return (hash_file(mode,fn));
 #endif
 
   /* We still have to clean filenames on Windows just in case we
@@ -427,5 +431,7 @@ void process(uint64_t mode, char *fn)
 
   clean_name(mode,fn);
   if (should_hash(mode,fn))
-    hash_file(mode,fn);
+    return (hash_file(mode,fn));
+
+  return FALSE;
 }
