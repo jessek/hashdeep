@@ -1,4 +1,15 @@
 
+Version 1.12 - 3 Apr 2006
+
+- (This version probably didn't need to be a full bump to 1.12, but 
+     I just couldn't release something called version 1.11.1 and still
+     sleep ok at night.) 
+- Fixed Gentoo compilation and the use of BLOCK_SIZE in hash.c.
+- Added multipliers for the piecewise hashing value and fixed several
+    bugs related to piecewise hashing. These include filename display,
+    correct offset when block size is larger than file, and ability to
+    handle large block sizes.
+
 Version 1.11 - 31 Mar 2006
 
 - Added piecewise mode -p

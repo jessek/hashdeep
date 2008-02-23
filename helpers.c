@@ -112,7 +112,12 @@ int find_comma_separated_string(char *s, unsigned int n)
 void print_error(uint64_t mode, char *fn, char *msg) 
 {
   if (!M_SILENT(mode))
-    fprintf (stderr,"%s: %s: %s%s", __progname,fn,msg,NEWLINE);
+  {
+    if (NULL == fn)
+      fprintf (stderr,"%s: %s%s", __progname,msg,NEWLINE);
+    else
+      fprintf (stderr,"%s: %s: %s%s", __progname,fn,msg,NEWLINE);
+  }
 }   
 
 

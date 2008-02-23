@@ -61,11 +61,6 @@
 #define PRIu64 "llu"
 #endif
 
-#ifdef BUFSIZ
-#undef BUFSIZ
-#endif
-#define BUFSIZ 512
-
 #define _MAX(A,B)             (A>B)?A:B
 #define STRINGS_EQUAL(A,B)   (!strncasecmp(A,B,_MAX(strlen(A),strlen(B))))
 

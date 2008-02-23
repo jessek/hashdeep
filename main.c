@@ -108,13 +108,45 @@ void sanity_check(uint64_t mode, int condition, char *msg)
     exit (STATUS_USER_ERROR);
   }
 }
+
+
+static uint64_t find_block_size(uint64_t mode, char *input_str)
+{
+  unsigned char c;
+  uint64_t multiplier = 1;
+
+  if (isalpha(input_str[strlen(input_str) - 1]))
+    {
+      c = tolower(input_str[strlen(input_str) - 1]);
+      // There are deliberately no break statements in this switch
+      switch (c) {
+      case 'e':
+	multiplier *= 1024;    
+      case 'p':
+	multiplier *= 1024;    
+      case 't':
+	multiplier *= 1024;    
+      case 'g':
+	multiplier *= 1024;    
+      case 'm':
+	multiplier *= 1024;
+      case 'k':
+	multiplier *= 1024;
+      case 'b':
+	break;
+      default:
+	print_error(mode,NULL,"Improper multiplier, unable to continue");
+      }
+      input_str[strlen(input_str) - 1] = 0;
+    }
+
+  return (atoll(input_str) * multiplier);
+}
+
       
 
 void check_flags_okay(uint64_t mode, int hashes_loaded)
 {
-  sanity_check(mode,
-	       (M_PIECEWISE(mode) && M_ESTIMATE(mode)),
-	       "Piecewise hashing and time estimation cannot be combined");
   sanity_check(mode,
 	       ((M_MATCH(mode) || M_MATCHNEG(mode)) && !hashes_loaded),
 	       "Unable to load any matching files");
@@ -122,6 +154,10 @@ void check_flags_okay(uint64_t mode, int hashes_loaded)
   sanity_check(mode,
 	       (M_RELATIVE(mode) && (M_BARENAME(mode))),
 	       "Relative paths and bare filenames are mutally exclusive");
+  
+  sanity_check(mode,
+	       (M_PIECEWISE(mode) && M_DISPLAY_SIZE(mode)),
+	       "Piecewise mode and file size display is just plain silly");
 
 
   /* If we try to display non-matching files but haven't initialized the
@@ -155,7 +191,10 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
 
     case 'p':
       *mode |= mode_piecewise;
-      piecewise_block = atoll(optarg);
+      piecewise_block = find_block_size(*mode, optarg);
+      if (0 == piecewise_block)
+	exit(EXIT_FAILURE);
+
       break;
 
     case 'q':

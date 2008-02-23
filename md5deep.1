@@ -1,4 +1,4 @@
-.TH MD5DEEP "1" "v1.10.1 \- 31 Mar 2006" "AFOSI" "United States Air Force"
+.TH MD5DEEP "1" "v1.12 \- 3 Apr 2006" "AFOSI" "United States Air Force"
 
 .SH NAME
 md5deep \- Compute MD5 message digests
@@ -32,8 +32,10 @@ reads from standard input.
 
 .TP
 \fB\-p <size> \fR
-Piecewise mode. Breaks files into chunks of size bytes before hashing. 
-This mode cannot be used with the \-e mode.
+Piecewise mode. Breaks files into chunks before hashing. Chunks may
+be specified using multiplers b,k,m,g,t,p, and e. (Never let it be
+said that the author didn't plan ahead.) 
+This mode cannot be used with the \-z mode.
 
 .TP
 \fB\-r\fR

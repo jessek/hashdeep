@@ -14,7 +14,9 @@
 
 #include "md5deep.h"
 
-uint32_t BLOCK_SIZE;
+#define MD5DEEP_IDEAL_BLOCK 8192
+
+uint32_t MD5DEEP_BLOCK_SIZE;
 
 #ifndef HASH_ALGORITHM
 #error No hash algorithm defined! See algorithms.h
@@ -26,6 +28,8 @@ typedef struct hash_info {
 
   // The size of the input file, in megabytes
   uint64_t total_megs;
+
+  uint64_t total_bytes;
   uint64_t bytes_read;
 
   char *result;
@@ -133,7 +137,21 @@ int compute_hash(uint64_t mode, hash_info *h, HASH_CONTEXT *md)
 {
   time_t start_time,current_time,last_time = 0;
   uint64_t current_read;
-  unsigned char buffer[BLOCK_SIZE];
+  unsigned char buffer[MD5DEEP_IDEAL_BLOCK];
+  uint32_t mysize, remaining;
+
+  /* Although we need to read MD5DEEP_BLOCK_SIZE bytes before
+     we exit this
+     function, we may not be able to do that in one fell swoop.
+     Instead we read in blocks of 8192 bytes (or as needed) to 
+     get how many bytes we need */
+
+  if (MD5DEEP_BLOCK_SIZE < MD5DEEP_IDEAL_BLOCK)
+    mysize = MD5DEEP_BLOCK_SIZE;
+  else
+    mysize = MD5DEEP_IDEAL_BLOCK;
+
+  remaining = MD5DEEP_BLOCK_SIZE;
 
   if (M_ESTIMATE(mode))
   {
@@ -144,9 +162,9 @@ int compute_hash(uint64_t mode, hash_info *h, HASH_CONTEXT *md)
   while (TRUE) 
   {    
     /* clear the buffer in case we hit an error and need to pad the hash */
-    memset(buffer,0,BLOCK_SIZE);
+    memset(buffer,0,mysize);
     
-    current_read = fread(buffer, 1, BLOCK_SIZE, h->handle);
+    current_read = fread(buffer, 1, mysize, h->handle);
 
     /* If an error occured, display a message but still add this block */
     if (ferror(h->handle))
@@ -158,8 +176,8 @@ int compute_hash(uint64_t mode, hash_info *h, HASH_CONTEXT *md)
       if (fatal_error())
 	return FALSE;
 
-      HASH_Update(md, buffer, BLOCK_SIZE);
-      h->bytes_read += BLOCK_SIZE;
+      HASH_Update(md, buffer, mysize);
+      h->bytes_read += mysize;
 
       clearerr(h->handle);
       
@@ -169,7 +187,7 @@ int compute_hash(uint64_t mode, hash_info *h, HASH_CONTEXT *md)
     } 
     else
     {
-      /* If we hit the end of the file, we read less than BLOCK_SIZE bytes
+      /* If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE bytes
          and must reflect that in how we update the hash. */
       HASH_Update(md, buffer, current_read);
       h->bytes_read += current_read;
@@ -187,7 +205,14 @@ int compute_hash(uint64_t mode, hash_info *h, HASH_CONTEXT *md)
 
     // In piecewise mode we only hash one block at a time
     if (M_PIECEWISE(mode))
-      return TRUE;
+    {
+      remaining -= mysize;
+      if (remaining == 0)
+	return TRUE;
+
+      if (remaining < MD5DEEP_IDEAL_BLOCK)
+	mysize = remaining;
+    }
     
     if (M_ESTIMATE(mode)) 
     {
@@ -260,7 +285,7 @@ int display_match_result(uint64_t mode, hash_info *h)
   }
   
   free(known_fn);
-  return FALSE;;
+  return FALSE;
 }
 
 
@@ -269,7 +294,7 @@ int display_hash(uint64_t mode, hash_info *h)
 {
   /* We can't call display_size here because we don't know if we're
      going to display *anything* yet. If we're in matching mode, we
-     have to evaluate if there was a match first! */
+     have to evaluate if there was a match first. */
   if (M_MATCH(mode) || M_MATCHNEG(mode))
     return display_match_result(mode,h);
 
@@ -280,7 +305,8 @@ int display_hash(uint64_t mode, hash_info *h)
     printf ("  ");
   else
   {
-    if (!(h->is_stdin))
+    if (M_PIECEWISE(mode) ||
+	!(h->is_stdin))
       printf(" %c%s", display_asterisk(mode),h->full_name);
   }
 
@@ -302,11 +328,11 @@ int hash(uint64_t mode, hash_info *h)
 
   h->bytes_read = 0;
   
-  BLOCK_SIZE = 8192;
+  MD5DEEP_BLOCK_SIZE = MD5DEEP_IDEAL_BLOCK;
 
   if (M_PIECEWISE(mode))
   {
-    BLOCK_SIZE = piecewise_block;
+    MD5DEEP_BLOCK_SIZE = piecewise_block;
 
     // We copy out the original file name and saved it in tmp_name
     tmp_name = h->full_name;
@@ -321,8 +347,16 @@ int hash(uint64_t mode, hash_info *h)
     HASH_Init(&md);
     
     if (M_PIECEWISE(mode))
-      snprintf(h->full_name,PATH_MAX,"%s offset %"PRIu64"-%"PRIu64,
-	       tmp_name, h->bytes_read, h->bytes_read + BLOCK_SIZE);
+    {
+      /* If the BLOCK_SIZE is larger than the file, this keeps the
+	 offset values correct */
+      if (h->bytes_read + MD5DEEP_BLOCK_SIZE >  h->total_bytes)
+	snprintf(h->full_name,PATH_MAX,"%s offset %"PRIu64"-%"PRIu64,
+		 tmp_name, h->bytes_read, h->total_bytes);
+      else
+	snprintf(h->full_name,PATH_MAX,"%s offset %"PRIu64"-%"PRIu64,
+		 tmp_name, h->bytes_read, h->bytes_read + MD5DEEP_BLOCK_SIZE);
+    }
 
     if (!compute_hash(mode,h,&md))
       return TRUE;
@@ -433,10 +467,13 @@ int hash_file(uint64_t mode, char *file_name)
 
   if ((h->handle = fopen(file_name,"rb")) != NULL)
   {
+
+    h->total_bytes = find_file_size(h->handle);
+
     if (M_ESTIMATE(mode))
     {
       // The find file size returns a value of type off_t, so we must cast it
-      h->total_megs = (uint64_t)(find_file_size(h->handle) / ONE_MEGABYTE);
+      h->total_megs = h->total_bytes / ONE_MEGABYTE;
       h->short_name = (char *)malloc(sizeof(char) * MAX_FILENAME_LENGTH);
       shorten_filename(h->short_name,h->full_name);    
     }    
@@ -465,7 +502,7 @@ int hash_stdin(uint64_t mode)
 {
   int status;
   hash_info *h = (hash_info *)malloc(sizeof(hash_info));
-  if (h == NULL)
+  if (NULL == h)
   {
     print_error(mode,"stdin","Out of memory");
     return TRUE;
