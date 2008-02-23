@@ -30,10 +30,9 @@ void try_msg()
 void usage() 
 {
   fprintf(stderr,"%s version %s by %s.%s",__progname,VERSION,AUTHOR,NEWLINE);
-  fprintf(stderr,"%s",NEWLINE);
   fprintf(stderr,"Usage:%s%s %s [-v|-V|-h] [-m|-M|-x|-X <file>] ",
 	  NEWLINE,CMD_PROMPT,__progname);
-  fprintf(stderr,"[-resbt] [-o fbcplsd] FILES%s%s",NEWLINE,NEWLINE);
+  fprintf(stderr,"[-zres0bt] [-o fbcplsd] FILES%s%s",NEWLINE,NEWLINE);
 
   fprintf(stderr,"-v  - display version number and exit%s",NEWLINE);
   fprintf(stderr,"-V  - display copyright information and exit%s",NEWLINE);
@@ -47,6 +46,8 @@ void usage()
 	  NEWLINE);
   fprintf(stderr,"-s  - enables silent mode. Suppress all error messages%s",
 	  NEWLINE);
+  fprintf(stderr,"-z  - display file size before hash%s", NEWLINE);
+  fprintf(stderr,"-0  - Use /0 as line terminator%s", NEWLINE);
   fprintf(stderr,"-o  - Only process certain types of files:%s",NEWLINE);
   fprintf(stderr,"      f - Regular File%s",NEWLINE);
   fprintf(stderr,"      b - Block Device%s",NEWLINE);
@@ -55,7 +56,6 @@ void usage()
   fprintf(stderr,"      l - Symbolic Link%s",NEWLINE);
   fprintf(stderr,"      s - Socket%s",NEWLINE);
   fprintf(stderr,"      d - Solaris Door%s",NEWLINE);
-  fprintf(stderr,"-b and -t are ignored. They are only present for compatibility with md5sum%s",NEWLINE);
 }
 
 
@@ -97,7 +97,6 @@ void setup_expert_mode(char *arg, off_t *mode)
   }
 }
 
-
 void check_matching_okay(off_t mode, int hashes_loaded)
 {
 
@@ -129,9 +128,9 @@ void process_command_line(int argc, char **argv, off_t *mode) {
 
   int i, hashes_loaded = FALSE;
   
-  while ((i=getopt(argc,argv,"M:X:x:m:u:o:serhvVbt")) != -1) { 
+  while ((i=getopt(argc,argv,"M:X:x:m:u:o:zserhvV0bt")) != -1) { 
     switch (i) {
-    
+
     case 'o':
       *mode |= mode_expert;
       setup_expert_mode(optarg,mode);
@@ -151,6 +150,14 @@ void process_command_line(int argc, char **argv, off_t *mode) {
       *mode |= mode_match_neg;
       if (load_match_file(*mode,optarg))
 	hashes_loaded = TRUE;
+      break;
+
+    case 'z':
+      *mode |= mode_display_size;
+      break;
+
+    case '0':
+      *mode |= mode_zero;
       break;
 
     case 's':

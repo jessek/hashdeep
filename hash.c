@@ -60,13 +60,6 @@ void updateDisplay(time_t elapsed,   off_t bytesRead,
 }
 
 
-int fatal_error()
-{
-  return (errno == EPERM ||    /* Operation not permitted */
-	  errno == EINVAL ||   /* Invalid argument */
-	  errno == EIO);       /* Input/Output error */
-}
-
 void shorten_filename(char *dest, char *src)
 {
   char *temp;
@@ -83,6 +76,13 @@ void shorten_filename(char *dest, char *src)
     free(temp);
   }
 }
+
+
+int fatal_error()
+{
+  return (errno == EACCES);
+}
+
 
 /* Returns TRUE if the file reads successfully, FALSE on failure */
 int compute_hash(off_t mode, FILE *fp, char *file_name, char *short_name,
@@ -112,14 +112,12 @@ int compute_hash(off_t mode, FILE *fp, char *file_name, char *short_name,
 	fprintf(stderr,"%s: %s: error at offset %llu: %s%s", 
 		__progname,file_name,position,strerror(errno),NEWLINE);
       
+      if (fatal_error())
+	return FALSE;
+
       HASH_Update(md, buffer, BUFSIZ);
       position += BUFSIZ;
       
-      if (fatal_error())
-      {
-	return FALSE;
-      }
-
       clearerr(fp);
       
       /* The file pointer's position is now undefined. We have to manually
@@ -193,67 +191,87 @@ char *hash_file(off_t mode, FILE *fp, char *file_name)
   return result;
 }
 
+
+void display_size(off_t mode, FILE *handle)
+{
+  off_t size;
+  if (M_DISPLAY_SIZE(mode))
+  {
+    size = ftello(handle);
+    
+    if (size > 9999999999)
+      printf ("9999999999  ");
+    else
+      printf ("%10llu  ", size);
+  }
+}
+
+
+void display_match_result(off_t mode, char *result, char *file_name, FILE *handle)
+{  
+  int status = is_known_hash(result);
+  if ((status && M_MATCH(mode)) || (!status && M_MATCHNEG(mode)))
+  {
+    display_size(mode,handle);
+
+    if (M_DISPLAY_HASH(mode))
+    {
+      printf ("%s  ", result);
+    }
+    printf ("%s", file_name);
+    make_newline(mode);
+  }
+}
+
+
+
+
+void do_hash(off_t mode, FILE *handle, char *file_name,unsigned int is_stdin)
+{
+  char *result;
+
+  if (is_stdin)
+    result = hash_file(mode,handle,"stdin");
+  else
+    result = hash_file(mode,handle,file_name);
+
+  if (result != NULL)
+  {
+    if (M_MATCH(mode) || M_MATCHNEG(mode))
+      display_match_result(mode,result,file_name,handle);
+    else 
+    {
+      display_size(mode,handle);
+
+      printf ("%s", result);
+      if (!is_stdin)
+	printf("  %s",file_name);
+
+      make_newline(mode);
+    }
+  }
+}  
+
+
 void hash(off_t mode, char *file_name) 
 {
   FILE *handle;
-  int status; 
-  char *result;
 
-  if ((handle = fopen(file_name,"rb")) == NULL) 
+  if ((handle = fopen(file_name,"rb")) != NULL) 
   {
+    do_hash(mode,handle,file_name,FALSE);
+    fclose(handle);
+  }
+  else
     print_error(mode,file_name,strerror(errno));
-    return;
-  }
-
-  if ((result = hash_file(mode,handle,file_name)) != NULL)
-  {
-    if (M_MATCH(mode) || M_MATCHNEG(mode))
-    {
-      status = is_known_hash(result);
-      if ((status && M_MATCH(mode)) || (!status && M_MATCHNEG(mode)))
-      {
-	if (M_DISPLAY_HASH(mode))
-	{
-	  printf ("%s  ", result);
-	}
-	printf ("%s%s", file_name,NEWLINE);
-      }
-    }
-    else 
-    {
-      printf("%s  %s%s",result,file_name,NEWLINE);
-    }
-  }
-
-  fclose(handle);
 }
 
-/* Yes, this LOOKS LIKE it repeats some of the above code, but we are
-   really displaying very different things. Don't try to combine this
-   function with hash() above. */
+
 void hash_stdin(off_t mode)
 {
-  char *result;
-  int status;
-  
-  if ((result = hash_file(mode,stdin,"STDIN")) != NULL)
-  {
-    if (M_MATCH(mode) || M_MATCHNEG(mode))
-    {
-      status = is_known_hash(result);
-      if ((status && M_MATCH(mode)) || (!status && M_MATCHNEG(mode)))
-      {
-	if (M_DISPLAY_HASH(mode))
-	{
-	  printf ("%s  ", result);
-	}
-	printf ("stdin matches%s", NEWLINE);
-      }
-    }
-    else 
-    {
-      printf("%s%s",result,NEWLINE);
-    }
-  }
+  /* The "filename" stdin_matches is used for the positive and
+     negative matching. The TRUE value we submit will set the progress
+     meter's name to stdin. */
+  do_hash(mode,stdin,"stdin matches",TRUE);
 }
 

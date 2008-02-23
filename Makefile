@@ -1,10 +1,8 @@
 
-CC = gcc
-CC_OPTS = -Wall -O2
-UNIX_OPTS = -D__UNIX
-MD5GOAL = md5deep
-SHA1GOAL = sha1deep
+RAW_CC = gcc
+RAW_FLAGS = -Wall -O2
 LINK_OPT = -lm
+VERSION = 1.3
 
 # You can cross compile this program for Win32 using Linux and the 
 # MinGW compiler. See the README for details. If you have already
@@ -13,32 +11,37 @@ CROSSBASE = /home/jessek/bin/cross-tools
 
 # You shouldn't need to change anything below this line
 #---------------------------------------------------------------------
-NAME = md5deep
-VERSION = 1.2
-CC_OPTS += -DVERSION=\"$(VERSION)\"
 
 # This should be commented out when debugging is done
-#CC_OPTS += -D__DEBUG -ggdb
+#RAW_FLAGS += -D__DEBUG -ggdb
+
+NAME = md5deep
+MD5GOAL = md5deep
+SHA1GOAL = sha1deep
+
+RAW_FLAGS += -DVERSION=\"$(VERSION)\"
 
 # Where we get installed
 BIN = /usr/local/bin
 MAN = /usr/local/man/man1
 
+# Setup for compiling and cross-compiling for Windows
 CROSSCC = $(CROSSBASE)/i386-mingw32msvc/bin/gcc
-CROSSOPT = $(CC_OPTS) -D__WIN32
+CROSSOPT = $(RAW_FLAGS) -D__WIN32
 CROSSLINK = -liberty
 CROSSMD5GOAL = md5deep.exe
 CROSSSHA1GOAL = sha1deep.exe
+WINCC = $(RAW_CC) $(RAW_FLAGS) -D__WIN32
 
 # Generic "how to compile C files"
-CC += $(UNIX_OPTS) $(CC_OPTS)
+CC = $(RAW_CC) $(RAW_FLAGS) -D__UNIX
 .c.o: 
 	$(CC) -c $<
 
-# Definitions we'll need later (and that should never change)
+# Definitions we'll need later (and that should rarely change)
 HEADER_FILES = $(NAME).h md5.h sha1.h hashTable.h algorithms.h
-SRC =  main.c match.c files.c hashTable.c helpers.c dig.c md5.c sha1.c hash.c
-OBJ =  main.o match.o helpers.o dig.o
+SRC =  main.c match.c files.c hashTable.c helpers.c dig.c md5.c sha1.c hash.c cycles.c
+OBJ =  main.o match.o helpers.o dig.o cycles.o
 DOCS = Makefile README $(MD5GOAL).1 $(SHA1GOAL).1 CHANGES 
 WINDOC = README.txt CHANGES.txt
 
@@ -96,14 +99,18 @@ unix: goals
 # Cross compiling from Linux to Windows. See README for more info
 cross: CC=$(CROSSCC) $(CROSSOPT)
 cross: LINK_OPT = $(CROSSLINK)
-cross: MD5GOAL  = md5deep.exe
-cross: SHA1GOAL = sha1deep.exe
+cross: MD5GOAL  = $(CROSSMD5GOAL)
+cross: SHA1GOAL = $(CROSSSHA1GOAL)
 cross: goals
 	strip *.exe
 
 # See the README for information on Windows compilation
-windows: CC+= -D__WIN32
+windows: CC = $(WINCC)
+windows: LINK_OPT = $(CROSSLINK)
+windows: MD5GOAL  = $(CROSSMD5GOAL)
+windows: SHA1GOAL = $(CROSSSHA1GOAL)
 windows: goals
+	strip *.exe
 
 #---------------------------------------------------------------------
 

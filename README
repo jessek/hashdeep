@@ -73,19 +73,18 @@ version. The current binary is available at:
 
 http://md5deep.sourceforge.net/#download
 
-
 If you want to compile md5deep yourself, I recommend using the (Free) 
 MingGW compiler. 
 
 First, obtain the MinGW toolkit from:  http://www.mingw.org/
 Install MinGW according to the documentation and then compile.
-Replace "1.x" with the current version number.
+Replace "1.x" with the current version number. You will need the
+"make" and "strip" components of mingw. Then just enter:
 
-C:\> cd md5deep-1.x
-C:\> gcc -DVERSION=\"1.x\" -D__WIN32 -DMD5 *.c -o md5deep -liberty
-C:\> gcc -DVERSION=\"1.x\" -D__WIN32 -DSHA1 *.c -o sha1deep -liberty
-C:\> strip md5deep.exe sha1deep.exe
+C:\> make windows
 
+(make is installed by default as \mingw\bin\mingw32-make. You may need
+to type the whole long filename!)
 
 
 ----------------------------------------------------------------------
@@ -109,12 +108,19 @@ for Win32.
 ----------------------------------------------------------------------
 CYGWIN
 
-Compiling md5deep using the Cygwin environment is not supported.
-Although it is possible to compile md5deep under Cygwin using the "make
-unix" directive, this is not recommended. Not only will the resulting
-executable require the cygwin1.dll file to run, but the output for each
-file will be in "cygdrive" notation, which takes up extra space and may be
-confusing to those not familiar with the Cygwin environment.
+Compiling md5deep using the Cygwin environment is *NOT* supported.
+Cygwin does not contain the libgen library, which is required for md5deep.
+(There is a version of libgen available 
+at http://anfaenger.de/cygwin/cygwin-1.5/libgen/ , but I don't know much 
+about it and can't vouch for its effectiveness or correctness.) If you 
+want to try using md5deep under Cygwin, you MUST install this libgen 
+library first.
+
+Next, although it's possible to compile md5deep under Cygwin using the
+"make unix" directive, this is not recommended. Not only will the
+resulting executable require the cygwin1.dll file to run, but the output
+for each file will be in "cygdrive" notation, which takes up extra space
+and may be confusing to those not familiar with the Cygwin environment.
 
 
 

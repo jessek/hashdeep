@@ -14,6 +14,15 @@
 
 #include "md5deep.h"
 
+void make_newline(off_t mode)
+{
+  if (M_ZERO(mode))
+    printf("%c", 0);
+  else
+    printf("%s", NEWLINE);
+}
+
+
 /* Shift the contents of a string so that the values after 'new_start'
    will now begin at location 'start' */
 void shift_string(char *fn, int start, int new_start)

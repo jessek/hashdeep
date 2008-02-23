@@ -1,11 +1,11 @@
-.TH MD5DEEP "1" "v1.2 \- April 2004" "AFOSI" "United States Air Force"
+.TH MD5DEEP "1" "v1.3 \- May 2004" "AFOSI" "United States Air Force"
 
 .SH NAME
 md5deep \- Compute MD5 message digests
 
 .SH SYNOPSIS
 .B md5deep [\-v|\-V|\-h] [\-m|\-M|\-x|\-X <file>]
-[\-resbt] [\-o <fbcplsd>] \fBFILES\fR
+[\-zres0bt] [\-o <fbcplsd>] \fBFILES\fR
 
 .SH DESCRIPTION
 .PP
@@ -36,9 +36,9 @@ Hashkeeper files, iLook, and the National Software Reference Library
 (NSRL) as produced by the National Institute for Standards in Technology.
 .br
 \fB\fR
-If standard input is used with the -m flag, md5deep displays "stdin matches"
+If standard input is used with the -m flag, displays "stdin matches"
 if the input matches one of the hashes in the list of known hashes. If the
-hash does not match, md5deep displays no output.
+hash does not match, the program displays no output.
 
 \fB\fR
 This flag may not be used in conjunction with the \-x flag.
@@ -58,6 +58,19 @@ does (or does not) match the list of known hashes.
 .TP
 \fB\-s\fR
 Enables silent mode. All error messages are supressed.
+
+.TP
+\fB\-z\fR
+Enables file size mode. Prepends the hash with 
+a ten digit representation of the size of 
+each file processed.
+If the file size is greater than
+9999999999 bytes (about 9GB), the program displays 9999999999 for the size.
+
+.TP
+\fB\-0\fR
+Uses a NULL character (/0) to terminate each line instead of a newline.
+Useful for processing filenames with strange characters.
 
 .TP
 \fB\-o\fR <bcpflsd>
@@ -97,12 +110,15 @@ Ignored. Present only for compatibility with md5sum
 
 
 .SH AUTHOR
-md5eep was written by Jesse Kornblum.
+md5deep was written by Jesse Kornblum.
 
+.SH KNOWN ISSUES
+The Windows version is not able to process files with Unicode 
+characters in their filenames or produce accurate time estimates 
+for files larger than 2GB.
 
-.SH "REPORTING BUGS"
-We
-take all bug reports \fIvery\fR seriously. Any bug that jeopardizes the
+.SH REPORTING BUGS
+We take all bug reports \fIvery\fR seriously. Any bug that jeopardizes the
 forensic integrity of this program could have serious consequenses on 
 people's lives. When submitting a bug report, please include a description
 of the problem, how you found it, and your contact information.

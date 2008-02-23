@@ -97,25 +97,28 @@
 #define TYPE_UNKNOWN    254
 
 
-#define mode_none          0x00
-#define mode_recursive     0x01
-#define mode_estimate      0x02
-#define mode_silent        0x04
-#define mode_match         0x08
-#define mode_match_neg     0x10
-#define mode_display_hash  0x20
+#define mode_none             0
+#define mode_recursive     1<<1
+#define mode_estimate      1<<2
+#define mode_silent        1<<3
+#define mode_match         1<<4
+#define mode_match_neg     1<<5
+#define mode_display_hash  1<<6
+#define mode_display_size  1<<7
+#define mode_zero          1<<8
 
-/* Modes 64 and 128 (0x40 and 0x80) are reserved for future use */
 
-#define mode_regular       0x100
-#define mode_directory     0x200
-#define mode_door          0x400
-#define mode_block         0x800
-#define mode_character     0x1000
-#define mode_pipe          0x2000
-#define mode_socket        0x4000
-#define mode_symlink       0x8000
-#define mode_expert        0x10000
+/* Modes 9 to 22 are reserved for future use */
+
+#define mode_regular       1<<23
+#define mode_directory     1<<24
+#define mode_door          1<<25
+#define mode_block         1<<26
+#define mode_character     1<<27
+#define mode_pipe          1<<28
+#define mode_socket        1<<29
+#define mode_symlink       1<<30
+#define mode_expert        1<<31
 
 
 /* These are the types of files we can encounter while hashing */
@@ -135,6 +138,8 @@
 #define M_ESTIMATE(A)      A & mode_estimate
 #define M_SILENT(A)        A & mode_silent
 #define M_DISPLAY_HASH(A)  A & mode_display_hash
+#define M_DISPLAY_SIZE(A)  A & mode_display_size
+#define M_ZERO(A)          A & mode_zero
 
 #define M_EXPERT(A)        A & mode_expert
 #define M_REGULAR(A)       A & mode_regular
@@ -245,6 +250,10 @@ char *__progname;
    Function definitions
    ----------------------------------------------------------------- */
 
+/* To avoid cycles */
+int have_processed_dir(off_t mode, char *fn);
+int processing_dir(off_t mode, char *fn);
+int done_processing_dir(off_t mode, char *fn);
 
 /* Functions from matching (match.c) */
 int load_match_file(off_t mode, char *filename);
@@ -265,6 +274,7 @@ void hash_stdin(off_t mode);
 /* Miscellaneous helper functions */
 void shift_string(char *fn, int start, int new_start);
 void print_error(off_t mode, char *fn, char *msg);
+void make_newline(off_t mode);
 
 /* Return the size, in bytes of an open file stream. On error, return -1 */
 off_t find_file_size(FILE *f);

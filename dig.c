@@ -145,11 +145,44 @@ void clean_name_win32(char *fn)
       fn[length - 1] = 0;
     }
 }
-#endif /* ifdef __WIN32 */
 
-
-void clean_name(char *fn)
+int check_special_files(char *fn)
 {
+
+  /* Specifications for special files came from
+     http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/base/createfile.asp
+   */
+
+  /* Check for physical devices */
+  if (!strncasecmp(fn,"\\\\.\\physicaldrive",17))
+  {
+    /* Format for physical devices is \\.\PhysicalDriveX where X 
+       is a digit from 0 to 9. */
+    if ((strlen(fn) == 18) && isdigit(fn[17]))
+      return TRUE;
+  }
+
+  /* Check for tape devices */
+  if (!strncasecmp(fn,"\\\\.\\tape",8))
+  {
+    /* Format for tape devices is \\.\tapeX where X is a digit from 0 to 9 */
+    if ((strlen(fn) == 9) && isdigit(fn[8]))
+      return TRUE;
+  }
+  
+  return FALSE;
+}
+
+#endif  /* ifdef __WIN32 */
+
+
+int clean_name(char *fn)
+{
+#ifdef __WIN32
+  if (check_special_files(fn))
+    return TRUE;
+#endif
+
   remove_double_slash(fn);
   remove_single_dirs(fn);
   remove_double_dirs(fn);
@@ -158,6 +191,7 @@ void clean_name(char *fn)
   clean_name_win32(fn);
 #endif
 
+  return FALSE;
 }
 
 
@@ -175,24 +209,45 @@ void process_dir(off_t mode, char *fn)
   DIR *current_dir;
   struct dirent *entry;
 
-  if ((current_dir = opendir(fn)) == NULL) 
+  if (have_processed_dir(mode,fn))
+    print_error(mode,fn,"symlink creates cycle");
+  else
   {
-    print_error(mode,fn,strerror(errno));
-    return;
-  }    
-  
-  while ((entry = readdir(current_dir)) != NULL) 
-  {
-    if (is_special_dir(entry->d_name))
-      continue;
     
-    snprintf(new_file,PATH_MAX,"%s%c%s", fn,DIR_SEPARATOR,entry->d_name);
-    process(mode,new_file);
+    if (!processing_dir(mode,fn))
+    {
+      print_error(mode,fn,"internal error. Contact developer!");
+      exit(-1);
+    }
+    
+    if ((current_dir = opendir(fn)) == NULL) 
+    {
+      print_error(mode,fn,strerror(errno));
+      return;
+    }    
+    
+    while ((entry = readdir(current_dir)) != NULL) 
+    {
+      if (is_special_dir(entry->d_name))
+	continue;
+      
+      snprintf(new_file,PATH_MAX,"%s%c%s", fn,DIR_SEPARATOR,entry->d_name);
+      process(mode,new_file);
+    }
+
+    closedir(current_dir);
+    
+    if (!done_processing_dir(mode,fn))
+    {
+      print_error(mode,fn,"internal error. Contact developer!");
+      exit(-1);
+    }
+
   }
   
   free(new_file);
-  closedir(current_dir);
 }
+
 
 
 int file_type_helper(struct stat sb)
@@ -234,36 +289,24 @@ int file_type_helper(struct stat sb)
   return file_unknown;
 }
 
-
 int file_type(off_t mode, char *fn)
 {
   struct stat sb;
 
-  if (!stat(fn,&sb))  
-    return file_type_helper(sb);
-
-  print_error(mode,fn,strerror(errno));
-  return file_unknown;
+  if (lstat(fn,&sb))  
+  {
+    print_error(mode,fn,strerror(errno));
+    return file_unknown;
+  }
+  return file_type_helper(sb);
 }
 
 
 int should_hash(off_t mode, char *fn);  
 
-int should_hash_expert(off_t mode, char *fn)
+int should_hash_expert(off_t mode, char *fn, int type)
 {
-  int file_type = file_unknown;
-  struct stat sb;
-
-  /* We use lstat instead of stat to look for symbolic links! */
-  if (!lstat(fn,&sb))
-    file_type = file_type_helper(sb);
-  else
-  {
-    print_error(mode,fn,strerror(errno));
-    return FALSE;
-  }
-
-  switch(file_type)
+  switch(type)
   {
   case file_regular:
     return (M_REGULAR(mode));
@@ -292,12 +335,44 @@ int should_hash_expert(off_t mode, char *fn)
        out of the mode or we'll just make an infinite loop! */
 
     if (M_SYMLINK(mode))
-      return (should_hash(mode & ~mode_expert,fn));
+      return (should_hash((mode) & ~(mode_expert),fn));
   }
   
   return FALSE;
 }
-      
+
+
+int should_hash_symlink(off_t mode, char *fn)
+{
+  int type;
+  struct stat sb;
+
+   /* We must look at what this symlink points to before we process it.
+      Symlinks to directories can cause cycles */
+  if (stat(fn,&sb))
+  {
+    print_error(mode,fn,strerror(errno));
+    return FALSE;
+  }
+  
+  type = file_type_helper(sb);
+
+  if (type != file_directory)
+    return TRUE;
+    
+  if (M_RECURSIVE(mode))
+  {
+    process_dir(mode,fn);
+    return FALSE;
+  }
+  else
+  {
+    print_error(mode,fn,"Is a directory");
+    return FALSE;
+  }
+}
+  
+
   
 
 int should_hash(off_t mode, char *fn)
@@ -315,8 +390,13 @@ int should_hash(off_t mode, char *fn)
   }
   
   if (M_EXPERT(mode))
-    return should_hash_expert(mode,fn);
-  
+    return should_hash_expert(mode,fn,type);
+
+#ifndef __WIN32
+  if (type == file_symlink)
+    return should_hash_symlink(mode,fn);
+#endif
+
   if (type == file_unknown)
     return FALSE;
 
@@ -329,9 +409,12 @@ void process(off_t mode, char *fn)
 {
   /* We still have to clean filenames on Windows just in case we
      are trying to process c:\\, which can happen even after
-     passing the filename through realpath (_fullpath, whatever). */
-  clean_name(fn);
-
-  if (should_hash(mode,fn))
+     passing the filename through realpath (_fullpath, whatever). 
+     We also check for special filenames like \\.\PhysicalDrive0. 
+     If we find one of those, we should process this file no matter what. */
+  if (clean_name(fn))
     hash(mode,fn);
+  else 
+    if (should_hash(mode,fn))
+      hash(mode,fn);
 }
