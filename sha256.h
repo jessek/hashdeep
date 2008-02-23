@@ -12,7 +12,7 @@
  *
  */
 
-#include "md5deep.h"
+#include "main.h"
 
 #ifndef _SHA256_H
 #define _SHA256_H

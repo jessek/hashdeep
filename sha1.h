@@ -12,7 +12,7 @@
  *
  */
 
-#include "md5deep.h"
+#include "main.h"
 
 /* See md5.h for a descripton of these fields */
 

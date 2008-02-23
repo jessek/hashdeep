@@ -11,7 +11,7 @@
  *  http://www.cr0.net:8040/code/crypto/sha256/ whenever possible.
  */
 
-#include "md5deep.h"
+#include "main.h"
 #include <string.h>
 #include "sha256.h"
 

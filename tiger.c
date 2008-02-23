@@ -19,7 +19,7 @@
  *
  */
 
-#include "md5deep.h"
+#include "main.h"
 
 /* Test vectors from the NESSIE Project:
    Note that the original version of this code included test vectors

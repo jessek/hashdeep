@@ -13,7 +13,7 @@
  */
 
 
-#include "md5deep.h"
+#include "main.h"
 #include "hashTable.h"
 
 hashTable knownHashes;
@@ -39,7 +39,7 @@ void init_table(void)
   
 
 
-int load_match_file(uint64_t mode, char *fn) 
+int load_match_file(state *s, char *fn) 
 {
   uint64_t line_number = 0;
   char buf[MAX_STRING_LENGTH + 1];
@@ -53,14 +53,14 @@ int load_match_file(uint64_t mode, char *fn)
 
   if ((f = fopen(fn,"r")) == NULL) 
   {
-    print_error(mode,fn,strerror(errno));
+    print_error(s,"%s: %s", fn,strerror(errno));
     return FALSE;
   }
 
   file_type = hash_file_type(f);
   if (file_type == TYPE_UNKNOWN)
   {
-    print_error(mode,fn,"Unable to find any hashes in file, skipped.");
+    print_error(s,"%s: Unable to find any hashes in file, skipped.", fn);
     return FALSE;
   }
 
@@ -73,7 +73,7 @@ int load_match_file(uint64_t mode, char *fn)
   
   if ((known_fn = (char *)malloc(sizeof(char) * PATH_MAX)) == NULL)
   {
-    print_error(mode,fn,"Out of memory before read");
+    print_error(s,"%s: Out of memory before read", fn);
     return FALSE;
   }
 
@@ -84,23 +84,19 @@ int load_match_file(uint64_t mode, char *fn)
 
     if (find_hash_in_line(buf,file_type,known_fn) != TRUE) 
     {
-      if (!(M_SILENT(mode)))
+      if ((!(s->mode & mode_silent)) || (s->mode & mode_warn_only))
       {
 	fprintf(stderr,"%s: %s: No hash found in line %" PRIu64 "%s", 
 		__progname,fn,line_number,NEWLINE);
       }
-
     } 
     else 
     {
       // Invalid hashes are caught above
       if (hashTableAdd(&knownHashes,buf,known_fn))
       {
-	if (!(M_SILENT(mode)))
-	{
-	  fprintf(stderr,"%s: %s: Out of memory at line %" PRIu64 "%s",
-		  __progname, fn, line_number, NEWLINE);
-	}
+	print_error(s,"%s: %s: Out of memory at line %" PRIu64 "%s",
+		    __progname, fn, line_number, NEWLINE);
 	fclose(f);
 	free(known_fn);
 	return FALSE;
@@ -119,14 +115,16 @@ int load_match_file(uint64_t mode, char *fn)
 }
 
 
-void add_hash(uint64_t mode, char *h, char *fn)
+void add_hash(state *s, char *h, char *fn)
 {
   init_table();
   switch (hashTableAdd(&knownHashes,h,fn))
   {
   case HASHTABLE_OK: break;
-  case HASHTABLE_OUT_OF_MEMORY: print_error(mode,h,"Out of memory"); break;
-  case HASHTABLE_INVALID_HASH: print_error(mode,h,"Invalid hash"); break;
+  case HASHTABLE_OUT_OF_MEMORY: 
+    print_error(s,"%s: Out of memory", __progname); break;
+  case HASHTABLE_INVALID_HASH: 
+    print_error(s,"%s: Invalid hash", __progname); break;
   }
 }
 
@@ -135,8 +133,8 @@ int is_known_hash(char *h, char *known_fn)
 {
   int status;
   if (!table_initialized)
-    internal_error("is_known_hash",
-		   "attempted to check hash before table was initialized");
+    internal_error("%s: Attempt to check hash before table was initialized",
+		   __progname);
   
   status = hashTableContains(&knownHashes,h,known_fn);
   if (!status)
@@ -149,18 +147,17 @@ int is_known_hash(char *h, char *known_fn)
 /* Examines the hash table and determines if any known hashes have not
    been used or if any input files did not match the known hashes. If
    requested, displays any unused known hashes. Returns a status variable */   
-int finalize_matching(uint64_t mode)
+int finalize_matching(state *s)
 {
   int status = STATUS_OK;
 
   if (!table_initialized)
-    internal_error("display_not_matched",
-		   "attempted to display unmatched hashes before table was initialized");
+    internal_error("%s: Attempt to display unmatched hashes before table was initialized", __progname);
   
   if (input_not_matched)
     status |= STATUS_INPUT_DID_NOT_MATCH;
 
-  if (hashTableDisplayNotMatched(&knownHashes, M_NOT_MATCHED(mode)))
+  if (hashTableDisplayNotMatched(&knownHashes, (s->mode & mode_not_matched)))
     status |= STATUS_UNUSED_HASHES;
 
   return status;

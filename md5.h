@@ -12,7 +12,7 @@
  *
  */
 
-#include "md5deep.h"
+#include "main.h"
 
 #ifdef HASH_ALGORITHM
 #error Hash algorithm already defined!

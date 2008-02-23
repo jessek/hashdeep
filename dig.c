@@ -12,7 +12,7 @@
  *
  */
 
-#include "md5deep.h"
+#include "main.h"
 
 void remove_double_slash(char *fn)
 {
@@ -139,7 +139,7 @@ void remove_double_dirs(char *fn)
    The following turns d: into d:\ and d:\foo\ into d:\foo */
 
 #ifdef _WIN32
-void clean_name_win32(char *fn)
+static void clean_name_win32(char *fn)
 {
   unsigned int length = strlen(fn);
 
@@ -159,7 +159,7 @@ void clean_name_win32(char *fn)
   }
 }
 
-int is_win32_device_file(char *fn)
+static int is_win32_device_file(char *fn)
 {
   /* Specifications for device files came from
      http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/base/createfile.asp
@@ -191,10 +191,10 @@ int is_win32_device_file(char *fn)
 #endif  /* ifdef _WIN32 */
 
 
-void clean_name(uint64_t mode, char *fn)
+static void clean_name(state *s, char *fn)
 {
   /* If we're using a relative path, we don't want to clean the filename */
-  if (!(M_RELATIVE(mode)))
+  if (!(s->mode & mode_relative))
   {
     remove_double_slash(fn);
     remove_single_dirs(fn);
@@ -214,42 +214,52 @@ int is_special_dir(char *d)
 }
 
 
-int process_dir(uint64_t mode, char *fn)
+int process_dir(state *s, char *fn)
 {
   int return_value = STATUS_OK;
   char *new_file;
   DIR *current_dir;
   struct dirent *entry;
 
-  if (have_processed_dir(mode,fn))
+  //  printf ("fn: %s\n", fn);
+
+  if (have_processed_dir(fn))
   {
-    print_error(mode,fn,"symlink creates cycle");
+    print_error(s,"%s: symlink creates cycle", fn);
     return STATUS_OK;
   }
 
-  if (!processing_dir(mode,fn))
-    internal_error(fn,"Cycle checking failed to register directory.");
+  if (!processing_dir(fn))
+    internal_error("%s: Cycle checking failed to register directory.", fn);
   
+  //  printf ("fn: %s\n", fn);
+
   if ((current_dir = opendir(fn)) == NULL) 
   {
-    print_error(mode,fn,strerror(errno));
+    print_error(s,"%s: %s", fn, strerror(errno));
     return STATUS_OK;
   }    
-  
+
+  //  printf ("fn: %s\n", fn);  
+
   new_file = (char *)malloc(sizeof(char) * PATH_MAX);
   while ((entry = readdir(current_dir)) != NULL) 
   {
     if (is_special_dir(entry->d_name))
       continue;
     
+    //    print_status("Found entry: %s\%s", fn,entry->d_name);
+
     snprintf(new_file,PATH_MAX,"%s%c%s", fn,DIR_SEPARATOR,entry->d_name);
-    return_value = process(mode,new_file);
+
+
+    return_value = process(s,new_file);
   }
   free(new_file);
   closedir(current_dir);
   
-  if (!done_processing_dir(mode,fn))
-    internal_error(fn,"Cycle checking failed to unregister directory.");
+  if (!done_processing_dir(fn))
+    internal_error("%s: Cycle checking failed to unregister directory.", fn);
 
   return return_value;
 }
@@ -294,25 +304,26 @@ int file_type_helper(struct stat sb)
   return file_unknown;
 }
 
-int file_type(uint64_t mode, char *fn)
+
+int file_type(state *s, char *fn)
 {
   struct stat sb;
 
   if (lstat(fn,&sb))  
   {
-    print_error(mode,fn,strerror(errno));
+    print_error(s,"%s: %s", fn,strerror(errno));
     return file_unknown;
   }
   return file_type_helper(sb);
 }
 
 
-int should_hash_symlink(uint64_t mode, char *fn, int *link_type);
+static int should_hash_symlink(state *s, char *fn, int *link_type);
 
 
 /* Type should be the result of calling lstat on the file. We want to
    know what this file is, not what it points to */
-int should_hash_expert(uint64_t mode, char *fn, int type)
+int should_hash_expert(state *s, char *fn, int type)
 {
   int link_type;
 
@@ -320,36 +331,29 @@ int should_hash_expert(uint64_t mode, char *fn, int type)
   {
 
   case file_directory:
-    if (M_RECURSIVE(mode))
-      process_dir(mode,fn);
+    if (s->mode & mode_recursive)
+      process_dir(s,fn);
     else
-      print_error(mode,fn,"Is a directory");
+      print_error(s,"%s: Is a directory", fn);
     return FALSE;
 
-  case file_regular:
-    return (M_REGULAR(mode));
+  case file_regular: return (s->mode & mode_regular);
+  case file_block: return (s->mode & mode_block);
     
-  case file_block:
-    return (M_BLOCK(mode));
+  case file_character: return (s->mode & mode_character);
     
-  case file_character:
-    return (M_CHARACTER(mode));
-    
-  case file_pipe:
-    return (M_PIPE(mode));
-    
-  case file_socket:
-    return (M_SOCKET(mode));
-    
-  case file_door:
-    return (M_DOOR(mode));
+  case file_pipe: return (s->mode & mode_pipe);
 
-  case file_symlink:
-    if (!(M_SYMLINK(mode)))
+  case file_socket: return (s->mode & mode_socket);
+    
+  case file_door: return (s->mode & mode_door);
+
+  case file_symlink: 
+    if (!(s->mode & mode_symlink))
       return FALSE;
 
-    if (should_hash_symlink(mode,fn,&link_type))
-      return should_hash_expert(mode,fn,link_type);
+    if (should_hash_symlink(s,fn,&link_type))
+      return should_hash_expert(s,fn,link_type);
     else
       return FALSE;
   }
@@ -358,7 +362,7 @@ int should_hash_expert(uint64_t mode, char *fn, int type)
 }
 
 
-int should_hash_symlink(uint64_t mode, char *fn, int *link_type)
+static int should_hash_symlink(state *s, char *fn, int *link_type)
 {
   int type;
   struct stat sb;
@@ -368,7 +372,7 @@ int should_hash_symlink(uint64_t mode, char *fn, int *link_type)
       we use stat to examine what this symlink points to. */
   if (stat(fn,&sb))
   {
-    print_error(mode,fn,strerror(errno));
+    print_error(s,"%s: %s", fn,strerror(errno));
     return FALSE;
   }
 
@@ -376,10 +380,10 @@ int should_hash_symlink(uint64_t mode, char *fn, int *link_type)
 
   if (type == file_directory)
   {
-    if (M_RECURSIVE(mode))
-      process_dir(mode,fn);
+    if (s->mode & mode_recursive)
+      process_dir(s,fn);
     else
-      print_error(mode,fn,"Is a directory");
+      print_error(s,"%s: Is a directory", fn);
     return FALSE;
   }    
 
@@ -391,26 +395,29 @@ int should_hash_symlink(uint64_t mode, char *fn, int *link_type)
 
   
 
-int should_hash(uint64_t mode, char *fn)
+int should_hash(state *s, char *fn)
 {
-  int type = file_type(mode,fn);
+  int type = file_type(s,fn);
 
-  if (M_EXPERT(mode))
-    return (should_hash_expert(mode,fn,type));
+  if (s->mode & mode_expert)
+    return (should_hash_expert(s,fn,type));
 
   if (type == file_directory)
   {
-    if (M_RECURSIVE(mode)) 
-      process_dir(mode,fn);
+    
+    //    print_status("This is a directory");
+
+    if (s->mode & mode_recursive)
+      process_dir(s,fn);
     else 
-      print_error(mode,fn,"Is a directory");
+      print_error(s,"%s: Is a directory", fn);
     
     return FALSE;
   }
   
 #ifndef _WIN32
   if (type == file_symlink)
-    return should_hash_symlink(mode,fn,NULL);
+    return should_hash_symlink(s,fn,NULL);
 #endif
 
   if (type == file_unknown)
@@ -421,23 +428,30 @@ int should_hash(uint64_t mode, char *fn)
 }
 
 
-int process(uint64_t mode, char *fn)
+int process(state *s, char *fn)
 {
   /* On Windows, the special device files don't need to be cleaned up.
      We check them here so that we don't have to test their file types
      later on. (They don't appear to be normal files.) */
 #ifdef _WIN32
   if (is_win32_device_file(fn))
-    return (hash_file(mode,fn));
+    return (hash_file(s,fn));
 #endif
+
+
+  //  print_status("processing %s\n", fn);
 
   /* We still have to clean filenames on Windows just in case we
      are trying to process c:\\, which can happen even after
      passing the filename through realpath (_fullpath, whatever). */
 
-  clean_name(mode,fn);
-  if (should_hash(mode,fn))
-    return (hash_file(mode,fn));
+  clean_name(s,fn);
+
+
+  //  print_status("processing clean %s\n", fn);
+
+  if (should_hash(s,fn))
+    return (hash_file(s,fn));
 
   return FALSE;
 }

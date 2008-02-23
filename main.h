@@ -20,13 +20,12 @@
 
 #define AUTHOR      "Jesse Kornblum"
 
-/* We use \r\n for newlines as this has to work on Win32. It's redundant for
-   everybody else, but shouldn't cause any harm. */
 #define COPYRIGHT   "This program is a work of the US Government. "\
-"In accordance with 17 USC 105,\r\n"\
-"copyright protection is not available for any work of the US Government.\r\n"\
-"This is free software; see the source for copying conditions. There is NO\r\n"\
-"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\r\n"
+"In accordance with 17 USC 105,%s"\
+"copyright protection is not available for any work of the US Government.%s"\
+"This is free software; see the source for copying conditions. There is NO%s"\
+"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",\
+NEWLINE, NEWLINE, NEWLINE
 
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -48,6 +47,8 @@
 #include <sys/mount.h>
 #endif 
 
+#include "hashTable.h"
+
 /* This allows us to open standard input in binary mode by default 
    See http://gnuwin32.sourceforge.net/compile.html for more */
 #include <fcntl.h>
@@ -61,6 +62,7 @@
 #define PRIu64 "llu"
 #endif
 
+// Note that STRINGS_EQUAL does not check if either A or B is NULL
 #define _MAX(A,B)             (A>B)?A:B
 #define STRINGS_EQUAL(A,B)   (!strncasecmp(A,B,_MAX(strlen(A),strlen(B))))
 
@@ -90,6 +92,20 @@
 
 #elif defined (__APPLE__)
 #include <machine/endian.h>
+
+#elif defined (__HPUX)
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN 4321
+#endif
+
+#ifndef LITTLE_ENDIAN
+#define LITTLE_ENDIAN 1234
+#endif
+
+#ifndef BYTE_ORDER
+#define BYTE_ORDER BIG_ENDIAN
+#endif
+
 #endif
 
 
@@ -109,13 +125,11 @@
 
 /* Strings have to be long enough to handle inputs from matched hashing files.
    The NSRL is already larger than 256 bytes. We go longer to be safer. */
-#define MAX_STRING_LENGTH   1024
+#define MAX_STRING_LENGTH    2048
 
 /* LINE_LENGTH is different between UNIX and WIN32 and is defined below */
 #define MAX_FILENAME_LENGTH   LINE_LENGTH - 41
 
-// Global variables are bad. This should be wrapped into the state in v2.0
-uint32_t piecewise_block;
 
 /* These are the types of files that we can match against */
 #define TYPE_PLAIN        0
@@ -132,23 +146,21 @@ uint32_t piecewise_block;
 #define mode_recursive     1<<0
 #define mode_estimate      1<<1
 #define mode_silent        1<<2
-#define mode_match         1<<3
-#define mode_match_neg     1<<4
-#define mode_display_hash  1<<5
-#define mode_display_size  1<<6
-#define mode_zero          1<<7
-#define mode_relative      1<<8
-#define mode_which         1<<9
-#define mode_barename     1<<10
-#define mode_asterisk     1<<11
-#define mode_not_matched  1<<12
-#define mode_quiet        1<<13
-#define mode_piecewise    1<<14
+#define mode_warn_only     1<<3
+#define mode_match         1<<4
+#define mode_match_neg     1<<5
+#define mode_display_hash  1<<6
+#define mode_display_size  1<<7
+#define mode_zero          1<<8
+#define mode_relative      1<<9
+#define mode_which        1<<10
+#define mode_barename     1<<11
+#define mode_asterisk     1<<12
+#define mode_not_matched  1<<13
+#define mode_quiet        1<<14
+#define mode_piecewise    1<<15
 
-/* Modes 15 to 22 and 32 to 63 are reserved for future use. 
-   (Yes, I could move the expert file modes, below, up to the higher
-   ranger of numbers, but it's working now, and so why change anything?
-   The next person who wants to add a lot of modes can have the fun.) */
+// Modes 16 to 22 are reserved for future use. 
 
 #define mode_regular       1<<23
 #define mode_directory     1<<24
@@ -172,30 +184,38 @@ uint32_t piecewise_block;
 #define file_symlink    8
 #define file_unknown  254
 
-#define M_MATCH(A)         (A & mode_match)
-#define M_MATCHNEG(A)      (A & mode_match_neg)
-#define M_RECURSIVE(A)     (A & mode_recursive)
-#define M_ESTIMATE(A)      (A & mode_estimate)
-#define M_SILENT(A)        (A & mode_silent)
-#define M_DISPLAY_HASH(A)  (A & mode_display_hash)
-#define M_DISPLAY_SIZE(A)  (A & mode_display_size)
-#define M_ZERO(A)          (A & mode_zero)
-#define M_RELATIVE(A)      (A & mode_relative)
-#define M_WHICH(A)         (A & mode_which)
-#define M_BARENAME(A)      (A & mode_barename)
-#define M_ASTERISK(A)      (A & mode_asterisk)
-#define M_NOT_MATCHED(A)   (A & mode_not_matched)
-#define M_QUIET(A)         (A & mode_quiet)
-#define M_PIECEWISE(A)     (A & mode_piecewise)
 
-#define M_EXPERT(A)        (A & mode_expert)
-#define M_REGULAR(A)       (A & mode_regular)
-#define M_BLOCK(A)         (A & mode_block)
-#define M_CHARACTER(A)     (A & mode_character)
-#define M_PIPE(A)          (A & mode_pipe)
-#define M_SOCKET(A)        (A & mode_socket)
-#define M_DOOR(A)          (A & mode_door)
-#define M_SYMLINK(A)       (A & mode_symlink)
+
+
+typedef struct _state {
+  
+  // Basic program state
+  uint64_t   mode, piecewise_block;
+  int        hashes_loaded, return_value;
+  hashTable  known_hashes;
+  char       *msg;
+
+  // Used exclusively during hashing
+  // Note that we can't put the hash context in here as it depends
+  // on which algorithm we are executing
+  char *full_name;
+  char *short_name;
+
+  // The size of the input file, in megabytes
+  uint64_t total_megs;
+
+  uint64_t total_bytes;
+  uint64_t bytes_read;
+
+  uint64_t block_size;
+
+  char *result;
+
+  FILE *handle;
+  int is_stdin;
+} state;
+
+#define MD5DEEP_IDEAL_BLOCK_SIZE 8192
 
 
 // Return values for the program
@@ -212,6 +232,16 @@ uint32_t piecewise_block;
 #define   u_int64_t   unsigned long
 #endif 
 
+#ifdef __HPUX
+#define   u_int32_t   unsigned int
+
+#ifdef __LP64__
+#define   u_int64_t   unsigned long
+#else
+#define   u_int64_t   unsigned long long
+#endif
+
+#endif
 
 /* Set up the environment for the *nix operating systems (Mac, Linux, 
    BSD, Solaris, and really everybody except Microsoft Windows) */
@@ -220,8 +250,11 @@ uint32_t piecewise_block;
 #include <libgen.h>
 
 // These prototypes help us avoid compiler warnings on older systems 
+
+#ifndef __HPUX
 int fseeko(FILE *stream, off_t offset, int whence);
 off_t ftello(FILE *stream);
+#endif
 
 #define CMD_PROMPT "$"
 #define DIR_SEPARATOR   '/'
@@ -307,18 +340,19 @@ char *__progname;
    ----------------------------------------------------------------- */
 
 /* To avoid cycles */
-int have_processed_dir(uint64_t mode, char *fn);
-int processing_dir(uint64_t mode, char *fn);
-int done_processing_dir(uint64_t mode, char *fn);
+int have_processed_dir(char *fn);
+int processing_dir(char *fn);
+int done_processing_dir(char *fn);
 
 /* Functions from matching (match.c) */
-int load_match_file(uint64_t mode, char *filename);
+int load_match_file(state *s, char *fn);
+
 int is_known_hash(char *h, char *known_fn);
 int was_input_not_matched(void);
-int finalize_matching(uint64_t mode);
+int finalize_matching(state *s);
 
 // Add a single hash to the matching set
-void add_hash(uint64_t mode, char *h, char *fn);
+void add_hash(state *s, char *h, char *fn);
 
 /* Functions for file evaluation (files.c) */
 int valid_hash(char *buf);
@@ -326,17 +360,37 @@ int hash_file_type(FILE *f);
 int find_hash_in_line(char *buf, int fileType, char *filename);
 
 /* Dig into file hierarchies */
-int process(uint64_t mode, char *input);
+int process(state *s, char *input);
 
 /* Hashing functions */
-int hash_file(uint64_t mode, char *filename);
-int hash_stdin(uint64_t mode);
+int hash_file(state *s, char *filename);
+int hash_stdin(state *s);
 
 /* Miscellaneous helper functions */
 void shift_string(char *fn, size_t start, size_t new_start);
-void print_error(uint64_t mode, char *fn, char *msg);
-void internal_error(char *fn, char *msg);
-void make_newline(uint64_t mode);
+
+// ----------------------------------------------------------------
+// User interface functions
+// ----------------------------------------------------------------
+
+// Display an ordinary message with newline added
+void print_status(char *fmt, ...);
+
+// Display an error message if not in silent mode
+void print_error(state *s, char *fmt, ...);
+
+// Display an error message, if not in silent mode,  
+// and exit with EXIT_FAILURE
+void fatal_error(state *s, char *fmt, ...);
+
+// Display an error message, ask user to contact the developer, 
+// and exit with EXIT_FAILURE
+void internal_error(char *fmt, ... );
+
+
+void print_debug(char *fmt, ...);
+
+void make_newline(state *s);
 int find_comma_separated_string(char *s, unsigned int n);
 int find_quoted_string(char *buf, unsigned int n);
 

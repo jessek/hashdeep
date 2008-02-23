@@ -12,7 +12,7 @@
  *
  */
 
-#include "md5deep.h"
+#include "main.h"
 
 typedef struct dir_table {
   char *name;
@@ -35,7 +35,7 @@ void dump_table(void)
 #endif
 
 
-int done_processing_dir(uint64_t mode, char *fn)
+int done_processing_dir(char *fn)
 {
   dir_table *last, *temp;
 
@@ -44,6 +44,9 @@ int done_processing_dir(uint64_t mode, char *fn)
 
   if (my_table == NULL)
   {
+    internal_error("Table is NULL in done_processing_dir");
+
+    // This code never gets executed... 
     free(d_name);
     return FALSE;
   }
@@ -73,14 +76,18 @@ int done_processing_dir(uint64_t mode, char *fn)
     }
   }
 
-  free (d_name);
+  internal_error("%s: Directory %s not found in done_processing_dir",
+		 __progname, d_name);
+
+  // This code never gets executed... 
+  //  free (d_name);
   return FALSE;
 }
 
 
 
 
-int processing_dir(uint64_t mode, char *fn)
+int processing_dir(char *fn)
 {
   dir_table *new, *temp;
   char *d_name = (char*)malloc(sizeof(char) * PATH_MAX);
@@ -103,6 +110,9 @@ int processing_dir(uint64_t mode, char *fn)
     /* We should never be adding a directory that is already here */
     if (!strncmp(temp->name,d_name,PATH_MAX))
     {
+      internal_error("%s: Attempt to add existing %s in processing_dir",
+		     __progname, d_name);
+      // Does not execute
       free(d_name);
       return FALSE;
     }
@@ -119,17 +129,16 @@ int processing_dir(uint64_t mode, char *fn)
 }
 
 
-int have_processed_dir(uint64_t mode, char *fn)
+int have_processed_dir(char *fn)
 {
   dir_table *temp;
-  char *d_name = (char*)malloc(sizeof(char) * PATH_MAX);
-  realpath(fn,d_name);
+  char *d_name;
 
   if (my_table == NULL)
-  {
-    free(d_name);
     return FALSE;
-  }
+
+  d_name = (char*)malloc(sizeof(char) * PATH_MAX);
+  realpath(fn,d_name);
 
   temp = my_table;
   while (temp != NULL)

@@ -1,4 +1,23 @@
 
+Version 1.13 - 6 Aug 2007
+
+- Added support for HP/UX
+- Changed piecewise hashing size to 64 bit value.
+- Fixed cosmetic error regarding newlines in -n mode.
+- Fixed error on Win32 in file estimate mode. Although it appeared
+     to be solely cosmetic, the functions to produce the status message
+     could potentially overwrite other memory and create inconsistencies
+- Added -S mode to only display warnings for improperly formatted hashes
+- Changed install procedure for man pages. Now using groff .so command 
+     instead of symbolic links
+- Removed make macg5 option. This doesn't work on newer versions of gcc.
+- Updated MAX_STRING_LENGTH to 2048 to handle larger input files
+- Changed internal structure to use a single state variable instead of mode 
+     and several global variables. This should make the program much
+     easier to maintain and expand in version 2.0.
+- Moved md5deep.h to main.h
+- Moved print functions to ui.c for easier abstraction
+
 Version 1.12 - 3 Apr 2006
 
 - (This version probably didn't need to be a full bump to 1.12, but 

@@ -4,7 +4,7 @@ CFLAGS   = -Wall -W -O3
 LINK_OPT = -lm
 
 NAME     = md5deep
-VERSION  = 1.12
+VERSION  = 1.13
 
 # Where we get installed
 PREFIX = /usr/local
@@ -32,10 +32,10 @@ ALL_ALGS    = md5,sha1,sha256,whirlpool,tiger
 COMMA_GOALS = {$(ALL_ALGS)}deep
 
 # Definitions we'll need later (and that should rarely change)
-HEADER_FILES  = md5deep.h hashTable.h algorithms.h {$(ALL_ALGS)}.h
-SRC  =  main.c match.c hashTable.c helpers.c dig.c files.c 
+HEADER_FILES  = main.h hashTable.h algorithms.h {$(ALL_ALGS)}.h
+SRC  =  main.c match.c hashTable.c helpers.c dig.c files.c ui.c
 SRC +=  md5.c sha1.c hash.c cycles.c sha256.c whirlpool.c tiger.c
-OBJ  =  main.o match.o helpers.o dig.o cycles.o hashTable.o
+OBJ  =  main.o match.o helpers.o dig.o cycles.o hashTable.o ui.o
 DOCS = Makefile README CHANGES $(MAN_PAGE)
 WINDOC = README.txt CHANGES.txt
 
@@ -57,12 +57,12 @@ sunos: solaris
 solaris: CC += -D__SOLARIS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 solaris: goals
 
+hpux: CC = cc
+hpux: CFLAGS += -Ae -DD64 -fast -D__HPUX -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+hpux: goals
+
 # There are no additional defines for OS X as _APPLE_ is defined for us.
 mac: goals
-
-# This compiles a G5 only version 
-macg5: CFLAGS += -fast
-macg5: goals
 
 unix: goals
 
@@ -155,11 +155,12 @@ MAN = $(PREFIX)/man/man1
 install: goals
 	install -d $(BIN) $(MAN)
 	install -m 755 $(ALL_GOALS) $(BIN)
+	rm -f $(MAN)/{$(ALL_ALGS)}deep.1
 	install -m 644 $(MAN_PAGE) $(MAN)
-	ln -fs md5deep.1 $(MAN)/sha1deep.1
-	ln -fs md5deep.1 $(MAN)/sha256deep.1
-	ln -fs md5deep.1 $(MAN)/whirlpooldeep.1
-	ln -fs md5deep.1 $(MAN)/tigerdeep.1
+	echo ".so md5deep.1" > $(MAN)/sha1deep.1
+	echo ".so md5deep.1" > $(MAN)/sha256deep.1
+	echo ".so md5deep.1" > $(MAN)/whirlpooldeep.1
+	echo ".so md5deep.1" > $(MAN)/tigerdeep.1
 
 uninstall:
 	rm -f -- $(BIN)/{$(COMMA_GOALS)}

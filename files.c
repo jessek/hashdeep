@@ -12,12 +12,12 @@
  *
  */
 
-#include "md5deep.h"
+#include "main.h"
 
 /* ---------------------------------------------------------------------
    How to add more file types that we can read known hashes from:
 
-   1. Add a definition of TYPE_[fileType] to md5deep.h. Ex: for type "cows",
+   1. Add a definition of TYPE_[fileType] to main.h. Ex: for type "cows",
       you would want to define TYPE_COWS.
 
    2. If your filetype has a rigid header, you should define a HEADER

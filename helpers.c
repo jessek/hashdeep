@@ -12,11 +12,11 @@
  *
  */
 
-#include "md5deep.h"
+#include "main.h"
 
-void make_newline(uint64_t mode)
+void make_newline(state *s)
 {
-  if (M_ZERO(mode))
+  if (s->mode & mode_zero)
     printf("%c", 0);
   else
     printf("%s", NEWLINE);
@@ -109,24 +109,6 @@ int find_comma_separated_string(char *s, unsigned int n)
 }
 
 
-void print_error(uint64_t mode, char *fn, char *msg) 
-{
-  if (!M_SILENT(mode))
-  {
-    if (NULL == fn)
-      fprintf (stderr,"%s: %s%s", __progname,msg,NEWLINE);
-    else
-      fprintf (stderr,"%s: %s: %s%s", __progname,fn,msg,NEWLINE);
-  }
-}   
-
-
-void internal_error(char *fn, char *msg)
-{
-  fprintf (stderr,"%s: %s: Internal error: %s CONTACT DEVELOPER!%s", 
-	   __progname,fn,msg,NEWLINE);
-  exit(STATUS_INTERNAL_ERROR);
-}
 
 
 void make_magic(void){printf("%s%s","\x53\x41\x4E\x20\x44\x49\x4D\x41\x53\x20\x48\x49\x47\x48\x20\x53\x43\x48\x4F\x4F\x4C\x20\x46\x4F\x4F\x54\x42\x41\x4C\x4C\x20\x52\x55\x4C\x45\x53\x21",NEWLINE);}

@@ -15,7 +15,7 @@
  * will fill a supplied 16-byte array with the digest.
  */
 
-#include "md5deep.h"
+#include "main.h"
 
 #ifndef HIGHFIRST
 #define byteReverse(buf, len)	/* Nothing */

@@ -14,7 +14,7 @@
 
 
 /* We keep all of the hash table manipulation functions here as an 
-   abstraction barrier. They're not in md5deep.h so that the main 
+   abstraction barrier. They're not in main.h so that the main 
    program can't call them. */
 
 #ifndef __HASHTABLE

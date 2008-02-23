@@ -1,4 +1,4 @@
-.TH MD5DEEP "1" "v1.12 \- 3 Apr 2006" "AFOSI" "United States Air Force"
+.TH MD5DEEP "1" "v1.13 \- 6 Aug 2007" "AFOSI" "United States Air Force"
 
 .SH NAME
 md5deep \- Compute MD5 message digests
@@ -17,7 +17,7 @@ whirlpooldeep \- Compute Whirlpool message digests
 .br
 .B md5deep
 [\-m|\-M|\-x|\-X <file>]  [-a|-A <hash>]
-[\-p <size>] [\-nwzres0lbkq] [\-o <fbcplsd>] [\fBFILES\fR]
+[\-p <size>] [\-nwzresS0lbkq] [\-o <fbcplsd>] [\fBFILES\fR]
 
 .SH DESCRIPTION
 .PP
@@ -111,6 +111,11 @@ filenames of any known hashes that were not matched by any of the input files.
 .TP
 \fB\-s\fR
 Enables silent mode. All error messages are supressed.
+
+.TP
+\fB\-S\fR
+Like silent mode, but still displays warnings on improperly formatted
+hashes in the list of known hashes.
 
 .TP
 \fB\-z\fR
@@ -219,7 +224,7 @@ characters in their filenames.
 
 Using the \-r flag cannot be used to recursively process all files 
 of a given extension in a directory. This is a feature, not a bug. 
-If you need to do this, use the find(1) command.
+If you need to do this, use the \fBfind\fR(1) command.
 
 .SH REPORTING BUGS
 We take all bug reports \fIvery\fR seriously. Any bug that jeopardizes the

@@ -12,7 +12,7 @@
  *
  */
 
-#include "md5deep.h"
+#include "main.h"
 #include "hashTable.h"
 
 
@@ -170,7 +170,7 @@ int hashTableDisplayNotMatched(hashTable *t, int display)
 
 	// The 'return' above allows us to disregard the if statement.
 	status = TRUE;
-	printf("%s\n", temp->filename);
+	printf("%s%s", temp->filename, NEWLINE);
       }
       temp = temp->next;
     }
@@ -211,13 +211,13 @@ void hashTableEvaluate(hashTable *knownHashes) {
   }
   
   if (temp > 10) {
-    printf ("Depth: %d  count: %ld\n",temp,count);
+    print_status ("Depth: %d  count: %"PRIu64, temp,count);
     return;
   }
 
-  printf ("Hash table depth chart:\n");
+  print_status ("Hash table depth chart:");
   for (count = 0; count < 10 ; count++) {
-    printf ("%ld: %ld\n", count,depth[count]);
+    print_status ("%"PRIu64": %"PRIu64, count,depth[count]);
   }
 }
 #endif    

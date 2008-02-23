@@ -12,7 +12,7 @@
  *
  */
 
-#include "md5deep.h"
+#include "main.h"
 
 /* This implementation of SHA1-1 was written by 
    Steve Reid <steve@edmweb.com> and was included in this program on 

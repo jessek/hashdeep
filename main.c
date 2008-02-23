@@ -12,7 +12,7 @@
  *
  */
 
-#include "md5deep.h"
+#include "main.h"
 
 #ifdef _WIN32 
 /* Allows us to open standard input in binary mode by default 
@@ -21,88 +21,76 @@ int _CRT_fmode = _O_BINARY;
 #endif
 
 
-void try_msg(void)
+static void try_msg(void)
 {
-  fprintf(stderr,"Try `%s -h` for more information.%s", __progname,NEWLINE);
+  print_status("Try `%s -h` for more information.", __progname);
 }
 
 
-/* The usage function must not produce more than 22 lines of text 
-   in order to fit on a single screen */
-void usage(void) 
+/* So that the usage message fits in a standard DOS window, this
+   function should produce no more than 22 lines of text. */
+static void usage(void) 
 {
-  fprintf(stderr,"%s version %s by %s.%s",__progname,VERSION,AUTHOR,NEWLINE);
-  fprintf(stderr,"%s %s [OPTION]... [FILES]%s%s",
-	  CMD_PROMPT,__progname,NEWLINE,NEWLINE);
+  print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
+  print_status("%s %s [OPTION]... [FILES]",CMD_PROMPT,__progname);
 
-  fprintf (stderr,"See the man page or README.txt file for the full list of options%s", NEWLINE);
-  fprintf(stderr,"-p  - piecewise mode. Files are broken into blocks for hashing%s", NEWLINE);
-  fprintf(stderr,"-r  - recursive mode. All subdirectories are traversed%s",NEWLINE);
-  fprintf(stderr,"-e  - compute estimated time remaining for each file%s",
-	  NEWLINE);
-  fprintf(stderr,"-s  - silent mode. Suppress all error messages%s",
-	  NEWLINE);
-  fprintf(stderr,"-z  - display file size before hash%s", NEWLINE);
-  fprintf(stderr,"-m <file> - enables matching mode. See README/man page%s",NEWLINE);
-  fprintf(stderr,"-x <file> - enables negative matching mode. See README/man page%s",
-	  NEWLINE);
-  fprintf(stderr,"-M and -X are the same as -m and -x but also print hashes of each file%s",NEWLINE);
-  fprintf(stderr,"-w  - displays which known file generated a match%s", NEWLINE);
-  fprintf(stderr,"-n  - displays known hashes that did not match any input files%s", NEWLINE);
-  fprintf(stderr,"-a and -A add a single hash to the positive or negative matching set%s", NEWLINE);
-  fprintf(stderr,"-b  - prints only the bare name of files; all path information is omitted%s", NEWLINE);
-  fprintf(stderr,"-l  - print relative paths for filenames%s", NEWLINE);
-  fprintf(stderr,"-k  - print asterisk before hash%s", NEWLINE);
-  fprintf(stderr,"-o  - Only process certain types of files. See README/manpage%s",NEWLINE);
-  fprintf(stderr,"-v  - display version number and exit%s",NEWLINE);
+  print_status("See the man page or README.txt file for the full list of options");
+  print_status("-p  - piecewise mode. Files are broken into blocks for hashing");
+  print_status("-r  - recursive mode. All subdirectories are traversed");
+  print_status("-e  - compute estimated time remaining for each file");
+  print_status("-s  - silent mode. Suppress all error messages");
+  print_status("-S  - Displays warnings on bad hashes only");
+  print_status("-z  - display file size before hash");
+  print_status("-m <file> - enables matching mode. See README/man page");
+  print_status("-x <file> - enables negative matching mode. See README/man page");
+	 
+  print_status("-M and -X are the same as -m and -x but also print hashes of each file");
+  print_status("-w  - displays which known file generated a match");
+  print_status("-n  - displays known hashes that did not match any input files");
+  print_status("-a and -A add a single hash to the positive or negative matching set");
+  print_status("-b  - prints only the bare name of files; all path information is omitted");
+  print_status("-l  - print relative paths for filenames");
+  print_status("-k  - print asterisk before filename");
+  print_status("-o  - Only process certain types of files. See README/manpage");
+  print_status("-v  - display version number and exit");
 }
 
 
-void setup_expert_mode(char *arg, uint64_t *mode) 
+static void setup_expert_mode(state *s, char *arg)
 {
   unsigned int i = 0;
 
   while (i < strlen(arg)) {
     switch (*(arg+i)) {
     case 'b': // Block Device
-      *mode |= mode_block;
-      break;
+      s->mode |= mode_block;     break;
     case 'c': // Character Device
-      *mode |= mode_character;
-      break;
+      s->mode |= mode_character; break;
     case 'p': // Named Pipe
-      *mode |= mode_pipe;
-      break;
+      s->mode |= mode_pipe;      break;
     case 'f': // Regular File
-      *mode |= mode_regular;
-      break;
+      s->mode |= mode_regular;   break;
     case 'l': // Symbolic Link
-      *mode |= mode_symlink;
-      break;
+      s->mode |= mode_symlink;   break;
     case 's': // Socket
-      *mode |= mode_socket;
-      break;
+      s->mode |= mode_socket;    break;
     case 'd': // Door (Solaris)
-      *mode |= mode_door;
-      break;
+      s->mode |= mode_door;      break;
     default:
-      if (!M_SILENT(*mode))
-	fprintf(stderr,
-		"%s: Unrecognized file type: %c%s"
-		, __progname,*(arg+i),NEWLINE);
+      print_error(s,"%s: Unrecognized file type: %c",__progname,*(arg+i));
     }
     ++i;
   }
 }
 
 
-void sanity_check(uint64_t mode, int condition, char *msg)
+void sanity_check(state *s, int condition, char *msg)
 {
   if (condition)
   {
-    if (!M_SILENT(mode))
+    if (!(s->mode & mode_silent))
     {
-      fprintf(stderr,"%s: %s%s", __progname, msg, NEWLINE);
+      print_status("%s: %s", __progname, msg);
       try_msg();
     }
     exit (STATUS_USER_ERROR);
@@ -110,7 +98,7 @@ void sanity_check(uint64_t mode, int condition, char *msg)
 }
 
 
-static uint64_t find_block_size(uint64_t mode, char *input_str)
+static uint64_t find_block_size(state *s, char *input_str)
 {
   unsigned char c;
   uint64_t multiplier = 1;
@@ -135,144 +123,147 @@ static uint64_t find_block_size(uint64_t mode, char *input_str)
       case 'b':
 	break;
       default:
-	print_error(mode,NULL,"Improper multiplier, unable to continue");
+	print_error(s,"%s: Improper piecewise multiplier ignored", __progname);
       }
       input_str[strlen(input_str) - 1] = 0;
     }
 
+#ifdef __HPUX
+  return (strtoumax ( input_str, (char**)0, 10) * multiplier);
+#else
   return (atoll(input_str) * multiplier);
+#endif
 }
 
       
 
-void check_flags_okay(uint64_t mode, int hashes_loaded)
+static void check_flags_okay(state *s)
 {
-  sanity_check(mode,
-	       ((M_MATCH(mode) || M_MATCHNEG(mode)) && !hashes_loaded),
+  sanity_check(s,
+	       ((s->mode & mode_match) || (s->mode & mode_match_neg)) &&
+	       !s->hashes_loaded,
 	       "Unable to load any matching files");
 
-  sanity_check(mode,
-	       (M_RELATIVE(mode) && (M_BARENAME(mode))),
+  sanity_check(s,
+	       (s->mode & mode_relative) && (s->mode & mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
-  sanity_check(mode,
-	       (M_PIECEWISE(mode) && M_DISPLAY_SIZE(mode)),
+  sanity_check(s,
+	       (s->mode & mode_piecewise) && (s->mode & mode_display_size),
 	       "Piecewise mode and file size display is just plain silly");
 
 
   /* If we try to display non-matching files but haven't initialized the
      list of matching files in the first place, bad things will happen. */
-  sanity_check(mode,
-	       (M_NOT_MATCHED(mode) && ! (M_MATCH(mode) || M_MATCHNEG(mode))),
+  sanity_check(s,
+	       (s->mode & mode_not_matched) && 
+	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)),
 	       "Matching or negative matching must be enabled to display non-matching files");
 
-  sanity_check(mode,
-	       (M_WHICH(mode) && ! (M_MATCH(mode) || M_MATCHNEG(mode))),
+  sanity_check(s,
+	       (s->mode & mode_which) && 
+	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)), 
 	       "Matching or negative matching must be enabled to display which file matched");
   
+
   // Additional sanity checks will go here as needed... 
 }
 
 
-void check_matching_modes(uint64_t mode)
+static void check_matching_modes(state *s)
 {
-  sanity_check(mode,
-	       (M_MATCH(mode) && M_MATCHNEG(mode)),
+  sanity_check(s,
+	       (s->mode & mode_match) && (s->mode & mode_match_neg),
 	       "Regular and negative matching are mutually exclusive.");
 }
 
 
-void process_command_line(int argc, char **argv, uint64_t *mode) {
-
-  int i, hashes_loaded = FALSE;
+void process_command_line(state *s, int argc, char **argv)
+{
+  int i;
   
-  while ((i=getopt(argc,argv,"M:X:x:m:u:o:A:a:nwzsp:erhvV0lbkq")) != -1) { 
+  while ((i=getopt(argc,argv,"M:X:x:m:u:o:A:a:nwzsSp:erhvV0lbkq")) != -1) { 
     switch (i) {
 
     case 'p':
-      *mode |= mode_piecewise;
-      piecewise_block = find_block_size(*mode, optarg);
-      if (0 == piecewise_block)
-	exit(EXIT_FAILURE);
+      s->mode |= mode_piecewise;
+      s->piecewise_block = find_block_size(s, optarg);
+      if (0 == s->piecewise_block)
+      {
+	print_error(s,"%s: Piecewise blocks of zero bytes are impossible", 
+		    __progname);
+	exit(STATUS_USER_ERROR);
+      }
 
       break;
 
-    case 'q':
-      *mode |= mode_quiet;
-      break;
-
-    case 'n':
-      *mode |= mode_not_matched;
-      break;
-
-    case 'w':
-      *mode |= mode_which;
-      break;
+    case 'q': s->mode |= mode_quiet; break;
+    case 'n': s->mode |= mode_not_matched; break;
+    case 'w': s->mode |= mode_which; break;
 
     case 'a':
-      *mode |= mode_match;
-      check_matching_modes(*mode);
-      add_hash(*mode,optarg,optarg);
-      hashes_loaded = TRUE;
+      s->mode |= mode_match;
+      check_matching_modes(s);
+      add_hash(s,optarg,optarg);
+      s->hashes_loaded = TRUE;
       break;
 
     case 'A':
-      *mode |= mode_match_neg;
-      check_matching_modes(*mode);
-
-      add_hash(*mode,optarg,optarg);
-      hashes_loaded = TRUE;
+      s->mode |= mode_match_neg;
+      check_matching_modes(s);
+      add_hash(s,optarg,optarg);
+      s->hashes_loaded = TRUE;
       break;
       
-    case 'l':
-      *mode |= mode_relative;
-      break;
+    case 'l': s->mode |= mode_relative; break;
+    case 'b': s->mode |= mode_barename; break;
 
-    case 'o':
-      *mode |= mode_expert;
-      setup_expert_mode(optarg,mode);
+    case 'o': 
+      s->mode |= mode_expert; 
+      setup_expert_mode(s,optarg);
       break;
       
     case 'M':
-      *mode |= mode_display_hash;
+      s->mode |= mode_display_hash;
     case 'm':
-      *mode |= mode_match;
-      check_matching_modes(*mode);
-      if (load_match_file(*mode,optarg))
-	hashes_loaded = TRUE;
+      s->mode |= mode_match;
+      check_matching_modes(s);
+      if (load_match_file(s,optarg))
+	s->hashes_loaded = TRUE;
       break;
 
     case 'X':
-      *mode |= mode_display_hash;
+      s->mode |= mode_display_hash;
     case 'x':
-      *mode |= mode_match_neg;
-      check_matching_modes(*mode);
-      if (load_match_file(*mode,optarg))
-	hashes_loaded = TRUE;
+      s->mode |= mode_match_neg;
+      check_matching_modes(s);
+      if (load_match_file(s,optarg))
+	s->hashes_loaded = TRUE;
       break;
 
-    case 'z':
-      *mode |= mode_display_size;
-      break;
+    case 'z': s->mode |= mode_display_size; break;
 
-    case '0':
-      *mode |= mode_zero;
+    case '0': s-> mode |= mode_zero; break;
+
+    case 'S': 
+      s->mode |= mode_warn_only;
+      s->mode |= mode_silent;
       break;
 
     case 's':
-      *mode |= mode_silent;
+      s->mode |= mode_silent;
       break;
 
     case 'e':
-      *mode |= mode_estimate;
+      s->mode |= mode_estimate;
       break;
 
     case 'r':
-      *mode |= mode_recursive;
+      s->mode |= mode_recursive;
       break;
 
     case 'k':
-      *mode |= mode_asterisk;
+      s->mode |= mode_asterisk;
       break;
 
     case 'h':
@@ -280,20 +271,13 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
       exit (STATUS_OK);
 
     case 'v':
-      printf ("%s%s",VERSION,NEWLINE);
+      print_status("%s",VERSION);
       exit (STATUS_OK);
 
     case 'V':
-      /* We could just say printf(COPYRIGHT), but that's a good way
-	 to introduce a format string vulnerability. Better to always
-	 use good programming practice... */
-      printf ("%s", COPYRIGHT);
+      // COPYRIGHT is a format string, complete with newlines
+      print_status(COPYRIGHT);
       exit (STATUS_OK);
-
-
-    case 'b':
-      *mode |= mode_barename;
-      break;
 
     default:
       try_msg();
@@ -301,11 +285,11 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
 
     }
   }
-  check_flags_okay(*mode, hashes_loaded);
+    check_flags_okay(s);
 }
 
 
-int is_absolute_path(char *fn)
+static int is_absolute_path(char *fn)
 {
 #ifdef _WIN32
   /* Windows has so many ways to make absolute paths (UNC, C:\, etc)
@@ -318,9 +302,9 @@ int is_absolute_path(char *fn)
 }
 
 
-void generate_filename(uint64_t mode, char **argv, char *fn, char *cwd)
+static void generate_filename(state *s, char **argv, char *fn, char *cwd)
 {
-  if (M_RELATIVE(mode) || is_absolute_path(*argv))
+  if ((s->mode & mode_relative) || is_absolute_path(*argv))
     strncpy(fn,*argv,PATH_MAX);	
   else
   {
@@ -342,26 +326,59 @@ void generate_filename(uint64_t mode, char **argv, char *fn, char *cwd)
 }
 
 
+#define MD5DEEP_ALLOC(VAR,SIZE) \
+VAR = (char *)malloc(SIZE); if (NULL == VAR) return TRUE;
+
+static int initialize_state(state *s)
+{
+  s->mode            = mode_none;
+  s->hashes_loaded   = FALSE;
+  s->return_value    = STATUS_OK;
+  s->piecewise_block = 0;
+  
+  // We use PATH_MAX as a handy constant for working with strings
+  // It may be overkill, but it keeps us out of trouble
+  MD5DEEP_ALLOC(s->msg,PATH_MAX);
+  MD5DEEP_ALLOC(s->full_name,PATH_MAX);
+  MD5DEEP_ALLOC(s->short_name,PATH_MAX);
+  MD5DEEP_ALLOC(s->result,PATH_MAX);
+  
+  return FALSE;
+}
+
+
 int main(int argc, char **argv) 
 {
-  int return_value = STATUS_OK;
-  char *fn;
-  char *cwd;
-  uint64_t mode = mode_none;
+  char *fn, *cwd;
+  state *s;
 
 #ifndef __GLIBC__
   __progname  = basename(argv[0]);
 #endif
 
-  process_command_line(argc,argv,&mode);
+  s = (state *)malloc(sizeof(state));
+  // We can't use fatal_error because it requires a valid state
+  if (NULL == s)
+  {
+    print_status("%s: Unable to allocate state variable", __progname);
+    return STATUS_INTERNAL_ERROR;
+  }
+
+  if (initialize_state(s))
+  {
+    print_status("%s: Unable to initialize state variable", __progname);
+    return STATUS_INTERNAL_ERROR;
+  }
+
+  process_command_line(s,argc,argv);
 
   /* Anything left on the command line at this point is a file
      or directory we're supposed to process. If there's nothing
      specified, we should tackle standard input */
-
   argv += optind;
+
   if (*argv == NULL)
-    hash_stdin(mode);
+    hash_stdin(s);
   else
   {
     fn  = (char *)malloc(sizeof(char)* PATH_MAX);
@@ -369,8 +386,8 @@ int main(int argc, char **argv)
     cwd = getcwd(cwd,PATH_MAX);
     while (*argv != NULL)
     {  
-      generate_filename(mode,argv,fn,cwd);
-      process(mode,fn);
+      generate_filename(s,argv,fn,cwd);
+      process(s,fn);
       ++argv;
     }
 
@@ -383,8 +400,8 @@ int main(int argc, char **argv)
      function determine if it needs to display anything. The function
      also sets our return values in terms of inputs not being matched
      or known hashes not being used */
-  if (M_MATCH(mode) || M_MATCHNEG(mode))
-    return_value = finalize_matching(mode);
+  if ((s->mode & mode_match) || (s->mode & mode_match_neg))
+    s->return_value = finalize_matching(s);
 
-  return return_value;
+  return s->return_value;
 }
