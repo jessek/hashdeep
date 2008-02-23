@@ -24,7 +24,7 @@ CR_BASE = /Users/jessekornblum/bin/cross-tools/i386-mingw32msvc/bin
 #CFLAGS += -O0 -D__DEBUG -ggdb
 
 NAME    = md5deep
-VERSION = 1.9
+VERSION = 1.9.1
 
 ALL_GOALS   = md5deep sha1deep sha256deep whirlpooldeep tigerdeep
 ALL_ALGS    = md5,sha1,sha256,whirlpool,tiger

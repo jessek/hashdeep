@@ -1,3 +1,9 @@
+
+Version 1.9.1 - 8 Nov 2005
+
+- Fixed bug when processing symlinks to directories introduced in
+   version 1.9 by accidently removing known good code. Oops.
+
 Version 1.9 - 7 Nov 2005
 
 - Changed the existing return values and added ones for the matching modes 

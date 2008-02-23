@@ -407,6 +407,11 @@ int should_hash(uint64_t mode, char *fn)
     return tmp;
   }
 
+#ifndef _WIN32
+  if (type == file_symlink)
+    return should_hash_symlink(mode,fn);
+#endif
+
   if (type == file_unknown)
     return FALSE;
 
