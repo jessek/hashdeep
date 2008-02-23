@@ -1,4 +1,8 @@
 
+Version 1.9.2 - 14 Nov 2005
+
+- Fixed Makefile to include compiler optimizations for hashing algorithms
+
 Version 1.9.1 - 8 Nov 2005
 
 - Fixed bug when processing symlinks to directories introduced in

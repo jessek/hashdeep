@@ -1,7 +1,10 @@
 
-CC = gcc
-CFLAGS = -Wall -O3
+CC       = gcc
+CFLAGS   = -Wall -O3
 LINK_OPT = -lm
+
+NAME     = md5deep
+VERSION  = 1.9.2
 
 # Where we get installed
 PREFIX = /usr/local
@@ -22,9 +25,6 @@ CR_BASE = /Users/jessekornblum/bin/cross-tools/i386-mingw32msvc/bin
 
 # This should be commented out when debugging is done
 #CFLAGS += -O0 -D__DEBUG -ggdb
-
-NAME    = md5deep
-VERSION = 1.9.1
 
 ALL_GOALS   = md5deep sha1deep sha256deep whirlpooldeep tigerdeep
 ALL_ALGS    = md5,sha1,sha256,whirlpool,tiger
@@ -83,61 +83,61 @@ windows: win_general
 #---------------------------------------------------------------------
 
 files-tiger.o: files.c
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 hash-tiger.o: hash.c
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 TIGEROBJ = files-tiger.o hash-tiger.o tiger.o
 tigerdeep: CC += -DTIGER
 tigerdeep: $(OBJ) $(TIGEROBJ)
-	$(CC) $(OBJ) $(TIGEROBJ) -o $@$(SUFFIX) $(LINK_OPT)
+	$(CC) $(CFLAGS) $(OBJ) $(TIGEROBJ) -o $@$(SUFFIX) $(LINK_OPT)
 
 
 
 files-whirlpool.o: files.c
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 hash-whirlpool.o: hash.c
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 WHIRLPOOLOBJ = files-whirlpool.o hash-whirlpool.o whirlpool.o
 whirlpooldeep: CC += -DWHIRLPOOL
 whirlpooldeep: $(OBJ) $(WHIRLPOOLOBJ)
-	$(CC) $(OBJ) $(WHIRLPOOLOBJ) -o $@$(SUFFIX) $(LINK_OPT)
+	$(CC) $(CFLAGS) $(OBJ) $(WHIRLPOOLOBJ) -o $@$(SUFFIX) $(LINK_OPT)
 
 
 
 files-md5.o: files.c
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 hash-md5.o: hash.c
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 MD5OBJ = files-md5.o hash-md5.o md5.o
 md5deep: CC += -DMD5
 md5deep: $(OBJ) $(MD5OBJ)
-	$(CC) $(OBJ) $(MD5OBJ) -o $@$(SUFFIX) $(LINK_OPT)
+	$(CC) $(CFLAGS) $(OBJ) $(MD5OBJ) -o $@$(SUFFIX) $(LINK_OPT)
 
 
 
 files-sha256.o: files.c
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 hash-sha256.o: hash.c
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 SHA256OBJ = files-sha256.o hash-sha256.o sha256.o
 sha256deep: CC += -DSHA256
 sha256deep: $(OBJ) $(SHA256OBJ)
-	$(CC) $(OBJ) $(SHA256OBJ) -o $@$(SUFFIX) $(LINK_OPT)
+	$(CC) $(CFLAGS) $(OBJ) $(SHA256OBJ) -o $@$(SUFFIX) $(LINK_OPT)
 
 
 
 files-sha1.o: files.c
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 hash-sha1.o: hash.c
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 SHA1OBJ = files-sha1.o hash-sha1.o sha1.o
 sha1deep: CC += -DSHA1
 sha1deep: $(OBJ) $(SHA1OBJ)
-	$(CC) $(OBJ) $(SHA1OBJ) -o $@$(SUFFIX) $(LINK_OPT)
+	$(CC) $(CFLAGS) $(OBJ) $(SHA1OBJ) -o $@$(SUFFIX) $(LINK_OPT)
 
 
 #---------------------------------------------------------------------
