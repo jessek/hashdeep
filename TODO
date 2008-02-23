@@ -1,0 +1,9 @@
+
+The following things should be added/fixed:
+
+
+- Time estimation for block devices can't be computed on FreeBSD and other 
+non-Linux, *nix operating systems. Code to fix this can be found in v1.1 
+of the dcfldd program.
+
+

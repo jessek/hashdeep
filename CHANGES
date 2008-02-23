@@ -1,0 +1,30 @@
+
+Version 0.15 - 5 Jan 03
+
+Added -m flag for matching support
+Made the help message more helpful
+
+
+Version 0.14 - 2 Dec 02:
+
+Added better checks for avoiding symbolic links on *nix
+Fixed time estimation for block devices on Linux
+Added -V flag for copyright information
+Program now identifies itself correctly in Windows error messages.
+
+
+Version 0.13 - 7 Nov 02:
+
+Added -r and -e flags for recursion and time estimation, respectively.
+Fixed Windows version to generate correct MD5 values. 
+ (u_int_32 should have been unsigned long instead of long. Oops.)
+
+
+Version 0.12 - 1 Nov 02:
+
+First version released to "public"
+Removed linux specific code
+Added -b and -t flags switches for compatibility with md5sum
+Cleaned up README and man page
+
+
