@@ -1,4 +1,7 @@
 
+*** Add man pages
+
+
 *** Add 'make test' directive to run compiled programs on test files 
     and insure compilation was successful. 
 

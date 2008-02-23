@@ -1,6 +1,6 @@
 AC_PREREQ(2.57)
 
-AC_INIT([MD5DEEP],[2.0.1-001],[md5deep@jessekornblum.com])
+AC_INIT([MD5DEEP],[2.1-RBF-002],[md5deep@jessekornblum.com])
 AM_INIT_AUTOMAKE
 #AM_MAINTAINER_MODE
 
@@ -16,7 +16,7 @@ esac
 AC_PROG_CC
 AC_PROG_INSTALL
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile hashdeep/Makefile md5deep/Makefile])
 AM_CONFIG_HEADER([config.h])
 
 # Bring additional directories where things might be found into our

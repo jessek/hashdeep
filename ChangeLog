@@ -1,3 +1,76 @@
+2007-12-27 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Fixed hashdeep current working directory and filesize display
+	  when hashing standard input.
+
+2007-12-11 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Got multihashing working. It turns out that the SHA-1
+	  update code modifies the buffer that its passed.
+	
+
+2007-12-08 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Moved hash.c into the common code directory, adapting it
+	  to work with both md5deep and hashdeep code. Moved display
+	  code to a separate file.
+
+	* First working version of hashdeep!
+	
+
+2007-12-08 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Updated hashing headers to only be included once.
+	  Included all hashing headers in common.h
+
+	* Modified hashing code to pass hashing context only into
+	  hashing code. This requires void pointers, but avoids
+	  the hashing code having to deal with the state at all.
+
+	* Moved md5deep man pages into the md5deep directory
+	
+
+2007-12-07 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Separated md5deep and hashdeep projects into separate 
+	  directories. Moved common code into include and common
+	  directories. Man pages moved into man. It doesn't all
+	  work just yet, but we're getting close.
+	
+
+2007-12-06 Jesse Kornblum <md5deep@jessekornblum.com>
+
+        * Added common.h and ui.h to Makefile.am so that they
+	  are included in a distribution.
+
+        * Copied more variables from md5deep source code to hashdeep state.
+
+        * Updated hashdeep usage message
+
+	* Version bump to 2.1-002
+
+	
+2007-12-05 Jesse Kornblum <md5deep@jessekornblum.com>
+	
+	* Reverting back to main.c and main.h from version 2.0.1. 
+	  Starting over on code for hashdeep
+
+	* Moved common header functions to common.h
+
+	* Created new files ui.h and audit.h to help reuse code in hashdeep
+
+	* Updated procedure to make README.TXT (Windows distribution 
+	  readme file) in Makefile.am so that it only has one copy of the 
+	  man page, not five. 
+
+	
+2007-10-31 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Added stub for hashdeep program
+
+	* Moved state type out of main.h and into deep.h
+
+	
 2007-10-28 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Added additional checks in find_file_size to account for

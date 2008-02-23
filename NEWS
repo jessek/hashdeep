@@ -1,3 +1,13 @@
+** Changes in version 2.1 (RBF DATE)
+
+* New Features
+
+	Added hashdeep program to support multihashing
+
+* Bug Fixes
+
+
+
 ** Changes in version 2.0.1 (31 Oct 2007)
 
 * Bug Fixes

@@ -76,27 +76,9 @@ VERSION = @VERSION@
 am__include = @am__include@
 am__quote = @am__quote@
 install_sh = @install_sh@
-ALL_GOALS = {md5,sha1,sha256,tiger,whirlpool}
+SUBDIRS = md5deep hashdeep
 
-AM_LDFLAGS = -lm
-
-bin_PROGRAMS = md5deep sha1deep sha256deep tigerdeep whirlpooldeep
-
-base_src = main.c dig.c cycles.c hash.c ui.c helpers.c files.c \
-                match.c hashTable.c \
-		md5.h sha1.h sha256.h tiger.h whirlpool.h \
-		main.h tchar-local.h hashTable.h
-
-
-md5deep_SOURCES = ${base_src} md5.c
-sha1deep_SOURCES = ${base_src} sha1.c
-sha256deep_SOURCES = ${base_src} sha256.c
-tigerdeep_SOURCES = ${base_src} tiger.c
-whirlpooldeep_SOURCES = ${base_src} whirlpool.c
-
-man_MANS = md5deep.1 sha1deep.1 sha256deep.1 tigerdeep.1 whirlpooldeep.1
-
-EXTRA_DIST = ${man_MANS} config.guess config.sub
+EXTRA_DIST = config.guess config.sub
 
 
 # This Makefile is designed to package Windows distributions from Mac OS X
@@ -120,75 +102,21 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
-bin_PROGRAMS = md5deep$(EXEEXT) sha1deep$(EXEEXT) sha256deep$(EXEEXT) \
-	tigerdeep$(EXEEXT) whirlpooldeep$(EXEEXT)
-PROGRAMS = $(bin_PROGRAMS)
+DIST_SOURCES =
 
-am__objects_1 = main.$(OBJEXT) dig.$(OBJEXT) cycles.$(OBJEXT) \
-	hash.$(OBJEXT) ui.$(OBJEXT) helpers.$(OBJEXT) files.$(OBJEXT) \
-	match.$(OBJEXT) hashTable.$(OBJEXT)
-am_md5deep_OBJECTS = $(am__objects_1) md5.$(OBJEXT)
-md5deep_OBJECTS = $(am_md5deep_OBJECTS)
-md5deep_LDADD = $(LDADD)
-md5deep_DEPENDENCIES =
-md5deep_LDFLAGS =
-am_sha1deep_OBJECTS = $(am__objects_1) sha1.$(OBJEXT)
-sha1deep_OBJECTS = $(am_sha1deep_OBJECTS)
-sha1deep_LDADD = $(LDADD)
-sha1deep_DEPENDENCIES =
-sha1deep_LDFLAGS =
-am_sha256deep_OBJECTS = $(am__objects_1) sha256.$(OBJEXT)
-sha256deep_OBJECTS = $(am_sha256deep_OBJECTS)
-sha256deep_LDADD = $(LDADD)
-sha256deep_DEPENDENCIES =
-sha256deep_LDFLAGS =
-am_tigerdeep_OBJECTS = $(am__objects_1) tiger.$(OBJEXT)
-tigerdeep_OBJECTS = $(am_tigerdeep_OBJECTS)
-tigerdeep_LDADD = $(LDADD)
-tigerdeep_DEPENDENCIES =
-tigerdeep_LDFLAGS =
-am_whirlpooldeep_OBJECTS = $(am__objects_1) whirlpool.$(OBJEXT)
-whirlpooldeep_OBJECTS = $(am_whirlpooldeep_OBJECTS)
-whirlpooldeep_LDADD = $(LDADD)
-whirlpooldeep_DEPENDENCIES =
-whirlpooldeep_LDFLAGS =
-
-DEFS = @DEFS@
-DEFAULT_INCLUDES =  -I. -I$(srcdir) -I.
-CPPFLAGS = @CPPFLAGS@
-LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@
-depcomp = $(SHELL) $(top_srcdir)/depcomp
-am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/cycles.Po ./$(DEPDIR)/dig.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/files.Po ./$(DEPDIR)/hash.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/hashTable.Po ./$(DEPDIR)/helpers.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/main.Po ./$(DEPDIR)/match.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/md5.Po ./$(DEPDIR)/sha1.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/sha256.Po ./$(DEPDIR)/tiger.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui.Po ./$(DEPDIR)/whirlpool.Po
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-CFLAGS = @CFLAGS@
-DIST_SOURCES = $(md5deep_SOURCES) $(sha1deep_SOURCES) \
-	$(sha256deep_SOURCES) $(tigerdeep_SOURCES) \
-	$(whirlpooldeep_SOURCES)
-
-NROFF = nroff
-MANS = $(man_MANS)
+RECURSIVE_TARGETS = info-recursive dvi-recursive install-info-recursive \
+	uninstall-info-recursive all-recursive install-data-recursive \
+	install-exec-recursive installdirs-recursive install-recursive \
+	uninstall-recursive check-recursive installcheck-recursive
 DIST_COMMON = README AUTHORS COPYING ChangeLog INSTALL Makefile.am \
 	Makefile.in NEWS TODO aclocal.m4 config.guess config.h.in \
 	config.sub configure configure.ac depcomp install-sh missing \
 	mkinstalldirs
-SOURCES = $(md5deep_SOURCES) $(sha1deep_SOURCES) $(sha256deep_SOURCES) $(tigerdeep_SOURCES) $(whirlpooldeep_SOURCES)
-
+DIST_SUBDIRS = $(SUBDIRS)
 all: config.h
-	$(MAKE) $(AM_MAKEFLAGS) all-am
+	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .c .o .obj
 
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno
@@ -222,125 +150,61 @@ $(srcdir)/config.h.in:  $(top_srcdir)/configure.ac $(ACLOCAL_M4)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
-binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-install-binPROGRAMS: $(bin_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  if test -f $$p \
-	  ; then \
-	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(binPROGRAMS_INSTALL) $$p $(DESTDIR)$(bindir)/$$f"; \
-	   $(INSTALL_PROGRAM_ENV) $(binPROGRAMS_INSTALL) $$p $(DESTDIR)$(bindir)/$$f; \
-	  else :; fi; \
-	done
-
-uninstall-binPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
-	  echo " rm -f $(DESTDIR)$(bindir)/$$f"; \
-	  rm -f $(DESTDIR)$(bindir)/$$f; \
-	done
-
-clean-binPROGRAMS:
-	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-md5deep$(EXEEXT): $(md5deep_OBJECTS) $(md5deep_DEPENDENCIES) 
-	@rm -f md5deep$(EXEEXT)
-	$(LINK) $(md5deep_LDFLAGS) $(md5deep_OBJECTS) $(md5deep_LDADD) $(LIBS)
-sha1deep$(EXEEXT): $(sha1deep_OBJECTS) $(sha1deep_DEPENDENCIES) 
-	@rm -f sha1deep$(EXEEXT)
-	$(LINK) $(sha1deep_LDFLAGS) $(sha1deep_OBJECTS) $(sha1deep_LDADD) $(LIBS)
-sha256deep$(EXEEXT): $(sha256deep_OBJECTS) $(sha256deep_DEPENDENCIES) 
-	@rm -f sha256deep$(EXEEXT)
-	$(LINK) $(sha256deep_LDFLAGS) $(sha256deep_OBJECTS) $(sha256deep_LDADD) $(LIBS)
-tigerdeep$(EXEEXT): $(tigerdeep_OBJECTS) $(tigerdeep_DEPENDENCIES) 
-	@rm -f tigerdeep$(EXEEXT)
-	$(LINK) $(tigerdeep_LDFLAGS) $(tigerdeep_OBJECTS) $(tigerdeep_LDADD) $(LIBS)
-whirlpooldeep$(EXEEXT): $(whirlpooldeep_OBJECTS) $(whirlpooldeep_DEPENDENCIES) 
-	@rm -f whirlpooldeep$(EXEEXT)
-	$(LINK) $(whirlpooldeep_LDFLAGS) $(whirlpooldeep_OBJECTS) $(whirlpooldeep_LDADD) $(LIBS)
-
-mostlyclean-compile:
-	-rm -f *.$(OBJEXT) core *.core
-
-distclean-compile:
-	-rm -f *.tab.c
-
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cycles.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dig.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/files.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hashTable.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/helpers.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/match.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha256.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tiger.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/whirlpool.Po@am__quote@
-
-distclean-depend:
-	-rm -rf ./$(DEPDIR)
-
-.c.o:
-@AMDEP_TRUE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(COMPILE) -c `test -f '$<' || echo '$(srcdir)/'`$<
-
-.c.obj:
-@AMDEP_TRUE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(COMPILE) -c `cygpath -w $<`
-CCDEPMODE = @CCDEPMODE@
 uninstall-info-am:
 
-man1dir = $(mandir)/man1
-install-man1: $(man1_MANS) $(man_MANS)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(man1dir)
-	@list='$(man1_MANS) $(dist_man1_MANS) $(nodist_man1_MANS)'; \
-	l2='$(man_MANS) $(dist_man_MANS) $(nodist_man_MANS)'; \
-	for i in $$l2; do \
-	  case "$$i" in \
-	    *.1*) list="$$list $$i" ;; \
-	  esac; \
+# This directory's subdirectories are mostly independent; you can cd
+# into them and run `make' without going through this Makefile.
+# To change the values of `make' variables: instead of editing Makefiles,
+# (1) if the variable is set in `config.status', edit `config.status'
+#     (which will cause the Makefiles to be regenerated when you run `make');
+# (2) otherwise, pass the desired values on the `make' command line.
+$(RECURSIVE_TARGETS):
+	@set fnord $$MAKEFLAGS; amf=$$2; \
+	dot_seen=no; \
+	target=`echo $@ | sed s/-recursive//`; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    dot_seen=yes; \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
 	done; \
-	for i in $$list; do \
-	  if test -f $(srcdir)/$$i; then file=$(srcdir)/$$i; \
-	  else file=$$i; fi; \
-	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
-	  case "$$ext" in \
-	    1*) ;; \
-	    *) ext='1' ;; \
-	  esac; \
-	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
-	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
-	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
-	  echo " $(INSTALL_DATA) $$file $(DESTDIR)$(man1dir)/$$inst"; \
-	  $(INSTALL_DATA) $$file $(DESTDIR)$(man1dir)/$$inst; \
-	done
-uninstall-man1:
-	@$(NORMAL_UNINSTALL)
-	@list='$(man1_MANS) $(dist_man1_MANS) $(nodist_man1_MANS)'; \
-	l2='$(man_MANS) $(dist_man_MANS) $(nodist_man_MANS)'; \
-	for i in $$l2; do \
-	  case "$$i" in \
-	    *.1*) list="$$list $$i" ;; \
-	  esac; \
+	if test "$$dot_seen" = "no"; then \
+	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
+	fi; test -z "$$fail"
+
+mostlyclean-recursive clean-recursive distclean-recursive \
+maintainer-clean-recursive:
+	@set fnord $$MAKEFLAGS; amf=$$2; \
+	dot_seen=no; \
+	case "$@" in \
+	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
+	  *) list='$(SUBDIRS)' ;; \
+	esac; \
+	rev=''; for subdir in $$list; do \
+	  if test "$$subdir" = "."; then :; else \
+	    rev="$$subdir $$rev"; \
+	  fi; \
 	done; \
-	for i in $$list; do \
-	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
-	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
-	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
-	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
-	  echo " rm -f $(DESTDIR)$(man1dir)/$$inst"; \
-	  rm -f $(DESTDIR)$(man1dir)/$$inst; \
+	rev="$$rev ."; \
+	target=`echo $@ | sed s/-recursive//`; \
+	for subdir in $$rev; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
+	done && test -z "$$fail"
+tags-recursive:
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) tags); \
 	done
 
 ETAGS = etags
@@ -357,10 +221,15 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	       END { for (i in files) print i; }'`; \
 	mkid -fID $$unique
 
-TAGS:  $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
+TAGS: tags-recursive $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test -f $$subdir/TAGS && tags="$$tags -i $$here/$$subdir/TAGS"; \
+	  fi; \
+	done; \
 	list='$(SOURCES) $(HEADERS) config.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
@@ -412,6 +281,19 @@ distdir: $(DISTFILES)
 	    test -f $(distdir)/$$file \
 	    || cp -p $$d/$$file $(distdir)/$$file \
 	    || exit 1; \
+	  fi; \
+	done
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test -d $(distdir)/$$subdir \
+	    || mkdir $(distdir)/$$subdir \
+	    || exit 1; \
+	    (cd $$subdir && \
+	      $(MAKE) $(AM_MAKEFLAGS) \
+	        top_distdir="$(top_distdir)" \
+	        distdir=../$(distdir)/$$subdir \
+	        distdir) \
+	      || exit 1; \
 	  fi; \
 	done
 	-find $(distdir) -type d ! -perm -777 -exec chmod a+rwx {} \; -o \
@@ -467,21 +349,20 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
-check: check-am
-all-am: Makefile $(PROGRAMS) $(MANS) config.h
+check: check-recursive
+all-am: Makefile config.h
+installdirs: installdirs-recursive
+installdirs-am:
 
-installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(man1dir)
-
-install: install-am
-install-exec: install-exec-am
-install-data: install-data-am
-uninstall: uninstall-am
+install: install-recursive
+install-exec: install-exec-recursive
+install-data: install-data-recursive
+uninstall: uninstall-recursive
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
-installcheck: installcheck-am
+installcheck: installcheck-recursive
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
 	  INSTALL_STRIP_FLAG=-s \
@@ -498,78 +379,68 @@ maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
-clean: clean-am
+clean: clean-recursive
 
-clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
+clean-am: clean-generic mostlyclean-am
 
-distclean: distclean-am
+distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-distclean-am: clean-am distclean-compile distclean-depend \
-	distclean-generic distclean-hdr distclean-tags
+distclean-am: clean-am distclean-generic distclean-hdr distclean-tags
 
-dvi: dvi-am
+dvi: dvi-recursive
 
 dvi-am:
 
-info: info-am
+info: info-recursive
 
 info-am:
 
-install-data-am: install-man
+install-data-am:
 
-install-exec-am: install-binPROGRAMS
-	@$(NORMAL_INSTALL)
-	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
+install-exec-am:
 
-install-info: install-info-am
+install-info: install-info-recursive
 
-install-man: install-man1
+install-man:
 
 installcheck-am:
 
-maintainer-clean: maintainer-clean-am
+maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf autom4te.cache
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
-mostlyclean: mostlyclean-am
+mostlyclean: mostlyclean-recursive
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic
+mostlyclean-am: mostlyclean-generic
 
-uninstall-am: uninstall-binPROGRAMS uninstall-info-am uninstall-man
+uninstall-am: uninstall-info-am
 
-uninstall-man: uninstall-man1
+uninstall-info: uninstall-info-recursive
 
-.PHONY: GTAGS all all-am check check-am clean clean-binPROGRAMS \
-	clean-generic dist dist-all dist-gzip distcheck distclean \
-	distclean-compile distclean-depend distclean-generic \
-	distclean-hdr distclean-tags distcleancheck distdir dvi dvi-am \
-	info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-exec install-exec-am \
-	install-info install-info-am install-man install-man1 \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic tags uninstall \
-	uninstall-am uninstall-binPROGRAMS uninstall-info-am \
-	uninstall-man uninstall-man1
+.PHONY: $(RECURSIVE_TARGETS) GTAGS all all-am check check-am clean \
+	clean-generic clean-recursive dist dist-all dist-gzip distcheck \
+	distclean distclean-generic distclean-hdr distclean-recursive \
+	distclean-tags distcleancheck distdir dvi dvi-am dvi-recursive \
+	info info-am info-recursive install install-am install-data \
+	install-data-am install-data-recursive install-exec \
+	install-exec-am install-exec-recursive install-info \
+	install-info-am install-info-recursive install-man \
+	install-recursive install-strip installcheck installcheck-am \
+	installdirs installdirs-am installdirs-recursive \
+	maintainer-clean maintainer-clean-generic \
+	maintainer-clean-recursive mostlyclean mostlyclean-generic \
+	mostlyclean-recursive tags tags-recursive uninstall \
+	uninstall-am uninstall-info-am uninstall-info-recursive \
+	uninstall-recursive
 
-
-# We erase the old man pages, just in case they might be symbolic links
-# (symbolic links were used in a previous release)
-install-exec-hook: update-manpages
-	rm -f ${man1dir}/${ALL_GOALS}deep.1
-
-update-manpages: md5deep.1
-	cp $< sha1deep.1
-	cp $< sha256deep.1
-	cp $< tigerdeep.1
-	cp $< whirlpooldeep.1
 
 nice:
 	rm -f *~
 
 preflight:
-	@grep RBF *.c *.h ${man_MANS} AUTHORS README NEWS TODO ChangeLog 
+	@grep RBF ${SUBDIRS}/*.c ${SUBDIRS}/*.h ${SUBDIRS}/*.1 \
+                  AUTHORS README NEWS TODO ChangeLog 
 
 todo:
 	@grep TODO *.c *.h ${man_MANS} AUTHORS README NEWS ChangeLog
@@ -586,7 +457,7 @@ CHANGES.TXT: NEWS
 #	unix2dos CHANGES.TXT
 
 README.TXT:
-	/usr/bin/tbl ./$(man_MANS) | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > README.TXT
+	/usr/bin/tbl ./md5deep.1 | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > README.TXT
 	flip -d README.TXT
 #	man ./md5deep.1 | col -bx > README.TXT
 #	unix2dos README.TXT

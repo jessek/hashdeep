@@ -1,40 +1,13 @@
-ALL_GOALS={md5,sha1,sha256,tiger,whirlpool}
+SUBDIRS = md5deep hashdeep
 
-AM_LDFLAGS=-lm
-
-bin_PROGRAMS=md5deep sha1deep sha256deep tigerdeep whirlpooldeep
-
-base_src=main.c dig.c cycles.c hash.c ui.c helpers.c files.c \
-                match.c hashTable.c \
-		md5.h sha1.h sha256.h tiger.h whirlpool.h \
-		main.h tchar-local.h hashTable.h
-
-md5deep_SOURCES      =${base_src} md5.c
-sha1deep_SOURCES     =${base_src} sha1.c
-sha256deep_SOURCES   =${base_src} sha256.c
-tigerdeep_SOURCES    =${base_src} tiger.c
-whirlpooldeep_SOURCES=${base_src} whirlpool.c
-
-# We erase the old man pages, just in case they might be symbolic links
-# (symbolic links were used in a previous release)
-install-exec-hook: update-manpages
-	rm -f ${man1dir}/${ALL_GOALS}deep.1
-
-update-manpages: md5deep.1
-	cp $< sha1deep.1
-	cp $< sha256deep.1
-	cp $< tigerdeep.1
-	cp $< whirlpooldeep.1
-
-man_MANS=md5deep.1 sha1deep.1 sha256deep.1 tigerdeep.1 whirlpooldeep.1
-
-EXTRA_DIST=${man_MANS} config.guess config.sub
+EXTRA_DIST=config.guess config.sub
 
 nice:
 	rm -f *~
 
 preflight:
-	@grep RBF *.c *.h ${man_MANS} AUTHORS README NEWS TODO ChangeLog 
+	@grep RBF ${SUBDIRS}/*.c ${SUBDIRS}/*.h ${SUBDIRS}/*.1 \
+                  AUTHORS README NEWS TODO ChangeLog 
 
 todo:
 	@grep TODO *.c *.h ${man_MANS} AUTHORS README NEWS ChangeLog
@@ -66,7 +39,7 @@ CHANGES.TXT: NEWS
 #	unix2dos CHANGES.TXT
 
 README.TXT:
-	/usr/bin/tbl ./$(man_MANS) | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > README.TXT
+	/usr/bin/tbl ./md5deep.1 | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > README.TXT
 	flip -d README.TXT
 #	man ./md5deep.1 | col -bx > README.TXT
 #	unix2dos README.TXT
