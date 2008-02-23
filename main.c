@@ -146,8 +146,12 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
 
   int i, hashes_loaded = FALSE;
   
-  while ((i=getopt(argc,argv,"M:X:x:m:u:o:A:a:nwzserhvV0lbk")) != -1) { 
+  while ((i=getopt(argc,argv,"M:X:x:m:u:o:A:a:nwzserhvV0lbkq")) != -1) { 
     switch (i) {
+
+    case 'q':
+      *mode |= mode_quiet;
+      break;
 
     case 'n':
       *mode |= mode_not_matched;

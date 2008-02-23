@@ -4,7 +4,7 @@ CFLAGS   = -Wall -O3
 LINK_OPT = -lm
 
 NAME     = md5deep
-VERSION  = 1.9.2
+VERSION  = 1.9.3
 
 # Where we get installed
 PREFIX = /usr/local
@@ -58,6 +58,10 @@ solaris: goals
 
 # There are no additional defines for OS X as _APPLE_ is defined for us.
 mac: goals
+
+# This compiles a G5 only version 
+macg5: CFLAGS += -fast
+macg5: goals
 
 unix: goals
 

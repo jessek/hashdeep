@@ -1,4 +1,4 @@
-.TH MD5DEEP "1" "v1.9.2 \- 14 Nov 2005" "AFOSI" "United States Air Force"
+.TH MD5DEEP "1" "v1.9.3 \- 5 Jan 2006" "AFOSI" "United States Air Force"
 
 .SH NAME
 md5deep \- Compute MD5 message digests
@@ -17,7 +17,7 @@ whirlpooldeep \- Compute Whirlpool message digests
 .br
 .B md5deep
 [\-m|\-M|\-x|\-X <file>]  [-a|-A <hash>]
-[\-nwzres0lbk] [\-o <fbcplsd>] [\fBFILES\fR]
+[\-nwzres0lbkq] [\-o <fbcplsd>] [\fBFILES\fR]
 
 .SH DESCRIPTION
 .PP
@@ -111,6 +111,10 @@ a ten digit representation of the size of
 each file processed. If the file size is greater than
 9999999999 bytes (about 9.3GB)
 the program displays 9999999999 for the size.
+
+.TP
+\fB\-q\fR
+Quiet mode. File names are omitted from the output.
 
 .TP
 \fB\-0\fR

@@ -1,4 +1,15 @@
 
+Version 1.9.3 - 5 Jan 2006
+
+- Fixed expert mode to remove a number of logical errors
+    that prevented the program from correctly identifying which 
+    files should be hashed. Symbolic links, in particular, were not 
+    being chosen or excluded correctly.
+- Added quiet mode, -q, filename is omitted from the output.
+- Added Makefile directive macg5 to compile OS X G5 specific code
+- Fixed comparisons between signed and unsigned variables in helpers.c
+   and dig.c
+
 Version 1.9.2 - 14 Nov 2005
 
 - Fixed Makefile to include compiler optimizations for hashing algorithms

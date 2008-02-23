@@ -25,9 +25,9 @@ void make_newline(uint64_t mode)
 
 /* Shift the contents of a string so that the values after 'new_start'
    will now begin at location 'start' */
-void shift_string(char *fn, int start, int new_start)
+void shift_string(char *fn, size_t start, size_t new_start)
 {
-  if (start < 0 || start > strlen(fn) || new_start < 0 || new_start < start)
+  if (start > strlen(fn) || new_start < start)
     return;
 
   while (new_start < strlen(fn))
@@ -77,7 +77,8 @@ int find_next_comma(char *s, unsigned int start)
    string to be found, returns TRUE. Otherwise, returns FALSE */
 int find_comma_separated_string(char *s, unsigned int n)
 {
-  unsigned int count = 0, start = 0, end;
+  int start = 0, end;
+  unsigned int count = 0; 
   while (count < n)
   {
     if ((start = find_next_comma(s,start)) == -1)

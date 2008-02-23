@@ -138,8 +138,9 @@
 #define mode_barename     1<<10
 #define mode_asterisk     1<<11
 #define mode_not_matched  1<<12
+#define mode_quiet        1<<13
 
-/* Modes 13 to 22 and 32 to 63 are reserved for future use. 
+/* Modes 14 to 22 and 32 to 63 are reserved for future use. 
    (Yes, I could move the expert file modes, below, up to the higher
    ranger of numbers, but it's working now, and so why change anything?
    The next person who wants to add a lot of modes can have the fun.) */
@@ -179,6 +180,7 @@
 #define M_BARENAME(A)      (A & mode_barename)
 #define M_ASTERISK(A)      (A & mode_asterisk)
 #define M_NOT_MATCHED(A)   (A & mode_not_matched)
+#define M_QUIET(A)         (A & mode_quiet)
 
 #define M_EXPERT(A)        (A & mode_expert)
 #define M_REGULAR(A)       (A & mode_regular)
@@ -332,7 +334,7 @@ int hash_file(uint64_t mode, char *filename);
 int hash_stdin(uint64_t mode);
 
 /* Miscellaneous helper functions */
-void shift_string(char *fn, int start, int new_start);
+void shift_string(char *fn, size_t start, size_t new_start);
 void print_error(uint64_t mode, char *fn, char *msg);
 void internal_error(char *fn, char *msg);
 void make_newline(uint64_t mode);

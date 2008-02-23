@@ -62,6 +62,10 @@ $ make linux
 OS X:
 $ make mac
 
+If you are compiling md5deep to run on a G5 Macintosh, you can use
+the make macg5 directive instead. The resulting binary will run much
+faster, but will ONLY run on G5 processors! 
+
 Solaris:
 $ make solaris
 

@@ -307,12 +307,25 @@ int file_type(uint64_t mode, char *fn)
 }
 
 
-int should_hash(uint64_t mode, char *fn);  
+int should_hash_symlink(uint64_t mode, char *fn, int *link_type);
 
+
+/* Type should be the result of calling lstat on the file. We want to
+   know what this file is, not what it points to */
 int should_hash_expert(uint64_t mode, char *fn, int type)
 {
+  int link_type;
+
   switch(type)
   {
+
+  case file_directory:
+    if (M_RECURSIVE(mode))
+      process_dir(mode,fn);
+    else
+      print_error(mode,fn,"Is a directory");
+    return FALSE;
+
   case file_regular:
     return (M_REGULAR(mode));
     
@@ -330,54 +343,49 @@ int should_hash_expert(uint64_t mode, char *fn, int type)
     
   case file_door:
     return (M_DOOR(mode));
-    
-  case file_symlink:
-    
-    /* We're not going to hash the symlink itself, but rather what 
-       it points to. To make that happen we need to call the 
-       regular should_hash function to distinguish between regular 
-       files and directories. But we have to strip the expert mode
-       out of the mode or we'll just make an infinite loop! */
 
-    if (M_SYMLINK(mode))
-      return (should_hash((mode) & ~(mode_expert),fn));
+  case file_symlink:
+    if (!(M_SYMLINK(mode)))
+      return FALSE;
+
+    if (should_hash_symlink(mode,fn,&link_type))
+      return should_hash_expert(mode,fn,link_type);
+    else
+      return FALSE;
   }
   
   return FALSE;
 }
 
 
-int should_hash_symlink(uint64_t mode, char *fn)
+int should_hash_symlink(uint64_t mode, char *fn, int *link_type)
 {
   int type;
   struct stat sb;
 
    /* We must look at what this symlink points to before we process it.
-      Symlinks to directories can cause cycles */
+      The normal file_type function uses lstat to examine the file,
+      we use stat to examine what this symlink points to. */
   if (stat(fn,&sb))
   {
     print_error(mode,fn,strerror(errno));
     return FALSE;
   }
-  
+
   type = file_type_helper(sb);
 
-  if (M_EXPERT(mode))
-    return (should_hash_expert(mode,fn,type));
+  if (type == file_directory)
+  {
+    if (M_RECURSIVE(mode))
+      process_dir(mode,fn);
+    else
+      print_error(mode,fn,"Is a directory");
+    return FALSE;
+  }    
 
-  if (type != file_directory)
-    return TRUE;
-    
-  if (M_RECURSIVE(mode))
-  {
-    process_dir(mode,fn);
-    return FALSE;
-  }
-  else
-  {
-    print_error(mode,fn,"Is a directory");
-    return FALSE;
-  }
+  if (link_type != NULL)
+    *link_type = type;
+  return TRUE;    
 }
   
 
@@ -385,7 +393,10 @@ int should_hash_symlink(uint64_t mode, char *fn)
 
 int should_hash(uint64_t mode, char *fn)
 {
-  int tmp, type = file_type(mode,fn);
+  int type = file_type(mode,fn);
+
+  if (M_EXPERT(mode))
+    return (should_hash_expert(mode,fn,type));
 
   if (type == file_directory)
   {
@@ -397,19 +408,9 @@ int should_hash(uint64_t mode, char *fn)
     return FALSE;
   }
   
-  if (M_EXPERT(mode))
-  {
-    tmp = should_hash_expert(mode,fn,type);
-#ifndef _WIN32
-    if (tmp && type == file_symlink)
-      return should_hash_symlink(mode,fn);
-#endif
-    return tmp;
-  }
-
 #ifndef _WIN32
   if (type == file_symlink)
-    return should_hash_symlink(mode,fn);
+    return should_hash_symlink(mode,fn,NULL);
 #endif
 
   if (type == file_unknown)

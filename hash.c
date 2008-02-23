@@ -41,9 +41,9 @@ void update_display(time_t elapsed, hash_info *h)
 
   memset(msg,0,LINE_LENGTH);
   
-  /* If we've read less than one MB, then mb_read will be zero. Later on
-     we may need to divide the total file size, total_megs, by mb_read. 
-     Dividing by zero can create... problems */
+  /* If we've read less than one MB, then the computed value for mb_read 
+     will be zero. Later on we may need to divide the total file size, 
+     total_megs, by mb_read. Dividing by zero can create... problems */
   if (h->bytes_read < ONE_MEGABYTE)
     mb_read = 1;
   else
@@ -268,10 +268,16 @@ int display_hash(uint64_t mode, hash_info *h)
     return display_match_result(mode,h);
 
   display_size(mode,h);
-  
   printf ("%s", h->result);
-  if (!(h->is_stdin))
-    printf(" %c%s", display_asterisk(mode),h->full_name);
+
+  if (M_QUIET(mode))
+    printf ("  ");
+  else
+  {
+    if (!(h->is_stdin))
+      printf(" %c%s", display_asterisk(mode),h->full_name);
+  }
+
   make_newline(mode);
 
   return FALSE;
