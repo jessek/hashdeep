@@ -34,7 +34,7 @@ void shift_string(char *fn, int start, int new_start)
 void print_error(off_t mode, char *fn, char *msg) 
 {
   if (!(M_SILENT(mode)))
-    fprintf (stderr,"%s: %s: %s\n", __progname,fn,msg);
+    fprintf (stderr,"%s: %s: %s%s", __progname,fn,msg,NEWLINE);
 }   
 
 
@@ -60,7 +60,8 @@ off_t find_file_size(FILE *f)
     if (ioctl(fd, BLKGETSIZE, &num_sectors))
     {
 #if defined(__DEBUG)
-      fprintf(stderr,"%s: ioctl call to BLKGETSIZE failed.\n", __progname);
+      fprintf(stderr,"%s: ioctl call to BLKGETSIZE failed.%s", 
+	      __progname,NEWLINE);
 #endif
     }
     else 
@@ -230,7 +231,7 @@ off_t find_file_size(FILE *f)
   if ((fseeko(f,original,SEEK_SET)))
     return 0;
   
-  return (total - original);
+  return total;
 }
 #endif /* ifdef __WIN32 */
 

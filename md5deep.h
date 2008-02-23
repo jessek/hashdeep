@@ -16,6 +16,7 @@
 #ifndef __MD5DEEP_H
 #define __MD5DEEP_H
 
+
 /* Version information is defined in the Makefile */
 
 #define AUTHOR      "Jesse Kornblum"
@@ -24,7 +25,6 @@
 "copyright protection is not available for any work of the US Government.\n"\
 "This is free software; see the source for copying conditions. There is NO\n"\
 "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
-
 
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -46,6 +46,37 @@
 #endif 
 
 
+/* MD5 and SHA-1 setup require knowing if we're big or little endian */
+#ifdef __LINUX
+
+#define __USE_BSD
+#include <endian.h>
+
+#elif defined (__SOLARIS)
+
+#define BIG_ENDIAN    4321
+#define LITTLE_ENDIAN 1234
+
+#include <sys/isa_defs.h>
+#ifdef _BIG_ENDIAN       
+#define BYTE_ORDER BIG_ENDIAN
+#else
+#define BYTE_ORDER LITTLE_ENDIAN
+#endif
+
+#elif defined (__WIN32)
+#include <sys/param.h>
+
+#elif defined (__MACOSX)
+#include <machine/endian.h>
+#endif
+
+
+/* For MD5 */
+#if BYTE_ORDER == BIG_ENDIAN
+#define HIGHFIRST 1
+#endif
+
 #define TRUE   1
 #define FALSE  0
 #define ONE_MEGABYTE  1048576
@@ -53,19 +84,8 @@
 /* Strings have to be long enough to handle inputs from matched hashing files.
    The NSRL is already larger than 256 bytes. We go longer to be safer. */
 #define MAX_STRING_LENGTH   1024
-#define HASH_STRING_LENGTH    32
 
-/* The length of BLANK_LINE define should correspond to the line length! */
-#ifdef __WIN32
-#define LINE_LENGTH 72
-#define BLANK_LINE \
-"                                                                        "
-#else
-#define LINE_LENGTH 74
-#define BLANK_LINE \
-"                                                                          "
-#endif
-
+/* LINE_LENGTH is different between UNIX and WIN32 and is defined below */
 #define MAX_FILENAME_LENGTH   LINE_LENGTH - 41
 
 /* These are the types of files that we can match against */
@@ -150,18 +170,28 @@
 int fseeko(FILE *stream, off_t offset, int whence);
 off_t ftello(FILE *stream);
 
-#define  DIR_SEPARATOR   '/'
+#define CMD_PROMPT "$"
+#define DIR_SEPARATOR   '/'
+#define NEWLINE "\n"
+#define LINE_LENGTH 74
+#define BLANK_LINE \
+"                                                                          "
 
 #endif /* #ifdef __UNIX */
 
-
+/* This allows us to open standard input in binary mode by default 
+   See http://gnuwin32.sourceforge.net/compile.html for more */
+#include <fcntl.h>
 
 /* Code specific to Microsoft Windows */
 #ifdef __WIN32
 
-/* Allows us to open standard input in binary mode by default 
-   See http://gnuwin32.sourceforge.net/compile.html for more */
-#include <fcntl.h>
+#define CMD_PROMPT "c:\\>"
+#define NEWLINE "\r\n"
+#define LINE_LENGTH 72
+#define BLANK_LINE \
+"                                                                        "
+
 
 /* By default BUFSIZ is 512 on Windows. We make it 8192 so that it's 
    the same as UNIX. While that shouldn't mean anything in terms of
@@ -207,6 +237,10 @@ char *__progname;
 #endif /* ifdef __GLIBC__ */
 
 
+/* The algorithm headers need all of the operating system specific 
+   defines, so we don't add them until down here */
+#include "algorithms.h"
+
 /* -----------------------------------------------------------------
    Function definitions
    ----------------------------------------------------------------- */
@@ -218,14 +252,15 @@ int is_known_hash(char *h);
 
 /* Functions for file evaluation (files.c) */
 int hash_file_type(FILE *f);
-int findHashValueinLine(char *buf, int fileType);
+int find_hash_in_line(char *buf, int fileType);
 
 /* Dig into file hierarchies */
 void process(off_t mode, char *input);
 
 /* Hashing functions */
-char *md5_file(off_t mode, FILE *fp, char *file_name);
-void md5(off_t mode, char *filename);
+char *hash_file(off_t mode, FILE *fp, char *file_name);
+void hash(off_t mode, char *filename);
+void hash_stdin(off_t mode);
 
 /* Miscellaneous helper functions */
 void shift_string(char *fn, int start, int new_start);
@@ -233,32 +268,6 @@ void print_error(off_t mode, char *fn, char *msg);
 
 /* Return the size, in bytes of an open file stream. On error, return -1 */
 off_t find_file_size(FILE *f);
-
-
-/* -----------------------------------------------------------------
-   MD5 definitions
-   ----------------------------------------------------------------- */
-
-#define MD5_HASH_LENGTH  16
-
-struct MD5Context {
-	u_int32_t buf[4];
-	u_int32_t bits[2];
-	unsigned char in[64];
-};
-
-void MD5Init(struct MD5Context *context);
-void MD5Update(struct MD5Context *context, unsigned char const *buf,
-	       unsigned len);
-void MD5Final(unsigned char digest[16], struct MD5Context *context);
-void MD5Transform(u_int32_t buf[4], u_int32_t const in[16]);
-
-/*
- * This is needed to make RSAREF happy on some MS-DOS compilers.
- */
-typedef struct MD5Context MD5_CTX;
-
-
 
 #endif /* __MD5DEEP_H */
 

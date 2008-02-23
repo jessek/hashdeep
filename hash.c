@@ -1,4 +1,17 @@
 
+/* MD5DEEP
+ *
+ * By Jesse Kornblum
+ *
+ * This is a work of the US Government. In accordance with 17 USC 105,
+ * copyright protection is not available for any work of the US Government.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ */
+
 #include "md5deep.h"
 
 void updateDisplay(time_t elapsed,   off_t bytesRead, 
@@ -64,16 +77,16 @@ void shorten_filename(char *dest, char *src)
     strncpy(dest,src,MAX_FILENAME_LENGTH);
   else
   {
-    temp = (char *)malloc(sizeof(char) * MAX_FILENAME_LENGTH);
-    snprintf(temp,MAX_FILENAME_LENGTH-3,src);
-    snprintf(dest,MAX_FILENAME_LENGTH,"%s...",temp);
+    temp = strdup(src);
+    temp[MAX_FILENAME_LENGTH - 3] = 0;
+    sprintf(dest,"%s...",temp);
     free(temp);
   }
 }
 
 /* Returns TRUE if the file reads successfully, FALSE on failure */
-int compute_md5(off_t mode, FILE *fp, char *file_name, char *short_name,
-		off_t file_size, int estimate_time, MD5_CTX *md)
+int compute_hash(off_t mode, FILE *fp, char *file_name, char *short_name,
+		 off_t file_size, int estimate_time, HASH_CONTEXT *md)
 {
   time_t start_time,current_time,last_time = 0;
   off_t position = 0, bytes_read;
@@ -96,10 +109,10 @@ int compute_md5(off_t mode, FILE *fp, char *file_name, char *short_name,
     if (ferror(fp))
     {
       if (!(M_SILENT(mode)))
-	fprintf(stderr,"%s: %s: error at offset %llu: %s\n", 
-		__progname,file_name,position,strerror(errno));
+	fprintf(stderr,"%s: %s: error at offset %llu: %s%s", 
+		__progname,file_name,position,strerror(errno),NEWLINE);
       
-      MD5Update(md, buffer, BUFSIZ);
+      HASH_Update(md, buffer, BUFSIZ);
       position += BUFSIZ;
       
       if (fatal_error())
@@ -116,7 +129,7 @@ int compute_md5(off_t mode, FILE *fp, char *file_name, char *short_name,
     else
     {
       /* If we hit the end of the file, we read less than BUFSIZ bytes! */
-      MD5Update(md, buffer, bytes_read);
+      HASH_Update(md, buffer, bytes_read);
       position += bytes_read;
     }
 
@@ -142,12 +155,15 @@ int compute_md5(off_t mode, FILE *fp, char *file_name, char *short_name,
   }      
 }
 
-char *md5_file(off_t mode, FILE *fp, char *file_name) 
+
+
+
+char *hash_file(off_t mode, FILE *fp, char *file_name) 
 {
   off_t file_size = 0;
-  MD5_CTX md;
-  unsigned char sum[MD5_HASH_LENGTH];
-  static char result[2 * MD5_HASH_LENGTH + 1];
+  HASH_CONTEXT md;
+  unsigned char sum[HASH_LENGTH];
+  static char result[2 * HASH_LENGTH + 1];
   static char hex[] = "0123456789abcdef";
   int i, status;
   char *temp, *basen = strdup(file_name),
@@ -156,34 +172,32 @@ char *md5_file(off_t mode, FILE *fp, char *file_name)
   if (M_ESTIMATE(mode))
   {
     file_size = find_file_size(fp);
-
     temp = basename(basen);
     shorten_filename(short_name,temp);
-    free(basen);
   }    
 
-  MD5Init(&md);
-  status = compute_md5(mode,fp,file_name,short_name,file_size,
-		       M_ESTIMATE(mode),&md);
+  HASH_Init(&md);
+  status = compute_hash(mode,fp,file_name,short_name,file_size,
+			M_ESTIMATE(mode),&md);
   free(short_name);
   if (!status)
     return NULL;
 
-  MD5Final(sum, &md);
+  HASH_Final(sum, &md);
   
-  for (i = 0; i < MD5_HASH_LENGTH; i++) {
+  for (i = 0; i < HASH_LENGTH; i++) {
     result[2 * i] = hex[(sum[i] >> 4) & 0xf];
     result[2 * i + 1] = hex[sum[i] & 0xf];
   }
-  return (result);
+
+  return result;
 }
 
-
-void md5(off_t mode, char *file_name) 
+void hash(off_t mode, char *file_name) 
 {
-  int result;
-  char *hash;
   FILE *handle;
+  int status; 
+  char *result;
 
   if ((handle = fopen(file_name,"rb")) == NULL) 
   {
@@ -191,26 +205,55 @@ void md5(off_t mode, char *file_name)
     return;
   }
 
-  if ((hash = md5_file(mode,handle,file_name)) != NULL)
+  if ((result = hash_file(mode,handle,file_name)) != NULL)
   {
     if (M_MATCH(mode) || M_MATCHNEG(mode))
     {
-      result = is_known_hash(hash);
-      if ((result && M_MATCH(mode)) || (!result && M_MATCHNEG(mode)))
+      status = is_known_hash(result);
+      if ((status && M_MATCH(mode)) || (!status && M_MATCHNEG(mode)))
       {
 	if (M_DISPLAY_HASH(mode))
 	{
-	  printf ("%s  ", hash);
+	  printf ("%s  ", result);
 	}
-	printf ("%s\n", file_name);
+	printf ("%s%s", file_name,NEWLINE);
       }
     }
     else 
     {
-      printf("%s  %s\n",hash,file_name);
+      printf("%s  %s%s",result,file_name,NEWLINE);
     }
   }
 
   fclose(handle);
+}
+
+/* Yes, this LOOKS LIKE it repeats some of the above code, but we are
+   really displaying very different things. Don't try to combine this
+   function with hash() above. */
+void hash_stdin(off_t mode)
+{
+  char *result;
+  int status;
+  
+  if ((result = hash_file(mode,stdin,"STDIN")) != NULL)
+  {
+    if (M_MATCH(mode) || M_MATCHNEG(mode))
+    {
+      status = is_known_hash(result);
+      if ((status && M_MATCH(mode)) || (!status && M_MATCHNEG(mode)))
+      {
+	if (M_DISPLAY_HASH(mode))
+	{
+	  printf ("%s  ", result);
+	}
+	printf ("stdin matches%s", NEWLINE);
+      }
+    }
+    else 
+    {
+      printf("%s%s",result,NEWLINE);
+    }
+  }
 }
 

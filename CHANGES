@@ -1,4 +1,12 @@
 
+Version 1.2 - 16 Apr 04
+
+- Added sha1deep to compute SHA-1 hashes
+- Abstracted hash functions to allow other algorithms to be inserted
+- Windows version now generates output with line feeds AND carriage returns
+- Fixed printing of error messages for positive and negative matching together
+- Cleaned up display for matching of standard input
+
 Version 1.1 - 25 Mar 04
 
 - Fixed processing of standard input on Windows

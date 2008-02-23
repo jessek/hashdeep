@@ -14,8 +14,8 @@
 
 #include "md5deep.h"
 
-
-/* How to make this code able to handle more file types:
+/* ---------------------------------------------------------------------
+   How to add more file types that we can read known hashes from:
 
    1. Add a definition of TYPE_[fileType] to md5deep.h. Ex: for type "cows",
       you would want to define TYPE_COWS.
@@ -29,11 +29,15 @@
    4. Create a find[fileType]HashinLine function. See the existing functions
       for some good examples.
 
-   5. Add your find[fileType]HashinLine function to the findHashinLine()
+   5. Add your find[fileType]HashinLine function to the find_hash_in_line()
       function.
 
    6. Add your fileType to the findNameinLine function.
-*/
+
+   7. Add a line to each hash algorithm header file (e.g. md5.h and sha1.h)
+      to indicate which types of hashes the new file type contains.
+   
+   ---------------------------------------------------------------------- */
 
 
 #define ILOOK_HEADER   \
@@ -45,14 +49,12 @@
 #define NSRL_20_HEADER \
 "\"SHA-1\",\"MD5\",\"CRC32\",\"FileName\",\"FileSize\",\"ProductCode\",\"OpSystemCode\",\"SpecialCode\""
 
-
-
 #define HASHKEEPER_HEADER \
 "\"file_id\",\"hashset_id\",\"file_name\",\"directory\",\"hash\",\"file_size\",\"date_modified\",\"time_modified\",\"time_zone\",\"comments\",\"date_accessed\",\"time_accessed\""
 
 
 
-int isValidHash(char *buf) {
+int valid_hash(char *buf) {
   int pos = 0;
 
   if (strlen(buf) < HASH_STRING_LENGTH) 
@@ -87,21 +89,21 @@ int isiLookFile(char *buf) {
 
 int findPlainHashinLine(char *buf) {
 
-  /* The validitity check of the data is performed later.
-     Right now we just check the length and space of this line */
+  /* We have to include a validity check here so that we don't
+     mistake SHA-1 hashes for MD5 hashes, among other things */
 
   if ((strlen(buf) < HASH_STRING_LENGTH) || 
       (buf[HASH_STRING_LENGTH] != ' '))
     return FALSE;
-  
+
   buf[HASH_STRING_LENGTH] = 0;
-  return TRUE;
+  return (valid_hash(buf));
 }  
 
 
 
 /* Attempts to find a hash value after the nth quotation mark in buf */
-int findHashAfterQuotes(char *buf, int n) {
+int find_hash_after_quotes(char *buf, int n) {
 
   unsigned int count = 0, pos = 0;
 
@@ -131,25 +133,44 @@ int findHashAfterQuotes(char *buf, int n) {
   return TRUE;
 }
 
-
-int findHashkeeperHashinLine(char *buf) {
-  return (findHashAfterQuotes(buf,3));
+int findHashkeeperHashinLine(char *buf) 
+{
+#ifdef SUPPORT_HASHKEEPER
+  return (find_hash_after_quotes(buf,SUPPORT_HASHKEEPER));
+#else
+  return FALSE;
+#endif
 }
 
-int findNSRL15HashinLine(char *buf) {
-  return (findHashAfterQuotes(buf,9));
+int findNSRL15HashinLine(char *buf) 
+{
+#ifdef SUPPORT_NSRL_15
+  return (find_hash_after_quotes(buf,SUPPORT_NSRL_15));
+#else
+  return FALSE;
+#endif
 } 
 
-int findNSRL20HashinLine(char *buf) {
-  return (findHashAfterQuotes(buf,3));
+int findNSRL20HashinLine(char *buf) 
+{
+#ifdef SUPPORT_NSRL_20
+  return (find_hash_after_quotes(buf,SUPPORT_NSRL_20));
+#else
+  return FALSE
+#endif
 } 
 
 
 
-/* iLook files have the hash as the first 32 characters. 
+/* iLook files have the MD5 hash as the first 32 characters. 
    As a result, we can just treat these files like plain hash files  */
-int findiLookHashinLine(char *buf) {
+int findiLookHashinLine(char *buf) 
+{
+#ifdef SUPPORT_ILOOK
   return (findPlainHashinLine(buf));
+#else
+  return FALSE;
+#endif
 }
 
 
@@ -167,19 +188,28 @@ int hash_file_type(FILE *f) {
   if (strlen(buf) > HASH_STRING_LENGTH)
   {
 
+#ifdef SUPPORT_HASHKEEPER
     if (isHashkeeperFile(buf)) 
       return TYPE_HASHKEEPER;
+#endif
     
+#ifdef SUPPORT_NSRL_15
     if (isNSRL15File(buf))
       return TYPE_NSRL_15;
+#endif
 
+#ifdef SUPPORT_NSRL_20
     if (isNSRL20File(buf))
       return TYPE_NSRL_20;
+#endif
 
+#ifdef SUPPORT_ILOOK
     if (isiLookFile(buf)) 
       return TYPE_ILOOK;
+#endif
   }    
 
+#ifdef SUPPORT_PLAIN
   /* Plain files can have comments, so the first line(s) may not
      contain a valid hash. But if we should process this file
      if we can find even *one* valid hash */
@@ -188,7 +218,8 @@ int hash_file_type(FILE *f) {
     if (findPlainHashinLine(buf))
       return TYPE_PLAIN;
   } while ((fgets(buf,MAX_STRING_LENGTH,f)) != NULL);
-  
+#endif  
+
   return TYPE_UNKNOWN;
 }
 
@@ -197,15 +228,15 @@ int hash_file_type(FILE *f) {
 /* Given an input string buf and the type of file it came from, finds
    the MD5 hash specified in the line if there is one and returns TRUE.
    If there is no valid hash in the line, returns FALSE. */
-int findHashValueinLine(char *buf, int fileType) {
+int find_hash_in_line(char *buf, int fileType) {
   
   int status = FALSE;
 
   switch(fileType) {
 
+    /* The findPlain already does a validity check for us */
   case TYPE_PLAIN:
-    status = findPlainHashinLine(buf);
-    break;
+    return findPlainHashinLine(buf);
     
   case TYPE_HASHKEEPER:
     status = findHashkeeperHashinLine(buf);
@@ -225,7 +256,7 @@ int findHashValueinLine(char *buf, int fileType) {
   }
 
   if (status)
-    return (isValidHash(buf));
+    return (valid_hash(buf));
 
   return FALSE;
 }

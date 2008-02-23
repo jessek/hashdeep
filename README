@@ -8,6 +8,9 @@ Details on how to use md5deep are in the man page.
 The MD5 algorithm is defined in RFC 1321:
 http://www.ietf.org/rfc/rfc1321.txt
 
+The SHA1 algorithm is defined in FIPS PUB 180:
+http://www.itl.nist.gov/fipspubs/fip180-1.htm
+
 md5deep was written by Special Agent Jesse Kornblum, United States Air
 Force Office of Special Investigations. Send all correspondence to
 md5deep@jessekornblum.com
@@ -26,7 +29,7 @@ INSTALLATION INSTRUCTIONS
 
 Instructions for Linux, Solaris, OS X, *BSD, and Windows are provided below.
 For Windows, it's a LOT easier to just download the binary from 
-http://md5deep.sourceforge.net/
+http://md5deep.sourceforge.net/#download
 
 Note that you will need to have root access to install md5deep in the
 default location!
@@ -68,17 +71,21 @@ COMPILING FOR MICROSOFT WINDOWS(R)
 The easiest way to get md5deep for Windows is to download the binary 
 version. The current binary is available at:
 
-http://md5deep.sourceforge.net/
+http://md5deep.sourceforge.net/#download
 
 
 If you want to compile md5deep yourself, I recommend using the (Free) 
 MingGW compiler. 
 
 First, obtain the MinGW toolkit from:  http://www.mingw.org/
-Install MinGW according to the documentation and then compile:
+Install MinGW according to the documentation and then compile.
+Replace "1.x" with the current version number.
 
 C:\> cd md5deep-1.x
-C:\> gcc -Wall -D__WIN32 -o md5deep.exe *.c -liberty
+C:\> gcc -DVERSION=\"1.x\" -D__WIN32 -DMD5 *.c -o md5deep -liberty
+C:\> gcc -DVERSION=\"1.x\" -D__WIN32 -DSHA1 *.c -o sha1deep -liberty
+C:\> strip md5deep.exe sha1deep.exe
+
 
 
 ----------------------------------------------------------------------
@@ -93,9 +100,10 @@ http://www.mingw.org/mingwfaq.shtml#faq-cross
 Once MinGW is installed on your linux system, edit the Makefile value for
 CROSSBASE with the $PREFIX you used for MinGW. Then just do:
 
-$ make cross-win
+$ make cross
 
-And you should have a working md5deep.exe executable for Win32.
+And you should have a working md5deep.exe and sha1deep.exe executables 
+for Win32.
 
 
 ----------------------------------------------------------------------

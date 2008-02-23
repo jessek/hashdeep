@@ -333,5 +333,5 @@ void process(off_t mode, char *fn)
   clean_name(fn);
 
   if (should_hash(mode,fn))
-    md5(mode,fn);
+    hash(mode,fn);
 }

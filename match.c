@@ -58,7 +58,7 @@ int load_match_file(off_t mode, char *fn) {
 
     ++line_number;
 
-    if (findHashValueinLine(buf,file_type) != TRUE) 
+    if (find_hash_in_line(buf,file_type) != TRUE) 
     {
 
       if (!(M_SILENT(mode)))

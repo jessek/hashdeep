@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
  */
-   
+
 #include "md5deep.h"
 
 #ifdef __WIN32 
@@ -20,36 +20,43 @@
 int _CRT_fmode = _O_BINARY;
 #endif
 
+void try_msg()
+{
+  fprintf(stderr,"Try `%s -h` for more information.%s", __progname,NEWLINE);
+}
 
 /* The usage function should, at most, display 22 lines of text to fit
    on a single screen */
 void usage() 
 {
-  fprintf(stderr,"%s version %s by %s.\n",__progname,VERSION,AUTHOR);
-  fprintf(stderr,"\n");
-  fprintf(stderr,"Usage:\n$ %s [-v|-V|-h] [-m|-M|-x|-X <file>] ",__progname);
-  fprintf(stderr,"[-resbt] [-o fbcplsd] FILES\n\n");
+  fprintf(stderr,"%s version %s by %s.%s",__progname,VERSION,AUTHOR,NEWLINE);
+  fprintf(stderr,"%s",NEWLINE);
+  fprintf(stderr,"Usage:%s%s %s [-v|-V|-h] [-m|-M|-x|-X <file>] ",
+	  NEWLINE,CMD_PROMPT,__progname);
+  fprintf(stderr,"[-resbt] [-o fbcplsd] FILES%s%s",NEWLINE,NEWLINE);
 
-  fprintf(stderr,"-v  - display version number and exit\n");
-  fprintf(stderr,"-V  - display copyright information and exit\n");
-  fprintf(stderr,"-h  - display this help message and exit\n");
-  fprintf(stderr,"-m  - enables matching mode. See README/man page\n");
-  fprintf(stderr,"-x  - enables negative matching mode. See README/man page\n");
-  fprintf(stderr,"-M and -X are the same as -m and -x but also print hashes of each file\n");
-  fprintf(stderr,"-r  - enables recursive mode. All subdirectories are traversed\n");
-  fprintf(stderr,"-e  - compute estimated time remaining for each file\n");
-  fprintf(stderr,"-s  - enables silent mode. Suppress all error messages\n");
-  fprintf(stderr,"-o  - Only process certain types of files:\n");
-  fprintf(stderr,"      f - Regular File\n");
-  fprintf(stderr,"      b - Block Device\n");
-  fprintf(stderr,"      c - Character Device\n");
-  fprintf(stderr,"      p - Named Pipe (FIFO)\n");
-  fprintf(stderr,"      l - Symbolic Link\n");
-  fprintf(stderr,"      s - Socket\n");
-  fprintf(stderr,"      d - Solaris Door\n");
-  fprintf(stderr,"-b and -t are ignored. They are only present for compatibility with md5sum\n");
+  fprintf(stderr,"-v  - display version number and exit%s",NEWLINE);
+  fprintf(stderr,"-V  - display copyright information and exit%s",NEWLINE);
+  fprintf(stderr,"-h  - display this help message and exit%s",NEWLINE);
+  fprintf(stderr,"-m  - enables matching mode. See README/man page%s",NEWLINE);
+  fprintf(stderr,"-x  - enables negative matching mode. See README/man page%s",
+	  NEWLINE);
+  fprintf(stderr,"-M and -X are the same as -m and -x but also print hashes of each file%s",NEWLINE);
+  fprintf(stderr,"-r  - enables recursive mode. All subdirectories are traversed%s",NEWLINE);
+  fprintf(stderr,"-e  - compute estimated time remaining for each file%s",
+	  NEWLINE);
+  fprintf(stderr,"-s  - enables silent mode. Suppress all error messages%s",
+	  NEWLINE);
+  fprintf(stderr,"-o  - Only process certain types of files:%s",NEWLINE);
+  fprintf(stderr,"      f - Regular File%s",NEWLINE);
+  fprintf(stderr,"      b - Block Device%s",NEWLINE);
+  fprintf(stderr,"      c - Character Device%s",NEWLINE);
+  fprintf(stderr,"      p - Named Pipe (FIFO)%s",NEWLINE);
+  fprintf(stderr,"      l - Symbolic Link%s",NEWLINE);
+  fprintf(stderr,"      s - Socket%s",NEWLINE);
+  fprintf(stderr,"      d - Solaris Door%s",NEWLINE);
+  fprintf(stderr,"-b and -t are ignored. They are only present for compatibility with md5sum%s",NEWLINE);
 }
-
 
 
 
@@ -83,16 +90,44 @@ void setup_expert_mode(char *arg, off_t *mode)
     default:
       if (!(M_SILENT(*mode)))
 	fprintf(stderr,
-		"%s: Unrecognized file type: %c\n", __progname,*(arg+i));
+		"%s: Unrecognized file type: %c%s"
+		, __progname,*(arg+i),NEWLINE);
     }
     ++i;
   }
 }
 
 
+void check_matching_okay(off_t mode, int hashes_loaded)
+{
+
+  if ((M_MATCH(mode) || M_MATCHNEG(mode)) && !hashes_loaded)
+  {
+    if (!(M_SILENT(mode)))
+    {  
+      fprintf(stderr,"%s: Unable to load any matching files.%s",
+	      __progname,NEWLINE);
+      try_msg();
+    }
+    exit (1);
+  }
+
+  if (M_MATCH(mode) && M_MATCHNEG(mode))
+  {
+    if (!(M_SILENT(mode)))
+    {
+      fprintf(stderr,
+	      "%s: Regular and negative matching are mutually exclusive.%s",
+	      __progname,NEWLINE);
+      try_msg();
+    }
+    exit (1);
+  }
+}
+
 void process_command_line(int argc, char **argv, off_t *mode) {
 
-  int i;
+  int i, hashes_loaded = FALSE;
   
   while ((i=getopt(argc,argv,"M:X:x:m:u:o:serhvVbt")) != -1) { 
     switch (i) {
@@ -106,14 +141,16 @@ void process_command_line(int argc, char **argv, off_t *mode) {
       *mode |= mode_display_hash;
     case 'm':
       *mode |= mode_match;
-      load_match_file(*mode,optarg);
+      if (load_match_file(*mode,optarg))
+	hashes_loaded = TRUE;
       break;
 
     case 'X':
       *mode |= mode_display_hash;
     case 'x':
       *mode |= mode_match_neg;
-      load_match_file(*mode,optarg);
+      if (load_match_file(*mode,optarg))
+	hashes_loaded = TRUE;
       break;
 
     case 's':
@@ -133,33 +170,26 @@ void process_command_line(int argc, char **argv, off_t *mode) {
       exit (1);
 
     case 'v':
-      printf ("%s\n",VERSION);
+      printf ("%s%s",VERSION,NEWLINE);
       exit (1);
 
     case 'V':
       printf (COPYRIGHT);
       exit (1);
 
-      /* These are only for compatibility with md5sum and are ignored */
+      /* These are only for compatibility with md5sum */
     case 'b':
     case 't':
       break;
 
     default:
-      usage();
+      try_msg();
       exit (1);
 
     }
   }
-  
-  if (M_MATCH(*mode) && M_MATCHNEG(*mode))
-  {
-    fprintf(stderr,
-            "%s: Regular and negative matching are mutually exclusive!\n\n",
-	    __progname);
-    usage();
-    exit (1);
-  }
+
+  check_matching_okay(*mode, hashes_loaded);
 }
 
 
@@ -187,10 +217,7 @@ int main(int argc, char **argv)
 
   argv += optind;
   if (*argv == NULL)
-  { 
-    printf("%s\n",md5_file(mode,stdin,"STDIN"));
-  }
-
+    hash_stdin(mode);
   else
   {
     cwd = getcwd(cwd,PATH_MAX);

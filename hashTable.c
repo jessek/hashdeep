@@ -15,7 +15,6 @@
 #include "md5deep.h"
 #include "hashTable.h"
 
-
 /* These two functions are the "hash" functions for the hash table. 
    Because the original implementation of this code was for storing
    md5 hashes, I used the name "translate" to avoid confusion. */
