@@ -204,6 +204,12 @@ void display_size(uint64_t mode, hash_info *h)
   }	
 }
 
+char display_asterisk(uint64_t mode)
+{
+  if (M_ASTERISK(mode))
+    return '*';
+  return ' ';
+}
 
 void display_match_result(uint64_t mode, hash_info *h)
 {  
@@ -223,7 +229,7 @@ void display_match_result(uint64_t mode, hash_info *h)
 
     if (M_DISPLAY_HASH(mode))
     {
-      printf ("%s  ", h->result);
+      printf ("%s %c",h->result,display_asterisk(mode));
     }
 
     if (M_WHICH(mode))
@@ -243,6 +249,7 @@ void display_match_result(uint64_t mode, hash_info *h)
 }
 
 
+
 void display_hash(uint64_t mode, hash_info *h)
 {
   /* We can't call display_size here because we don't know if we're
@@ -257,8 +264,7 @@ void display_hash(uint64_t mode, hash_info *h)
       
     printf ("%s", h->result);
     if (!(h->is_stdin))
-      printf("  %s", h->full_name);
-    
+      printf(" %c%s", display_asterisk(mode),h->full_name);
     make_newline(mode);
   }
 }

@@ -24,7 +24,7 @@ void remove_double_slash(char *fn)
 
      /* On Windows, we have to allow the first two characters to be slashes
 	to account for UNC paths. e.g. \\foo\bar\cow */
-#ifdef __WIN32
+#ifdef _WIN32
      if (pos == 0)
        continue;
 #endif
@@ -138,7 +138,7 @@ void remove_double_dirs(char *fn)
    attempting to process d:\foo\ causes an error, but d:\foo does not.
    The following turns d: into d:\ and d:\foo\ into d:\foo */
 
-#ifdef __WIN32
+#ifdef _WIN32
 void clean_name_win32(char *fn)
 {
   unsigned int length = strlen(fn);
@@ -188,7 +188,7 @@ int is_win32_device_file(char *fn)
   return FALSE;
 }
 
-#endif  /* ifdef __WIN32 */
+#endif  /* ifdef _WIN32 */
 
 
 void clean_name(uint64_t mode, char *fn)
@@ -201,7 +201,7 @@ void clean_name(uint64_t mode, char *fn)
     remove_double_dirs(fn);
   }
 
-#ifdef __WIN32
+#ifdef _WIN32
   clean_name_win32(fn);
 #endif
 }
@@ -271,14 +271,14 @@ int file_type_helper(struct stat sb)
     return file_pipe;
 
   /* These file types do not exist in Win32 */
-#ifndef __WIN32
+#ifndef _WIN32
   
   if (S_ISSOCK(sb.st_mode))
     return file_socket;
   
   if (S_ISLNK(sb.st_mode))
     return file_symlink;  
-#endif   /* ifndef __WIN32 */
+#endif   /* ifndef _WIN32 */
 
 
   /* Used to detect Solaris doors */
@@ -395,7 +395,7 @@ int should_hash(uint64_t mode, char *fn)
   if (M_EXPERT(mode))
     return should_hash_expert(mode,fn,type);
 
-#ifndef __WIN32
+#ifndef _WIN32
   if (type == file_symlink)
     return should_hash_symlink(mode,fn);
 #endif
@@ -413,7 +413,7 @@ void process(uint64_t mode, char *fn)
   /* On Windows, the special device files don't need to be cleaned up.
      We check them here so that we don't have to test their file types
      later on. (They don't appear to be normal files.) */
-#ifdef __WIN32
+#ifdef _WIN32
   if (is_win32_device_file(fn))
   {
     hash_file(mode,fn);

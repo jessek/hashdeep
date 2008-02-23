@@ -18,8 +18,13 @@ http://www.itl.nist.gov/fipspubs/fip180-1.htm
 The SHA256 algorithm is defined FIPS 180-2:
 http://csrc.nist.gov/publications/fips/fips180-2/fips180-2.pdf
 
+The Tiger algorithm is defined at:
+http://www.cs.technion.ac.il/~biham/Reports/Tiger/
+
 The Whirlpool algorithm is defined at:
 http://planeta.terra.com.br/informatica/paulobarreto/WhirlpoolPage.html
+
+
 
 
 md5deep was written by Special Agent Jesse Kornblum, United States Air
@@ -46,8 +51,8 @@ below. For Windows, it's a LOT easier to just download the binary from
 http://md5deep.sourceforge.net/#download, but instructions are also below.
 
 Note that you will need to have root access to install md5deep in the
-default location! If you would like to install md5deep somewhere, set the
-PREFIX variable in the Makefile.
+default location! If you would like to install md5deep somewhere else
+or don't have root access, change the PREFIX variable in the Makefile.
 
 To compile:
 

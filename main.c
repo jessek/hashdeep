@@ -14,7 +14,7 @@
 
 #include "md5deep.h"
 
-#ifdef __WIN32 
+#ifdef _WIN32 
 /* Allows us to open standard input in binary mode by default 
    See http://gnuwin32.sourceforge.net/compile.html for more */
 int _CRT_fmode = _O_BINARY;
@@ -50,7 +50,7 @@ void usage(void)
   fprintf(stderr,"-a and -A add a single hash to the positive or negative matching set%s", NEWLINE);
   fprintf(stderr,"-b  - prints only the bare name of files; all path information is omitted%s", NEWLINE);
   fprintf(stderr,"-l  - print relative paths for filenames%s", NEWLINE);
-  fprintf(stderr,"-0  - use /0 as line terminator%s", NEWLINE);
+  fprintf(stderr,"-k  - print asterisk before hash%s", NEWLINE);
   fprintf(stderr,"-o  - Only process certain types of files:%s",NEWLINE);
   fprintf(stderr,"      f - Regular File       l - Symbolic Link%s",NEWLINE);
   fprintf(stderr,"      b - Block Device       s - Socket%s",NEWLINE);
@@ -138,7 +138,7 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
 
   int i, hashes_loaded = FALSE;
   
-  while ((i=getopt(argc,argv,"M:X:x:m:u:o:A:a:wzserhvV0lb")) != -1) { 
+  while ((i=getopt(argc,argv,"M:X:x:m:u:o:A:a:wzserhvV0lbk")) != -1) { 
     switch (i) {
 
     case 'w':
@@ -206,6 +206,10 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
       *mode |= mode_recursive;
       break;
 
+    case 'k':
+      *mode |= mode_asterisk;
+      break;
+
     case 'h':
       usage();
       exit (0);
@@ -226,10 +230,6 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
       *mode |= mode_barename;
       break;
 
-      /* These are here only for compatibility with md5sum */
-      //    case 't':
-      //      break;
-
     default:
       try_msg();
       exit (1);
@@ -242,7 +242,7 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
 
 int is_absolute_path(char *fn)
 {
-#ifdef __WIN32
+#ifdef _WIN32
   /* Windows has so many ways to make absolute paths (UNC, C:\, etc)
      that it's hard to keep track. It doesn't hurt us
      to call realpath as there are no symbolic links to lose. */
@@ -262,7 +262,7 @@ void generate_filename(uint64_t mode, char **argv, char *fn, char *cwd)
     /* Windows systems don't have symbolic links, so we don't
        have to worry about carefully preserving the paths 
        they follow. Just use the system command to resolve the paths */   
-#ifdef __WIN32
+#ifdef _WIN32
     realpath(*argv,fn);
 #else	  
     if (cwd == NULL)

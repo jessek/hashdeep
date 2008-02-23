@@ -2,7 +2,6 @@
 RAW_CC = gcc
 RAW_FLAGS = -Wall -O2
 LINK_OPT = -lm
-VERSION = 1.7
 
 # Where we get installed
 PREFIX = /usr/local
@@ -24,47 +23,28 @@ CR_BASE = /Users/jessekornblum/bin/cross-tools/i386-mingw32msvc/bin
 # This should be commented out when debugging is done
 #RAW_FLAGS += -D__DEBUG -ggdb
 
-NAME = md5deep
+NAME    = md5deep
+VERSION = 1.8
 
-MD5GOAL = md5deep
-SHA1GOAL = sha1deep
-SHA256GOAL = sha256deep
-WHIRLGOAL = whirlpooldeep
-ALL_GOALS = $(MD5GOAL) $(SHA1GOAL) $(SHA256GOAL) $(WHIRLGOAL)
-RM_GOALS = $(MD5GOAL),$(SHA1GOAL),$(SHA256GOAL),$(WHIRLGOAL)
+ALL_GOALS   = md5deep sha1deep sha256deep whirlpooldeep tigerdeep
+COMMA_GOALS = md5deep,sha1deep,sha256deep,whirlpooldeep,tigerdeep
 
-MAN_PAGES = md5deep.1
-RM_DOCS = md5deep.1,sha1deep.1,sha256deep.1,whirlpooldeep.1
+# Definitions we'll need later (and that should rarely change)
+HEADER_FILES  = md5deep.h hashTable.h algorithms.h
+HEADER_FILES += sha256.h md5.h sha1.h whirlpool.h tiger.h
+SRC  =  main.c match.c hashTable.c helpers.c dig.c files.c 
+SRC +=  md5.c sha1.c hash.c cycles.c sha256.c whirlpool.c tiger.c
+OBJ  =  main.o match.o helpers.o dig.o cycles.o hashTable.o
+DOCS = Makefile README CHANGES $(MAN_PAGE)
+WINDOC = README.txt CHANGES.txt
 
+MAN_PAGE   = $(NAME).1
 RAW_FLAGS += -DVERSION=\"$(VERSION)\"
-
-# Setup for compiling and cross-compiling for Windows
-# The CR_ prefix refers to cross compiling from OSX to Windows
-CR_CC = $(CR_BASE)/gcc
-CR_OPT = $(RAW_FLAGS) -D__WIN32
-CR_LINK = -liberty
-CR_STRIP = $(CR_BASE)/strip
-CR_MD5 = md5deep.exe
-CR_SHA1 = sha1deep.exe
-CR_SHA256 = sha256deep.exe
-CR_WHIRL = whirlpooldeep.exe
-CR_ALL_GOALS = $(CR_MD5) $(CR_SHA1) $(CR_SHA256) $(CR_WHIRL)
-WINCC = $(RAW_CC) $(RAW_FLAGS) -D__WIN32
 
 # Generic "how to compile C files"
 CC = $(RAW_CC) $(RAW_FLAGS)
 .c.o: 
 	$(CC) -c $<
-
-# Definitions we'll need later (and that should rarely change)
-HEADER_FILES = $(NAME).h hashTable.h algorithms.h
-HEADER_FILES += sha256.h md5.h sha1.h whirlpool.h
-SRC =  main.c match.c files.c hashTable.c helpers.c dig.c
-SRC += md5.c sha1.c hash.c cycles.c sha256.c whirlpool.c
-OBJ =  main.o match.o helpers.o dig.o cycles.o hashTable.o
-DOCS = Makefile README CHANGES $(MAN_PAGES)
-WINDOC = README.txt CHANGES.txt
-
 
 #---------------------------------------------------------------------
 # OPERATING SYSTEM DIRECTIVES
@@ -72,7 +52,7 @@ WINDOC = README.txt CHANGES.txt
 
 all: linux
 
-goals: $(ALL_GOALS)
+goals: $(OBJ) $(ALL_GOALS)
 
 linux: CC += -D__LINUX -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 linux: goals
@@ -85,79 +65,83 @@ mac: goals
 
 unix: goals
 
-
 # Common commands for compiling versions for Windows. 
 # See cross and windows directives below.
-win_general: LINK_OPT = $(CR_LINK)
-win_general: MD5GOAL = $(CR_MD5)
-win_general: SHA1GOAL = $(CR_SHA1)
-win_general: SHA256GOAL = $(CR_SHA256)
-win_general: WHIRLGOAL = $(CR_WHIRL)
-win_general: ALL_GOALS = $(MD5GOAL) $(SHA1GOAL) $(SHA256GOAL) $(WHIRLGOAL)
+win_general: LINK_OPT = -liberty
+win_general: SUFFIX=.exe
 win_general: goals
-	$(STRIP) $(ALL_GOALS)
+	$(STRIP) {$(COMMA_GOALS)}.exe
 
 # Cross compiling from Linux to Windows. See README for more info
-cross: CC = $(CR_CC) $(CR_OPT)
-cross: STRIP = $(CR_STRIP)
+cross: CC = $(CR_BASE)/gcc $(RAW_FLAGS)
+cross: STRIP = $(CR_BASE)/strip
 cross: win_general
 
 # See the README for information on Windows compilation
-windows: CC = $(WINCC)
 windows: STRIP = strip
 windows: win_general 
-
-
 
 #---------------------------------------------------------------------
 # COMPILE THE PROGRAMS
 #   This section must be updated each time you add an algorithm
 #---------------------------------------------------------------------
 
-files-whirlpool.o: files.c
-	$(CC) -DWHIRLPOOL -c files.c -o files-whirlpool.o
-hash-whirlpool.o: hash.c
-	$(CC) -DWHIRLPOOL -c hash.c -o hash-whirlpool.o
-whirlpool.o: whirlpool.c
-	$(CC) -DWHIRLPOOL -c whirlpool.c
+files-tiger.o: files.c
+	$(CC) -c $< -o $@
+hash-tiger.o: hash.c
+	$(CC) -c $< -o $@
 
-whirlpooldeep: $(OBJ) hash-whirlpool.o whirlpool.o files-whirlpool.o
-	$(CC) $(OBJ) *whirlpool.o -o $(WHIRLGOAL) $(LINK_OPT)
+TIGEROBJ = files-tiger.o hash-tiger.o tiger.o
+tigerdeep: CC += -DTIGER
+tigerdeep: $(OBJ) $(TIGEROBJ)
+	$(CC) $(OBJ) $(TIGEROBJ) -o $@$(SUFFIX) $(LINK_OPT)
+
+
+
+files-whirlpool.o: files.c
+	$(CC) -c $< -o $@
+hash-whirlpool.o: hash.c
+	$(CC) -c $< -o $@
+
+WHIRLPOOLOBJ = files-whirlpool.o hash-whirlpool.o whirlpool.o
+whirlpooldeep: CC += -DWHIRLPOOL
+whirlpooldeep: $(OBJ) $(WHIRLPOOLOBJ)
+	$(CC) $(OBJ) $(WHIRLPOOLOBJ) -o $@$(SUFFIX) $(LINK_OPT)
+
 
 
 files-md5.o: files.c
-	$(CC) -DMD5 -c files.c -o files-md5.o
+	$(CC) -c $< -o $@
 hash-md5.o: hash.c
-	$(CC) -DMD5 -c hash.c -o hash-md5.o
-md5.o: md5.c
-	$(CC) -DMD5 -c md5.c
+	$(CC) -c $< -o $@
 
-md5deep: $(OBJ) hash-md5.o md5.o files-md5.o 
-	$(CC) $(OBJ) *md5.o -o $(MD5GOAL) $(LINK_OPT)
+MD5OBJ = files-md5.o hash-md5.o md5.o
+md5deep: CC += -DMD5
+md5deep: $(OBJ) $(MD5OBJ)
+	$(CC) $(OBJ) $(MD5OBJ) -o $@$(SUFFIX) $(LINK_OPT)
 
 
 
 files-sha256.o: files.c
-	$(CC) -DSHA256 -c files.c -o files-sha256.o
+	$(CC) -c $< -o $@
 hash-sha256.o: hash.c
-	$(CC) -DSHA256 -c hash.c -o hash-sha256.o
-sha256.o: sha256.c
-	$(CC) -DSHA256 -c sha256.c
+	$(CC) -c $< -o $@
 
-sha256deep: $(OBJ) hash-sha256.o sha256.o files-sha256.o
-	$(CC) $(OBJ) *sha256.o -o $(SHA256GOAL) $(LINK_OPT)
+SHA256OBJ = files-sha256.o hash-sha256.o sha256.o
+sha256deep: CC += -DSHA256
+sha256deep: $(OBJ) $(SHA256OBJ)
+	$(CC) $(OBJ) $(SHA256OBJ) -o $@$(SUFFIX) $(LINK_OPT)
 
 
 
 files-sha1.o: files.c
-	$(CC) -DSHA1 -c files.c -o files-sha1.o
+	$(CC) -c $< -o $@
 hash-sha1.o: hash.c
-	$(CC) -DSHA1 -c hash.c -o hash-sha1.o
-sha1.o:
-	$(CC) -DSHA1 -c sha1.c
-
-sha1deep: $(OBJ) hash-sha1.o sha1.o files-sha1.o
-	$(CC) $(OBJ) *sha1.o -o $(SHA1GOAL) $(LINK_OPT)
+	$(CC) -c $< -o $@
+SHA1OBJ = files-sha1.o hash-sha1.o sha1.o
+sha1deep: CC += -DSHA1
+sha1deep: $(OBJ) $(SHA1OBJ)
+	$(CC) $(OBJ) $(SHA1OBJ) -o $@$(SUFFIX) $(LINK_OPT)
 
 
 #---------------------------------------------------------------------
@@ -170,14 +154,15 @@ MAN = $(PREFIX)/man/man1
 install: goals
 	install -d $(BIN) $(MAN)
 	install -m 755 $(ALL_GOALS) $(BIN)
-	install -m 644 $(MAN_PAGES) $(MAN)
+	install -m 644 $(MAN_PAGE) $(MAN)
 	ln -fs md5deep.1 $(MAN)/sha1deep.1
 	ln -fs md5deep.1 $(MAN)/sha256deep.1
 	ln -fs md5deep.1 $(MAN)/whirlpooldeep.1
+	ln -fs md5deep.1 $(MAN)/tigerdeep.1
 
 uninstall:
-	rm -f -- $(BIN)/{$(RM_GOALS)}
-	rm -f -- $(MAN)/{$(RM_DOCS)}
+	rm -f -- $(BIN)/{$(COMMA_GOALS)}
+	rm -f -- $(MAN)/{$(COMMA_GOALS)}.1
 
 #---------------------------------------------------------------------
 # CLEAN UP
@@ -197,7 +182,7 @@ nice:
 
 clean: nice
 	rm -f -- *.o $(ALL_GOALS) $(WIN_DOC)
-	rm -f -- $(CR_ALL_GOALS)
+	rm -f -- {$(COMMA_GOALS)}.exe
 	rm -f -- $(TAR_FILE).gz $(DEST_DIR).zip $(DEST_DIR).zip.gpg
 
 #-------------------------------------------------------------------------
@@ -208,6 +193,7 @@ EXTRA_FILES =
 DEST_DIR = $(NAME)-$(VERSION)
 TAR_FILE = $(DEST_DIR).tar
 PKG_FILES = $(SRC) $(HEADER_FILES) $(DOCS) $(EXTRA_FILES)
+ZIP_FILES = {$(COMMA_GOALS)}.exe $(WINDOC) 
 
 # This packages me up to send to somebody else
 package:
@@ -223,22 +209,23 @@ package:
 # To do this on a linux box, The big line below starting with "/usr/bin/tbl"
 # should be replaced with:
 #
-#	man ./$(MD5GOAL).1 | col -bx > README.txt
+#	man ./$(MAN_PAGE) | col -bx > README.txt
 #
 # and the "flip -d" command should be replaced with unix2dos
 #
 # The flip command can be found at:
 # http://ccrma-www.stanford.edu/~craig/utility/flip/#
+
 win-doc:
-#	man ./$(MD5GOAL).1 | col -bx > README.txt
-	/usr/bin/tbl ./$(MD5GOAL).1 | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > README.txt
+#	man ./$(MAN_PAGE) | col -bx > README.txt
+	/usr/bin/tbl ./$(MAN_PAGE) | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > README.txt
 	cp CHANGES CHANGES.txt
 #	unix2dos $(WINDOC)
 	flip -d $(WINDOC)
 
 cross-pkg: cross win-doc
 	rm -f $(DEST_DIR).zip
-	zip $(DEST_DIR).zip $(CR_MD5) $(CR_SHA1) $(CR_SHA256) $(CR_WHIRL) $(WINDOC) 
+	zip $(DEST_DIR).zip $(ZIP_FILES)
 	rm -f $(WINDOC)
 
 world: package cross-pkg

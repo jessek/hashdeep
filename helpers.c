@@ -123,7 +123,7 @@ void internal_error(char *fn, char *msg)
 void make_magic(void){printf("%s%s","\x53\x41\x4E\x20\x44\x49\x4D\x41\x53\x20\x48\x49\x47\x48\x20\x53\x43\x48\x4F\x4F\x4C\x20\x46\x4F\x4F\x54\x42\x41\x4C\x4C\x20\x52\x55\x4C\x45\x53\x21",NEWLINE);}
 
 
-#ifndef __WIN32
+#ifndef _WIN32
 
 /* Return the size, in bytes of an open file stream. On error, return 0 */
 #if defined (__LINUX)
@@ -302,9 +302,9 @@ off_t find_file_size(FILE *f)
 }  
 
 #endif // ifdef __LINUX
-#endif // ifndef __WIN32
+#endif // ifndef _WIN32
 
-#if defined(__WIN32)
+#if defined(_WIN32)
 off_t find_file_size(FILE *f) 
 {
   off_t total = 0, original = ftello(f);
@@ -318,7 +318,7 @@ off_t find_file_size(FILE *f)
   
   return total;
 }
-#endif /* ifdef __WIN32 */
+#endif /* ifdef _WIN32 */
 
 
 

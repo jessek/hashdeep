@@ -1,4 +1,4 @@
-.TH MD5DEEP "1" "v1.7 \- 23 May 2005" "AFOSI" "United States Air Force"
+.TH MD5DEEP "1" "v1.8 \- 8 Aug 2005" "AFOSI" "United States Air Force"
 
 .SH NAME
 md5deep \- Compute MD5 message digests
@@ -6,6 +6,8 @@ md5deep \- Compute MD5 message digests
 sha1deep \- Compute SHA-1 message digests
 .br
 sha256deep \- Compute SHA-256 message digests
+.br
+tigerdeep \- Computer Tiger message digests
 .br
 whirlpooldeep \- Compute Whirlpool message digests
 
@@ -15,7 +17,7 @@ whirlpooldeep \- Compute Whirlpool message digests
 .br
 .B md5deep
 [\-m|\-M|\-x|\-X <file>]  [-a|-A <hash>]
-[\-wzres0lb] [\-o <fbcplsd>] [\fBFILES\fR]
+[\-wzres0lbk] [\-o <fbcplsd>] [\fBFILES\fR]
 
 .SH DESCRIPTION
 .PP
@@ -115,6 +117,19 @@ each file, displays the relative file path as indicated on the command
 line. This flag may not be used in conjunction with the \-b flag.
 
 .TP
+\fB\-b\fR
+Enables bare mode. Strips any leading directory information from 
+displayed filenames.
+This flag may not be used in conjunction with the \-l flag.
+
+.TP
+\fB\-k\fR
+Enables asterisk mode. An asterisk is inserted in lieu of a second
+space between the filename and the hash, just like md5sum in 
+its binary (\-b) mode.
+
+
+.TP
 \fB\-o\fR <bcpflsd>
 Enables expert mode. Allows the user specify which (and only which) types of
 files are processed. Directory processing is still controlled with the
@@ -145,13 +160,6 @@ Show the version number and exit.
 .TP
 \fB\-V\fR
 Show copyright information and exit.
-
-.TP
-\fB\-b\fR
-Enables bare mode. Strips any leading directory information from 
-displayed filenames.
-This flag may not be used in conjunction with the \-b flag.
-
 
 .SH RETURN VALUE
 Returns zero on a successful operation. (Successful operations can 
@@ -209,6 +217,10 @@ http://www.faqs.org/rfcs/rfc3174.html
 The SHA-256 specification, FIPS 180-2, is available at
 .br
 http://csrc.nist.gov/publications/fips/fips180-2/fips180-2.pdf
+.PP
+The Tiger specification is available at
+.br
+http://www.cs.technion.ac.il/~biham/Reports/Tiger/
 .PP
 The Whirlpool specification is available at
 .br

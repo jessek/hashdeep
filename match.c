@@ -19,6 +19,14 @@
 hashTable knownHashes;
 int table_initialized = FALSE;
 
+
+int file_type_without_header(int file_type)
+{
+  return (file_type == TYPE_PLAIN ||
+	  file_type == TYPE_BSD);
+}
+
+
 int load_match_file(uint64_t mode, char *fn) 
 {
   uint64_t line_number = 0;
@@ -50,7 +58,7 @@ int load_match_file(uint64_t mode, char *fn)
 
   /* We skip the first line in every file type except plain files. 
      All other file types have a header line that we need to ignore. */
-  if (file_type == TYPE_PLAIN) 
+  if (file_type_without_header(file_type))
     rewind(f);
   else 
     line_number++;

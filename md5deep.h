@@ -85,7 +85,7 @@
 #define BYTE_ORDER LITTLE_ENDIAN
 #endif
 
-#elif defined (__WIN32)
+#elif defined (_WIN32)
 #include <sys/param.h>
 
 #elif defined (__APPLE__)
@@ -93,10 +93,14 @@
 #endif
 
 
-/* For MD5 */
+// Some algorithms need to know if this is a big endian host
 #if BYTE_ORDER == BIG_ENDIAN
+// For MD5
 #define HIGHFIRST 1
-#endif
+// For Tiger
+#define BIG_ENDIAN_HOST
+#endif //   #if BYTE_ORDER == BIG_ENDIAN
+
 
 #define TRUE   1
 #define FALSE  0
@@ -131,8 +135,9 @@
 #define mode_relative      1<<9
 #define mode_which        1<<10
 #define mode_barename     1<<11
+#define mode_asterisk     1<<12
 
-/* Modes 12 to 22 and 32 to 63 are reserved for future use. 
+/* Modes 13 to 22 and 32 to 63 are reserved for future use. 
    (Yes, I could move the expert file modes, below, up to the higher
    ranger of numbers, but it's working now, and so why change anything?
    The next person who wants to add a lot of modes can have the fun.) */
@@ -170,7 +175,7 @@
 #define M_RELATIVE(A)      A & mode_relative
 #define M_WHICH(A)         A & mode_which
 #define M_BARENAME(A)      A & mode_barename
-
+#define M_ASTERISK(A)      A & mode_asterisk
 
 #define M_EXPERT(A)        A & mode_expert
 #define M_REGULAR(A)       A & mode_regular
@@ -192,7 +197,7 @@
 
 /* Set up the environment for the *nix operating systems (Mac, Linux, 
    BSD, Solaris, and really everybody except Microsoft Windows) */
-#ifndef __WIN32
+#ifndef _WIN32
 
 #include <libgen.h>
 
@@ -207,10 +212,10 @@ off_t ftello(FILE *stream);
 #define BLANK_LINE \
 "                                                                          "
 
-#endif // #ifndef __WIN32 
+#endif // #ifndef _WIN32 
 
 
-#ifdef __WIN32
+#ifdef _WIN32
 
 /* The current cross compiler for OS X->Windows does not support a few
    critical error codes normally defined in errno.h. Because we need 

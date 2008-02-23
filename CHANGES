@@ -1,6 +1,20 @@
+
+Version 1.8 - 8 Aug 2005
+
+- Added Tiger algorithm to make tigerdeep.
+- Added -k mode to insert asterisks before filename, like md5sum -b
+- Fixed a bug that prevented the first BSD style hash from being 
+    loaded during any of the matching modes.
+- Continued to simplify the Makefile. To wit:
+   - Changed checks for __WIN32 to _WIN32, which is defined by the compiler.
+     Removed -D__WIN32 from the Makefile.
+   - Greatly reduced the number of instructions for cross compiling
+   - Simplified rules for building all applications
+
+
 Version 1.7 - 23 May 2005
 
-- Added support for BSD style hashes
+- Added support to use BSD style hashes in matching modes
 - Fixed support for Hashkeeper files that have directory information.
     Matt Kucenski helped to track this down.
 - While fixing Hashkeeper support, improved support for other hash
