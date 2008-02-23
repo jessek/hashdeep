@@ -1,3 +1,16 @@
+2007-10-28 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Added additional checks in find_file_size to account for
+	  older Linux systems that don't have all of the necessary
+	  ioctl calls.
+
+2007-10-16 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Incorporated patch from Yaakov Selkowitz to handle man page
+	  copying when build dir is not the same as source dir.
+	  (Sourceforge tracker #1814253)
+
+
 2007-09-26 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Added second ioctl call in Linux version of find_file_size

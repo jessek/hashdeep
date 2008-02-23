@@ -1,6 +1,6 @@
 AC_PREREQ(2.57)
 
-AC_INIT([MD5DEEP],[2.0],[md5deep@jessekornblum.com])
+AC_INIT([MD5DEEP],[2.0.1-001],[md5deep@jessekornblum.com])
 AM_INIT_AUTOMAKE
 #AM_MAINTAINER_MODE
 

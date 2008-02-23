@@ -12,7 +12,7 @@
  *
  */
 
-/* $Id: helpers.c,v 1.18 2007/09/26 20:27:54 jessekornblum Exp $ */
+/* $Id: helpers.c,v 1.20 2007/10/28 17:03:27 jessekornblum Exp $ */
 
 #include "main.h"
 
@@ -180,19 +180,31 @@ off_t find_file_size(FILE *f)
 #ifdef HAVE_SYS_MOUNT_H
   if (S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode))
   {
+#if defined(_IO) && defined(BLKGETSIZE)
     if (ioctl(fd, BLKGETSIZE, &num_sectors))
     {
       print_debug("%s: ioctl BLKGETSIZE failed: %s", 
 		  __progname, strerror(errno));
       return 0;
     }
+#else
+    // If we can't run the ioctl call, we can't do anything here
+    return 0;
+#endif // ifdefined _IO and BLKGETSIZE
 
+
+#if defined(_IO) && defined(BLKSSZGET)
     if (ioctl(fd, BLKSSZGET, &sector_size))
     {
       print_debug("%s: ioctl BLKSSZGET failed: %s",
 		  __progname, strerror(errno));		  
       return 0;
     }
+    if (0 == sector_size)
+      sector_size = 512;
+#else
+    sector_size = 512;
+#endif  // ifdef _IO and BLKSSZGET
 
     return (num_sectors * sector_size);
   }
