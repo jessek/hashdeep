@@ -52,6 +52,8 @@
    Remember that numbers are not necessary for all file types! */ 
 #define SUPPORT_PLAIN
 #define SUPPORT_BSD
+#define SUPPORT_MD5DEEP_SIZE
+
 #undef SUPPORT_HASHKEEPER 
 #undef SUPPORT_ILOOK
 #undef SUPPORT_NSRL_15

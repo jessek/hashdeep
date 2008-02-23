@@ -42,7 +42,7 @@ int translateChar(char c)
 uint64_t translate(char *n) 
 { 
   int count;
-  unsigned long total = 0, power = 1;
+  uint64_t total = 0, power = 1;
   for (count = HASH_SIG_FIGS - 1 ; count >= 0 ; count--) {
     total += translateChar(n[count]) * power;
     power *= 16;
@@ -123,7 +123,7 @@ int hashTableAdd(hashTable *knownHashes, char *n, char *fn)
 
 int hashTableContains(hashTable *knownHashes, char *n, char *known) 
 {
-  unsigned long key = translate(n);
+  uint64_t key = translate(n);
   hashNode *temp;
 
   if ((*knownHashes)[key] == NULL)
@@ -187,7 +187,7 @@ void hashTableEvaluate(hashTable *knownHashes) {
 
   hashNode *ptr;
   int temp = 0;
-  unsigned long count, depth[10];
+  uint64_t count, depth[10];
 
   for (count = 0 ; count < 10 ; count++) {
     depth[count] = 0;

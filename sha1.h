@@ -55,6 +55,7 @@
    Remember that numbers are not necessary for all file types! */ 
 #define SUPPORT_PLAIN
 #define SUPPORT_BSD
+#define SUPPORT_MD5DEEP_SIZE
 
 /* Hashkeeper and iLook only have MD5 hashes */
 #undef SUPPORT_HASHKEEPER
@@ -67,15 +68,15 @@
 /* After this is the algorithm itself. You shouldn't change these */
 
 struct SHA1_Context{
-  unsigned long state[5];
-  unsigned long count[2];
+  uint32_t state[5];
+  uint32_t count[2];
   unsigned char buffer[64];
 };
 
 typedef struct SHA1_Context SHA1_CTX;
 
 
-void SHA1Transform(unsigned long state[5], unsigned char buffer[64]);
+void SHA1Transform(uint32_t state[5], unsigned char buffer[64]);
 void SHA1Init(SHA1_CTX* context);
 void SHA1Update(SHA1_CTX* context, unsigned char* data, unsigned int len);
 void SHA1Final(unsigned char digest[20], SHA1_CTX* context);

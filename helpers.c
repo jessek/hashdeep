@@ -20,6 +20,7 @@ void make_newline(uint64_t mode)
     printf("%c", 0);
   else
     printf("%s", NEWLINE);
+  fflush(stdout);
 }
 
 

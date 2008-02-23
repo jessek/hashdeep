@@ -16,8 +16,8 @@
 
 void remove_double_slash(char *fn)
 {
-  int pos;
-  for (pos = 0 ; pos < strlen(fn) ; pos++)
+  size_t pos, max = strlen(fn);
+  for (pos = 0 ; pos < max ; pos++)
   {
    if (fn[pos] == DIR_SEPARATOR && fn[pos+1] == DIR_SEPARATOR)
    {

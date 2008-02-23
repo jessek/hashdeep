@@ -56,6 +56,7 @@
 #define SUPPORT_ILOOK
 #define SUPPORT_NSRL_15      6
 #define SUPPORT_NSRL_20      1
+#define SUPPORT_MD5DEEP_SIZE
 
 /* -------------------------------------------------------------- */
 /* After this is the algorithm itself. You shouldn't change these */

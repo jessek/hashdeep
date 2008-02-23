@@ -1,10 +1,10 @@
 
 CC       = gcc
-CFLAGS   = -Wall -O3
+CFLAGS   = -Wall -W -O3
 LINK_OPT = -lm
 
 NAME     = md5deep
-VERSION  = 1.10
+VERSION  = 1.11
 
 # Where we get installed
 PREFIX = /usr/local
@@ -14,7 +14,8 @@ PREFIX = /usr/local
 # The values below are used by the developer on the test platforms
 
 # On OS X:
-CR_BASE = /Users/jessekornblum/bin/cross-tools/i386-mingw32msvc/bin
+CR_BASE = /usr/local/mingw32/mingw32/bin
+
 
 # On Linux:
 #CR_BASE = /home/jessek/cross-tools/i386-mingw32msvc/bin

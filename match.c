@@ -23,6 +23,7 @@ int input_not_matched = FALSE;
 int file_type_without_header(int file_type)
 {
   return (file_type == TYPE_PLAIN ||
+	  file_type == TYPE_MD5DEEP_SIZE || 
 	  file_type == TYPE_BSD);
 }
 

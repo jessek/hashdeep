@@ -14,6 +14,8 @@
 
 #include "md5deep.h"
 
+uint32_t BLOCK_SIZE;
+
 #ifndef HASH_ALGORITHM
 #error No hash algorithm defined! See algorithms.h
 #endif
@@ -131,7 +133,7 @@ int compute_hash(uint64_t mode, hash_info *h, HASH_CONTEXT *md)
 {
   time_t start_time,current_time,last_time = 0;
   uint64_t current_read;
-  unsigned char buffer[BUFSIZ];
+  unsigned char buffer[BLOCK_SIZE];
 
   if (M_ESTIMATE(mode))
   {
@@ -142,9 +144,9 @@ int compute_hash(uint64_t mode, hash_info *h, HASH_CONTEXT *md)
   while (TRUE) 
   {    
     /* clear the buffer in case we hit an error and need to pad the hash */
-    memset(buffer,0,BUFSIZ);
+    memset(buffer,0,BLOCK_SIZE);
     
-    current_read = fread(buffer, 1, BUFSIZ, h->handle);
+    current_read = fread(buffer, 1, BLOCK_SIZE, h->handle);
 
     /* If an error occured, display a message but still add this block */
     if (ferror(h->handle))
@@ -156,8 +158,8 @@ int compute_hash(uint64_t mode, hash_info *h, HASH_CONTEXT *md)
       if (fatal_error())
 	return FALSE;
 
-      HASH_Update(md, buffer, BUFSIZ);
-      h->bytes_read += BUFSIZ;
+      HASH_Update(md, buffer, BLOCK_SIZE);
+      h->bytes_read += BLOCK_SIZE;
 
       clearerr(h->handle);
       
@@ -167,7 +169,7 @@ int compute_hash(uint64_t mode, hash_info *h, HASH_CONTEXT *md)
     } 
     else
     {
-      /* If we hit the end of the file, we read less than BUFSIZ bytes
+      /* If we hit the end of the file, we read less than BLOCK_SIZE bytes
          and must reflect that in how we update the hash. */
       HASH_Update(md, buffer, current_read);
       h->bytes_read += current_read;
@@ -182,6 +184,10 @@ int compute_hash(uint64_t mode, hash_info *h, HASH_CONTEXT *md)
 
       return TRUE;
     }
+
+    // In piecewise mode we only hash one block at a time
+    if (M_PIECEWISE(mode))
+      return TRUE;
     
     if (M_ESTIMATE(mode)) 
     {
@@ -286,42 +292,76 @@ int display_hash(uint64_t mode, hash_info *h)
 
 int hash(uint64_t mode, hash_info *h)
 {
-  int status = FALSE;
+  int done = FALSE, status = FALSE;
   HASH_CONTEXT md;
   unsigned char sum[HASH_LENGTH];
   static char result[2 * HASH_LENGTH + 1];
   static char hex[] = "0123456789abcdef";
   int i;
+  char *tmp_name = NULL;
 
   h->bytes_read = 0;
-  h->result = NULL;
-  HASH_Init(&md);
-
-  if (!compute_hash(mode,h,&md))
-    return TRUE;
-
-  HASH_Final(sum, &md);  
-  for (i = 0; i < HASH_LENGTH; ++i) {
-    result[2 * i] = hex[(sum[i] >> 4) & 0xf];
-    result[2 * i + 1] = hex[sum[i] & 0xf];
-  }
   
-  h->result = strdup(result);
-  if (h->result == NULL)
+  BLOCK_SIZE = 8192;
+
+  if (M_PIECEWISE(mode))
   {
-    print_error(mode,h->full_name,"Out of memory");
-    return TRUE;
-  }
-  
-  /* Under not matched mode, we only display those known hashes that
-     didn't match any input files. Thus, we don't display anything now.
-     The lookup is to mark those known hashes that we do encounter */
-  if (M_NOT_MATCHED(mode))
-    is_known_hash(h->result,NULL);
-  else
-    status = display_hash(mode,h);
+    BLOCK_SIZE = piecewise_block;
 
-  free(h->result);
+    // We copy out the original file name and saved it in tmp_name
+    tmp_name = h->full_name;
+    h->full_name = (char *)malloc(sizeof(char) * PATH_MAX);
+    if (NULL == h->full_name)
+      return TRUE;
+  }
+
+  while (!done)
+  {
+    h->result = NULL;
+    HASH_Init(&md);
+    
+    if (M_PIECEWISE(mode))
+      snprintf(h->full_name,PATH_MAX,"%s offset %"PRIu64"-%"PRIu64,
+	       tmp_name, h->bytes_read, h->bytes_read + BLOCK_SIZE);
+
+    if (!compute_hash(mode,h,&md))
+      return TRUE;
+
+    HASH_Final(sum, &md);  
+    for (i = 0; i < HASH_LENGTH; ++i) 
+    {
+      result[2 * i] = hex[(sum[i] >> 4) & 0xf];
+      result[2 * i + 1] = hex[sum[i] & 0xf];
+    }
+  
+    h->result = strdup(result);
+    if (h->result == NULL)
+    {
+      print_error(mode,h->full_name,"Out of memory");
+      return TRUE;
+    }
+  
+    /* Under not matched mode, we only display those known hashes that
+       didn't match any input files. Thus, we don't display anything now.
+       The lookup is to mark those known hashes that we do encounter */
+    if (M_NOT_MATCHED(mode))
+      is_known_hash(h->result,NULL);
+    else
+      status = display_hash(mode,h);
+
+    free(h->result);
+    if (M_PIECEWISE(mode))
+      done = feof(h->handle);
+    else
+      done = TRUE;
+  }
+
+  if (M_PIECEWISE(mode))
+  {
+    free(h->full_name);
+    h->full_name = tmp_name;
+  }
+
   return status;
 }
 
@@ -333,7 +373,7 @@ int hash(uint64_t mode, hash_info *h)
    will not work properly for a string that ends in a DIR_SEPARATOR */
 int my_basename(char *s)
 {
-  unsigned long pos = strlen(s);
+  size_t pos = strlen(s);
   if (0 == pos || pos > PATH_MAX)
     return TRUE;
   

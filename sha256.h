@@ -57,11 +57,13 @@
 /* Although there is no sha256 program on BSD at this time, there's
    no reason why these hashes can't be stored in BSD format. */
 #define SUPPORT_BSD
+#define SUPPORT_MD5DEEP_SIZE
 
 #undef SUPPORT_HASHKEEPER   
 #undef SUPPORT_ILOOK
 #undef SUPPORT_NSRL_15      
 #undef SUPPORT_NSRL_20      
+
 
 /* -------------------------------------------------------------- */
 /* After this is the algorithm itself. You shouldn't change these */

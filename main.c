@@ -36,6 +36,7 @@ void usage(void)
 	  CMD_PROMPT,__progname,NEWLINE,NEWLINE);
 
   fprintf (stderr,"See the man page or README.txt file for the full list of options%s", NEWLINE);
+  fprintf(stderr,"-p  - piecewise mode. Files are broken into blocks for hashing%s", NEWLINE);
   fprintf(stderr,"-r  - recursive mode. All subdirectories are traversed%s",NEWLINE);
   fprintf(stderr,"-e  - compute estimated time remaining for each file%s",
 	  NEWLINE);
@@ -112,6 +113,9 @@ void sanity_check(uint64_t mode, int condition, char *msg)
 void check_flags_okay(uint64_t mode, int hashes_loaded)
 {
   sanity_check(mode,
+	       (M_PIECEWISE(mode) && M_ESTIMATE(mode)),
+	       "Piecewise hashing and time estimation cannot be combined");
+  sanity_check(mode,
 	       ((M_MATCH(mode) || M_MATCHNEG(mode)) && !hashes_loaded),
 	       "Unable to load any matching files");
 
@@ -146,8 +150,13 @@ void process_command_line(int argc, char **argv, uint64_t *mode) {
 
   int i, hashes_loaded = FALSE;
   
-  while ((i=getopt(argc,argv,"M:X:x:m:u:o:A:a:nwzserhvV0lbkq")) != -1) { 
+  while ((i=getopt(argc,argv,"M:X:x:m:u:o:A:a:nwzsp:erhvV0lbkq")) != -1) { 
     switch (i) {
+
+    case 'p':
+      *mode |= mode_piecewise;
+      piecewise_block = atoll(optarg);
+      break;
 
     case 'q':
       *mode |= mode_quiet;

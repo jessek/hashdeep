@@ -118,6 +118,30 @@ int find_plain_hash(char *buf, char *known_fn)
   return (valid_hash(buf));
 }  
 
+int find_md5deep_size_hash(char *buf, char *known_fn)
+{
+  size_t pos; 
+
+  if (NULL == buf)
+    return FALSE;
+
+  // Extra 12 chars for size and space
+  if (strlen(buf) < HASH_STRING_LENGTH + 12)
+    return FALSE;
+  
+  // Check for size. Spaces are legal here (e.g. "      20")
+  for (pos = 0 ; pos < 10 ; ++pos)
+    if (!(isdigit(buf[pos]) || 0x20 == buf[pos]))
+      return FALSE;
+  
+  if (buf[10] != 0x20 && buf[11] != 0x20)
+    return FALSE;
+
+  shift_string(buf,0,12);;
+
+  return find_plain_hash(buf,known_fn);
+}
+
 
 int find_bsd_hash(char *buf, char *fn)
 {
@@ -261,6 +285,12 @@ int hash_file_type(FILE *f)
       return TYPE_BSD;
     }
 
+    if (find_md5deep_size_hash(buf,known_fn))
+    {
+      free(known_fn);
+      return TYPE_MD5DEEP_SIZE;
+    }
+
     if (find_plain_hash(buf,known_fn))
     {
       free(known_fn);
@@ -313,6 +343,12 @@ int find_hash_in_line(char *buf, int fileType, char *fn)
   case TYPE_ILOOK:
     return (find_ilook_hash(buf,fn));
 #endif
+
+#ifdef SUPPORT_MD5DEEP_SIZE
+  case TYPE_MD5DEEP_SIZE:
+    return (find_md5deep_size_hash(buf,fn));
+#endif
+
   }
 
   return FALSE;

@@ -1,4 +1,17 @@
 
+Version 1.11 - 31 Mar 2006
+
+- Added piecewise mode -p
+- Added support for using md5deep output while file sizes (-z mode) in
+    matching mode.
+- Added flush to output after newline generation in helpers.c 
+- Fixed SHA-1 to work on 64-bit platforms (changed unsigned long to uin32_t)
+- For good measure, eliminated a few other unsigned long references
+    throughout the source code
+- Added -W to the compiler flags to catch lots of other little bugs,
+    many little fixes. Mostly eliminating comparisons between signed and
+    unsigned. Some warnings, especially "unused paramter" are ok.
+
 Version 1.10 - 2 Feb 2006
 
 - Fixed Tiger hashes being displayed in big endian instead of little endian

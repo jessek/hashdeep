@@ -61,8 +61,13 @@
 #define PRIu64 "llu"
 #endif
 
-#define MAX(A,B)             (A>B)?A:B
-#define STRINGS_EQUAL(A,B)   (!strncasecmp(A,B,MAX(strlen(A),strlen(B))))
+#ifdef BUFSIZ
+#undef BUFSIZ
+#endif
+#define BUFSIZ 512
+
+#define _MAX(A,B)             (A>B)?A:B
+#define STRINGS_EQUAL(A,B)   (!strncasecmp(A,B,_MAX(strlen(A),strlen(B))))
 
 
 /* MD5 and SHA-1 setup require knowing if we're big or little endian */
@@ -114,6 +119,9 @@
 /* LINE_LENGTH is different between UNIX and WIN32 and is defined below */
 #define MAX_FILENAME_LENGTH   LINE_LENGTH - 41
 
+// Global variables are bad. This should be wrapped into the state in v2.0
+uint32_t piecewise_block;
+
 /* These are the types of files that we can match against */
 #define TYPE_PLAIN        0
 #define TYPE_BSD          1
@@ -121,6 +129,7 @@
 #define TYPE_NSRL_15      3
 #define TYPE_NSRL_20      4
 #define TYPE_ILOOK        5
+#define TYPE_MD5DEEP_SIZE 6
 #define TYPE_UNKNOWN    254
 
 
@@ -139,8 +148,9 @@
 #define mode_asterisk     1<<11
 #define mode_not_matched  1<<12
 #define mode_quiet        1<<13
+#define mode_piecewise    1<<14
 
-/* Modes 14 to 22 and 32 to 63 are reserved for future use. 
+/* Modes 15 to 22 and 32 to 63 are reserved for future use. 
    (Yes, I could move the expert file modes, below, up to the higher
    ranger of numbers, but it's working now, and so why change anything?
    The next person who wants to add a lot of modes can have the fun.) */
@@ -181,6 +191,7 @@
 #define M_ASTERISK(A)      (A & mode_asterisk)
 #define M_NOT_MATCHED(A)   (A & mode_not_matched)
 #define M_QUIET(A)         (A & mode_quiet)
+#define M_PIECEWISE(A)     (A & mode_piecewise)
 
 #define M_EXPERT(A)        (A & mode_expert)
 #define M_REGULAR(A)       (A & mode_regular)
@@ -259,13 +270,6 @@ off_t ftello(FILE *stream);
 "                                                                        "
 
 
-/* By default BUFSIZ is 512 on Windows. We make it 8192 so that it's 
-   the same as UNIX. While that shouldn't mean anything in terms of
-   computing the hash values, it should speed us up a little bit. */
-#ifdef BUFSIZ
-#undef BUFSIZ
-#endif
-#define BUFSIZ 8192
 
 #define ftello   ftell
 #define fseeko   fseek

@@ -43,6 +43,8 @@
    no reason why these hashes can't be stored in BSD format. */
 #define SUPPORT_BSD
 
+#define SUPPORT_MD5DEEP_SIZE
+
 #undef SUPPORT_HASHKEEPER   
 #undef SUPPORT_ILOOK
 #undef SUPPORT_NSRL_15      

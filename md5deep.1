@@ -1,4 +1,4 @@
-.TH MD5DEEP "1" "v1.10 \- 2 Feb 2006" "AFOSI" "United States Air Force"
+.TH MD5DEEP "1" "v1.10.1 \- 31 Mar 2006" "AFOSI" "United States Air Force"
 
 .SH NAME
 md5deep \- Compute MD5 message digests
@@ -17,7 +17,7 @@ whirlpooldeep \- Compute Whirlpool message digests
 .br
 .B md5deep
 [\-m|\-M|\-x|\-X <file>]  [-a|-A <hash>]
-[\-nwzres0lbkq] [\-o <fbcplsd>] [\fBFILES\fR]
+[\-p <size>] [\-nwzres0lbkq] [\-o <fbcplsd>] [\fBFILES\fR]
 
 .SH DESCRIPTION
 .PP
@@ -31,6 +31,11 @@ Errors are reported to standard error. If no FILES are specified,
 reads from standard input.
 
 .TP
+\fB\-p <size> \fR
+Piecewise mode. Breaks files into chunks of size bytes before hashing. 
+This mode cannot be used with the \-e mode.
+
+.TP
 \fB\-r\fR
 Enables recursive mode. All subdirectories are traversed. Please note
 that recursive mode cannot be used to examine all files of a given 
@@ -41,7 +46,8 @@ all files in \fIdirectories\fR that end in .txt.
 \fB\-e\fR
 Displays a progress indicator and estimate of time
 remaining for each file being processed. Time estimates for files
-larger than 4GB are not available on Windows.
+larger than 4GB are not available on Windows. This mode may not be
+used with th \-p mode.
 
 .TP
 \fB\-m\fR <file>
