@@ -1,4 +1,3 @@
-
 /* MD5DEEP - main.c
  *
  * By Jesse Kornblum
@@ -12,9 +11,13 @@
  *
  */
 
+// $Id: main.c,v 1.16 2007/09/26 20:27:54 jessekornblum Exp $
+
 #include "main.h"
 
+
 #ifdef _WIN32 
+// This can't go in main.h or we get multiple definitions of it
 /* Allows us to open standard input in binary mode by default 
    See http://gnuwin32.sourceforge.net/compile.html for more */
 int _CRT_fmode = _O_BINARY;
@@ -32,7 +35,7 @@ static void try_msg(void)
 static void usage(void) 
 {
   print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
-  print_status("%s %s [OPTION]... [FILES]",CMD_PROMPT,__progname);
+  print_status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,__progname);
 
   print_status("See the man page or README.txt file for the full list of options");
   print_status("-p  - piecewise mode. Files are broken into blocks for hashing");
@@ -182,13 +185,13 @@ void process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"M:X:x:m:u:o:A:a:nwzsSp:erhvV0lbkq")) != -1) { 
+  while ((i=getopt(argc,argv,"M:X:x:m:o:A:a:nwzsSp:erhvV0lbkqU")) != -1) { 
     switch (i) {
 
     case 'p':
       s->mode |= mode_piecewise;
-      s->piecewise_block = find_block_size(s, optarg);
-      if (0 == s->piecewise_block)
+      s->piecewise_size = find_block_size(s, optarg);
+      if (0 == s->piecewise_size)
       {
 	print_error(s,"%s: Piecewise blocks of zero bytes are impossible", 
 		    __progname);
@@ -197,9 +200,15 @@ void process_command_line(state *s, int argc, char **argv)
 
       break;
 
-    case 'q': s->mode |= mode_quiet; break;
-    case 'n': s->mode |= mode_not_matched; break;
-    case 'w': s->mode |= mode_which; break;
+    case 'q': 
+      s->mode |= mode_quiet; 
+      break;
+    case 'n': 
+      s->mode |= mode_not_matched; 
+      break;
+    case 'w': 
+      s->mode |= mode_which; 
+      break;
 
     case 'a':
       s->mode |= mode_match;
@@ -215,8 +224,13 @@ void process_command_line(state *s, int argc, char **argv)
       s->hashes_loaded = TRUE;
       break;
       
-    case 'l': s->mode |= mode_relative; break;
-    case 'b': s->mode |= mode_barename; break;
+    case 'l': 
+      s->mode |= mode_relative; 
+      break;
+
+    case 'b': 
+      s->mode |= mode_barename; 
+      break;
 
     case 'o': 
       s->mode |= mode_expert; 
@@ -241,9 +255,13 @@ void process_command_line(state *s, int argc, char **argv)
 	s->hashes_loaded = TRUE;
       break;
 
-    case 'z': s->mode |= mode_display_size; break;
+    case 'z': 
+      s->mode |= mode_display_size; 
+      break;
 
-    case '0': s-> mode |= mode_zero; break;
+    case '0': 
+      s->mode |= mode_zero; 
+      break;
 
     case 'S': 
       s->mode |= mode_warn_only;
@@ -279,6 +297,14 @@ void process_command_line(state *s, int argc, char **argv)
       print_status(COPYRIGHT);
       exit (STATUS_OK);
 
+    case 'U':
+#ifdef WIN32
+      MessageBox(NULL,_TEXT(MM_STR),TEXT("md5deep"),MB_OK);
+#else
+      print_status("%s", MM_STR);
+#endif
+      exit (STATUS_OK);
+
     default:
       try_msg();
       exit (STATUS_USER_ERROR);
@@ -289,77 +315,106 @@ void process_command_line(state *s, int argc, char **argv)
 }
 
 
-static int is_absolute_path(char *fn)
+static int is_absolute_path(TCHAR *fn)
 {
+  if (NULL == fn)
+    internal_error("Unknown error in is_absolute_path");
+  
 #ifdef _WIN32
-  /* Windows has so many ways to make absolute paths (UNC, C:\, etc)
-     that it's hard to keep track. It doesn't hurt us
-     to call realpath as there are no symbolic links to lose. */
   return FALSE;
-#else
-  return (fn[0] == DIR_SEPARATOR);
 #endif
+
+  return (DIR_SEPARATOR == fn[0]);
 }
 
 
-static void generate_filename(state *s, char **argv, char *fn, char *cwd)
+static void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input)
 {
-  if ((s->mode & mode_relative) || is_absolute_path(*argv))
-    strncpy(fn,*argv,PATH_MAX);	
+  if (NULL == fn || NULL == input)
+    internal_error("Error calling generate_filename");
+
+  if ((s->mode & mode_relative) || is_absolute_path(input))
+    _tcsncpy(fn,input,PATH_MAX);
   else
   {
     /* Windows systems don't have symbolic links, so we don't
-       have to worry about carefully preserving the paths 
+       have to worry about carefully preserving the paths
        they follow. Just use the system command to resolve the paths */   
 #ifdef _WIN32
-    realpath(*argv,fn);
+    _wfullpath(fn,input,PATH_MAX);
 #else	  
-    if (cwd == NULL)
+    if (NULL == cwd)
       /* If we can't get the current working directory, we're not
 	 going to be able to build the relative path to this file anyway.
-	 So we just call realpath and make the best of things */
-      realpath(*argv,fn);
+         So we just call realpath and make the best of things */
+      realpath(input,fn);
     else
-      snprintf(fn,PATH_MAX,"%s%c%s",cwd,DIR_SEPARATOR,*argv);
-#endif   
+      snprintf(fn,PATH_MAX,"%s%c%s",cwd,DIR_SEPARATOR,input);
+#endif
   }
 }
 
 
-#define MD5DEEP_ALLOC(VAR,SIZE) \
-VAR = (char *)malloc(SIZE); if (NULL == VAR) return TRUE;
-
 static int initialize_state(state *s)
 {
+  /* We use PATH_MAX as a handy constant for working with strings
+     It may be overkill, but it keeps us out of trouble */
+  MD5DEEP_ALLOC(TCHAR,s->msg,PATH_MAX);
+  MD5DEEP_ALLOC(TCHAR,s->full_name,PATH_MAX);
+  MD5DEEP_ALLOC(TCHAR,s->short_name,PATH_MAX);
+
+  MD5DEEP_ALLOC(unsigned char,s->hash_sum,PATH_MAX);
+  MD5DEEP_ALLOC(char,s->hash_result,PATH_MAX);
+  MD5DEEP_ALLOC(char,s->known_fn,PATH_MAX);
+
   s->mode            = mode_none;
   s->hashes_loaded   = FALSE;
   s->return_value    = STATUS_OK;
-  s->piecewise_block = 0;
-  
-  // We use PATH_MAX as a handy constant for working with strings
-  // It may be overkill, but it keeps us out of trouble
-  MD5DEEP_ALLOC(s->msg,PATH_MAX);
-  MD5DEEP_ALLOC(s->full_name,PATH_MAX);
-  MD5DEEP_ALLOC(s->short_name,PATH_MAX);
-  MD5DEEP_ALLOC(s->result,PATH_MAX);
-  
+  s->piecewise_size  = 0;
+  s->block_size      = MD5DEEP_IDEAL_BLOCK_SIZE;
+
+  if (setup_hashing_algorithm(s))
+    return TRUE;
+
   return FALSE;
 }
 
 
+#ifdef _WIN32
+static int prepare_windows_command_line(state *s)
+{
+  int argc;
+  TCHAR **argv;
+
+  argv = CommandLineToArgvW(GetCommandLineW(),&argc);
+  
+  s->argc = argc;
+  s->argv = argv;
+
+  return FALSE;
+}
+#endif
+
+
 int main(int argc, char **argv) 
 {
-  char *fn, *cwd;
+  TCHAR *fn, *cwd;
   state *s;
+  int count, status = STATUS_OK;
+
+  /* Because the main() function can handle wchar_t arguments on Win32,
+     we need a way to reference those values. Thus we make a duplciate
+     of the argc and argv values. */ 
 
 #ifndef __GLIBC__
   __progname  = basename(argv[0]);
 #endif
 
+  
   s = (state *)malloc(sizeof(state));
-  // We can't use fatal_error because it requires a valid state
   if (NULL == s)
   {
+    // We can't use fatal_error because it requires a valid state
     print_status("%s: Unable to allocate state variable", __progname);
     return STATUS_INTERNAL_ERROR;
   }
@@ -372,23 +427,44 @@ int main(int argc, char **argv)
 
   process_command_line(s,argc,argv);
 
+#ifdef _WIN32
+  if (prepare_windows_command_line(s))
+    fatal_error(s,"%s: Unable to process command line arguments", __progname);
+#else
+  s->argc = argc;
+  s->argv = argv;
+#endif
+
   /* Anything left on the command line at this point is a file
      or directory we're supposed to process. If there's nothing
      specified, we should tackle standard input */
-  argv += optind;
-
-  if (*argv == NULL)
+  if (optind == argc)
     hash_stdin(s);
   else
   {
-    fn  = (char *)malloc(sizeof(char)* PATH_MAX);
-    cwd = (char *)malloc(sizeof(char)* PATH_MAX);
-    cwd = getcwd(cwd,PATH_MAX);
-    while (*argv != NULL)
+    MD5DEEP_ALLOC(TCHAR,fn,PATH_MAX);
+    MD5DEEP_ALLOC(TCHAR,cwd,PATH_MAX);
+
+    cwd = _tgetcwd(cwd,PATH_MAX);
+    if (NULL == cwd)
+      fatal_error(s,"%s: %s", __progname, strerror(errno));
+
+    count = optind;
+
+    while (count < s->argc)
     {  
-      generate_filename(s,argv,fn,cwd);
-      process(s,fn);
-      ++argv;
+      generate_filename(s,fn,cwd,s->argv[count]);
+
+#ifdef _WIN32
+      status = process_win32(s,fn);
+#else
+      status = process_normal(s,fn);
+#endif
+
+      //      if (status != STATUS_OK)
+      //	return status;
+
+      ++count;
     }
 
     free(fn);

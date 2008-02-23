@@ -12,7 +12,32 @@
  *
  */
 
+/* $Id: sha1.c,v 1.6 2007/09/23 01:54:26 jessekornblum Exp $ */
+
 #include "main.h"
+#include "sha1.h"
+
+int setup_hashing_algorithm(state *s)
+{
+  s->hash_length        = 20;
+  s->hash_init          = hash_init_sha1;
+  s->hash_update        = hash_update_sha1;
+  s->hash_finalize      = hash_final_sha1;
+  
+  s->h_plain = s->h_bsd = s->h_md5deep_size = 1;      
+  s->h_ilook = s->h_hashkeeper = 0;
+  s->h_nsrl15 = 1;
+  s->h_nsrl20 = 1;
+  s->h_encase = 0;
+  
+  s->hash_context = (context_sha1_t *)malloc(sizeof(context_sha1_t));
+  if (NULL == s->hash_context)
+    return TRUE;
+  
+  return FALSE;
+}
+
+
 
 /* This implementation of SHA1-1 was written by 
    Steve Reid <steve@edmweb.com> and was included in this program on 
@@ -32,7 +57,7 @@ A million repetitions of "a"
 
 /* blk0() and blk() perform the initial expand. */
 /* I got the idea of expanding during the round function from SSLeay */
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 #define blk0(i) (block->l[i] = (rol(block->l[i],24)&0xFF00FF00) \
     |(rol(block->l[i],8)&0x00FF00FF))
 #else
@@ -47,6 +72,26 @@ A million repetitions of "a"
 #define R2(v,w,x,y,z,i) z+=(w^x^y)+blk(i)+0x6ED9EBA1+rol(v,5);w=rol(w,30);
 #define R3(v,w,x,y,z,i) z+=(((w|x)&y)|(w&x))+blk(i)+0x8F1BBCDC+rol(v,5);w=rol(w,30);
 #define R4(v,w,x,y,z,i) z+=(w^x^y)+blk(i)+0xCA62C1D6+rol(v,5);w=rol(w,30);
+
+
+int hash_init_sha1(state *s)
+{
+  SHA1Init(s->hash_context);
+  return FALSE;
+}
+
+int hash_update_sha1(state *s, unsigned char *buf, uint64_t len)
+{
+  SHA1Update(s->hash_context, buf, len);
+  return FALSE;
+}
+
+int hash_final_sha1(state *s, unsigned char *digest)
+{
+  SHA1Final(digest,s->hash_context);
+  return FALSE;
+}
+
 
 
 /* Hash a single 512-bit block. This is the core of the algorithm. */
@@ -119,15 +164,19 @@ void SHA1Init(SHA1_CTX* context)
 
 
 /* Run your data through this. */
-
-void SHA1Update(SHA1_CTX* context, unsigned char* data, unsigned int len)
+void SHA1Update(SHA1_CTX* context, unsigned char * data, unsigned int len)
 {
   unsigned int i, j;
 
   j = (context->count[0] >> 3) & 63;
-  if ((context->count[0] += len << 3) < (len << 3)) context->count[1]++;
+
+  if ((context->count[0] += len << 3) < (len << 3)) 
+    context->count[1]++;
+
   context->count[1] += (len >> 29);
-  if ((j + len) > 63) {
+
+  if ((j + len) > 63) 
+  {
     memcpy(&context->buffer[j], data, (i = 64-j));
     SHA1Transform(context->state, context->buffer);
     for ( ; i + 63 < len; i += 64) {

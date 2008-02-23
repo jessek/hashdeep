@@ -12,6 +12,7 @@
  *
  */
 
+/* $Id: hashTable.h,v 1.8 2007/09/23 01:54:24 jessekornblum Exp $ */
 
 /* We keep all of the hash table manipulation functions here as an 
    abstraction barrier. They're not in main.h so that the main 
@@ -20,15 +21,18 @@
 #ifndef __HASHTABLE
 #define __HASHTABLE
 
-#include <ctype.h>
 
 /* The HASH_TABLE_SIZE must be more than 16 to the power of HASH_SIG_FIGS */
 #define HASH_SIG_FIGS           5
 #define HASH_TABLE_SIZE   1048577
 
+/* We're making the decision NOT to hold known filenames with Unicode
+   characters in their names. We can't print them anyway, so it's 
+   unlikely that we'll end up with them in files of known hashes. */
 typedef struct hashNode {
   int been_matched;
-  char *data, *filename;
+  char  *data;
+  char  *filename;
   struct hashNode *next;
 } hashNode;
 
@@ -37,33 +41,5 @@ typedef hashNode *hashTable[HASH_TABLE_SIZE + 1];
 #define HASHTABLE_OK            0
 #define HASHTABLE_INVALID_HASH  1
 #define HASHTABLE_OUT_OF_MEMORY 2
-
-
-
-/* --- Everything below this line is public --- */
-
-void hashTableInit(hashTable *knownHashes);
-
-/* Adds the string n to the hashTable, along with the filename fn.
-   Returns TRUE if an error occured (i.e. Out of memory) */
-int hashTableAdd(hashTable *knownHashes, char *n, char *fn);
-
-/* Returns TRUE if the hashTable contains the hash n and stores the
-   filename of the known hash in known. Returns FALSE and does not
-   alter known if the hashTable does not contain n. This function
-   assumes that fn has already been malloc'ed to hold at least 
-   PATH_MAX characters */
-int hashTableContains(hashTable *knownHashes, char *n, char *known);
-
-/* Find any hashes that have not been used. If there are any, and display
-   is TRUE, prints them to stdout. Regardless of display, then returns
-   TRUE. If there are no unused hashes, returns FALSE. */
-int hashTableDisplayNotMatched(hashTable *t, int display);
-
-/* This function is for debugging */
-void hashTableEvaluate(hashTable *knownHashes);
-
-
-
 
 #endif  /* #ifdef __HASHTABLE */

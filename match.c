@@ -12,6 +12,7 @@
  *
  */
 
+/* $Id: match.c,v 1.14 2007/09/23 01:54:25 jessekornblum Exp $ */
 
 #include "main.h"
 #include "hashTable.h"
@@ -37,6 +38,85 @@ void init_table(void)
   }
 }
   
+#define ENCASE_START_HASHES 0x480
+
+
+static int parse_encase_file(state *s, char *fn, FILE *handle)
+{
+  unsigned char *buffer;
+  char *result;
+  uint32_t count = 0;
+  
+  /* Each hash entry is 18 bytes. 16 bytes for the hash and 
+     two \0 characters at the end. We reserve 19 characters 
+     as fread will append an extra \0 to the string */  
+  MD5DEEP_ALLOC(unsigned char,buffer,19);
+  MD5DEEP_ALLOC(char,result,(s->hash_length * 2) + 1);
+
+  if (fseeko(handle,ENCASE_START_HASHES,SEEK_SET))
+  {
+    print_error(s,"%s: Unable to seek to start of hashes", fn);
+    return STATUS_USER_ERROR;
+  }
+        
+  while (!feof(handle))
+  {
+    if (18 != fread(buffer,sizeof(unsigned char),18,handle))
+    {
+      if (feof(handle))
+	continue;
+        
+      // Users expect the line numbers to start at one, not zero.
+      if ((!(s->mode & mode_silent)) || (s->mode & mode_warn_only))
+      {
+	print_error(s,"%s: No hash found in line %"PRIu32, fn, count + 1);
+	print_error(s,"%s: %s", fn, strerror(errno));
+	free(buffer);
+	free(result);
+	return STATUS_USER_ERROR;
+      }
+    }
+
+    ++count;        
+                
+    snprintf(result,(s->hash_length * 2) + 1,
+	 "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+	     buffer[0],
+	     buffer[1],                      
+	     buffer[2],
+	     buffer[3],
+	     buffer[4],                      
+	     buffer[5],
+	     buffer[6],
+	     buffer[7],                              
+	     buffer[8],                              
+	     buffer[9],
+	     buffer[10],                     
+	     buffer[11],                             
+	     buffer[12],                     
+	     buffer[13],     
+	     buffer[14],                     
+	     buffer[15]);
+
+    if (hashTableAdd(s,&knownHashes,result,fn))
+    {
+      print_error(s,"%s: %s: Out of memory at line %" PRIu32,
+		  __progname, fn, count);
+      return STATUS_INTERNAL_ERROR;
+    }
+  }
+
+  free(buffer);
+  free(result);
+  
+  if (s->expected_hashes != count)
+    print_error(s,
+		"%s: Expecting %"PRIu32" hashes, found %"PRIu32"\n", 
+		fn, s->expected_hashes, count);
+
+  return STATUS_OK;
+}
+
 
 
 int load_match_file(state *s, char *fn) 
@@ -44,24 +124,41 @@ int load_match_file(state *s, char *fn)
   uint64_t line_number = 0;
   char buf[MAX_STRING_LENGTH + 1];
   char *known_fn;
-  int file_type;
+  int file_type, status;
   FILE *f;
 
   /* We only need to initialize the table the first time through here.
      Otherwise, we'd erase all of the previous entries! */
   init_table();
 
-  if ((f = fopen(fn,"r")) == NULL) 
+  if ((f = fopen(fn,"rb")) == NULL) 
   {
     print_error(s,"%s: %s", fn,strerror(errno));
     return FALSE;
   }
 
-  file_type = hash_file_type(f);
+  file_type = hash_file_type(s,f);
   if (file_type == TYPE_UNKNOWN)
   {
     print_error(s,"%s: Unable to find any hashes in file, skipped.", fn);
+    fclose(f);
     return FALSE;
+  }
+
+  if (TYPE_ENCASE == file_type)
+  {
+    /* We can't use the normal file reading code which is based on
+       a one-line-at-a-time approach. Encase files are binary records */
+    status = parse_encase_file(s,fn,f);
+    fclose(f);
+    
+    switch (status)
+    {
+    case STATUS_OK: 
+    case STATUS_USER_ERROR:
+      return TRUE;
+    default: return FALSE;
+    }
   }
 
   /* We skip the first line in every file type except plain files. 
@@ -82,7 +179,7 @@ int load_match_file(state *s, char *fn)
     ++line_number;
     memset(known_fn,sizeof(char),PATH_MAX);
 
-    if (find_hash_in_line(buf,file_type,known_fn) != TRUE) 
+    if (find_hash_in_line(s,buf,file_type,known_fn) != TRUE) 
     {
       if ((!(s->mode & mode_silent)) || (s->mode & mode_warn_only))
       {
@@ -93,7 +190,7 @@ int load_match_file(state *s, char *fn)
     else 
     {
       // Invalid hashes are caught above
-      if (hashTableAdd(&knownHashes,buf,known_fn))
+      if (hashTableAdd(s,&knownHashes,buf,known_fn))
       {
 	print_error(s,"%s: %s: Out of memory at line %" PRIu64 "%s",
 		    __progname, fn, line_number, NEWLINE);
@@ -115,10 +212,11 @@ int load_match_file(state *s, char *fn)
 }
 
 
+
 void add_hash(state *s, char *h, char *fn)
 {
   init_table();
-  switch (hashTableAdd(&knownHashes,h,fn))
+  switch (hashTableAdd(s,&knownHashes,h,fn))
   {
   case HASHTABLE_OK: break;
   case HASHTABLE_OUT_OF_MEMORY: 

@@ -1,14 +1,10 @@
 
 /* MD5DEEP - tiger.c
  *
- * By Jesse Kornblum
- *
- *                SPECIAL COPYRIGHT NOTICE FOR THIS FILE
- *                         (and this file only)
- *
  * This code was adapted from GnuPG and is licensed under the
  * GNU General Public License as published by the Free Software Foundation;
  * either version 2 of the license, or (at your option) any later version.
+ * Please see COPYING for the license regarding this file
  *
  * Some functions have been changed or removed from the GnuPG version.
  * See comments for details.
@@ -19,7 +15,31 @@
  *
  */
 
+/* $Id: tiger.c,v 1.7 2007/09/23 01:54:29 jessekornblum Exp $ */
+
 #include "main.h"
+#include "tiger.h"
+
+int setup_hashing_algorithm(state *s)
+{
+  s->hash_length        = 24;
+  s->hash_init          = hash_init_tiger;
+  s->hash_update        = hash_update_tiger;
+  s->hash_finalize      = hash_final_tiger;
+  
+  s->h_plain = s->h_bsd = s->h_md5deep_size = 1;
+  s->h_ilook = 0;
+  s->h_hashkeeper = 0;
+  s->h_nsrl15 = 0;
+  s->h_nsrl20 = 0;
+  s->h_encase = 0;
+  
+  s->hash_context = (context_tiger_t *)malloc(sizeof(context_tiger_t));
+  if (NULL == s->hash_context)
+    return TRUE;
+  
+  return FALSE;
+}
 
 /* Test vectors from the NESSIE Project:
    Note that the original version of this code included test vectors
@@ -56,8 +76,28 @@
 */
 
 
+int hash_init_tiger(state *s)
+{
+  tiger_init(s->hash_context);
+  return FALSE;
+}
 
-static u64 sbox1[256] = {
+int hash_update_tiger(state *s, unsigned char *buf, uint64_t len)
+{
+  tiger_update(s->hash_context,buf,len);
+  return FALSE;
+}
+
+int hash_final_tiger(state *s, unsigned char *sum)
+{
+  tiger_final(sum,s->hash_context);
+  return FALSE;
+}
+
+
+
+
+static uint64_t sbox1[256] = {
     0x02aab17cf7e90c5eLL /*    0 */,	0xac424b03e243a8ecLL /*    1 */,
     0x72cd5be30dd5fcd3LL /*    2 */,	0x6d019b93f6f97f3aLL /*    3 */,
     0xcd9978ffd21f9193LL /*    4 */,	0x7573a1c9708029e2LL /*    5 */,
@@ -187,7 +227,7 @@ static u64 sbox1[256] = {
     0xffed95d8f1ea02a2LL /*  252 */,	0xe72b3bd61464d43dLL /*  253 */,
     0xa6300f170bdc4820LL /*  254 */,	0xebc18760ed78a77aLL /*  255 */
 };
-static u64 sbox2[256] = {
+static uint64_t sbox2[256] = {
     0xe6a6be5a05a12138LL /*  256 */,	0xb5a122a5b4f87c98LL /*  257 */,
     0x563c6089140b6990LL /*  258 */,	0x4c46cb2e391f5dd5LL /*  259 */,
     0xd932addbc9b79434LL /*  260 */,	0x08ea70e42015aff5LL /*  261 */,
@@ -317,7 +357,7 @@ static u64 sbox2[256] = {
     0x9010a91e84711ae9LL /*  508 */,	0x4df7f0b7b1498371LL /*  509 */,
     0xd62a2eabc0977179LL /*  510 */,	0x22fac097aa8d5c0eLL /*  511 */
 };
-static u64 sbox3[256] = {
+static uint64_t sbox3[256] = {
     0xf49fcc2ff1daf39bLL /*  512 */,	0x487fd5c66ff29281LL /*  513 */,
     0xe8a30667fcdca83fLL /*  514 */,	0x2c9b4be3d2fcce63LL /*  515 */,
     0xda3ff74b93fbbbc2LL /*  516 */,	0x2fa165d2fe70ba66LL /*  517 */,
@@ -447,7 +487,7 @@ static u64 sbox3[256] = {
     0x454c6fe9f2c0c1cdLL /*  764 */,	0x419cf6496412691cLL /*  765 */,
     0xd3dc3bef265b0f70LL /*  766 */,	0x6d0e60f5c3578a9eLL /*  767 */
 };
-static u64 sbox4[256] = {
+static uint64_t sbox4[256] = {
     0x5b0e608526323c55LL /*  768 */,	0x1a46c1a9fa1b59f5LL /*  769 */,
     0xa9e245a17c4c8ffaLL /*  770 */,	0x65ca5159db2955d7LL /*  771 */,
     0x05db0a76ce35afc2LL /*  772 */,	0x81eac77ea9113d45LL /*  773 */,
@@ -585,11 +625,11 @@ static u64 sbox4[256] = {
 /* I was getting compiler errors for "conflicting types for 'round'
    from including math.h, so I renamed this function tiger_round (jk) */
 static void 
-tiger_round( u64 *ra, u64 *rb, u64 *rc, u64 x, int mul )
+tiger_round( uint64_t *ra, uint64_t *rb, uint64_t *rc, uint64_t x, int mul )
 {
-    u64 a = *ra;
-    u64 b = *rb;
-    u64 c = *rc;
+    uint64_t a = *ra;
+    uint64_t b = *rb;
+    uint64_t c = *rc;
 
     c ^= x;
     a -=   sbox1[  c	    & 0xff ] ^ sbox2[ (c >> 16) & 0xff ]
@@ -605,11 +645,11 @@ tiger_round( u64 *ra, u64 *rb, u64 *rc, u64 x, int mul )
 
 
 static void
-pass( u64 *ra, u64 *rb, u64 *rc, u64 *x, int mul )
+pass( uint64_t *ra, uint64_t *rb, uint64_t *rc, uint64_t *x, int mul )
 {
-    u64 a = *ra;
-    u64 b = *rb;
-    u64 c = *rc;
+    uint64_t a = *ra;
+    uint64_t b = *rb;
+    uint64_t c = *rc;
 
     tiger_round( &a, &b, &c, x[0], mul );
     tiger_round( &b, &c, &a, x[1], mul );
@@ -627,7 +667,7 @@ pass( u64 *ra, u64 *rb, u64 *rc, u64 *x, int mul )
 
 
 static void
-key_schedule( u64 *x )
+key_schedule( uint64_t *x )
 {
     x[0] -= x[7] ^ 0xa5a5a5a5a5a5a5a5LL;
     x[1] ^= x[0];
@@ -652,16 +692,16 @@ key_schedule( u64 *x )
  * Transform the message DATA which consists of 512 bytes (8 words)
  */
 static void
-transform( TIGER_CONTEXT *hd, byte *data )
+transform( TIGER_CONTEXT *hd, unsigned char *data )
 {
-    u64 a,b,c,aa,bb,cc;
-    u64 x[8];
-  #ifdef BIG_ENDIAN_HOST
+    uint64_t a,b,c,aa,bb,cc;
+    uint64_t x[8];
+  #ifdef WORDS_BIGENDIAN
     #define MKWORD(d,n) \
-		(  ((u64)(d)[8*(n)+7]) << 56 | ((u64)(d)[8*(n)+6]) << 48  \
-		 | ((u64)(d)[8*(n)+5]) << 40 | ((u64)(d)[8*(n)+4]) << 32  \
-		 | ((u64)(d)[8*(n)+3]) << 24 | ((u64)(d)[8*(n)+2]) << 16  \
-		 | ((u64)(d)[8*(n)+1]) << 8  | ((u64)(d)[8*(n)	])	 )
+		(  ((uint64_t)(d)[8*(n)+7]) << 56 | ((uint64_t)(d)[8*(n)+6]) << 48  \
+		 | ((uint64_t)(d)[8*(n)+5]) << 40 | ((uint64_t)(d)[8*(n)+4]) << 32  \
+		 | ((uint64_t)(d)[8*(n)+3]) << 24 | ((uint64_t)(d)[8*(n)+2]) << 16  \
+		 | ((uint64_t)(d)[8*(n)+1]) << 8  | ((uint64_t)(d)[8*(n)	])	 )
     x[0] = MKWORD(data, 0);
     x[1] = MKWORD(data, 1);
     x[2] = MKWORD(data, 2);
@@ -710,7 +750,7 @@ tiger_init( TIGER_CONTEXT *hd )
 /* Update the message digest with the contents
  * of INBUF with length INLEN. */
 void
-tiger_update(TIGER_CONTEXT *hd, byte *inbuf, size_t inlen)
+tiger_update(TIGER_CONTEXT *hd, unsigned char *inbuf, size_t inlen)
 {
     if( hd->count == 64 ) { /* flush the buffer */
 	transform( hd, hd->buf );
@@ -742,10 +782,10 @@ tiger_update(TIGER_CONTEXT *hd, byte *inbuf, size_t inlen)
 
 /* The routine terminates the computation */
 void
-tiger_final(byte hash[24], TIGER_CONTEXT *hd)
+tiger_final(unsigned char hash[24], TIGER_CONTEXT *hd)
 {
-    u32 t, msb, lsb;
-    byte *p;
+    uint32_t t, msb, lsb;
+    unsigned char *p;
     int i, j;
 
     tiger_update(hd, NULL, 0); /* flush */;
@@ -787,8 +827,8 @@ tiger_final(byte hash[24], TIGER_CONTEXT *hd)
     transform( hd, hd->buf );
 
     p = hd->buf;
-  #ifdef BIG_ENDIAN_HOST
-    #define X(a) do { *(u64*)p = hd->a ; p += 8; } while(0)
+  #ifdef WORDS_BIGENDIAN
+    #define X(a) do { *(uint64_t *)p = hd->a ; p += 8; } while(0)
     // Original code - modified by jk to deal with gcc changes
     //    #define X(a) do { *(u64*)p = hd->##a ; p += 8; } while(0)
   #else /* little endian */

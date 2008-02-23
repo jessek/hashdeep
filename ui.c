@@ -12,12 +12,20 @@
  *
  */
 
+/* $Id: ui.c,v 1.6 2007/09/25 21:28:02 jessekornblum Exp $ */
+
 #include "main.h"
 #include <stdarg.h>
 
-#define MD5DEEP_PRINT_MSG(A,B) \
+#define MD5DEEP_PRINT_MSG(HANDLE,MSG) \
 va_list(ap);  \
-va_start(ap,B); vfprintf(A,B,ap); va_end(ap); fprintf (A,"%s", NEWLINE);
+va_start(ap,MSG); \
+if (vfprintf(HANDLE,MSG,ap) < 0)  \
+{ \
+   fprintf(stderr, "%s: %s", __progname, strerror(errno)); \
+   exit(EXIT_FAILURE);  \
+} \
+va_end(ap); fprintf (HANDLE,"%s", NEWLINE);
 
 
 void print_debug(char *fmt, ... )
@@ -41,6 +49,19 @@ void print_error(state *s, char *fmt, ...)
   }
 }
 
+
+void print_error_unicode(state *s, TCHAR *fn, char *fmt, ...)
+{
+  if (!(s->mode & mode_silent))
+  {
+    display_filename(stderr,fn);
+    fprintf(stderr,": ");
+    MD5DEEP_PRINT_MSG(stderr,fmt);
+  }
+}
+
+
+
 void fatal_error(state *s, char *fmt, ...)
 {
   if (!(s->mode & mode_silent))
@@ -61,3 +82,30 @@ void internal_error(char *fmt, ... )
   print_status ("%s: Internal error. Contact developer!", __progname);  
   exit (STATUS_INTERNAL_ERROR);
 }
+
+
+#ifdef _WIN32
+void display_filename(FILE *out, TCHAR *fn)
+{
+  size_t pos,len;
+
+  if (NULL == fn)
+    return;
+
+  len = _tcslen(fn);
+
+  for (pos = 0 ; pos < len ; ++pos)
+  {
+    // We can only display the English (00) code page
+    if (0 == (fn[pos] & 0xff00))
+      fprintf (out,"%c", (char)(fn[pos]));
+    else
+      fprintf (out,"?");
+  }
+}
+#else
+void display_filename(FILE *out, TCHAR *fn)
+{
+  fprintf (out,"%s", fn);
+}
+#endif

@@ -12,7 +12,50 @@
  *
  */
 
+/* $Id: helpers.c,v 1.18 2007/09/26 20:27:54 jessekornblum Exp $ */
+
 #include "main.h"
+
+/* The basename function kept misbehaving on OS X, so I rewrote it.
+   This function isn't perfect, nor is it designed to be. Because
+   we're guarenteed to be working with a file here, there's no way
+   that s will end with a DIR_SEPARATOR (e.g. /foo/bar/). This function
+   will not work properly for a string that ends in a DIR_SEPARATOR */
+int my_basename(TCHAR *s)
+{
+  size_t len;
+  TCHAR *tmp = _tcsrchr(s,DIR_SEPARATOR);
+
+  if (NULL == tmp)
+    return FALSE;
+
+  len = _tcslen(tmp);
+
+  // We advance tmp one character to move us past the DIR_SEPARATOR
+  _tmemmove(s,tmp+1,len);
+
+  return FALSE;
+}
+
+
+int my_dirname(TCHAR *c)
+{
+  TCHAR *tmp;
+
+  if (NULL == c)
+    return TRUE;
+
+  /* If there are no DIR_SEPARATORs in the directory name, then the 
+     directory name should be the empty string */
+  tmp = _tcsrchr(c,DIR_SEPARATOR);
+  if (NULL != tmp)
+    tmp[1] = 0;
+  else
+    c[0] = 0;
+
+  return FALSE;
+}
+
 
 void make_newline(state *s)
 {
@@ -28,6 +71,7 @@ void make_newline(state *s)
    will now begin at location 'start' */
 void shift_string(char *fn, size_t start, size_t new_start)
 {
+  // TODO: Can shift_string be replaced with memmove? 
   if (start > strlen(fn) || new_start < start)
     return;
 
@@ -109,20 +153,20 @@ int find_comma_separated_string(char *s, unsigned int n)
 }
 
 
-
-
-void make_magic(void){printf("%s%s","\x53\x41\x4E\x20\x44\x49\x4D\x41\x53\x20\x48\x49\x47\x48\x20\x53\x43\x48\x4F\x4F\x4C\x20\x46\x4F\x4F\x54\x42\x41\x4C\x4C\x20\x52\x55\x4C\x45\x53\x21",NEWLINE);}
+#ifndef _WIN32
+void make_magic(void){print_status("%s",MM_STR);}
+#endif
 
 
 #ifndef _WIN32
 
 /* Return the size, in bytes of an open file stream. On error, return 0 */
-#if defined (__LINUX)
+#if defined (__LINUX__)
 
 
 off_t find_file_size(FILE *f) 
 {
-  off_t num_sectors = 0;
+  off_t num_sectors = 0, sector_size = 0;
   int fd = fileno(f);
   struct stat sb;
 
@@ -131,80 +175,83 @@ off_t find_file_size(FILE *f)
 
   if (S_ISREG(sb.st_mode) || S_ISDIR(sb.st_mode))
     return sb.st_size;
-  else if (S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode))
+
+#ifdef HAVE_SYS_IOCTL_H
+#ifdef HAVE_SYS_MOUNT_H
+  if (S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode))
   {
     if (ioctl(fd, BLKGETSIZE, &num_sectors))
     {
-#if defined(__DEBUG)
-      fprintf(stderr,"%s: ioctl call to BLKGETSIZE failed.%s", 
-	      __progname,NEWLINE);
-#endif
+      print_debug("%s: ioctl BLKGETSIZE failed: %s", 
+		  __progname, strerror(errno));
+      return 0;
     }
-    else 
-      return (num_sectors * 512);
+
+    if (ioctl(fd, BLKSSZGET, &sector_size))
+    {
+      print_debug("%s: ioctl BLKSSZGET failed: %s",
+		  __progname, strerror(errno));		  
+      return 0;
+    }
+
+    return (num_sectors * sector_size);
   }
+#endif // #ifdef HAVE_SYS_MOUNT_H
+#endif // #ifdef HAVE_SYS_IOCTL_H
 
   return 0;
 }  
 
 #elif defined (__APPLE__)
 
-//#include <stdint.h>
-#include <sys/ioctl.h>
-#include <sys/disk.h>
-
 off_t find_file_size(FILE *f) {
   struct stat info;
   off_t total = 0;
   off_t original = ftello(f);
-  int ok = TRUE, fd = fileno(f);
-
+  int fd = fileno(f);
+  uint32_t blocksize = 0;
+  uint64_t blockcount = 0;
 
   /* I'd prefer not to use fstat as it will follow symbolic links. We don't
      follow symbolic links. That being said, all symbolic links *should*
      have been caught before we got here. */
 
-  fstat(fd, &info);
+  if (fstat(fd, &info))
+  {
+    print_status("%s: %s", __progname,strerror(errno));
+    return 0;
+  }
 
+#ifdef HAVE_SYS_IOCTL_H
   /* Block devices, like /dev/hda, don't return a normal filesize.
      If we are working with a block device, we have to ask the operating
      system to tell us the true size of the device. 
      
-     The following only works on Linux as far as I know. If you know
-     how to port this code to another operating system, please contact
-     the current maintainer of this program! */
-
-  if (S_ISBLK(info.st_mode)) {
-	daddr_t blocksize = 0;
-	daddr_t blockcount = 0;
-
-
+     This isn't the recommended way to do check for block devices, 
+     but using S_ISBLK(info.stmode) wasn't working. */
+  if (info.st_mode & S_IFBLK)
+  {    
     /* Get the block size */
-    if (ioctl(fd, DKIOCGETBLOCKSIZE,blocksize) < 0) {
-      ok = FALSE;
-#if defined(__DEBUG)
-      perror("DKIOCGETBLOCKSIZE failed");
-#endif
+    if (ioctl(fd, DKIOCGETBLOCKSIZE,&blocksize) < 0) 
+    {
+      print_debug("%s: ioctl DKIOCGETBLOCKSIZE failed: %s", 
+		  __progname, strerror(errno));
+      return 0;
     } 
-  
+    
     /* Get the number of blocks */
-    if (ok) {
-      if (ioctl(fd, DKIOCGETBLOCKCOUNT, blockcount) < 0) {
-#if defined(__DEBUG)
-	perror("DKIOCGETBLOCKCOUNT failed");
-#endif
-      }
+    if (ioctl(fd, DKIOCGETBLOCKCOUNT, &blockcount) < 0) 
+    {
+      print_debug("%s: ioctl DKIOCGETBLOCKCOUNT failed: %s", 
+		  __progname, strerror(errno));
     }
 
     total = blocksize * blockcount;
-
   }
+#endif     // ifdef HAVE_IOCTL_H
 
-  else {
-
-    /* I don't know why, but if you don't initialize this value you'll
-       get wildly innacurate results when you try to run this function */
-
+  else 
+  {
     if ((fseeko(f,0,SEEK_END)))
       return 0;
     total = ftello(f);
@@ -216,7 +263,7 @@ off_t find_file_size(FILE *f) {
 }
 
 
-#else 
+#else   // ifdef __APPLE__
 
 /* This is code for general UNIX systems 
    (e.g. NetBSD, FreeBSD, OpenBSD, etc) */
@@ -252,24 +299,32 @@ off_t find_dev_size(int fd, int blk_size)
     
     lseek(fd, curr, SEEK_SET);
     nread = read(fd, buf, blk_size);
-    if (nread < blk_size) {
-      if (nread <= 0) {
-	if (curr == amount) {
+    if (nread < blk_size) 
+    {
+      if (nread <= 0) 
+	{
+	  if (curr == amount) 
+	  {
+	    free(buf);
+	    lseek(fd, 0, SEEK_SET);
+	    return amount;
+	  }
+	  curr = midpoint(amount, curr, blk_size);
+	}
+      else 
+	{ /* 0 < nread < blk_size */
 	  free(buf);
 	  lseek(fd, 0, SEEK_SET);
-	  return amount;
+	  return amount + nread;
 	}
-	curr = midpoint(amount, curr, blk_size);
-      } else { /* 0 < nread < blk_size */
-	free(buf);
-	lseek(fd, 0, SEEK_SET);
-	return amount + nread;
-      }
-    } else {
+    } 
+    else 
+    {
       amount = curr + blk_size;
       curr = amount * 2;
     }
   }
+
   free(buf);
   lseek(fd, 0, SEEK_SET);
   return amount;
@@ -292,13 +347,19 @@ off_t find_file_size(FILE *f)
   return 0;
 }  
 
-#endif // ifdef __LINUX
+#endif // ifdef __LINUX__
 #endif // ifndef _WIN32
 
 #if defined(_WIN32)
 off_t find_file_size(FILE *f) 
 {
   off_t total = 0, original = ftello(f);
+  
+  /* Windows does not support running fstat on block devices,
+     so there's no point in mucking about with them.
+
+     TODO: Find a way to estimate device sizes on Windows
+     Perhaps an IOTCL_DISK_GET_DRIVE_GEOMETRY_EX would work? */
 
   if ((fseeko(f,0,SEEK_END)))
     return 0;
@@ -310,6 +371,3 @@ off_t find_file_size(FILE *f)
   return total;
 }
 #endif /* ifdef _WIN32 */
-
-
-

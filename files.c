@@ -12,6 +12,8 @@
  *
  */
 
+// $Id: files.c,v 1.11 2007/09/23 01:54:22 jessekornblum Exp $
+
 #include "main.h"
 
 /* ---------------------------------------------------------------------
@@ -31,24 +33,24 @@
 
    5. Add this method to the find_hash_in_line() function. 
 
-   6. Add a line to each hash algorithm header file (e.g. md5.h and sha1.h)
-      to indicate which types of hashes the new file type contains. It is
-      a good practice to ensure that your header is *undefined* for 
-      algorithms that you don't suppport. For example, if you're adding
-      the file type cows and you don't support MD5 hashes, you should add
-      the following to md5.h:
+   6. Add a variable to the state in main.h to indicate if each
+      filetype supports this hash. The variable can be used to denote
+      a position if necessary. Look for h_[name] variables for examples.
 
-      #ifdef SUPPORT_COWS
-      #undef SUPPORT_COWS
-      #endif
-
-   7. If your file format uses comma separated values, be sure that the
-      SUPPORT_[type] variable you define contains the number of commas
-      before the hash value in each line. See find_general_hash() for
-      more details.
+   7. Each hashing algorithm should set this variable in the 
+      setup_hashing_algorithm function.
    
    ---------------------------------------------------------------------- */
 
+typedef struct _ENCASE_HASH_HEADER {
+  /* 000 */ char          Signature[8];
+  /* 008 */ uint32_t      Version;
+  /* 00c */ uint32_t      Padding;
+  /* 010 */ uint32_t      NumHashes;
+} ENCASE_HASH_HEADER;
+
+
+#define ENCASE_HEADER    "HASH\x0d\x0a\xff\x00"
 
 #define ILOOK_HEADER   \
 "V1Hash,HashType,SetDescription,FileName,FilePath,FileSize"
@@ -63,9 +65,12 @@
 "\"file_id\",\"hashset_id\",\"file_name\",\"directory\",\"hash\",\"file_size\",\"date_modified\",\"time_modified\",\"time_zone\",\"comments\",\"date_accessed\",\"time_accessed\""
 
 
+#define HASH_STRING_LENGTH   (s->hash_length * 2)
 
-int valid_hash(char *buf) {
-  int pos = 0;
+
+int valid_hash(state *s, char *buf) 
+{
+  size_t pos = 0;
 
   if (strlen(buf) < HASH_STRING_LENGTH) 
     return FALSE;
@@ -80,7 +85,7 @@ int valid_hash(char *buf) {
 // Remove the newlines, if any. Works on both DOS and *nix newlines
 void chop_line(char *s)
 {
-  unsigned int pos = strlen(s);
+  size_t pos = strlen(s);
 
   if (s[pos - 2] == '\r' && s[pos - 1] == '\n')
     s[pos - 2] = 0;
@@ -89,9 +94,9 @@ void chop_line(char *s)
 }
 
 
-int find_plain_hash(char *buf, char *known_fn) 
+int find_plain_hash(state *s, char *buf, char *known_fn) 
 {
-  unsigned int p = HASH_STRING_LENGTH;
+  size_t p = HASH_STRING_LENGTH;
 
   if (buf == NULL)
     return FALSE;
@@ -115,10 +120,10 @@ int find_plain_hash(char *buf, char *known_fn)
 
   /* We have to include a validity check here so that we don't
      mistake SHA-1 hashes for MD5 hashes, among other things */
-  return (valid_hash(buf));
+  return (valid_hash(s,buf));
 }  
 
-int find_md5deep_size_hash(char *buf, char *known_fn)
+int find_md5deep_size_hash(state *s, char *buf, char *known_fn)
 {
   size_t pos; 
 
@@ -139,11 +144,11 @@ int find_md5deep_size_hash(char *buf, char *known_fn)
 
   shift_string(buf,0,12);;
 
-  return find_plain_hash(buf,known_fn);
+  return find_plain_hash(s,buf,known_fn);
 }
 
 
-int find_bsd_hash(char *buf, char *fn)
+int find_bsd_hash(state *s, char *buf, char *fn)
 {
   char *temp;
   size_t buf_len = strlen(buf);
@@ -188,7 +193,7 @@ int find_bsd_hash(char *buf, char *fn)
 
   // The hash always begins four characters after the second paren
   shift_string(buf,0,second_paren+4);
-  return (valid_hash(buf));
+  return (valid_hash(s,buf));
 }
   
 
@@ -202,7 +207,7 @@ int find_bsd_hash(char *buf, char *fn)
 
    you should call find_rigid_hash(buf,fn,0,3);
 */
-int find_rigid_hash(char *buf, char *fn, 
+int find_rigid_hash(state *s, char *buf, char *fn, 
 		      unsigned int fn_location, 
 		      unsigned int hash_location)
 {
@@ -218,23 +223,64 @@ int find_rigid_hash(char *buf, char *fn,
   free(temp);
   if (find_comma_separated_string(buf,hash_location))
     return FALSE;
-  return valid_hash(buf);
+  return valid_hash(s,buf);
 }
+
+#ifdef WORDS_BIGENDIAN
+uint32_t byte_reverse(uint32_t n)
+{
+  uint32_t res = 0, count, bytes[5];
+        
+  for (count = 0 ; count < 4 ; count++)
+    {
+      bytes[count] = (n & (0xff << (count * 8))) >> (count * 8);
+      res |= bytes[count] << (24 - (count * 8));
+    }       
+  return res;
+}
+#endif
 
 
 /* iLook files have the MD5 hash as the first 32 characters. 
    As a result, we can just treat these files like plain hash files  */
-int find_ilook_hash(char *buf, char *known_fn) 
+int find_ilook_hash(state *s, char *buf, char *known_fn) 
 {
-#ifdef SUPPORT_ILOOK
-  return (find_plain_hash(buf,known_fn));
-#else
-  return FALSE;
+  if (s->h_ilook)
+    return (find_plain_hash(s,buf,known_fn));
+  else
+    return FALSE;
+}
+
+static int check_for_encase(state *s, FILE *f)
+{
+  ENCASE_HASH_HEADER *h = (ENCASE_HASH_HEADER *)malloc(sizeof(ENCASE_HASH_HEADER));
+  
+  if (NULL == h)
+    fatal_error(s,"Out of memory");
+  
+  if (sizeof(ENCASE_HASH_HEADER) != fread(h,1,sizeof(ENCASE_HASH_HEADER),f))
+  {
+    free(f);
+    return FALSE;
+  }
+  
+  if (memcmp(h->Signature,ENCASE_HEADER,8))
+  {
+    rewind(f);
+    free(h);
+    return FALSE;
+  }           
+  
+#ifdef WORDS_BIGENDIAN
+  h->NumHashes = byte_reverse(h->NumHashes);  
 #endif
+
+  s->expected_hashes = h->NumHashes;
+  return TRUE;
 }
 
 
-int hash_file_type(FILE *f) 
+int hash_file_type(state *s, FILE *f) 
 {
   char *known_fn;
   char buf[MAX_STRING_LENGTH + 1];
@@ -242,6 +288,12 @@ int hash_file_type(FILE *f)
 
   /* The "rigid" file types all have their headers in the 
      first line of the file. We check them first */
+
+  if (s->h_encase)
+    {
+      if (check_for_encase(s,f))
+	return TYPE_ENCASE;
+    }
 
   if ((fgets(buf,MAX_STRING_LENGTH,f)) == NULL) 
     return TYPE_UNKNOWN;
@@ -251,27 +303,32 @@ int hash_file_type(FILE *f)
 
     chop_line(buf);
 
-#ifdef SUPPORT_HASHKEEPER
-    if (STRINGS_EQUAL(buf,HASHKEEPER_HEADER))
-      return TYPE_HASHKEEPER;
-#endif
+    if (s->h_hashkeeper)
+      {
+	if (STRINGS_EQUAL(buf,HASHKEEPER_HEADER))
+	  return TYPE_HASHKEEPER;
+      }
     
-#ifdef SUPPORT_NSRL_15
-    if (STRINGS_EQUAL(buf,NSRL_15_HEADER))
-      return TYPE_NSRL_15;
-#endif
-
-#ifdef SUPPORT_NSRL_20
+    if (s->h_nsrl15)
+      {
+	if (STRINGS_EQUAL(buf,NSRL_15_HEADER))
+	  return TYPE_NSRL_15;
+      }
+    
+    if (s->h_nsrl20)
+      {
     if (STRINGS_EQUAL(buf,NSRL_20_HEADER))
       return TYPE_NSRL_20;
-#endif
+      }
+    
+    if (s->h_ilook)
+      {
+	if (STRINGS_EQUAL(buf,ILOOK_HEADER))
+	  return TYPE_ILOOK;
+      }
 
-#ifdef SUPPORT_ILOOK
-    if (STRINGS_EQUAL(buf,ILOOK_HEADER))
-      return TYPE_ILOOK;
-#endif
-  }    
-
+  }
+  
   
   /* Plain files can have comments, so the first line(s) may not
      contain a valid hash. But if we should process this file
@@ -279,19 +336,19 @@ int hash_file_type(FILE *f)
   known_fn = (char *)malloc(sizeof(char) * PATH_MAX);
   do 
   {
-    if (find_bsd_hash(buf,known_fn))
+    if (find_bsd_hash(s,buf,known_fn))
     {
       free(known_fn);
       return TYPE_BSD;
     }
 
-    if (find_md5deep_size_hash(buf,known_fn))
+    if (find_md5deep_size_hash(s,buf,known_fn))
     {
       free(known_fn);
       return TYPE_MD5DEEP_SIZE;
     }
 
-    if (find_plain_hash(buf,known_fn))
+    if (find_plain_hash(s,buf,known_fn))
     {
       free(known_fn);
       return TYPE_PLAIN;
@@ -309,46 +366,33 @@ int hash_file_type(FILE *f)
    If there is no valid hash in the line, returns FALSE. 
    All functions called from here are required to check that the hash
    is valid before returning! */
-int find_hash_in_line(char *buf, int fileType, char *fn) 
+int find_hash_in_line(state *s, char *buf, int fileType, char *fn) 
 {
   switch(fileType) {
 
-#ifdef SUPPORT_PLAIN
   case TYPE_PLAIN:
-    return find_plain_hash(buf,fn);
-#endif
+    return find_plain_hash(s,buf,fn);
 
-#ifdef SUPPORT_BSD
   case TYPE_BSD:
-    return find_bsd_hash(buf,fn);
-#endif
+    return find_bsd_hash(s,buf,fn);
 
-#ifdef SUPPORT_HASHKEEPER
   case TYPE_HASHKEEPER:
-    return (find_rigid_hash(buf,fn,2,SUPPORT_HASHKEEPER));
-#endif
-    
-#ifdef SUPPORT_NSRL_15
+    return (find_rigid_hash(s,buf,fn,2,s->h_hashkeeper));
+
   case TYPE_NSRL_15:
-    return (find_rigid_hash(buf,fn,1,SUPPORT_NSRL_15));
+    return (find_rigid_hash(s,buf,fn,1,s->h_nsrl15));
     break;
-#endif
 
-#ifdef SUPPORT_NSRL_20
   case TYPE_NSRL_20:
-    return (find_rigid_hash(buf,fn,3,SUPPORT_NSRL_20));
-#endif
+    return (find_rigid_hash(s,buf,fn,3,s->h_nsrl20));
 
-#ifdef SUPPORT_ILOOK    
   case TYPE_ILOOK:
-    return (find_ilook_hash(buf,fn));
-#endif
+    return (find_ilook_hash(s,buf,fn));
 
-#ifdef SUPPORT_MD5DEEP_SIZE
   case TYPE_MD5DEEP_SIZE:
-    return (find_md5deep_size_hash(buf,fn));
-#endif
+    return (find_md5deep_size_hash(s,buf,fn));
 
+	  
   }
 
   return FALSE;

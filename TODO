@@ -1,0 +1,30 @@
+
+*** Add 'make test' directive to run compiled programs on test files 
+    and insure compilation was successful. 
+
+*** Create a new program, hashdeep, to do multi-hashing. That is, 
+    compute more than one hash for each input file. For example:
+
+$ hashdeep -a md5,sha256 foo
+# hashdeep,1.0
+# size,md5,sha256,filename
+0,d41d8cd98f00b204e9800998ecf8427e,e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855,foo
+
+Things to note in this example:
+ - The program can work with arbitrary hashing algorithms
+ - The file size always comes first. The file name always comes last. 
+   Note that with this arrangement we shouldn't need any quotation marks
+   around the filename. 
+
+The program should be able to do matching similar to md5deep. 
+For example, if the above output was saved to known.dat:
+
+$ hashdeep -m known.dat * 
+foo
+
+$ hashdeep -wm known.dat * 
+foo matches foo
+
+This can create some unusual errors:
+ - If a file matches hashes but not file size
+ - If one of the hashes match but others do not

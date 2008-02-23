@@ -1,13 +1,34 @@
-MD5DEEP 
----------------------------------------------------------
-Md5deep is a suite of tools to compute hashes, or message digests for any
-number of files while optionally recursively digging through the directory
-structure.  It can also take a list of known hashes and display the
-filenames of input files whose hashes either do or do not match any of the
-known hashes. Errors are reported to standard error. If no FILES are
-specified, reads from standard input. 
 
-Details on how to use md5deep are in the man page.
+This is md5deep, a set of cross-platform tools to computer hashes, or
+message digests, for any number of files while optionally recursively
+digging through the directory structure.  It can also take a list of known
+hashes and display the filenames of input files whose hashes either do or
+do not match any of the known hashes. This version supports MD5, SHA-1,
+SHA-256, Tiger, and Whirlpool hashes. 
+
+See the file NEWS for a list of changes between releases.
+
+See the file COPYING for information about the licensing for this program. 
+
+See the file INSTALL for (generic) compilation and installation
+instructions. Here's the short version:
+
+$ ./configure
+$ make
+$ make install
+
+Note that you must be normally root to install to the default location.
+The sudo command is helpful for doing so. You can specify an alternate
+installation location using the --prefix option to the configure script.
+For example, to install to /home/foo/bin, use:
+
+$ ./configure --prefix=/home/foo
+
+There is complete documentation on how to use the program on the 
+project's homepage, http://md5deep.sourceforge.net/ 
+
+
+== Hash Algorithm References ==
 
 The MD5 algorithm is defined in RFC 1321:
 http://www.ietf.org/rfc/rfc1321.txt
@@ -23,114 +44,3 @@ http://www.cs.technion.ac.il/~biham/Reports/Tiger/
 
 The Whirlpool algorithm is defined at:
 http://planeta.terra.com.br/informatica/paulobarreto/WhirlpoolPage.html
-
-
-
-
-md5deep was written by Special Agent Jesse Kornblum, United States Air
-Force Office of Special Investigations. Send all correspondence to
-md5deep [at] jessekornblum [dot] com
-
-This program is a work of the US Government. In accordance with 17 USC
-105, copyright protection is not available for any work of the US
-Government.  Lawyer to English translation: This program is PUBLIC DOMAIN.
-Not only is this program not copyrighted, but IT CANNOT BE COPYRIGHTED BY
-ANYBODY AT ANY TIME UNDER ANY CIRCUMSTANCES. 
-
-There is NO warranty for this program; not even for MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE. 
-
-
-
-
-INSTALLATION INSTRUCTIONS 
----------------------------------------------------------
-
-Instructions for Linux, Solaris, OS X, *BSD, and Windows are provided
-below. For Windows, it's a LOT easier to just download the binary from
-http://md5deep.sourceforge.net/#download, but instructions are also below.
-
-Note that you will need to have root access to install md5deep in the
-default location! If you would like to install md5deep somewhere else
-or don't have root access, change the PREFIX variable in the Makefile.
-
-To compile:
-
-Linux:
-$ make linux
-
-OS X:
-$ make mac
-
-Solaris:
-$ make solaris
-
-Cygwin, *BSD, and other Unicies:
-$ make unix
-
-HP/UX:
-$ make hpux
-
-To install, you must be root:
-
-# make install
-
-If you ever need to remove md5deep from your system:
-
-# make uninstall
-
-
-----------------------------------------------------------------------
-COMPILING FOR MICROSOFT WINDOWS(R)
-
-The easiest way to get md5deep for Windows is to download the binary
-version. The current binary is available at: 
-
-http://md5deep.sourceforge.net/#download
-
-If you want to compile md5deep yourself, I recommend using the (Free)
-MingGW compiler. 
-
-First, obtain the MinGW toolkit from:  http://www.mingw.org/ Install MinGW
-according to the documentation. You will also need the "make" and "strip"
-components of mingw. Then change into the md5deep directory and enter: 
-
-C:\md5deep\> make windows
-
-(make is installed by default as \mingw\bin\mingw32-make. You may need to
-type the whole long filename!)
-
-
-----------------------------------------------------------------------
-CROSS COMPILING FOR WINDOWS
-
-The MinGW compiler can also be used to cross-compile md5deep for Win32 on
-another platform. (I've used both linux and Mac OS X to make the Windows
-builds!) The MinGW FAQ lists a script that downloads, configures, and
-installs the MinGW compiler on a linux system:
-http://www.mingw.org/mingwfaq.shtml#faq-cross
-
-This script can get out of date and may require some tweaking to get right.
-Mostly this means bumping up the version numbers of the files to be 
-downloaded. On OS X you will also need the gettext package installed before
-this script will work.
-
-Once MinGW is installed on your linux system, edit the Makefile value for
-CR_BASE with the $PREFIX you used for MinGW. Then just do: 
-
-$ make cross
-
-And you should have a working .exe executables for Win32.
-
-
-----------------------------------------------------------------------
-CYGWIN
-
-As of version 1.9.3, Cygwin is a supported platform. You can obtain 
-Cygwin binaries at the md5deep web site or compile them yourself. You'll 
-need a default Cygwin install plus the "gcc" and "make" packages. After 
-those are installed, just type:
-
-$ make unix
-
-to compile the programs.

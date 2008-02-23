@@ -11,27 +11,71 @@
  *  http://www.cr0.net:8040/code/crypto/sha256/ whenever possible.
  */
 
+/* $Id: sha256.c,v 1.4 2007/09/23 01:54:27 jessekornblum Exp $ */
+
 #include "main.h"
 #include <string.h>
 #include "sha256.h"
 
+int setup_hashing_algorithm(state *s)
+{
+  s->hash_length        = 32;
+  s->hash_init          = hash_init_sha256;
+  s->hash_update        = hash_update_sha256;
+  s->hash_finalize      = hash_final_sha256;
+  
+  s->h_plain = s->h_bsd = s->h_md5deep_size = 1;
+  
+  s->h_hashkeeper = 0;
+  s->h_nsrl15 = 0;
+  s->h_nsrl20 = 0;
+  s->h_ilook = 0;
+  s->h_encase = 0;
+    
+  s->hash_context = (context_sha256_t *)malloc(sizeof(context_sha256_t));
+  if (NULL == s->hash_context)
+    return TRUE;
+  
+  return FALSE;
+}
+
+int hash_init_sha256(state *s)
+{
+  sha256_starts(s->hash_context);
+  return FALSE;
+}
+
+int hash_update_sha256(state *s, unsigned char *buf, uint64_t len)
+{
+  sha256_update(s->hash_context,buf,len);
+  return FALSE;
+}
+
+int hash_final_sha256(state *s, unsigned char *digest)
+{
+  sha256_finish(s->hash_context, digest);
+  return FALSE;
+}
+
+
+
 #define GET_UINT32(n,b,i)                       \
 {                                               \
-    (n) = ( (uint32) (b)[(i)    ] << 24 )       \
-        | ( (uint32) (b)[(i) + 1] << 16 )       \
-        | ( (uint32) (b)[(i) + 2] <<  8 )       \
-        | ( (uint32) (b)[(i) + 3]       );      \
+    (n) = ( (uint32_t) (b)[(i)    ] << 24 )       \
+        | ( (uint32_t) (b)[(i) + 1] << 16 )       \
+        | ( (uint32_t) (b)[(i) + 2] <<  8 )       \
+        | ( (uint32_t) (b)[(i) + 3]       );      \
 }
 
 #define PUT_UINT32(n,b,i)                       \
 {                                               \
-    (b)[(i)    ] = (uint8) ( (n) >> 24 );       \
-    (b)[(i) + 1] = (uint8) ( (n) >> 16 );       \
-    (b)[(i) + 2] = (uint8) ( (n) >>  8 );       \
-    (b)[(i) + 3] = (uint8) ( (n)       );       \
+    (b)[(i)    ] = (uint8_t) ( (n) >> 24 );       \
+    (b)[(i) + 1] = (uint8_t) ( (n) >> 16 );       \
+    (b)[(i) + 2] = (uint8_t) ( (n) >>  8 );       \
+    (b)[(i) + 3] = (uint8_t) ( (n)       );       \
 }
 
-void sha256_starts( sha256_context *ctx )
+void sha256_starts( context_sha256_t *ctx )
 {
   ctx->total[0] = 0;
   ctx->total[1] = 0;
@@ -46,10 +90,10 @@ void sha256_starts( sha256_context *ctx )
   ctx->state[7] = 0x5BE0CD19;
 }
 
-void sha256_process( sha256_context *ctx, uint8 data[64] )
+void sha256_process( context_sha256_t *ctx, uint8_t data[64] )
 {
-  uint32 temp1, temp2, W[64];
-  uint32 A, B, C, D, E, F, G, H;
+  uint32_t temp1, temp2, W[64];
+  uint32_t A, B, C, D, E, F, G, H;
 
   GET_UINT32( W[0],  data,  0 );
   GET_UINT32( W[1],  data,  4 );
@@ -177,9 +221,9 @@ void sha256_process( sha256_context *ctx, uint8 data[64] )
   ctx->state[7] += H;
 }
 
-void sha256_update( sha256_context *ctx, uint8 *input, uint32 length )
+void sha256_update( context_sha256_t *ctx, uint8_t *input, uint32_t length )
 {
-  uint32 left, fill;
+  uint32_t left, fill;
 
   if( ! length ) return;
 
@@ -216,7 +260,7 @@ void sha256_update( sha256_context *ctx, uint8 *input, uint32 length )
     }
 }
 
-static uint8 sha256_padding[64] =
+static uint8_t sha256_padding[64] =
   {
     0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -224,11 +268,11 @@ static uint8 sha256_padding[64] =
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   };
 
-void sha256_finish( sha256_context *ctx, uint8 digest[32] )
+void sha256_finish( context_sha256_t *ctx, uint8_t digest[32] )
 {
-  uint32 last, padn;
-  uint32 high, low;
-  uint8 msglen[8];
+  uint32_t last, padn;
+  uint32_t high, low;
+  uint8_t msglen[8];
 
   high = ( ctx->total[0] >> 29 )
     | ( ctx->total[1] <<  3 );
@@ -284,7 +328,7 @@ int main( int argc, char *argv[] )
   FILE *f;
   int i, j;
   char output[65];
-  sha256_context ctx;
+  context_sha256_t ctx;
   unsigned char buf[1000];
   unsigned char sha256sum[32];
 
@@ -300,7 +344,7 @@ int main( int argc, char *argv[] )
 
 	  if( i < 2 )
             {
-	      sha256_update( &ctx, (uint8 *) msg[i],
+	      sha256_update( &ctx, (uint8_t *) msg[i],
 			     strlen( msg[i] ) );
             }
 	  else
@@ -309,7 +353,7 @@ int main( int argc, char *argv[] )
 
 	      for( j = 0; j < 1000; j++ )
                 {
-		  sha256_update( &ctx, (uint8 *) buf, 1000 );
+		  sha256_update( &ctx, (uint8_t *) buf, 1000 );
                 }
             }
 

@@ -56,12 +56,51 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+/* $Id: whirlpool.c,v 1.6 2007/09/23 01:54:30 jessekornblum Exp $ */
 
+#include "main.h"
 #include "whirlpool.h"
+
+int setup_hashing_algorithm(state *s)
+{
+    s->hash_length        = 64;
+    s->hash_init          = hash_init_whirlpool;
+    s->hash_update        = hash_update_whirlpool;
+    s->hash_finalize      = hash_final_whirlpool;
+    
+    s->h_plain = s->h_bsd = s->h_md5deep_size = 1;
+    s->h_ilook = 0;
+    s->h_hashkeeper = 0;
+    s->h_nsrl15 = 0;
+    s->h_nsrl20 = 0;
+    s->h_encase = 0;
+
+    s->hash_context = (context_whirlpool_t *)malloc(sizeof(context_whirlpool_t));
+    if (NULL == s->hash_context)
+      return TRUE;
+    
+    return FALSE;
+}
+
+int hash_init_whirlpool(state *s)
+{
+  NESSIEinit(s->hash_context);
+  return FALSE;
+}
+
+int hash_update_whirlpool(state *s, unsigned char *buf, uint64_t len)
+{
+  NESSIEadd(buf,len * 8,s->hash_context);
+  return FALSE;
+}
+
+int hash_final_whirlpool(state *s, unsigned char *digest)
+{
+  NESSIEfinalize(s->hash_context,digest);
+  return FALSE;
+}
+
+
 
 /* #define TRACE_INTERMEDIATE_VALUES */
 

@@ -1,4 +1,3 @@
-
 /* MD5DEEP
  *
  * By Jesse Kornblum
@@ -12,14 +11,18 @@
  *
  */
 
+// $Id: main.h,v 1.12 2007/09/26 20:39:30 jessekornblum Exp $
    
 #ifndef __MD5DEEP_H
 #define __MD5DEEP_H
 
-/* Version information is defined in the Makefile */
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+/* The version information, VERSION, is defined in config.h */
 
 #define AUTHOR      "Jesse Kornblum"
-
 #define COPYRIGHT   "This program is a work of the US Government. "\
 "In accordance with 17 USC 105,%s"\
 "copyright protection is not available for any work of the US Government.%s"\
@@ -27,31 +30,83 @@
 "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",\
 NEWLINE, NEWLINE, NEWLINE
 
-#define _GNU_SOURCE
+
 #include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <dirent.h>
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
 #include <math.h>
 #include <ctype.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <inttypes.h>
+#include <errno.h>
 
-#ifdef __LINUX
-#include <sys/ioctl.h>
-#include <sys/mount.h>
+#ifdef HAVE_STDLIB_H
+# include <stdlib.h>
+#endif
+
+#ifdef HAVE_LIMITS_H
+# include <limits.h>
+#endif
+
+#ifdef HAVE_DIRENT_H
+# include <dirent.h>
+#endif
+
+#ifdef HAVE_STRING_H
+# include <string.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
 #endif 
 
-#include "hashTable.h"
+#ifdef TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+
+#ifdef HAVE_SYS_MOUNT_H
+# include <sys/mount.h>
+#endif 
+
+#ifdef HAVE_SYS_DISK_H
+# include <sys/disk.h>
+#endif
+
+#ifdef HAVE_LIBGEN_H
+# include <libgen.h>
+#endif
 
 /* This allows us to open standard input in binary mode by default 
    See http://gnuwin32.sourceforge.net/compile.html for more */
-#include <fcntl.h>
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#else
+// This should really have been caught during configuration, but just in case...
+# error Unable to work without inttypes.h!
+#endif
 
 /* A few operating systems (e.g. versions of OpenBSD) don't meet the 
    C99 standard and don't define the PRI??? macros we use to display 
@@ -62,60 +117,9 @@ NEWLINE, NEWLINE, NEWLINE
 #define PRIu64 "llu"
 #endif
 
-// Note that STRINGS_EQUAL does not check if either A or B is NULL
-#define _MAX(A,B)             (A>B)?A:B
-#define STRINGS_EQUAL(A,B)   (!strncasecmp(A,B,_MAX(strlen(A),strlen(B))))
+#include "tchar-local.h"
+#include "hashTable.h"
 
-
-/* MD5 and SHA-1 setup require knowing if we're big or little endian */
-#ifdef __LINUX
-
-#ifndef __USE_BSD
-#define __USE_BSD
-#endif
-#include <endian.h>
-
-#elif defined (__SOLARIS)
-
-#define BIG_ENDIAN    4321
-#define LITTLE_ENDIAN 1234
-
-#include <sys/isa_defs.h>
-#ifdef _BIG_ENDIAN       
-#define BYTE_ORDER BIG_ENDIAN
-#else
-#define BYTE_ORDER LITTLE_ENDIAN
-#endif
-
-#elif defined (_WIN32)
-#include <sys/param.h>
-
-#elif defined (__APPLE__)
-#include <machine/endian.h>
-
-#elif defined (__HPUX)
-#ifndef BIG_ENDIAN
-#define BIG_ENDIAN 4321
-#endif
-
-#ifndef LITTLE_ENDIAN
-#define LITTLE_ENDIAN 1234
-#endif
-
-#ifndef BYTE_ORDER
-#define BYTE_ORDER BIG_ENDIAN
-#endif
-
-#endif
-
-
-// Some algorithms need to know if this is a big endian host
-#if BYTE_ORDER == BIG_ENDIAN
-// For MD5
-#define HIGHFIRST 1
-// For Tiger
-#define BIG_ENDIAN_HOST
-#endif //   #if BYTE_ORDER == BIG_ENDIAN
 
 
 #define TRUE   1
@@ -139,6 +143,7 @@ NEWLINE, NEWLINE, NEWLINE
 #define TYPE_NSRL_20      4
 #define TYPE_ILOOK        5
 #define TYPE_MD5DEEP_SIZE 6
+#define TYPE_ENCASE       7
 #define TYPE_UNKNOWN    254
 
 
@@ -160,102 +165,130 @@ NEWLINE, NEWLINE, NEWLINE
 #define mode_quiet        1<<14
 #define mode_piecewise    1<<15
 
-// Modes 16 to 22 are reserved for future use. 
+/* Modes 16-48 are reserved for future use.
 
-#define mode_regular       1<<23
-#define mode_directory     1<<24
-#define mode_door          1<<25
-#define mode_block         1<<26
-#define mode_character     1<<27
-#define mode_pipe          1<<28
-#define mode_socket        1<<29
-#define mode_symlink       1<<30
-#define mode_expert        1<<31
+   Note that the LL is required to avoid overflows of 32-bit words.
+   LL must be used for any value equal to or above 1<<31. 
+   Also note that these values can't be returned as an int type. 
+   For example, any function that returns an int can't use
+
+   return (s->mode & mode_regular);   
+
+   That value is 64-bits wide and may not be returned correctly. */
+
+#define mode_expert        (1LL)<<49
+#define mode_regular       (1LL)<<50
+#define mode_directory     (1LL)<<51
+#define mode_door          (1LL)<<52
+#define mode_block         (1LL)<<53
+#define mode_character     (1LL)<<54
+#define mode_pipe          (1LL)<<55
+#define mode_socket        (1LL)<<56
+#define mode_symlink       (1LL)<<57
+
+// Modes 58-62 are reserved for future use in expert mode
 
 
 /* These are the types of files we can encounter while hashing */
 #define file_regular    0
 #define file_directory  1
-#define file_door       3
-#define file_block      4
-#define file_character  5
-#define file_pipe       6
-#define file_socket     7
-#define file_symlink    8
+#define file_door       2
+#define file_block      3
+#define file_character  4
+#define file_pipe       5
+#define file_socket     6
+#define file_symlink    7
 #define file_unknown  254
 
+// Note that STRINGS_EQUAL does not check if either A or B is NULL
+#define _MAX(A,B)             (A>B)?A:B
+#define STRINGS_EQUAL(A,B)   (!strncasecmp(A,B,_MAX(strlen(A),strlen(B))))
 
+
+#define MD5DEEP_ALLOC(TYPE,VAR,SIZE)     \
+VAR = (TYPE *)malloc(sizeof(TYPE) * SIZE);  \
+if (NULL == VAR)  \
+   return STATUS_INTERNAL_ERROR; \
+memset(VAR,0,SIZE * sizeof(TYPE));
 
 
 typedef struct _state {
-  
-  // Basic program state
-  uint64_t   mode, piecewise_block;
-  int        hashes_loaded, return_value;
-  hashTable  known_hashes;
-  char       *msg;
 
-  // Used exclusively during hashing
-  // Note that we can't put the hash context in here as it depends
-  // on which algorithm we are executing
-  char *full_name;
-  char *short_name;
+  /* Basic program state */
+  uint64_t      mode;
+  int           return_value;
+  time_t        start_time, last_time;
 
+  /* Command line arguments */
+  TCHAR        **argv;
+  int            argc;
+
+  /* The input file */
+  int           is_stdin;
+  FILE          * handle;
   // The size of the input file, in megabytes
-  uint64_t total_megs;
+  uint64_t      total_megs;
+  uint64_t      total_bytes;
+  uint64_t      bytes_read;
+  
+  /* Lists of known hashes */
+  int           hashes_loaded;
+  hashTable     known_hashes;
+  uint32_t      expected_hashes;
 
-  uint64_t total_bytes;
-  uint64_t bytes_read;
+  /* Size of blocks used in normal hashing */
+  uint64_t      block_size;
 
-  uint64_t block_size;
+  /* Size of blocks used in piecewise hashing */
+  uint64_t      piecewise_size;
 
-  char *result;
+  // These strings are used in hash.c to hold the filename
+  TCHAR         * full_name;
+  TCHAR          * short_name;
+  TCHAR          * msg;
 
-  FILE *handle;
-  int is_stdin;
+  /* Hashing algorithms */
+
+  /* We don't define hash_string_length, it's just twice this length. 
+     We use a signed value as this gets compared with the output of strlen() */
+  size_t       hash_length;
+  
+  // Which filetypes this algorithm supports and their position in the file
+  uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
+  uint8_t      h_ilook, h_nsrl15, h_nsrl20, h_encase;
+  
+  // Function used to do the actual hashing
+  int ( *hash_init)(struct _state *);
+  int ( *hash_update)(struct _state *, unsigned char *, uint64_t );
+  int ( *hash_finalize)(struct _state *, unsigned char *);
+
+  void * hash_context;
+  
+  unsigned char * hash_sum;
+  char          * hash_result;
+  char          * known_fn;
+
 } state;
 
+
+
+/* The default size for hashing */
 #define MD5DEEP_IDEAL_BLOCK_SIZE 8192
 
-
-// Return values for the program
+/* Return values for the program */
 #define STATUS_OK                      0
 #define STATUS_UNUSED_HASHES           1
 #define STATUS_INPUT_DID_NOT_MATCH     2
-
 #define STATUS_USER_ERROR             64
 #define STATUS_INTERNAL_ERROR        128 
 
+#define MM_STR "\x53\x41\x4E\x20\x44\x49\x4D\x41\x53\x20\x48\x49\x47\x48\x20\x53\x43\x48\x4F\x4F\x4C\x20\x46\x4F\x4F\x54\x42\x41\x4C\x4C\x20\x52\x55\x4C\x45\x53\x21"
 
-#ifdef __SOLARIS
-#define   u_int32_t   unsigned int
-#define   u_int64_t   unsigned long
-#endif 
 
-#ifdef __HPUX
-#define   u_int32_t   unsigned int
-
-#ifdef __LP64__
-#define   u_int64_t   unsigned long
-#else
-#define   u_int64_t   unsigned long long
-#endif
-
-#endif
 
 /* Set up the environment for the *nix operating systems (Mac, Linux, 
    BSD, Solaris, and really everybody except Microsoft Windows) */
 #ifndef _WIN32
-
-#include <libgen.h>
-
-// These prototypes help us avoid compiler warnings on older systems 
-
-#ifndef __HPUX
-int fseeko(FILE *stream, off_t offset, int whence);
-off_t ftello(FILE *stream);
-#endif
-
 #define CMD_PROMPT "$"
 #define DIR_SEPARATOR   '/'
 #define NEWLINE "\n"
@@ -263,10 +296,14 @@ off_t ftello(FILE *stream);
 #define BLANK_LINE \
 "                                                                          "
 
-#endif // #ifndef _WIN32 
+#ifndef HAVE_FSEEKO
+#define fseeko fseek
+#define ftello ftell
+#endif
 
 
-#ifdef _WIN32
+#else   // ifndef _WIN32
+
 
 /* The current cross compiler for OS X->Windows does not support a few
    critical error codes normally defined in errno.h. Because we need 
@@ -289,7 +326,6 @@ off_t ftello(FILE *stream);
 #endif
 
 
-
 #define CMD_PROMPT "c:\\>"
 #define DIR_SEPARATOR   '\\'
 #define NEWLINE "\r\n"
@@ -297,30 +333,21 @@ off_t ftello(FILE *stream);
 #define BLANK_LINE \
 "                                                                        "
 
-
-
 #define ftello   ftell
 #define fseeko   fseek
 
-#define  snprintf         _snprintf
-#define  u_int32_t        unsigned long
-
 /* We create macros for the Windows equivalent UNIX functions.
-   No worries about lstat to stat; Windows doesn't have symbolic links */
-#define lstat(A,B)      stat(A,B)
-
+   No worries about lstat to stat; Windows doesn't have symbolic links 
+   This function has been replaced with _lstat in the code. See tchar-local.h */
+//#define lstat(A,B)      stat(A,B)
 #define realpath(A,B)   _fullpath(B,A,PATH_MAX) 
-
-/* Not used in md5deep anymore, but left in here in case I 
-   ever need it again. Win32 documentation searches are evil.
-   int asprintf(char **strp, const char *fmt, ...);  */
 
 char *basename(char *a);
 extern char *optarg;
 extern int optind;
 int getopt(int argc, char *const argv[], const char *optstring);
 
-#endif   /* ifdef _WIN32 */
+#endif   /* ifndef _WIN32,#else */
 
 
 /* On non-glibc systems we have to manually set the __progname variable */
@@ -331,20 +358,39 @@ char *__progname;
 #endif /* ifdef __GLIBC__ */
 
 
-/* The algorithm headers need all of the operating system specific 
-   defines, so we don't add them until down here */
-#include "algorithms.h"
 
-/* -----------------------------------------------------------------
-   Function definitions
-   ----------------------------------------------------------------- */
 
-/* To avoid cycles */
-int have_processed_dir(char *fn);
-int processing_dir(char *fn);
-int done_processing_dir(char *fn);
+/* ----------------------------------------------------------------
+   PROGRAM ENGINE
+   ---------------------------------------------------------------- */
 
-/* Functions from matching (match.c) */
+/* Dig into the file hierachy and hash file accordingly */
+int process_normal(state *s, TCHAR *input);
+int process_win32(state *s, TCHAR *fn);
+
+/* Hashing functions */
+int hash_file(state *s, TCHAR *file_name);
+int hash_stdin(state *s);
+
+/* Sets up hashing algorithm and allocates memory */
+int setup_hashing_algorithm(state *s);
+
+
+
+/* ----------------------------------------------------------------
+   CYCLE CHECKING
+   ---------------------------------------------------------------- */
+int have_processed_dir(TCHAR *fn);
+int processing_dir(TCHAR *fn);
+int done_processing_dir(TCHAR *fn);
+
+
+
+/* ----------------------------------------------------------------
+   FILE MATCHING
+   ---------------------------------------------------------------- */
+
+/* Load a file of known hashes from the disk */
 int load_match_file(state *s, char *fn);
 
 int is_known_hash(char *h, char *known_fn);
@@ -355,29 +401,28 @@ int finalize_matching(state *s);
 void add_hash(state *s, char *h, char *fn);
 
 /* Functions for file evaluation (files.c) */
-int valid_hash(char *buf);
-int hash_file_type(FILE *f);
-int find_hash_in_line(char *buf, int fileType, char *filename);
+int valid_hash(state *s, char *buf);
+int hash_file_type(state *s, FILE *f);
+int find_hash_in_line(state *s, char *buf, int fileType, char *filename);
 
-/* Dig into file hierarchies */
-int process(state *s, char *input);
 
-/* Hashing functions */
-int hash_file(state *s, char *filename);
-int hash_stdin(state *s);
 
-/* Miscellaneous helper functions */
-void shift_string(char *fn, size_t start, size_t new_start);
 
-// ----------------------------------------------------------------
-// User interface functions
-// ----------------------------------------------------------------
+/* ----------------------------------------------------------------
+   USER INTERFACE
+
+   These are all command line functions, but could be replaced
+   with GUI functions if desired.
+   ---------------------------------------------------------------- */
 
 // Display an ordinary message with newline added
 void print_status(char *fmt, ...);
 
 // Display an error message if not in silent mode
 void print_error(state *s, char *fmt, ...);
+
+// Display an error message if not in silent mode with a Unicode filename
+void print_error_unicode(state *s, TCHAR *fn, char *fmt, ...);
 
 // Display an error message, if not in silent mode,  
 // and exit with EXIT_FAILURE
@@ -387,10 +432,52 @@ void fatal_error(state *s, char *fmt, ...);
 // and exit with EXIT_FAILURE
 void internal_error(char *fmt, ... );
 
+// Display a filename, possibly including Unicode characters
+void display_filename(FILE *out, TCHAR *fn);
 
 void print_debug(char *fmt, ...);
 
 void make_newline(state *s);
+
+
+/* ------------------------------------------------------------------
+   HASH TABLE
+   ------------------------------------------------------------------ */
+
+void hashTableInit(hashTable *knownHashes);
+
+/* Adds the string n to the hashTable, along with the filename fn.
+Returns TRUE if an error occured (i.e. Out of memory) */
+int hashTableAdd(state *s, hashTable *knownHashes, char *n, char *fn);
+
+/* Returns TRUE if the hashTable contains the hash n and stores the
+filename of the known hash in known. Returns FALSE and does not
+alter known if the hashTable does not contain n. This function
+assumes that fn has already been malloc'ed to hold at least 
+PATH_MAX characters */
+int hashTableContains(hashTable *knownHashes, char *n, char *known);
+
+/* Find any hashes that have not been used. If there are any, and display
+is TRUE, prints them to stdout. Regardless of display, then returns
+TRUE. If there are no unused hashes, returns FALSE. */
+int hashTableDisplayNotMatched(hashTable *t, int display);
+
+/* This function is for debugging */
+void hashTableEvaluate(hashTable *knownHashes);
+
+
+
+
+/* ------------------------------------------------------------------
+   HELPER FUNCTIONS
+   ------------------------------------------------------------------ */
+
+void shift_string(char *fn, size_t start, size_t new_start);
+
+// Works like dirname(3), but accepts a TCHAR* instead of char*
+int my_dirname(TCHAR *c);
+int my_basename(TCHAR *s);
+
 int find_comma_separated_string(char *s, unsigned int n);
 int find_quoted_string(char *buf, unsigned int n);
 

@@ -12,35 +12,44 @@
  *
  */
 
+// $Id: cycles.c,v 1.8 2007/09/26 20:27:54 jessekornblum Exp $
+
 #include "main.h"
 
+
 typedef struct dir_table {
-  char *name;
+  TCHAR *name;
   struct dir_table *next;
 } dir_table;
 
 dir_table *my_table = NULL;
 
-#ifdef __DEBUG
-void dump_table(void)
+
+/* This function was used in the dark ages for debugging
+static void dump_table(void)
 {
   struct dir_table *t = my_table;
   while (t != NULL)
   {
-    printf ("* %s\n", t->name);
+    print_status (_TEXT("* %s"), t->name);
     t = t->next;
   }
-  printf ("-- end of table --\n");
+  print_status ("-- end of table --");
 }
-#endif
+*/
 
 
-int done_processing_dir(char *fn)
+
+int done_processing_dir(TCHAR *fn)
 {
   dir_table *last, *temp;
+  TCHAR *d_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
 
-  char *d_name = (char*)malloc(sizeof(char) * PATH_MAX);
+#ifdef _WIN32
+  _wfullpath(d_name,fn,PATH_MAX);
+#else
   realpath(fn,d_name);
+#endif
 
   if (my_table == NULL)
   {
@@ -53,7 +62,7 @@ int done_processing_dir(char *fn)
 
   temp = my_table;
 
-  if (!strncmp(d_name,temp->name,PATH_MAX))
+  if (!_tcsncmp(d_name,temp->name,PATH_MAX))
   {
     my_table = my_table->next;
     free(temp->name);
@@ -66,7 +75,7 @@ int done_processing_dir(char *fn)
   {
     last = temp;
     temp = temp->next;
-    if (!strncmp(d_name,temp->name,PATH_MAX))
+    if (!_tcsncmp(d_name,temp->name,PATH_MAX))
     {
       last->next = temp->next;
       free(temp->name);
@@ -87,16 +96,21 @@ int done_processing_dir(char *fn)
 
 
 
-int processing_dir(char *fn)
+int processing_dir(TCHAR *fn)
 {
   dir_table *new, *temp;
-  char *d_name = (char*)malloc(sizeof(char) * PATH_MAX);
+  TCHAR *d_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
+
+#ifdef _WIN32
+  _wfullpath(d_name,fn,PATH_MAX);
+#else
   realpath(fn,d_name);
+#endif
 
   if (my_table == NULL)
   {
     my_table = (dir_table*)malloc(sizeof(dir_table));
-    my_table->name = strdup(d_name);
+    my_table->name = _tcsdup(d_name);
     my_table->next = NULL;
 
     free(d_name);
@@ -108,7 +122,7 @@ int processing_dir(char *fn)
   while (temp->next != NULL)
   {
     /* We should never be adding a directory that is already here */
-    if (!strncmp(temp->name,d_name,PATH_MAX))
+    if (!_tcsncmp(temp->name,d_name,PATH_MAX))
     {
       internal_error("%s: Attempt to add existing %s in processing_dir",
 		     __progname, d_name);
@@ -120,7 +134,7 @@ int processing_dir(char *fn)
   }
 
   new = (dir_table*)malloc(sizeof(dir_table));
-  new->name = strdup(d_name);
+  new->name = _tcsdup(d_name);
   new->next = NULL;  
   temp->next = new;
 
@@ -129,21 +143,25 @@ int processing_dir(char *fn)
 }
 
 
-int have_processed_dir(char *fn)
+int have_processed_dir(TCHAR *fn)
 {
   dir_table *temp;
-  char *d_name;
+  TCHAR *d_name;
 
   if (my_table == NULL)
     return FALSE;
 
-  d_name = (char*)malloc(sizeof(char) * PATH_MAX);
+  d_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
+#ifdef _WIN32
+  _wfullpath(d_name,fn,PATH_MAX);
+#else
   realpath(fn,d_name);
+#endif
 
   temp = my_table;
   while (temp != NULL)
   {
-    if (!strncmp(temp->name,d_name,PATH_MAX))
+    if (!_tcsncmp(temp->name,d_name,PATH_MAX))
     {
       free(d_name);
       return TRUE;

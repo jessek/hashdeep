@@ -1,0 +1,50 @@
+2007-09-26 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Added second ioctl call in Linux version of find_file_size
+	  to get the true sector size; don't just assume 512 byte
+	  sectors. 
+
+	* Changed fseek call in hash.c to fseeko for large file support
+	
+	* Removed spurrious -u: from getopt call in main.c
+
+	* Removed function checks from configure.ac. We weren't using
+	  them to build support, so we shouldn't waste time checking
+	  for them.
+	
+
+2007-09-25 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Created new function print_error_unicode to 
+	  handle errors encountered while processing
+	  files with (possibly) Unicode characters in 
+	  their filenames.
+	
+	* Added AC_SYS_LARGEFILE to configure script to 
+	  account for large files on Linux. This fixes
+	  the file estimation mode (-e) for Liunx. 
+
+	* Fixed find_file_size for block devices on OS X.
+
+	
+2007-09-24 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Updated error display for Unicode filenames in dig.c
+	
+	* Fixed expert mode due to 64-bit values in int returns
+
+	
+2007-09-23 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Reverted back to old method of installing man pages.
+	  When make install is invoked, current md5deep.1 is
+	  copied over other man pages, which are all then 
+	  installed normally.
+
+	
+2007-09-22 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Switched to GNU autotools
+	
+	* Moved list of past changes to NEWS file
+	

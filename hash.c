@@ -12,21 +12,24 @@
  *
  */
 
+// $Id: hash.c,v 1.21 2007/09/26 20:27:54 jessekornblum Exp $
+
 #include "main.h"
 
-#ifndef HASH_ALGORITHM
-#error No hash algorithm defined! See algorithms.h
-#endif
 
-
+/* At least one user has suggested changing update_display() to 
+   use human readable units (e.g. GB) when displaying the updates.
+   The problem is that once the display goes above 1024MB, there
+   won't be many updates. The counter doesn't change often enough
+   to indicate progress. Using MB is a reasonable compromise. */
 
 static void update_display(state *s, time_t elapsed)
 {
   uint8_t hour,min;
   uint64_t seconds, mb_read;
 
-  memset(s->msg,0,PATH_MAX);
-  
+  memset(s->msg,0,LINE_LENGTH);
+
   /* If we've read less than one MB, then the computed value for mb_read 
      will be zero. Later on we may need to divide the total file size, 
      total_megs, by mb_read. Dividing by zero can create... problems */
@@ -35,11 +38,14 @@ static void update_display(state *s, time_t elapsed)
   else
     mb_read = s->bytes_read / ONE_MEGABYTE;
 
-  if (s->total_megs == 0) 
+  if (0 == s->total_megs)
   {
-    snprintf(s->msg,LINE_LENGTH-1,
-	     "%s: %"PRIu64"MB done. Unable to estimate remaining time.%s",
-	     s->short_name,mb_read,BLANK_LINE);
+    _sntprintf(s->msg,
+	       LINE_LENGTH-1,
+	       _TEXT("%s: %"PRIu64"MB done. Unable to estimate remaining time.%s"),
+	       s->short_name,
+	       mb_read,
+	       _TEXT(BLANK_LINE));
   }
   else 
   {
@@ -57,37 +63,48 @@ static void update_display(state *s, time_t elapsed)
     min = floor((double)seconds/60);
     seconds -= min * 60;
 
-    snprintf(s->msg,LINE_LENGTH-1,
-	     "%s: %"PRIu64"MB of %"PRIu64"MB done, %02"PRIu8":%02"PRIu8":%02"PRIu64" left%s",
-	     s->short_name,mb_read,s->total_megs,hour,min,seconds,BLANK_LINE);
+    _sntprintf(s->msg,LINE_LENGTH-1,
+	      _TEXT("%s: %"PRIu64"MB of %"PRIu64"MB done, %02"PRIu8":%02"PRIu8":%02"PRIu64" left%s"),
+	       s->short_name,
+	       mb_read,
+	       s->total_megs,
+	       hour,
+	       min,
+	       seconds,
+	       _TEXT(BLANK_LINE));
   }    
 
-  fprintf(stderr,"\r%s", s->msg);
+  fprintf(stderr,"\r");
+  display_filename(stderr,s->msg);
 }
 
 
-static void shorten_filename(char *dest, char *src)
+
+static void shorten_filename(TCHAR *dest, TCHAR *src)
 {
-  char *chopped, *basen;
+  TCHAR *basen;
 
-  if (strlen(src) < MAX_FILENAME_LENGTH)
+  if (_tcslen(src) < MAX_FILENAME_LENGTH)
   {
-    strncpy(dest,src, MAX_FILENAME_LENGTH);
+    _tcsncpy(dest,src, MAX_FILENAME_LENGTH);
     return;
   }
 
-  basen = strdup(src);
-  chopped = basename(basen);  
+  basen = _tcsdup(src);
+  if (NULL == basen)
+    return;
+
+  my_basename(basen);  
+
+  if (_tcslen(basen) < MAX_FILENAME_LENGTH)
+  {
+    _tcsncpy(dest,basen,MAX_FILENAME_LENGTH);
+    return;
+  }
+
+  basen[MAX_FILENAME_LENGTH - 3] = 0;
+  _sntprintf(dest,MAX_FILENAME_LENGTH,_TEXT("%s..."),basen);
   free(basen);
-
-  if (strlen(chopped) < MAX_FILENAME_LENGTH)
-  {
-    strncpy(dest,chopped,MAX_FILENAME_LENGTH);
-    return;
-  }
-  
-  chopped[MAX_FILENAME_LENGTH - 3] = 0;
-  snprintf(dest,MAX_FILENAME_LENGTH,"%s...",chopped);
 }
 
 
@@ -113,18 +130,16 @@ static int file_fatal_error(void)
 }
 
 
-int compute_hash(state *s, HASH_CONTEXT *md)
+static int compute_hash(state *s)
 {
-  time_t start_time,current_time,last_time = 0;
-  uint64_t current_read;
+  time_t current_time;
+  uint64_t current_read, mysize, remaining;
   unsigned char buffer[MD5DEEP_IDEAL_BLOCK_SIZE];
-  uint64_t mysize, remaining;
 
   /* Although we need to read MD5DEEP_BLOCK_SIZE bytes before
-     we exit this
-     function, we may not be able to do that in one fell swoop.
-     Instead we read in blocks of 8192 bytes (or as needed) to 
-     get how many bytes we need */
+     we exit this function, we may not be able to do that in 
+     one read operation. Instead we read in blocks of 8192 bytes 
+     (or as needed) to get the number of bytes we need. */
 
   if (s->block_size < MD5DEEP_IDEAL_BLOCK_SIZE)
     mysize = s->block_size;
@@ -132,12 +147,6 @@ int compute_hash(state *s, HASH_CONTEXT *md)
     mysize = MD5DEEP_IDEAL_BLOCK_SIZE;
 
   remaining = s->block_size;
-
-  if (s->mode & mode_estimate)
-  {
-    time(&start_time);
-    last_time = start_time;
-  }
 
   while (TRUE) 
   {    
@@ -149,26 +158,30 @@ int compute_hash(state *s, HASH_CONTEXT *md)
     /* If an error occured, display a message but still add this block */
     if (ferror(s->handle))
     {
-      print_error(s,"%s: error at offset %"PRIu64": %s", 
-		  s->full_name,s->bytes_read,strerror(errno));
-      
+      if ( ! (s->mode & mode_silent))
+	print_error_unicode(s,
+			    s->full_name,
+			    "error at offset %"PRIu64": %s",
+			    s->bytes_read,
+			    strerror(errno));
+	   
       if (file_fatal_error())
 	return FALSE;
-
-      HASH_Update(md, buffer, mysize);
+      
+      s->hash_update(s,buffer,mysize);
       s->bytes_read += mysize;
-
+      
       clearerr(s->handle);
       
       /* The file pointer's position is now undefined. We have to manually
 	 advance it to the start of the next buffer to read. */
-      fseek(s->handle,SEEK_SET,s->bytes_read);
+      fseeko(s->handle,SEEK_SET,s->bytes_read);
     } 
     else
     {
       /* If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE
 	 bytes and must reflect that in how we update the hash. */
-      HASH_Update(md, buffer, current_read);
+      s->hash_update(s,buffer,current_read);
       s->bytes_read += current_read;
     }
     
@@ -198,17 +211,19 @@ int compute_hash(state *s, HASH_CONTEXT *md)
       time(&current_time);
       
       /* We only update the display only if a full second has elapsed */
-      if (last_time != current_time) 
+      if (s->last_time != current_time) 
       {
-	last_time = current_time;
-	update_display(s,current_time - start_time);
+	s->last_time = current_time;
+	update_display(s,current_time - s->start_time);
       }
     }
   }      
 }
 
 
-void display_size(state *s)
+
+
+static void display_size(state *s)
 {
   if (s->mode & mode_display_size)
   {
@@ -221,7 +236,7 @@ void display_size(state *s)
 }
 
 
-char display_asterisk(state *s)
+static char display_asterisk(state *s)
 {
   if (s->mode & mode_asterisk)
     return '*';
@@ -229,46 +244,43 @@ char display_asterisk(state *s)
 }
 
 
-int display_match_result(state *s)
+static int display_match_result(state *s)
 {  
   int known_hash;
-  char *known_fn;
 
-  if ((known_fn = (char *)malloc(sizeof(char) * PATH_MAX)) == NULL)
-  {
-    print_error(s,"%s: Out of memory", s->full_name);
-    return TRUE;;
-  }
-
-  known_hash = is_known_hash(s->result,known_fn);
+  known_hash = is_known_hash(s->hash_result,s->known_fn);
   if ((known_hash && (s->mode & mode_match)) ||
       (!known_hash && (s->mode & mode_match_neg)))
   {
     display_size(s);
 
     if (s->mode & mode_display_hash)
-      printf ("%s %c",s->result,display_asterisk(s));
+      printf ("%s %c",s->hash_result,display_asterisk(s));
 
     if (s->mode & mode_which)
     {
       if (known_hash && (s->mode & mode_match))
-	printf ("%s matched %s", s->full_name,known_fn);
+      {
+	display_filename(stdout,s->full_name);
+	printf (" matched %s", s->known_fn);
+      }
       else
-	printf ("%s does NOT match", s->full_name);
+      {
+	display_filename(stdout,s->full_name);
+	printf (" does NOT match");
+      }
     }
     else
-      printf ("%s", s->full_name);
+      display_filename(stdout,s->full_name);
 
     make_newline(s);
   }
   
-  free(known_fn);
   return FALSE;
 }
 
 
-
-int display_hash(state *s)
+static int display_hash(state *s)
 {
   /* We can't call display_size here because we don't know if we're
      going to display *anything* yet. If we're in matching mode, we
@@ -277,15 +289,18 @@ int display_hash(state *s)
     return display_match_result(s);
 
   display_size(s);
-  printf ("%s", s->result);
+  _tprintf (_TEXT("%s"), s->hash_result);
 
   if (s->mode & mode_quiet)
-    printf ("  ");
+    _tprintf (_TEXT("  "));
   else
   {
     if ((s->mode & mode_piecewise) ||
 	!(s->is_stdin))
-      printf(" %c%s", display_asterisk(s),s->full_name);
+    {
+      printf(" %c", display_asterisk(s));      
+      display_filename(stdout,s->full_name);
+    }
   }
 
   make_newline(s);
@@ -293,134 +308,112 @@ int display_hash(state *s)
 }
 
 
-int hash(state *s)
+static int hash(state *s)
 {
   int done = FALSE, status = FALSE;
-  HASH_CONTEXT md;
-  unsigned char sum[HASH_LENGTH];
-  static char result[2 * HASH_LENGTH + 1];
   static char hex[] = "0123456789abcdef";
-  int i;
-  char *tmp_name = NULL;
-
+  size_t i;
+  TCHAR *tmp_name = NULL;
+  
   s->bytes_read = 0;
-  s->block_size = MD5DEEP_IDEAL_BLOCK_SIZE;
-
-  if (s->mode & mode_piecewise)
+  if (s->mode & mode_estimate)
   {
-    s->block_size = s->piecewise_block;
-
+    time(&(s->start_time));
+    s->last_time = s->start_time;
+  }
+  
+  if ( s->mode & mode_piecewise )
+  {
+    s->block_size = s->piecewise_size;
+    
     // We copy out the original file name and saved it in tmp_name
     tmp_name = s->full_name;
-    s->full_name = (char *)malloc(sizeof(char) * PATH_MAX);
+    s->full_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
     if (NULL == s->full_name)
+    {
       return TRUE;
+    }
   }
+
 
   while (!done)
   {
-    memset(s->result,0,PATH_MAX);
-
-    HASH_Init(&md);
+    memset(s->hash_result,0,(2 * s->hash_length) + 1);
+    
+    s->hash_init(s);
     
     if (s->mode & mode_piecewise)
     {
-      /* If the BLOCK_SIZE is larger than the file, this keeps the
-	 offset values correct */
+      /* This logic keeps the offset values correct when s->block_size
+	 is larger than the whole file. */
       if (s->bytes_read + s->block_size >  s->total_bytes)
-	snprintf(s->full_name,PATH_MAX,"%s offset %"PRIu64"-%"PRIu64,
-		 tmp_name, s->bytes_read, s->total_bytes);
+	_sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
+		  tmp_name, s->bytes_read, s->total_bytes);
       else
-	snprintf(s->full_name,PATH_MAX,"%s offset %"PRIu64"-%"PRIu64,
-		 tmp_name, s->bytes_read, s->bytes_read + s->block_size);
+	_sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
+		  tmp_name, s->bytes_read, s->bytes_read + s->block_size);
     }
-
-    if (!compute_hash(s,&md))
+    
+    if (!compute_hash(s))
     {
       if (s->mode & mode_piecewise)
 	free(s->full_name);
       return TRUE;
     }
-
-    HASH_Final(sum, &md);  
-    for (i = 0; i < HASH_LENGTH; ++i) 
+      
+    s->hash_finalize(s,s->hash_sum);    
+    for (i = 0; i < s->hash_length ; ++i) 
     {
-      result[2 * i] = hex[(sum[i] >> 4) & 0xf];
-      result[2 * i + 1] = hex[sum[i] & 0xf];
+      s->hash_result[2 * i] = hex[(s->hash_sum[i] >> 4) & 0xf];
+      s->hash_result[2 * i + 1] = hex[s->hash_sum[i] & 0xf];
     }
-  
-    strncpy(s->result,result,PATH_MAX);
-  
+    
     /* Under not matched mode, we only display those known hashes that
        didn't match any input files. Thus, we don't display anything now.
        The lookup is to mark those known hashes that we do encounter */
     if (s->mode & mode_not_matched)
-      is_known_hash(s->result,NULL);
+      is_known_hash(s->hash_result,NULL);
     else
       status = display_hash(s);
-
+    
     if (s->mode & mode_piecewise)
       done = feof(s->handle);
     else
       done = TRUE;
   }
-
+  
   if (s->mode & mode_piecewise)
   {
     free(s->full_name);
     s->full_name = tmp_name;
   }
-
+  
   return status;
 }
 
 
-/* The basename function kept misbehaving on OS X, so I rewrote it.
-   This function isn't perfect, nor is it designed to be. Because
-   we're guarenteed to be working with a file here, there's no way
-   that s will end with a DIR_SEPARATOR (e.g. /foo/bar/). This function
-   will not work properly for a string that ends in a DIR_SEPARATOR */
-int my_basename(char *s)
+static int setup_barename(state *s, TCHAR *fn)
 {
-  size_t pos = strlen(s);
-  if (0 == pos || pos > PATH_MAX)
-    return TRUE;
-  
-  while(s[pos] != DIR_SEPARATOR && pos > 0)
-    --pos;
-  
-  // If there were no DIR_SEPARATORs in the string, we were still successful!
-  if (0 == pos)
-    return FALSE;
-
-  // The current character is a DIR_SEPARATOR. We advance one to ignore it
-  ++pos;
-  shift_string(s,0,pos);
-  return FALSE;
-}
-
-
-int setup_barename(state *s, char *file_name)
-{
-  char *basen = strdup(file_name);
+  TCHAR *basen = _tcsdup(fn);
   if (basen == NULL)
   {
-    print_error(s,"%s: Out of memory", file_name);
+    print_error_unicode(s,fn,"Out of memory");
     return TRUE;
   }
 
   if (my_basename(basen))
   {
     free(basen);
-    print_error(s,"%s: Illegal filename", file_name);
+    print_error_unicode(s,fn,"%s: Illegal filename");
     return TRUE;
   }
+
   s->full_name = basen;
   return FALSE;
 }
 
 
-int hash_file(state *s, char *file_name)
+int hash_file(state *s, TCHAR *fn)
 {
   int status = STATUS_OK;
 
@@ -428,15 +421,14 @@ int hash_file(state *s, char *file_name)
 
   if (s->mode & mode_barename)
   {
-    if (setup_barename(s,file_name))
+    if (setup_barename(s,fn))
       return TRUE;
   }
   else
-    s->full_name = file_name;
+    s->full_name = fn;
 
-  if ((s->handle = fopen(file_name,"rb")) != NULL)
+  if ((s->handle = _tfopen(fn,_TEXT("rb"))) != NULL)
   {
-
     s->total_bytes = find_file_size(s->handle);
 
     if (s->mode & mode_estimate)
@@ -447,13 +439,14 @@ int hash_file(state *s, char *file_name)
     }    
 
     status = hash(s);
+
     fclose(s->handle);
   }
   else
   {
-    print_error(s,"%s: %s", file_name,strerror(errno));
-    status = TRUE;
+    print_error_unicode(s,fn,"%s", strerror(errno));
   }
+
   
   return status;
 }
@@ -461,7 +454,7 @@ int hash_file(state *s, char *file_name)
 
 int hash_stdin(state *s)
 {
-  strncpy(s->full_name,"stdin",PATH_MAX);
+  _tcsncpy(s->full_name,_TEXT("stdin"),PATH_MAX);
   s->is_stdin  = TRUE;
   s->handle    = stdin;
 

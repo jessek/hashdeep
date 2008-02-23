@@ -1,0 +1,343 @@
+
+** Changes in version 2.0 (15 Oct 2007)
+
+* New Features
+
+	Using GNU Autotools for configuration and compilation. This
+	should help avoid platform specific issues such as SHA-1
+	problems previously found on 64-bit versions of AIX.
+
+	Added support for files with Unicode characters in their
+	filenames on Microsoft Windows.
+
+	Added support for EnCase hash sets (.hash files).
+
+	Updated web site and quick start guide
+
+	Slightly reduced the size of all of the executables by removing
+	duplicated code. 
+
+* Bug Fixes
+
+	Fixed time estimation mode for block devices on OS X and Linux
+
+	Fixed cosmetic error where estimated time remaining mode is
+	being used in conjunction with piecewise hashing. Time estimates
+	are now based on the whole file, not just each piece.
+
+	Clarified licensing issues in COPYING for tiger.c
+	
+	Changed some data types in hashing functions to C99 standard.
+	Whirlpool seems to be working well enough without changes.
+
+	Wrapped all of the global variables into the state structure
+
+
+
+** Changes in version 1.13 (6 Aug 2007)
+
+* New Features
+
+	Added HP/UX as a support platform
+
+	Added -S mode to only display warnings for improperly
+	formatted hashes.
+
+	Created an internal state variable to central program structure.
+	This will help to simplify future development. Also moved
+	md5deep.h to main.h. 
+
+	Moved print functions to ui.c for easier abstraction
+
+* Bug Fixes 
+
+	Changed piecewise hashing block size to a 64-bit value.
+	
+	Fixed a cosmetic error regarding newlines in -n mode.
+
+	Fixed error on Win32 in file estimate mode. Although it appeared
+	to be solely cosmetic, the functions to produce the status message
+	could potentially overwrite other memory and create inconsistencies
+
+	Removed make macg5 option as it didn't work with new
+	versions of gcc.
+
+	Updated the maximum line length to 2048 bytes. This should
+	avoid errors reading in files with very long lines.
+
+
+
+** Changes in version 1.12 (3 Apr 2006)
+
+* New Features
+
+	Added multipliers for piecewise hashing mode.
+
+* Bug Fixes
+
+	Fixed Gentoo compilation and the use of BLOCK_SIZE in hash.c.
+
+	Fixed piecewise hashing bugs: filename display, correct offset
+	when block size is larger than file, and ability to handle 
+	large block sizes.
+
+
+	
+Version 1.11 - 31 Mar 2006
+         - Added piecewise mode -p
+	 - Added support for using md5deep output while file sizes (-z mode) in
+	   matching mode.
+	 - Added flush to output after newline generation in helpers.c 
+	 - Fixed SHA-1 to work on 64-bit platforms (changed unsigned long to uin32_t)
+	 - For good measure, eliminated a few other unsigned long references
+	   throughout the source code
+         - Added -W to the compiler flags to catch lots of other little bugs,
+	   many little fixes. Mostly eliminating comparisons between signed and
+	   unsigned. Some warnings, especially "unused paramter" are ok.
+
+Version 1.10 - 2 Feb 2006
+         - Fixed Tiger hashes being displayed in big endian instead of little endian
+	     Thanks to Peter Chuenkov (aka ODB) for finding this bug
+	 - Fixed cosmetic bug in usage message
+
+Version 1.9.3 - 5 Jan 2006
+         - Added Cygwin as a supported platform
+	 - Fixed expert mode to remove a number of logical errors
+	   that prevented the program from correctly identifying which 
+	   files should be hashed. Symbolic links, in particular, were not 
+	   being chosen or excluded correctly.
+	 - Added quiet mode, -q, filename is omitted from the output.
+	 - Added Makefile directive macg5 to compile OS X G5 specific code
+	 - Fixed comparisons between signed and unsigned variables in helpers.c
+	    and dig.c
+
+Version 1.9.2 - 14 Nov 2005
+         - Fixed Makefile to include compiler optimizations for hashing algorithms
+
+Version 1.9.1 - 8 Nov 2005
+         - Fixed bug when processing symlinks to directories introduced in
+	   version 1.9 by accidently removing known good code. Oops.
+
+Version 1.9 - 7 Nov 2005
+         - Changed the existing return values and added ones for the matching modes 
+	   to indicate if any of the input files did not match a known hash and 
+	   if any hashes were unused. See "RETURN VALUES" section of the manpage.
+- Added -n mode to display which files from the list of known hashes did
+    not match any of the input files. 
+- Fixed dig.c code to correctly handle links to Solaris doors.
+- Fixed cosmetic bug that caused the leading slash to be omitted from the
+    output under 'which matching file', or -w mode.
+- Changed text displayed in matching modes for standard input. Now displays
+    just "stdin" in matching mode
+- Fixed bug in files.c:valid_hash that caused crash by casting
+    character value into a signed integer. 
+- Fixed bug in BSD hash file importing that caused crash when processing a 
+    line with two parenthesis but was shorter than a valid hash. 
+- Fixed cosmetic bug in hash.c:update_display to prevent the first time 
+    estimate to be wildly off if it takes more than one second to read
+    the first megabyte of each input file.
+- Simplified hash.c by removing match_name from hash_info structure
+- Minor changes to Makefile defines
+
+
+Version 1.8 - 8 Aug 2005
+
+- Added Tiger algorithm to make tigerdeep.
+- Added -k mode to insert asterisks before filename, like md5sum -b
+- Fixed a bug that prevented the first BSD style hash from being 
+    loaded during any of the matching modes.
+- Continued to simplify the Makefile. To wit:
+   - Changed checks for __WIN32 to _WIN32, which is defined by the compiler.
+     Removed -D__WIN32 from the Makefile.
+   - Greatly reduced the number of instructions for cross compiling
+   - Simplified rules for building all applications
+
+
+Version 1.7 - 23 May 2005
+
+- Added support to use BSD style hashes in matching modes
+- Fixed support for Hashkeeper files that have directory information.
+    Matt Kucenski helped to track this down.
+- While fixing Hashkeeper support, improved support for other hash
+    file formats and generalized the code in files.c
+- Fixed a bug for displaying the correct matching filename in -w mode
+    (ensured that extra characters are erased)
+- Fixed cosmetic bug to avoid extra characters on time estimation mode
+- Removed 32-bit number limitation from Win32 code, which allows 
+    the display of file sizes larger than 4GB. (Note that time estimates
+    for files larger than 4GB is still not available on Windows.)
+- Switched printing of large numbers to C99 style (e.g. PRIu64 et al)
+- Simplified the operating systems defines in the Makefile. To wit:
+     - Removed -D__MACOSX for Mac. Instead check for __APPLE__, which 
+       the compiler defines by default for us.
+     - Removed the -D__UNIX directive. Instead just check the __WIN32
+       is *not* defined whenever we put in *nix code.
+
+
+Version 1.6 - 4 May 2005
+
+- Added Whirlpool algorithm to make whirlpooldeep.
+- Fixed bug to prevent trying to access 'busy' files. This happens when
+    trying to access system files on Win32 that are mounted via Samba.
+    Jeff Bryner helped to track this one down
+- Added -w flag to display, in matching mode, which known hash matched
+    the input file
+- Added -b flag to remove leading directory information from filenames
+- Added -a and -A flags to add a single hash to 
+    positive and negative matching, respectively
+- Removed -t as a valid flag, breaking compatibility with md5sum
+- Enabled control of FIFO pages via expert mode on Windows
+- Combined all manpages into single md5deep man page
+- Added error checking to hash table functions
+- Removed algorithm specific code from hash table code
+- Fixed __USE_BSD define in md5deep.h to avoid compiler warnings
+- Fixed minor bug to clean up Windows version of man page
+- Updated install process to use $(PREFIX) for installed location
+- Removed macinstall option
+
+
+Version 1.5 - 31 Aug 2004
+
+- Added SHA-256 algorithm to make sha256deep. Special thanks to
+  Christophe Devine his SHA-256 implementation.
+- Fixed typo in files.c for unsupport file type processing
+- Fixed typo in sha1deep man page. (Had wrong reference in description.)
+- Man pages are now installed mode 444 instead of 755. (i.e. non-executable)
+- Cleaned up Makefile. Yes, again.
+
+
+Version 1.4 - 16 Aug 2004
+
+- Added relative paths mode
+- Fixed printing of file sizes larger than 9GB for Mac, *BSD.
+- Changed return values so that always returns 0 on success
+    positive integer on failure (1 = user error, 2 = internal error)
+- Fixed memory leak on directory open failures in dig.c
+- Fixed memory leak in directory release code in cycles.c
+- Fixed potential information leak in md5.c (thanks to Derek Jones) 
+- Removed possible supression of critical error messages in cycles.c
+- Fixed size computation for standard input
+- Added support for Win32 logical drives (e.g. \\.\C:)
+- Changed data structures in hash.c for ease of reading
+- Added overflow counter for Win32 for files larger than 4GB
+- Put Windows style newlines in copyright message
+
+
+Version 1.3 - 24 Jun 2004
+
+- Fixed Windows version to handle physical devices and UNC paths
+   (e.g. \\.\PhysicalDrive0  \\.\tape0  \\server\share\file  etc)
+- Removed halting on fatal errors except "Permission Denied"
+- Added error checking for cycles created by symbolic links
+- Added -z flag to print file sizes
+- Added -0 flag to end lines with /0 instead of newlines
+- Updated documentation regarding Cygwin and Win32 compilation
+- Cleaned up Makefile, fixed "make windows"
+
+
+Version 1.2 - 16 Apr 2004
+
+- Added sha1deep to compute SHA-1 hashes
+- Abstracted hash functions to allow other algorithms to be inserted
+- Windows version now generates output with line feeds AND carriage returns
+- Fixed printing of error messages for positive and negative matching together
+- Cleaned up display for matching of standard input
+
+
+Version 1.1 - 25 Mar 2004
+
+- Fixed processing of standard input on Windows
+- Fixed cosmetic errors with time estimation to now produce a fixed length
+   output and avoid spanning multiple lines
+
+
+Version 1.0 - 15 Mar 2004
+(better late than never!)
+
+- Moved hierarchy traversal code into separate file, dig.c
+- Now able to handle symbolic links properly
+- If no input files are given, uses standard input
+- Added file read error handling (display an error message, pad missing data
+  with zeros and continue execution).
+- Added expert mode; allows user to choose which and only which types of
+  files are processed
+- Added -X and -M to print hashes as well as matches
+- Errors in files of known hashes are now treated an non-fatal
+- When estimating completion time, print the filename being processed
+- Corrected NSRL import code
+- Cleaned up time estimation calculation
+- Fixed block device time estimation for *BSD
+- Switched from unsigned long long to off_t type
+- Fixed duplicate slashes in filenames from root directory (e.g. //usr/src)
+- Fixed install process. Generally this meant removing flags from
+  the install command.
+- Added *BSD-specific includes
+- Fixed minor data type issue for Gentoo linux
+- Fixed typos in copyright and error messages
+
+
+Version 0.16 - 7 Mar 2003
+
+Added -x flag for negative matching
+Made the Makefile nicer
+Added code for compatibility with FreeBSD, Solaris, and OS X.
+Added support for symbolic links to files
+Changed the rules for a valid plain hash such that it only needs to
+be followed by one space instead of two
+
+
+Version 0.15 - 5 Jan 2003
+
+Added -m flag for matching support
+Made the help message more helpful
+
+
+
+** Changes in version 0.14 (2 Dec 2002)
+
+* New Features
+
+	Added better checks for avoiding symbolic links on *nix
+
+	Added -V flag for copyright information
+
+* Buf Fixes
+
+	Fixed time estimation for block devices on Linux
+
+	Program now identifies itself correctly in Windows error messages.
+
+
+
+
+** Changes in version 0.13 (7 Nov 2002)
+
+* New Features
+
+	Added -r and -e flags for recursion and time 
+	estimation, respectively.
+
+* Bug Fixes
+
+	Fixed Windows version to generate correct MD5 values. 
+	(u_int_32 should have been unsigned long instead of long. Oops.)
+
+
+
+
+** Changes in version 0.12 (1 Nov 2002)
+
+* New Features
+
+	First (internally) published  version
+
+	Added -b and -t switches for compability with md5sum
+	
+	Cleaned up README and man page
+
+* Bug Fixes
+
+	Removed Linux specific code
+
+
+

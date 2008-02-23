@@ -12,6 +12,8 @@
  *
  */
 
+// $Id: hashTable.c,v 1.10 2007/09/23 01:54:23 jessekornblum Exp $
+
 #include "main.h"
 #include "hashTable.h"
 
@@ -75,12 +77,12 @@ int initialize_node(hashNode *new, char *n, char *fn)
 }
 
 
-int hashTableAdd(hashTable *knownHashes, char *n, char *fn) 
+int hashTableAdd(state *s, hashTable *knownHashes, char *n, char *fn) 
 {
   uint64_t key = translate(n);
   hashNode *new, *temp;
 
-  if (!valid_hash(n))
+  if (!valid_hash(s,n))
     return HASHTABLE_INVALID_HASH;
 
   if ((*knownHashes)[key] == NULL) 
@@ -170,7 +172,8 @@ int hashTableDisplayNotMatched(hashTable *t, int display)
 
 	// The 'return' above allows us to disregard the if statement.
 	status = TRUE;
-	printf("%s%s", temp->filename, NEWLINE);
+	
+	printf ("%s%s", temp->filename, NEWLINE);
       }
       temp = temp->next;
     }
