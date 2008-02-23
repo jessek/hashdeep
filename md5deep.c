@@ -18,6 +18,7 @@ int modeMatch = FALSE;
 int modeSilent = FALSE;
 int modeEstimate = FALSE;
 int modeRecursive = FALSE;
+int modeNegativeMatch = FALSE;
 
 
 void printError(char *fn) {
@@ -35,107 +36,19 @@ void usage() {
   author();
   fprintf (stderr,"\n");
   fprintf (stderr,
-	   "Usage: %s [-v] [-V] [-h] [-m <filename>] [-resbt] [FILES] \n",
+	   "Usage: %s [-v] [-V] [-h] [-m <filename>] [-x <filename] [-resbt] [FILES] \n",
 	   __progname);
 
   fprintf (stderr,"-v  - display version number and exit\n");
   fprintf (stderr,"-V  - display copyright information and exit\n");
   fprintf (stderr,"-h  - display this help message and exit\n");
   fprintf (stderr,"-m  - enables matching mode. See README/man page for details\n");
+  fprintf (stderr,"-x  - enables negative matching mode. See README/man page for details\n");
   fprintf (stderr,"-r  - enables recursive mode. All subdirectories are traversed\n");
   fprintf (stderr,"-e  - compute estimated time remaining for each file\n");
   fprintf (stderr,"-s  - enables silent mode. Suppress all error messages\n");
   fprintf (stderr,"-b  - ignored. Present for compatibility with md5sum\n");
   fprintf (stderr,"-t  - ignored. Present for compatibility with md5sum\n");
-}
-
-
-/* The Windows equivalent to __progname, _pgmptr, gives the full path to
-   the executable, not just the program's name. This function takes the
-   full path and trims it down to just the executable's name. 
-   The result is stored in __progname to make everything UNIX-based work.  */
-#ifdef __WIN32
-void setProgramName() {
-
-  int count,pos = strlen(_pgmptr);
-
-  while (_pgmptr[pos] != DIR_TRAIL_CHAR && pos > 0)
-    pos--;
-
-  if (pos == 0) {
-    __progname = malloc(sizeof(char) * strlen(_pgmptr) + 1);
-    strncpy(__progname,_pgmptr,strlen(_pgmptr));
-    return;
-  }
-
-  /* Advance past the DIR_TRAIL_CHAR that we found */
-  pos++;
-
-  __progname = malloc(sizeof(char) * strlen(_pgmptr - pos + 1));
-  for (count = pos ; count <= strlen(_pgmptr) ; count++) {
-    __progname[count - pos] = _pgmptr[count];
-  }
-  return;
-}
-#endif  /* ifdef __WIN32 */
-
-
-/* Return the size, in bytes of an open file stream. On error, return -1 */
-unsigned long long measureOpenFile(FILE *f){
-
-#ifdef __LINUX
-  int descriptor = 0;
-  struct stat *info;
-
-  /* I don't know why, but if you don't initialize this value you'll
-     get wildly innacurate results when you try to run this function */
-  unsigned long long numsectors = 0;
-#endif
-
-  unsigned long long total = 0, original = ftello(f);
-
-  if ((fseeko(f,0,SEEK_END)))
-    return -1;
-  total = ftello(f);
-  if ((fseeko(f,original,SEEK_SET)))
-    return -1;
-
-#ifdef __LINUX
-
-  /* Block devices, like /dev/hda, don't return a normal filesize.
-     If we are working with a block device, we have to ask the operating
-     system to tell us the true size of the device. 
-     
-     The following only works on Linux as far as I know. If you know
-     how to port this code to another operating system, please contact
-     the current maintainer of this program! */
-
-  descriptor = fileno(f);
-  info = (struct stat*)malloc(sizeof(struct stat));
-
-  /* I'd prefer not to use fstat as it will follow symbolic links. We don't
-     follow symbolic links. That being said, all symbolic links *should*
-     have been caught before we got here. */
-
-  fstat(descriptor,info);
-  if (S_ISBLK(info->st_mode)) {
-    if (ioctl(descriptor, BLKGETSIZE, &numsectors)){
-#ifdef __DEBUG
-      perror("BLKGETSIZE failed");
-#endif
-    } else {
-
-      /* We're going to assume that this device has 512 byte sectors.
-	 Eventually we should add a way to get the real number of sectors
-	 from the device. */
-      total = numsectors * 512;
-    }
-  }
-  
-  free(info);
-#endif /* ifdef __LINUX */
-  
-  return (total - original);
 }
 
 
@@ -253,14 +166,17 @@ char *MD5File(FILE *fp) {
 
 
 void md5(char *filename) {
+  int result;
   FILE *f;
+
   if ((f = fopen(filename,"rb")) == NULL) {
     printError(filename);
     return;
   }
 
-  if (modeMatch) { 
-    if (isKnownHash(MD5File(f))) {
+  if (modeMatch || modeNegativeMatch) { 
+    result = isKnownHash(MD5File(f));
+    if ((result && modeMatch) || (!result && modeNegativeMatch)) {
       printf ("%s\n", filename);
     } 
   } else {
@@ -284,6 +200,11 @@ int examineFile(char *fn) {
   /* By default we "fail open." That is, any file type we can't
      identify as something we *shouldn't* process is something that 
      we must process */
+
+#ifndef __WIN32
+  char *realName;
+#endif
+
   int status = FILE_REGULAR;
   struct stat *info = (struct stat*)malloc(sizeof(struct stat));
   if (lstat(fn,info)) {
@@ -300,7 +221,17 @@ int examineFile(char *fn) {
   /* There are no symbolic links on Windows */
 #ifndef __WIN32
   if (S_ISLNK(info->st_mode)) {
-    status = FILE_SYMLINK;
+    
+    /* Symbolic links are okay if they point to files, but not directories. */
+    realName = (char *)malloc(sizeof(char) * PATH_MAX);
+    if (realpath(fn,realName) == NULL) {
+      status = FILE_SYMLINK;
+    } else {
+      status = examineFile(realName);
+      if (status == FILE_DIRECTORY) 
+	status = FILE_SYMLINK;
+    }
+    free(realName);
   }
 #endif
   
@@ -418,11 +349,16 @@ void processCommandLine(int argc, char **argv) {
 
   char i;
   
-  while ((i=getopt(argc,argv,"m:serhvVbt")) != -1) { 
+  while ((i=getopt(argc,argv,"x:m:serhvVbt")) != -1) { 
     switch (i) {
 
     case 'm':
       modeMatch = TRUE;
+      addMatchingFile(optarg);
+      break;
+
+    case 'x':
+      modeNegativeMatch = TRUE;
       addMatchingFile(optarg);
       break;
 
@@ -460,6 +396,13 @@ void processCommandLine(int argc, char **argv) {
       exit (1);
 
     }
+  }
+
+  if (modeMatch && modeNegativeMatch) {
+    fprintf(stderr,"%s: Regular and Negative matching are mutally exclusive!\n",
+	    __progname);
+    usage();
+    exit (1);
   }
 }
 
@@ -515,8 +458,8 @@ int main(int argc, char **argv) {
 
   char *fn = (char*)malloc(sizeof(char)* PATH_MAX);
 
-#ifdef __WIN32
-  setProgramName();
+#ifndef __GLIBC__
+  setProgramName(argv[0]);
 #endif
 
   processCommandLine(argc,argv);

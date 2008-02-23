@@ -15,6 +15,19 @@
  * will fill a supplied 16-byte array with the digest.
  */
 
+#ifdef __FREEBSD
+#include <machine/endian.h>
+#elif defined (__LINUX)
+#include <endian.h>
+#elif defined (__SOLARIS)
+#include <sys/isa_defs.h>
+#endif
+
+#if __BYTE_ORDER == BIG_ENDIAN
+#define HIGHFIRST  1
+#endif
+
+
 #include <sys/types.h>
 #include <string.h>		/* for memcpy() */
 #include "md5deep.h"

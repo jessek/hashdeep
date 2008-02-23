@@ -48,27 +48,26 @@
 
 
 bool isValidHash(char *buf) {
-  short pos = 0;
+  int pos = 0;
 
   if (strlen(buf) < HASH_STRING_LENGTH) 
     return FALSE;
 
   for (pos = 0 ; pos < HASH_STRING_LENGTH ; pos++) 
-    if (!isxdigit(buf[pos])) 
+    if (!isxdigit((int)buf[pos])) 
       return FALSE;
   return TRUE;
 }
 
 
 /* A plain hash file has 32 hash characters at the start of each line
-   followed by two spaces or tabs. */
+   followed by at least one space. */
 bool isPlainFile(char *buf) {
 
   if (!isValidHash(buf))
     return FALSE;
 
-  return (buf[HASH_STRING_LENGTH]     == 32 &&
-	  buf[HASH_STRING_LENGTH + 1] == 32);
+  return (buf[HASH_STRING_LENGTH] == 32);
 }
 
 

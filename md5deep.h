@@ -15,7 +15,7 @@
 #ifndef __MD5DEEP_H
 #define __MD5DEEP_H
 
-#define MD5DEEP_VERSION     "0.15"
+#define MD5DEEP_VERSION     "0.16"
 #define MD5DEEP_AUTHOR      "Jesse Kornblum"
 #define MD5DEEP_COPYRIGHT   "This program is a work of the US Govenment. "\
 "In accordance with 17 USC 105,\n"\
@@ -47,7 +47,6 @@
 #define MAX_STRING_LENGTH    768
 #define HASH_STRING_LENGTH    32
 
-
 /* These are the types of files that we can match against */
 #define TYPE_PLAIN        0
 #define TYPE_HASHKEEPER   1
@@ -66,18 +65,24 @@
 
 typedef short bool;
 
+#ifdef __SOLARIS
+#define   u_int32_t   unsigned int
+#define   u_int64_t   unsigned long
+#endif 
+
 
 #ifdef __LINUX
-
-#ifndef __UNIX
-#define __UNIX
-#endif
-
 #include <sys/ioctl.h>
 #include <sys/mount.h>
+#endif 
 
-#endif /* ifdef __LINUX */
 
+/* The only time we're *not* on a UNIX system is when we're on Windows */
+#ifndef __WIN32
+#ifndef __UNIX
+#define __UNIX
+#endif  /* ifndef __UNIX */
+#endif  /* ifndef __WIN32 */
 
 
 #ifdef __UNIX
@@ -86,10 +91,7 @@ typedef short bool;
 int fseeko(FILE *stream, off_t offset, int whence);
 off_t ftello(FILE *stream);
 
-/* This enables 64-bit file offsets with ftello and fseeko */
-#define _FILE_OFFSET_BITS   64
 #define  DIR_TRAIL_CHAR   '/'
-extern char *__progname;
 
 #endif /* #ifdef __UNIX */
 
@@ -120,11 +122,6 @@ extern char *__progname;
 #define lstat(A,B)      stat(A,B)
 #define realpath(A,B)   _fullpath(B,A,PATH_MAX)
 
-/* This handy UNIX variable doesn't exist on UNIX. We manually
-   populate this substitute in setProgramName */
-char *__progname;
-
-
 extern char *optarg;
 extern int optind;
 int getopt(int argc, char *const argv[], const char *optstring);
@@ -132,6 +129,14 @@ int asprintf(char **strp, const char *fmt, ...);
 
 #endif   /* ifdef _WIN32 */
 
+
+/* For non-glibc systems we need to compute the __progname variable */
+#ifdef __GLIBC__
+extern char *__progname;
+#else
+char *__progname;
+void setProgramName(char *s);
+#endif /* ifdef __GLIBC__ */
 
 
 /* Functions from md5deep.c */
@@ -147,6 +152,11 @@ int isKnownHash(char *h);
 int determineFileType(FILE *f);
 bool findHashValueinLine(char *buf, int fileType);
 
+
+/* Miscellaneous helper functions */
+
+/* Return the size, in bytes of an open file stream. On error, return -1 */
+unsigned long long measureOpenFile(FILE *f);
 
 
 

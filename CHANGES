@@ -1,4 +1,14 @@
 
+Version 0.16 - 7 Mar 03
+
+Added -x flag for negative matching
+Made the Makefile nicer
+Added code for compatibility with FreeBSD, Solaris, and OS X.
+Added support for symbolic links to files
+Changed the rules for a valid plain hash such that it only needs to
+be followed by one space instead of two
+
+
 Version 0.15 - 5 Jan 03
 
 Added -m flag for matching support

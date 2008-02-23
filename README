@@ -30,13 +30,24 @@ do-it-yourself types.
 
 Linux:
 --------------------------
-
 $ make linux
 $ make install
 
 
-*BSD, Solaris, and other Unicies
+Solaris
+--------------------------
+$ make solaris
+$ make install
 
+
+Mac OS X
+--------------------------
+$ make mac
+$ make install
+
+
+*BSD, and other Unicies
+--------------------------
 $ make unix
 $ make install
 
