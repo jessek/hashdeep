@@ -3,6 +3,8 @@
 	* Moved source code from CVS to Subversion repository.
 	  This shouldn't create any changes in the code, but
 	  should be noted.
+
+	* Version change to 2.1. No need for -001 anymore.
 	
 
 2007-12-27 Jesse Kornblum <md5deep@jessekornblum.com>
