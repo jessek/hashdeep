@@ -4,25 +4,28 @@ CC_OPTS = -Wall -O2
 LINK_OPTS = -lm
 GOAL = md5deep
 
-# This is the cross compiler for compiling Windows programs on Linux
-# If you don't want to cross compile, don't worry about this
-CROSSCC = /usr/local/cross-tools/i386-mingw32msvc/bin/gcc
-CROSSOPT = -Wall -O2 -D__WIN32
-CROSSLINK = -liberty
-CROSSGOAL = $(GOAL).exe
+# You can cross compile this program for Win32 using Linux and the 
+# MinGW compiler. See the README for details. If you have already
+# installed MinGW, put the location ($PREFIX) here:
+CROSSBASE = /home/jessek/bin/cross-tools
 
 # You shouldn't need to change anything below this line
 #---------------------------------------------------------------------
 
 # This is used when generating packages
-VERSION = 0.16
+VERSION = 1.0
+
+# This should be commented out when debugging is done
+#CC_OPTS += -D__DEBUG -ggdb
 
 # Where we get installed
 BIN = /usr/local/bin
 MAN = /usr/local/man/man1
 
-# This should be commented out when debugging is done
-#CC_OPTS += -D__DEBUG -ggdb
+CROSSCC = $(CROSSBASE)/i386-mingw32msvc/bin/gcc
+CROSSOPT = $(CC_OPTS) -D__WIN32
+CROSSLINK = -liberty
+CROSSGOAL = $(GOAL).exe
 
 # Generic "how to compile C files"
 CC += $(CC_OPTS)
@@ -31,8 +34,8 @@ CC += $(CC_OPTS)
 
 # Definitions we'll need later (and that should never change)
 HEADER_FILES = $(GOAL).h hashTable.h
-SRC =  $(GOAL).c md5.c match.c files.c hashTable.c helpers.c
-OBJ =  $(GOAL).o md5.o match.o files.o hashTable.o helpers.o
+SRC =  main.c md5.c match.c files.c hashTable.c helpers.c hash.c dig.c
+OBJ =  main.o md5.o match.o files.o hashTable.o helpers.o hash.o dig.o
 DOCS = Makefile README $(GOAL).1 CHANGES TODO
 WINDOC = README.txt CHANGES.txt
 
@@ -50,16 +53,19 @@ sunos: solaris
 solaris: CC += -D__SOLARIS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 solaris: $(GOAL) 
 
-unix:
-	$(CC) -D__UNIX -o $(GOAL) $(SRC) -lm
+unix: 
+	$(CC) -D__UNIX -o $(GOAL) $(SRC) $(LINK_OPTS)
 
 mac: CC += -D__MACOSX
 mac: $(GOAL)
 
+macinstall: $(GOAL)
+	install -m 755 $(GOAL) /usr/bin/
+	install -m 755 $(GOAL).1 /usr/share/man/man1/
+
 # Cross compiling from Linux to Windows. See README for more info
-cross-win: CROSSCC += $(CROSSOPT) 
-cross-win: $(SRC) $(HEADER_FILES)
-	$(CROSSCC) -o $(CROSSGOAL) $(SRC) $(CROSSLINK)
+cross: $(SRC) $(HEADER_FILES)
+	$(CROSSCC) $(CROSSOPT) -o $(CROSSGOAL) $(SRC) $(CROSSLINK)
 	strip $(CROSSGOAL)
 
 # See the README for information on Windows compilation
@@ -74,8 +80,8 @@ prof: linux
 #---------------------------------------------------------------------
 
 install: $(GOAL)
-	install -CDm 755 $(GOAL) $(BIN)/$(GOAL)
-	install -CDm 644 $(GOAL).1 $(MAN)/$(GOAL).1
+	install -m 755 $(GOAL) $(BIN)/$(GOAL)
+	install -m 644 $(GOAL).1 $(MAN)/$(GOAL).1
 
 uninstall:
 	rm -f $(BIN)/$(GOAL) $(MAN)/$(GOAL).1
@@ -113,22 +119,19 @@ package:
 	rm -rf $(DEST_DIR)
 	gzip $(TAR_FILE)
 
-win-package: cross-win
+win-doc:
 	man ./$(GOAL).1 | col -bx > README.txt
-	unix2dos README.txt
-	zip md5deep-$(VERSION).zip $(GOAL).exe README.txt
-
-
-cross-pkg: cross-win
-	man ./$(GOAL).1 | col -b > README.txt
 	cp CHANGES CHANGES.txt
 	unix2dos CHANGES.txt
 	unix2dos README.txt
+
+win-package: cross win-doc
+	rm -f $(GOAL)-$(VERSION).zip
 	zip $(GOAL)-$(VERSION).zip $(GOAL).exe $(WINDOC)
+	rm -f $(WINDOC)
+
+cross-pkg: win-package
 	gpg -c $(GOAL)-$(VERSION).zip 
 
-publish: clean cross-win package cross-pkg
-	mv $(DEST_DIR).* ~/rnd/$(GOAL)/
-	make clean
-
-
+publish: package win-package
+	cp $(GOAL)-$(VERSION).* ~/xdrive/public_html/md5deep/

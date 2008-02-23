@@ -9,7 +9,8 @@ The MD5 algorithm is defined in RFC 1321:
 http://www.ietf.org/rfc/rfc1321.txt
 
 md5deep was written by Special Agent Jesse Kornblum, United States Air
-Force Office of Special Investigations. jesse.kornblum@ogn.af.mil.
+Force Office of Special Investigations. Send all correspondence to
+md5deep@jessekornblum.com
 
 md5deep is a work of the US Government. In accordance with 17 USC 105,
 works of the US Government are not entitled to Copyright protection. This
@@ -23,43 +24,46 @@ FOR A PARTICULAR PURPOSE.
 INSTALLATION INSTRUCTIONS 
 ---------------------------------------------------------
 
-Installing md5deep on *nix is easy. For Windows, the easiest thing to do 
-is grab the binary. Compilation instructions are below for the 
-do-it-yourself types.
+Instructions for Linux, Solaris, OS X, *BSD, and Windows are provided below.
+For Windows, it's a LOT easier to just download the binary from 
+http://md5deep.sourceforge.net/
+
+Note that you will need to have root access to install md5deep in the
+default location!
 
 
 Linux:
 --------------------------
 $ make linux
-$ make install
+# make install
 
 
 Solaris
 --------------------------
 $ make solaris
-$ make install
+# make install
 
 
-Mac OS X
+Mac OS X  (note the different command to install!) 
 --------------------------
 $ make mac
-$ make install
+# make macinstall
 
 
 *BSD, and other Unicies
 --------------------------
 $ make unix
-$ make install
+# make install
 
 
 
-If you ever need to remove md5deep from your system, you can do this:
-$ make uninstall
+If you ever need to remove md5deep from your system:
+
+# make uninstall
 
 
-
-Microsoft Windows(R) 
---------------------------
+----------------------------------------------------------------------
+COMPILING FOR MICROSOFT WINDOWS(R)
 
 The easiest way to get md5deep for Windows is to download the binary 
 version. The current binary is available at:
@@ -71,53 +75,40 @@ If you want to compile md5deep yourself, I recommend using the (Free)
 MingGW compiler. 
 
 First, obtain the MinGW toolkit from:  http://www.mingw.org/
-Install this package and use it to compile md5deep as follows:
+Install MinGW according to the documentation and then compile:
 
-C:\> PATH=c:\mingw\bin;c:\mingw\mingw32\bin;%PATH%
-C:\> gcc -Wall -D__WIN32 -o md5deep.exe c:\path\to\md5deep-xx\*.c -liberty
+C:\> cd md5deep-1.x
+C:\> gcc -Wall -D__WIN32 -o md5deep.exe *.c -liberty
 
 
-If you want to get really fancy, you can compile md5deep using MinGW
-from inside the Cygwin environment.
+----------------------------------------------------------------------
+CROSS COMPILING LINUX->WIN32
 
-$ tar zxvf md5deep-xx.tar.gz
-$ cd md5deep-xx
-$ PATH="/cygdrive/c/mingw/bin:/cygdrive/c/mingw/mingw32/bin:$PATH"
-$ make windows
+The MinGW compiler can also be used to cross-compile md5deep for Win32 
+from a linux platform. (This is how the developer makes the Win32 builds!)
+The MinGW FAQ has a script that downloads, configures, and installs the
+MinGW compiler on a linux system:
+http://www.mingw.org/mingwfaq.shtml#faq-cross
 
+Once MinGW is installed on your linux system, edit the Makefile value for
+CROSSBASE with the $PREFIX you used for MinGW. Then just do:
+
+$ make cross-win
+
+And you should have a working md5deep.exe executable for Win32.
+
+
+----------------------------------------------------------------------
+CYGWIN
+
+Compiling md5deep using the Cygwin environment is not supported.
 Although it is possible to compile md5deep under Cygwin using the "make
 unix" directive, this is not recommended. Not only will the resulting
 executable require the cygwin1.dll file to run, but the output for each
 file will be in "cygdrive" notation, which takes up extra space and may be
-confusing to those not familar with the Cygwin environment.
+confusing to those not familiar with the Cygwin environment.
 
 
-
-You can also use the linux port of the MinGW compiler to cross-compile. I 
-use this to create the binary versions of md5deep. The port is available:
-
-http://www.libsdl.org/extras/win32/cross/mingw32-linux-x86-glibc-2.2.tar.gz
-
-Steps to build a Linux hosted MinGW cross-compilation environment:
-
-Step 1. Download the build-cross.sh script:
-	http://www.libsdl.org/extras/win32/cross/build-cross.sh
-        This script builds and installs the cross-compilation tools
-        into /usr/local/cross-tools by default.
-Step 2. Put the script in a temporary directory with lots of space
-Step 3. Edit the configuration variables in the script (if needed)
-Step 4. Run the script to download files, compile and install.
-
-You can get precompiled binaries for x86 Linux from:
-http://www.libsdl.org/extras/win32/cross/mingw32-linux-x86-glibc-2.2.tar.gz
-
-Once you have the cross-compilation tools available, you can get
-the scripts cross-configure.sh and cross-make.sh and use them as
-you would normally use configure and make.
-
-These scripts are available from:
-	http://www.libsdl.org/extras/win32/cross/cross-configure.sh
-	http://www.libsdl.org/extras/win32/cross/cross-make.sh
 
 
 

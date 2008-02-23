@@ -1,4 +1,29 @@
 
+Version 1.0 - 15 Mar 04
+(better late than never!)
+
+- Moved hierarchy traversal code into separate file, dig.c
+- Now able to handle symbolic links properly
+- If no input files are given, uses standard input
+- Added file read error handling (display an error message, pad missing data
+  with zeros and continue execution).
+- Added expert mode; allows user to choose which and only which types of
+  files are processed
+- Added -X and -M to print hashes as well as matches
+- Errors in files of known hashes are now treated an non-fatal
+- When estimating completion time, print the filename being processed
+- Corrected NSRL import code
+- Cleaned up time estimation calculation
+- Fixed block device time estimation for *BSD
+- Switched from unsigned long long to off_t type
+- Fixed duplicate slashes in filenames from root directory (e.g. //usr/src)
+- Fixed install process. Generally this meant removing flags from
+  the install command.
+- Added *BSD-specific includes
+- Fixed minor data type issue for Gentoo linux
+- Fixed typos in copyright and error messages
+
+
 Version 0.16 - 7 Mar 03
 
 Added -x flag for negative matching

@@ -24,7 +24,7 @@
       isSpecifiedFileType() function below. See the existing functions
       for examples. 
 
-   3. Add your is[fileType]File function to the determineFileType() function.
+   3. Add your is[fileType]File function to the hash_file_type() function.
 
    4. Create a find[fileType]HashinLine function. See the existing functions
       for some good examples.
@@ -39,15 +39,20 @@
 #define ILOOK_HEADER   \
 "V1Hash,HashType,SetDescription,FileName,FilePath,FileSize"
 
-#define NSRL_HEADER    \
+#define NSRL_15_HEADER    \
 "\"SHA-1\",\"FileName\",\"FileSize\",\"ProductCode\",\"OpSystemCode\",\"MD4\",\"MD5\",\"CRC32\",\"SpecialCode\""
+
+#define NSRL_20_HEADER \
+"\"SHA-1\",\"MD5\",\"CRC32\",\"FileName\",\"FileSize\",\"ProductCode\",\"OpSystemCode\",\"SpecialCode\""
+
+
 
 #define HASHKEEPER_HEADER \
 "\"file_id\",\"hashset_id\",\"file_name\",\"directory\",\"hash\",\"file_size\",\"date_modified\",\"time_modified\",\"time_zone\",\"comments\",\"date_accessed\",\"time_accessed\""
 
 
 
-bool isValidHash(char *buf) {
+int isValidHash(char *buf) {
   int pos = 0;
 
   if (strlen(buf) < HASH_STRING_LENGTH) 
@@ -60,99 +65,33 @@ bool isValidHash(char *buf) {
 }
 
 
-/* A plain hash file has 32 hash characters at the start of each line
-   followed by at least one space. */
-bool isPlainFile(char *buf) {
-
-  if (!isValidHash(buf))
-    return FALSE;
-
-  return (buf[HASH_STRING_LENGTH] == 32);
-}
-
-
-bool isHashkeeperFile(char *buf) {
+int isHashkeeperFile(char *buf) 
+{
   return (!strncmp(buf,HASHKEEPER_HEADER,strlen(HASHKEEPER_HEADER)));
 }
 
-bool isNSRLFile(char *buf) {
-  return (!strncmp(buf,NSRL_HEADER,strlen(NSRL_HEADER)));
+int isNSRL15File(char *buf) 
+{
+  return (!strncmp(buf,NSRL_15_HEADER,strlen(NSRL_15_HEADER)));
 }
 
-bool isiLookFile(char *buf) {
+int isNSRL20File(char *buf) 
+{
+  return (!strncmp(buf,NSRL_20_HEADER,strlen(NSRL_20_HEADER)));
+}
+
+
+int isiLookFile(char *buf) {
   return (!strncmp(buf,ILOOK_HEADER,strlen(ILOOK_HEADER)));
 }
 
+int findPlainHashinLine(char *buf) {
 
+  /* The validitity check of the data is performed later.
+     Right now we just check the length and space of this line */
 
-
-int determineFileType(FILE *f) {
-
-  char buf[MAX_STRING_LENGTH + 1];
-  rewind(f);
-
-  if ((fgets(buf,MAX_STRING_LENGTH,f)) == NULL) 
-    return FALSE;
-
-  if (isHashkeeperFile(buf)) 
-    return TYPE_HASHKEEPER;
-
-  if (isNSRLFile(buf))
-    return TYPE_NSRL;
-
-  if (isiLookFile(buf)) 
-    return TYPE_ILOOK;
-
-  /* We always look for plain files last. Other types of files can
-     be mistaken for plain files.  */
-  if (isPlainFile(buf))
-    return TYPE_PLAIN;
-
-  return TYPE_UNKNOWN;
-}
-
-
-
-/* Given an input string buf and the type of file it came from,
-   finds the filename associated with the given hash value.
-   This function was originally written for another application and
-   is not used in md5deep. Therefore, it's okay that it's incomplete here.
-   When the other program is developed, this function will be 
-   fully implemented. */
-#ifdef __SANTA
-bool findNameinLine(char *buf, int fileType, char *name) {
-
-  int pos;
-
-  switch (fileType) {
-
-  case TYPE_PLAIN:
-
-    for (pos = HASH_STRING_LENGTH + 2 ; buf[pos] != 0 ; pos++) {
-      name[pos - (HASH_STRING_LENGTH + 2)] = buf[pos];
-    }
-    name[pos - (HASH_STRING_LENGTH + 2)] = 0;
-    return TRUE;
-
-  /* RBF - Write findNameinLine */  
-  case TYPE_HASHKEEPER:
-  case TYPE_ILOOK:
-  case TYPE_NSRL:
-  default:
-    strncpy(name,"Unknown name",15);
-    return TRUE;
-  }
-
-  return TRUE;
-}
-#endif   /* #ifdef __SANTA */
-
-
-bool findPlainHashinLine(char *buf) {
-
- /* We don't have to check the string length here.
-     It's done inside isValidHash */
-  if (!isValidHash(buf))
+  if ((strlen(buf) < HASH_STRING_LENGTH) || 
+      (buf[HASH_STRING_LENGTH] != ' '))
     return FALSE;
   
   buf[HASH_STRING_LENGTH] = 0;
@@ -162,56 +101,95 @@ bool findPlainHashinLine(char *buf) {
 
 
 /* Attempts to find a hash value after the nth quotation mark in buf */
-bool findHashAfterQuotes(char *buf, int n) {
+int findHashAfterQuotes(char *buf, int n) {
 
-  int count = 0, pos = -1;
+  unsigned int count = 0, pos = 0;
 
-  while (count < n) {
+  do {
 
-    pos++;
-    if (buf[pos] == '"') {
+    switch (buf[pos])
+    {
+    case '"': 
       count++;
-
-      /* We don't *need* to continue here, but by skipping the if
-	 statement that comes next, we should be faster.
-	 Yes, I'm that concerned about speed. */
-      continue;
-    }
-
-    if (buf[pos] == 0) 
+      break;
+    case 0:
       return FALSE;
-  }
+    }   
 
-  /* The current character is still the leading quote to the hash.
-     We advance one to get to the real start of the hash */
-  pos++;
-  
-  /* Now we just copy the hash value back to the begining of the line
-     and re-terminate the string */   
-  for (count = 0 ; count < HASH_STRING_LENGTH ; count++) {
-      buf[count] = buf[pos];
-      pos++;
-  }
-  
-  buf[count] = 0;
+    ++pos;
+
+  } while (count < n);
+
+  /* Check that there is enough left in the string to copy */
+  if (pos + HASH_STRING_LENGTH > strlen(buf))
+    return FALSE;
+
+  /* Now we just copy the hash value back to the begining of the line */
+  shift_string(buf,0,pos);
+  buf[HASH_STRING_LENGTH] = 0;
+
   return TRUE;
 }
 
 
-bool findHashkeeperHashinLine(char *buf) {
+int findHashkeeperHashinLine(char *buf) {
   return (findHashAfterQuotes(buf,3));
 }
 
-bool findNSRLHashinLine(char *buf) {
+int findNSRL15HashinLine(char *buf) {
   return (findHashAfterQuotes(buf,9));
+} 
+
+int findNSRL20HashinLine(char *buf) {
+  return (findHashAfterQuotes(buf,3));
 } 
 
 
 
 /* iLook files have the hash as the first 32 characters. 
    As a result, we can just treat these files like plain hash files  */
-bool findiLookHashinLine(char *buf) {
+int findiLookHashinLine(char *buf) {
   return (findPlainHashinLine(buf));
+}
+
+
+int hash_file_type(FILE *f) {
+
+  char buf[MAX_STRING_LENGTH + 1];
+  rewind(f);
+
+  /* The "rigid" file types all have their headers in the 
+     first line of the file. We check them first */
+
+  if ((fgets(buf,MAX_STRING_LENGTH,f)) == NULL) 
+    return TYPE_UNKNOWN;
+  
+  if (strlen(buf) > HASH_STRING_LENGTH)
+  {
+
+    if (isHashkeeperFile(buf)) 
+      return TYPE_HASHKEEPER;
+    
+    if (isNSRL15File(buf))
+      return TYPE_NSRL_15;
+
+    if (isNSRL20File(buf))
+      return TYPE_NSRL_20;
+
+    if (isiLookFile(buf)) 
+      return TYPE_ILOOK;
+  }    
+
+  /* Plain files can have comments, so the first line(s) may not
+     contain a valid hash. But if we should process this file
+     if we can find even *one* valid hash */
+  do 
+  {
+    if (findPlainHashinLine(buf))
+      return TYPE_PLAIN;
+  } while ((fgets(buf,MAX_STRING_LENGTH,f)) != NULL);
+  
+  return TYPE_UNKNOWN;
 }
 
 
@@ -219,9 +197,9 @@ bool findiLookHashinLine(char *buf) {
 /* Given an input string buf and the type of file it came from, finds
    the MD5 hash specified in the line if there is one and returns TRUE.
    If there is no valid hash in the line, returns FALSE. */
-bool findHashValueinLine(char *buf, int fileType) {
+int findHashValueinLine(char *buf, int fileType) {
   
-  int status;
+  int status = FALSE;
 
   switch(fileType) {
 
@@ -233,24 +211,23 @@ bool findHashValueinLine(char *buf, int fileType) {
     status = findHashkeeperHashinLine(buf);
     break;
     
-  case TYPE_NSRL:
-    status = findNSRLHashinLine(buf);
+  case TYPE_NSRL_15:
+    status = findNSRL15HashinLine(buf);
+    break;
+
+  case TYPE_NSRL_20:
+    status = findNSRL20HashinLine(buf);
     break;
     
   case TYPE_ILOOK:
     status = findiLookHashinLine(buf);
     break;
-
-    /* If we don't know what kind of file this is, we certainly can't
-       find a hash in it! (We should never get here, really.) */
-  default:
-    return FALSE;
   }
 
-  if (!isValidHash(buf))
-    return FALSE;
+  if (status)
+    return (isValidHash(buf));
 
-  return status;
+  return FALSE;
 }
 
 

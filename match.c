@@ -17,46 +17,55 @@
 #include "hashTable.h"
 
 hashTable knownHashes;
-bool tableInitialized = FALSE;
+int table_initialized = FALSE;
 
-int loadMatchFile(char *filename) {
+int load_match_file(off_t mode, char *fn) {
 
-  unsigned long lineNumber = 0;
+  off_t line_number = 0;
   char buf[MAX_STRING_LENGTH + 1];
-  int fileType;
+  int file_type;
   FILE *f;
 
   /* We only need to initialize the table the first time through here.
      Otherwise, we'd erase all of the previous entries! */
-  if (!tableInitialized) {
+  if (!table_initialized) 
+  {
     hashTableInit(&knownHashes);
-    tableInitialized = TRUE;
+    table_initialized = TRUE;
   }
 
-  if ((f = fopen(filename,"r")) == NULL) {
-    printError(filename);
+  if ((f = fopen(fn,"r")) == NULL) 
+  {
+    print_error(mode,fn,strerror(errno));
     return FALSE;
   }
 
-  fileType = determineFileType(f);
-  
+  file_type = hash_file_type(f);
+  if (file_type == TYPE_UNKNOWN)
+  {
+    print_error(mode,fn,"Unable to find hashes in file, skipped.");
+    return FALSE;
+  }
+
   /* We skip the first line in every file type except plain files. 
      All other file types have a header line that we need to ignore. */
-  if (fileType != TYPE_PLAIN) 
-    lineNumber++;
-  else 
+  if (file_type == TYPE_PLAIN) 
     rewind(f);
+  else 
+    line_number++;
   
   while (fgets(buf,MAX_STRING_LENGTH,f)) {
 
-    lineNumber++;
+    ++line_number;
 
-    if (findHashValueinLine(buf,fileType) != TRUE) {
+    if (findHashValueinLine(buf,file_type) != TRUE) 
+    {
 
-      fprintf(stderr,"%s: %s: Improperly formatted file at line %ld\n",
-	      __progname,filename,lineNumber);
-      fprintf(stderr,"The offending line was:\n%s\n", buf);
-      return FALSE;
+      if (!(M_SILENT(mode)))
+      {
+	fprintf(stderr,"%s: %s: WARNING: No hash found in line %llu\n", 
+		__progname,fn,line_number);
+      }
 
     } else {
 
@@ -76,7 +85,7 @@ int loadMatchFile(char *filename) {
 
 
 
-int isKnownHash(char *h) {
+int is_known_hash(char *h) {
   return (hashTableContains(&knownHashes,h));
 }
 
