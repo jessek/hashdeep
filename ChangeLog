@@ -1,3 +1,10 @@
+2008-02-22 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Moved source code from CVS to Subversion repository.
+	  This shouldn't create any changes in the code, but
+	  should be noted.
+	
+
 2007-12-27 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Fixed hashdeep current working directory and filesize display
