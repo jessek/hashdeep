@@ -191,7 +191,7 @@ int is_win32_device_file(char *fn)
 #endif  /* ifdef __WIN32 */
 
 
-void clean_name(off_t mode, char *fn)
+void clean_name(uint64_t mode, char *fn)
 {
   /* If we're using a relative path, we don't want to clean the filename */
   if (!(M_RELATIVE(mode)))
@@ -213,9 +213,9 @@ int is_special_dir(char *d)
           (!strncmp(d,"..",2) && (strlen(d) == 2)));
 }
 
-void process(off_t mode, char *input);
+void process(uint64_t mode, char *input);
 
-void process_dir(off_t mode, char *fn)
+void process_dir(uint64_t mode, char *fn)
 {
   char *new_file;
   DIR *current_dir;
@@ -292,7 +292,7 @@ int file_type_helper(struct stat sb)
   return file_unknown;
 }
 
-int file_type(off_t mode, char *fn)
+int file_type(uint64_t mode, char *fn)
 {
   struct stat sb;
 
@@ -305,9 +305,9 @@ int file_type(off_t mode, char *fn)
 }
 
 
-int should_hash(off_t mode, char *fn);  
+int should_hash(uint64_t mode, char *fn);  
 
-int should_hash_expert(off_t mode, char *fn, int type)
+int should_hash_expert(uint64_t mode, char *fn, int type)
 {
   switch(type)
   {
@@ -345,7 +345,7 @@ int should_hash_expert(off_t mode, char *fn, int type)
 }
 
 
-int should_hash_symlink(off_t mode, char *fn)
+int should_hash_symlink(uint64_t mode, char *fn)
 {
   int type;
   struct stat sb;
@@ -378,7 +378,7 @@ int should_hash_symlink(off_t mode, char *fn)
 
   
 
-int should_hash(off_t mode, char *fn)
+int should_hash(uint64_t mode, char *fn)
 {
   int type = file_type(mode,fn);
 
@@ -408,7 +408,7 @@ int should_hash(off_t mode, char *fn)
 }
 
 
-void process(off_t mode, char *fn)
+void process(uint64_t mode, char *fn)
 {
   /* On Windows, the special device files don't need to be cleaned up.
      We check them here so that we don't have to test their file types

@@ -19,9 +19,9 @@
 hashTable knownHashes;
 int table_initialized = FALSE;
 
-int load_match_file(off_t mode, char *fn) {
-
-  off_t line_number = 0;
+int load_match_file(uint64_t mode, char *fn) 
+{
+  uint64_t line_number = 0;
   char buf[MAX_STRING_LENGTH + 1];
   char *known_fn;
   int file_type;
@@ -61,16 +61,17 @@ int load_match_file(off_t mode, char *fn) {
     return FALSE;
   }
 
-  while (fgets(buf,MAX_STRING_LENGTH,f)) {
-
+  while (fgets(buf,MAX_STRING_LENGTH,f)) 
+  {
     ++line_number;
+    memset(known_fn,sizeof(char),PATH_MAX);
 
     if (find_hash_in_line(buf,file_type,known_fn) != TRUE) 
     {
       if (!(M_SILENT(mode)))
       {
-	fprintf(stderr,"%s: %s: No hash found in line %llu\n", 
-		__progname,fn,line_number);
+	fprintf(stderr,"%s: %s: No hash found in line %" PRIu64 "%s", 
+		__progname,fn,line_number,NEWLINE);
       }
 
     } 
@@ -80,8 +81,8 @@ int load_match_file(off_t mode, char *fn) {
       {
 	if (!(M_SILENT(mode)))
 	{
-	  fprintf(stderr,"%s: %s: Out of memory at line %llu\n",
-		  __progname, fn, line_number);
+	  fprintf(stderr,"%s: %s: Out of memory at line %" PRIu64 "%s",
+		  __progname, fn, line_number, NEWLINE);
 	}
 	fclose(f);
 	free(known_fn);

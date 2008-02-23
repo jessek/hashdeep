@@ -28,7 +28,11 @@
    hashes as part of the matching process. */
 #define HASH_STRING_LENGTH 32
 
-/* Data types used by the hash */
+/* These supply the hashing code, hash.c, with the names of the 
+   functions used in the algorithm to do the real computation. 
+   HASH_Init takes a HASH_CONTEXT only
+   HASH_Update takes a hash context, the buffer, and its size in bytes
+   HASH_Final takes a char to put the sum in and then a context */
 #define HASH_CONTEXT       MD5_CTX
 #define HASH_Init(A)       MD5Init(A)
 #define HASH_Update(A,B,C) MD5Update(A,B,C)
@@ -36,14 +40,22 @@
 
 
 /* Define which types of files of known hashes that support this type
-   of hash. The values, if given, are the offset,
-   in terms of numbers of quotation marks, used to find the hash in the 
-   file type. Numbers are not necessary for all file types. */
+   of hash. The values, if given, are the location of the hash value
+   in terms of number of commas that preceed the hash. For example,
+   if the file format is:
+   hash,stuff,junk
+   the define should be SUPPORT_FORMAT 0 
+   if the file format is
+   stuff,junk,hash
+   the define should be SUPPORT_FORMAT 2
+
+   Remember that numbers are not necessary for all file types! */ 
 #define SUPPORT_PLAIN
-#define SUPPORT_HASHKEEPER   3
+#define SUPPORT_BSD
+#define SUPPORT_HASHKEEPER   4
 #define SUPPORT_ILOOK
-#define SUPPORT_NSRL_15      9
-#define SUPPORT_NSRL_20      3
+#define SUPPORT_NSRL_15      6
+#define SUPPORT_NSRL_20      1
 
 /* -------------------------------------------------------------- */
 /* After this is the algorithm itself. You shouldn't change these */

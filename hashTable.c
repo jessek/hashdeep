@@ -16,10 +16,6 @@
 #include "hashTable.h"
 
 
-#define MAX(A,B)             (A>B)?A:B
-#define STRINGS_EQUAL(A,B)   (!strncasecmp(A,B,MAX(strlen(A),strlen(B))))
-
-
 /* These two functions are the "hash" functions for the hash table. 
    Because the original implementation of this code was for storing
    md5 hashes, I used the name "translate" to avoid confusion. */
@@ -43,7 +39,7 @@ int translateChar(char c)
     
 /* Translates a hex value into it's appropriate index in the array.
    In reality, this just turns the first HASH_SIG_FIGS into decimal */
-off_t translate(char *n) 
+uint64_t translate(char *n) 
 { 
   int count;
   unsigned long total = 0, power = 1;
@@ -61,7 +57,7 @@ off_t translate(char *n)
 
 void hashTableInit(hashTable *knownHashes) 
 {
-  off_t count;
+  uint64_t count;
   for (count = 0 ; count < HASH_TABLE_SIZE ; ++count) 
     (*knownHashes)[count] = NULL;
 }
@@ -69,7 +65,7 @@ void hashTableInit(hashTable *knownHashes)
 
 int hashTableAdd(hashTable *knownHashes, char *n, char *fn) 
 {
-  off_t key = translate(n);
+  uint64_t key = translate(n);
   hashNode *new, *temp;
 
   if ((*knownHashes)[key] == NULL) 

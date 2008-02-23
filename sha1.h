@@ -32,22 +32,36 @@
    hashes as part of the matching process. */
 #define HASH_STRING_LENGTH 40
 
+/* These supply the hashing code, hash.c, with the names of the 
+   functions used in the algorithm to do the real computation. 
+   HASH_Init takes a HASH_CONTEXT only
+   HASH_Update takes a hash context, the buffer, and its size in bytes
+   HASH_Final takes a char to put the sum in and then a context */
 #define HASH_CONTEXT       SHA1_CTX
 #define HASH_Init(A)       SHA1Init(A)
 #define HASH_Update(A,B,C) SHA1Update(A,B,C)
 #define HASH_Final(A,B)    SHA1Final(A,B)
 
-/* Options for reading this file. The values, if given, are the offset
-   used to find the hash in the file type. They are not necessary for 
-   all file types. */
+/* Define which types of files of known hashes that support this type
+   of hash. The values, if given, are the location of the hash value
+   in terms of number of commas that preceed the hash. For example,
+   if the file format is:
+   hash,stuff,junk
+   the define should be SUPPORT_FORMAT 0 
+   if the file format is
+   stuff,junk,hash
+   the define should be SUPPORT_FORMAT 2
+
+   Remember that numbers are not necessary for all file types! */ 
 #define SUPPORT_PLAIN
+#define SUPPORT_BSD
 
 /* Hashkeeper and iLook only have MD5 hashes */
 #undef SUPPORT_HASHKEEPER
 #undef SUPPORT_ILOOK  
 
-#define SUPPORT_NSRL_15    1
-#define SUPPORT_NSRL_20    1 
+#define SUPPORT_NSRL_15    0
+#define SUPPORT_NSRL_20    0 
 
 /* -------------------------------------------------------------- */
 /* After this is the algorithm itself. You shouldn't change these */

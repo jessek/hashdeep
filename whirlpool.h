@@ -1,4 +1,58 @@
 
+#ifdef HASH_ALGORITHM
+#error Hash algorithm already defined!
+#else
+#define HASH_ALGORITHM  "Whirlpool"
+#endif
+
+/* Bytes in hash */
+#define HASH_LENGTH       64
+
+/* Characters needed to display hash. This is *usually* twice the
+   HASH_LENGTH defined above. This number is used to find and compare
+   hashes as part of the matching process. */
+#define HASH_STRING_LENGTH 128
+
+/* These supply the hashing code, hash.c, with the names of the 
+   functions used in the algorithm to do the real computation. 
+   HASH_Init takes a HASH_CONTEXT only
+   HASH_Update takes a hash context, the buffer, and its size in bytes
+   HASH_Final takes a char to put the sum in and then a context */
+#define HASH_CONTEXT        NESSIEstruct
+#define HASH_Init(A)        NESSIEinit(A)
+// We multiply by C by eight because this function needs 
+// number of BITS as a paramter!
+#define HASH_Update(A,B,C)  NESSIEadd(B, C*8, A)
+#define HASH_Final(A,B)     NESSIEfinalize(B,A)
+
+
+/* Define which types of files of known hashes that support this type
+   of hash. The values, if given, are the location of the hash value
+   in terms of number of commas that preceed the hash. For example,
+   if the file format is:
+   hash,stuff,junk
+   the define should be SUPPORT_FORMAT 0 
+   if the file format is
+   stuff,junk,hash
+   the define should be SUPPORT_FORMAT 2
+
+   Remember that numbers are not necessary for all file types! */ 
+#define SUPPORT_PLAIN
+
+/* Although there is no whirlpool program on BSD at this time, there's
+   no reason why these hashes can't be stored in BSD format. */
+#define SUPPORT_BSD
+
+#undef SUPPORT_HASHKEEPER   
+#undef SUPPORT_ILOOK
+#undef SUPPORT_NSRL_15      
+#undef SUPPORT_NSRL_20      
+
+
+
+/* ----------------------------------------------------------------------
+   Original headers from Whirlpool
+   ---------------------------------------------------------------------- */
 #ifndef PORTABLE_C__
 #define PORTABLE_C__
 
@@ -125,39 +179,6 @@ typedef struct NESSIEstruct {
 	u64 hash[DIGESTBYTES/8];    /* the hashing state */
 } NESSIEstruct;
 
-
-
-
-/* Function calls added by Jesse Kornblum for md5deep package */
-#ifdef HASH_ALGORITHM
-#error Hash algorithm already defined!
-#else
-#define HASH_ALGORITHM  "Whirlpool"
-#endif
-
-/* Bytes in hash */
-#define HASH_LENGTH       64
-
-/* Characters needed to display hash. This is *usually* twice the
-   HASH_LENGTH defined above. This number is used to find and compare
-   hashes as part of the matching process. */
-#define HASH_STRING_LENGTH 128
-
-#define HASH_CONTEXT        NESSIEstruct
-#define HASH_Init(A)        NESSIEinit(A)
-
-// We multiply by eight because this function needs the source BITS
-// as a paramter!
-#define HASH_Update(A,B,C)  NESSIEadd(B, C*8, A)
-#define HASH_Final(A,B)     NESSIEfinalize(B,A)
-
-/* Define which types of files of known hashes that support this type
-   of hash. The values, if given, are the offset,
-   in terms of numbers of quotation marks, used to find the hash in the 
-   file type. Numbers are not necessary for all file types. */
-#define SUPPORT_PLAIN
-
-
 void NESSIEinit(struct NESSIEstruct * const structpointer);
 
 void NESSIEadd(const unsigned char * const source,
@@ -166,7 +187,6 @@ void NESSIEadd(const unsigned char * const source,
 
 void NESSIEfinalize(struct NESSIEstruct * const structpointer,
   unsigned char * const result);
-
 
 #endif   /* PORTABLE_C__ */
 

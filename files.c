@@ -20,22 +20,32 @@
    1. Add a definition of TYPE_[fileType] to md5deep.h. Ex: for type "cows",
       you would want to define TYPE_COWS.
 
-   2. Create an is[fileType]File function. You may wish to use the 
-      isSpecifiedFileType() function below. See the existing functions
-      for examples. 
+   2. If your filetype has a rigid header, you should define a HEADER
+      variable to make comparisons easier. 
 
-   3. Add your is[fileType]File function to the hash_file_type() function.
+   3. Add a check for your file type to the hash_file_type() function.
 
-   4. Create a find[fileType]HashinLine function. See the existing functions
-      for some good examples.
+   4. Create a method to find a valid hash and filename in a line of
+      your file. You are encouraged to use find_plain_hash and
+      find_rigid_hash if possible! 
 
-   5. Add your find[fileType]HashinLine function to the find_hash_in_line()
-      function.
+   5. Add this method to the find_hash_in_line() function. 
 
-   6. Add your fileType to the findNameinLine function.
+   6. Add a line to each hash algorithm header file (e.g. md5.h and sha1.h)
+      to indicate which types of hashes the new file type contains. It is
+      a good practice to ensure that your header is *undefined* for 
+      algorithms that you don't suppport. For example, if you're adding
+      the file type cows and you don't support MD5 hashes, you should add
+      the following to md5.h:
 
-   7. Add a line to each hash algorithm header file (e.g. md5.h and sha1.h)
-      to indicate which types of hashes the new file type contains.
+      #ifdef SUPPORT_COWS
+      #undef SUPPORT_COWS
+      #endif
+
+   7. If your file format uses comma separated values, be sure that the
+      SUPPORT_[type] variable you define contains the number of commas
+      before the hash value in each line. See find_general_hash() for
+      more details.
    
    ---------------------------------------------------------------------- */
 
@@ -67,28 +77,7 @@ int valid_hash(char *buf) {
 }
 
 
-int isHashkeeperFile(char *buf) 
-{
-  return (!strncmp(buf,HASHKEEPER_HEADER,strlen(HASHKEEPER_HEADER)));
-}
-
-int isNSRL15File(char *buf) 
-{
-  return (!strncmp(buf,NSRL_15_HEADER,strlen(NSRL_15_HEADER)));
-}
-
-int isNSRL20File(char *buf) 
-{
-  return (!strncmp(buf,NSRL_20_HEADER,strlen(NSRL_20_HEADER)));
-}
-
-
-int isiLookFile(char *buf) 
-{
-  return (!strncmp(buf,ILOOK_HEADER,strlen(ILOOK_HEADER)));
-}
-
-
+// Remove the newlines, if any. Works on both DOS and *nix newlines
 void chop_line(char *s)
 {
   unsigned int pos = strlen(s);
@@ -97,129 +86,118 @@ void chop_line(char *s)
     s[pos - 2] = 0;
   else if (s[pos-1] == '\n')
     s[pos - 1] = 0;
-
 }
 
 
-int findPlainHashinLine(char *buf, char *known_fn) 
+int find_plain_hash(char *buf, char *known_fn) 
 {
   unsigned int p = HASH_STRING_LENGTH;
 
-  /* We have to include a validity check here so that we don't
-     mistake SHA-1 hashes for MD5 hashes, among other things */
+  if (buf == NULL)
+    return FALSE;
 
   if ((strlen(buf) < HASH_STRING_LENGTH) || 
       (buf[HASH_STRING_LENGTH] != ' '))
     return FALSE;
 
-  strncpy(known_fn,buf,PATH_MAX);
-  while(p < strlen(known_fn) && !(isalnum(known_fn[p])))
-    ++p;
-  shift_string(known_fn,0,p);
-  chop_line(known_fn);
+  if (known_fn != NULL)
+  {
+    strncpy(known_fn,buf,PATH_MAX);
+    while(p < strlen(known_fn) && !(isalnum(known_fn[p])))
+      ++p;
+    shift_string(known_fn,0,p);
+    chop_line(known_fn);
+  }
 
   buf[HASH_STRING_LENGTH] = 0;
+
+  /* We have to include a validity check here so that we don't
+     mistake SHA-1 hashes for MD5 hashes, among other things */
   return (valid_hash(buf));
 }  
 
 
-
-/* Attempts to find a hash value after the nth quotation mark in buf */
-int find_hash_after_quotes(char *buf, unsigned int n) 
+int find_bsd_hash(char *buf, char *fn)
 {
-  unsigned int count = 0, pos = 0;
+  char *temp;
+  unsigned int pos = 0, size = HASH_STRING_LENGTH, first_paren, second_paren;
 
-  do {
+  if (buf == NULL)
+    return FALSE;
 
-    switch (buf[pos])
-    {
-    case '"': 
-      count++;
-      break;
-    case 0:
-      return FALSE;
-    }   
-
+  while (pos < strlen(buf) && buf[pos] != '(')
     ++pos;
-
-  } while (count < n);
-
-  /* Check that there is enough left in the string to copy */
-  if (pos + HASH_STRING_LENGTH > strlen(buf))
+  if (pos == strlen(buf))
     return FALSE;
+  first_paren = pos;
 
-  /* Now we just copy the hash value back to the begining of the line */
-  shift_string(buf,0,pos);
-  buf[HASH_STRING_LENGTH] = 0;
+  /* We only need to check back as far as the opening parenethsis,
+     not the start of the string. If the closing paren comes before
+     the opening paren (e.g. )( ) then the line is not valid */
+  pos = strlen(buf) - size;
+  while (pos > first_paren && buf[pos] != ')')
+    --pos;
+  if (pos == first_paren)
+    return FALSE;
+  second_paren = pos;
 
-  return TRUE;
+  if (fn != NULL)
+  {
+    temp = strdup(buf);
+    temp[second_paren] = 0;
+    // The filename starts one character after the first paren
+    shift_string(temp,0,first_paren+1);
+    strncpy(fn,temp,PATH_MAX);
+    free(temp);
+  }
+
+  /* We chop instead of setting buf[HASH_STRING_LENGTH] = 0 just in
+     case there is extra data. We don't want to chop up longer 
+     (possibly invalid) data and take part of it as a valid hash! */
+  chop_line(buf);
+
+  // The hash always begins four characters after the second paren
+  shift_string(buf,0,second_paren+4);
+  return (valid_hash(buf));
 }
+  
 
-int findHashkeeperHashinLine(char *buf, char *known_fn) 
+/* This is a generic function to find the filename and hash from a rigid
+   (i.e. comma separated value) file format. Values may be quoted, but
+   the quotes are removed before values are returned. The location variables
+   refer to how many commas preceed the entry. For example, to get the
+   hash out of:
+
+   filename,junk,stuff,hash,stuff
+
+   you should call find_rigid_hash(buf,fn,0,3);
+*/
+int find_rigid_hash(char *buf, char *fn, 
+		      unsigned int fn_location, 
+		      unsigned int hash_location)
 {
-#ifdef SUPPORT_HASHKEEPER
-  char *fn = strdup(buf);
-  if (fn == NULL)
+  char *temp = strdup(buf);
+  if (temp == NULL)
     return FALSE;
-
-  if (!find_quoted_string(fn,1))
+  if (find_comma_separated_string(temp,fn_location))
+  {
+    free(temp);
     return FALSE;
-
-  strncpy(known_fn,fn,PATH_MAX);
-  free(fn);
-
-  return (find_hash_after_quotes(buf,SUPPORT_HASHKEEPER));
-#else
-  return FALSE;
-#endif
+  }
+  strncpy(fn, temp, strlen(fn));
+  free(temp);
+  if (find_comma_separated_string(buf,hash_location))
+    return FALSE;
+  return valid_hash(buf);
 }
-
-int findNSRL15HashinLine(char *buf, char *known_fn) 
-{
-#ifdef SUPPORT_NSRL_15
-  char *fn = strdup(buf);
-  if (fn == NULL)
-    return FALSE;
-
-  if (!find_quoted_string(fn,3))
-    return FALSE;
-
-  strncpy(known_fn,fn,PATH_MAX);
-  free(fn);
-
-  return (find_hash_after_quotes(buf,SUPPORT_NSRL_15));
-#else
-  return FALSE;
-#endif
-} 
-
-int findNSRL20HashinLine(char *buf, char *known_fn) 
-{
-#ifdef SUPPORT_NSRL_20
-  char *fn = strdup(buf);
-  if (fn == NULL)
-    return FALSE;
-
-  if (!find_quoted_string(fn,7))
-    return FALSE;
-
-  strncpy(known_fn,fn,PATH_MAX);
-  free(fn);
-
-  return (find_hash_after_quotes(buf,SUPPORT_NSRL_20));
-#else
-  return FALSE;
-#endif
-} 
-
 
 
 /* iLook files have the MD5 hash as the first 32 characters. 
    As a result, we can just treat these files like plain hash files  */
-int findiLookHashinLine(char *buf, char *known_fn) 
+int find_ilook_hash(char *buf, char *known_fn) 
 {
 #ifdef SUPPORT_ILOOK
-  return (findPlainHashinLine(buf,known_fn));
+  return (find_plain_hash(buf,known_fn));
 #else
   return FALSE;
 #endif
@@ -241,42 +219,49 @@ int hash_file_type(FILE *f)
   if (strlen(buf) > HASH_STRING_LENGTH)
   {
 
+    chop_line(buf);
+
 #ifdef SUPPORT_HASHKEEPER
-    if (isHashkeeperFile(buf)) 
+    if (STRINGS_EQUAL(buf,HASHKEEPER_HEADER))
       return TYPE_HASHKEEPER;
 #endif
     
 #ifdef SUPPORT_NSRL_15
-    if (isNSRL15File(buf))
+    if (STRINGS_EQUAL(buf,NSRL_15_HEADER))
       return TYPE_NSRL_15;
 #endif
 
 #ifdef SUPPORT_NSRL_20
-    if (isNSRL20File(buf))
+    if (STRINGS_EQUAL(buf,NSRL_20_HEADER))
       return TYPE_NSRL_20;
 #endif
 
 #ifdef SUPPORT_ILOOK
-    if (isiLookFile(buf)) 
+    if (STRINGS_EQUAL(buf,ILOOK_HEADER))
       return TYPE_ILOOK;
 #endif
   }    
 
-#ifdef SUPPORT_PLAIN
+  
   /* Plain files can have comments, so the first line(s) may not
      contain a valid hash. But if we should process this file
      if we can find even *one* valid hash */
   known_fn = (char *)malloc(sizeof(char) * PATH_MAX);
   do 
   {
-    if (findPlainHashinLine(buf,known_fn))
+    if (find_bsd_hash(buf,known_fn))
+    {
+      free(known_fn);
+      return TYPE_BSD;
+    }
+
+    if (find_plain_hash(buf,known_fn))
     {
       free(known_fn);
       return TYPE_PLAIN;
     }
   } while ((fgets(buf,MAX_STRING_LENGTH,f)) != NULL);
   free(known_fn);
-#endif  
 
   return TYPE_UNKNOWN;
 }
@@ -284,41 +269,45 @@ int hash_file_type(FILE *f)
 
 
 /* Given an input string buf and the type of file it came from, finds
-   the MD5 hash specified in the line if there is one and returns TRUE.
-   If there is no valid hash in the line, returns FALSE. */
-int find_hash_in_line(char *buf, int fileType, char *known_fn) 
+   the hash specified in the line if there is one and returns TRUE.
+   If there is no valid hash in the line, returns FALSE. 
+   All functions called from here are required to check that the hash
+   is valid before returning! */
+int find_hash_in_line(char *buf, int fileType, char *fn) 
 {
-  int status = FALSE;
-
   switch(fileType) {
 
-    /* The findPlain already does a validity check for us */
+#ifdef SUPPORT_PLAIN
   case TYPE_PLAIN:
-    return findPlainHashinLine(buf,known_fn);
-    
+    return find_plain_hash(buf,fn);
+#endif
+
+#ifdef SUPPORT_BSD
+  case TYPE_BSD:
+    return find_bsd_hash(buf,fn);
+#endif
+
+#ifdef SUPPORT_HASHKEEPER
   case TYPE_HASHKEEPER:
-    status = findHashkeeperHashinLine(buf,known_fn);
-    break;
+    return (find_rigid_hash(buf,fn,2,SUPPORT_HASHKEEPER));
+#endif
     
+#ifdef SUPPORT_NSRL_15
   case TYPE_NSRL_15:
-    status = findNSRL15HashinLine(buf,known_fn);
+    return (find_rigid_hash(buf,fn,1,SUPPORT_NSRL_15));
     break;
+#endif
 
+#ifdef SUPPORT_NSRL_20
   case TYPE_NSRL_20:
-    status = findNSRL20HashinLine(buf,known_fn);
-    break;
-    
-  case TYPE_ILOOK:
-    status = findiLookHashinLine(buf,known_fn);
-    break;
-  }
+    return (find_rigid_hash(buf,fn,3,SUPPORT_NSRL_20));
+#endif
 
-  if (status)
-    return (valid_hash(buf));
+#ifdef SUPPORT_ILOOK    
+  case TYPE_ILOOK:
+    return (find_ilook_hash(buf,fn));
+#endif
+  }
 
   return FALSE;
 }
-
-
-
-

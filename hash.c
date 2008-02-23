@@ -1,5 +1,5 @@
 
-/* MD5DEEP
+/* MD5DEEP - hash.c
  *
  * By Jesse Kornblum
  *
@@ -25,15 +25,8 @@ typedef struct hash_info {
 
   /* We never use the total number of bytes in a file, 
      only the number of megabytes when we display a time estimate */
-  off_t total_megs;
-  off_t bytes_read;
-
-#ifdef __WIN32
-  /* Win32 is a 32-bit operating system and can't handle file sizes
-     larger than 4GB. We use this to keep track of overflows */
-  off_t last_read;
-  off_t overflow_count;
-#endif
+  uint64_t total_megs;
+  uint64_t bytes_read;
 
   char *result;
 
@@ -46,21 +39,19 @@ void update_display(time_t elapsed, hash_info *h)
 {
   char msg[LINE_LENGTH];
   unsigned int hour,min;
-  off_t seconds, mb_read = h->bytes_read / ONE_MEGABYTE;
+  uint64_t seconds, mb_read = h->bytes_read / ONE_MEGABYTE;
 
-#ifdef __WIN32
-  mb_read += h->overflow_count * 4096;
-#endif
+  memset(msg,0,LINE_LENGTH);
 
   if (h->total_megs == 0) 
   {
     snprintf(msg,LINE_LENGTH,
-	     "%s: %lluMB done. Unable to estimate remaining time.",
+	     "%s: %"PRIu64"MB done. Unable to estimate remaining time.",
 	     h->short_name,mb_read);
   }
   else 
   {
-    /* Our estimate of the number of seconds remaining */
+    // Our estimate of the number of seconds remaining
     seconds = (off_t)floor(((double)h->total_megs/mb_read - 1) * elapsed);
 
     /* We don't care if the remaining time is more than one day.
@@ -75,7 +66,7 @@ void update_display(time_t elapsed, hash_info *h)
     seconds -= min * 60;
     
     snprintf(msg,LINE_LENGTH,
-	     "%s: %lluMB of %lluMB done, %02u:%02u:%02llu left%s",
+	     "%s: %"PRIu64"MB of %"PRIu64"MB done, %02u:%02u:%02"PRIu64" left%s",
 	     h->short_name,mb_read,h->total_megs,hour,min,seconds,BLANK_LINE);
   }    
 
@@ -130,10 +121,10 @@ int fatal_error(void)
 }
 
 
-int compute_hash(off_t mode, hash_info *h, HASH_CONTEXT *md)
+int compute_hash(uint64_t mode, hash_info *h, HASH_CONTEXT *md)
 {
   time_t start_time,current_time,last_time = 0;
-  off_t current_read;
+  uint64_t current_read;
   unsigned char buffer[BUFSIZ];
 
   if (M_ESTIMATE(mode))
@@ -153,7 +144,7 @@ int compute_hash(off_t mode, hash_info *h, HASH_CONTEXT *md)
     if (ferror(h->handle))
     {
       if (!(M_SILENT(mode)))
-	fprintf(stderr,"%s: %s: error at offset %llu: %s%s", 
+	fprintf(stderr,"%s: %s: error at offset %"PRIu64": %s%s", 
 		__progname,h->full_name,h->bytes_read,strerror(errno),NEWLINE);
       
       if (fatal_error())
@@ -175,15 +166,6 @@ int compute_hash(off_t mode, hash_info *h, HASH_CONTEXT *md)
       HASH_Update(md, buffer, current_read);
       h->bytes_read += current_read;
     }
-
-#ifdef __WIN32
-    /* We have to update the overflow counter here. If it's only in 
-       update_display() then it's possible that we roll over but never
-       see it. This causes an error when we try to display the final size. */
-    if (h->last_read > h->bytes_read)
-      h->overflow_count++;
-    h->last_read = h->bytes_read;
-#endif
     
     /* Check if we've hit the end of the file */
     if (feof(h->handle))
@@ -210,41 +192,20 @@ int compute_hash(off_t mode, hash_info *h, HASH_CONTEXT *md)
 }
 
 
-void display_size(off_t mode, hash_info *h)
+void display_size(uint64_t mode, hash_info *h)
 {
-#ifndef __WIN32
-  off_t max_size = 999999999;
-  max_size *= 10;
-  max_size += 9;
-
-  /* We don't have Windows code for a "max value" because Win32 can
-     only handle 32 bit numbers, or 2^32. This is far less than the
-     ten digits we can display. If we go over 2^32 we overflow and
-     there's no way to compute the true number of bytes.
-
-     Also, Mac and *BSD don't like using ten digit constants, so we
-     compute the max_size of 9999999999 instead. */
-
   if (M_DISPLAY_SIZE(mode))
   {
-    if (h->bytes_read > max_size)
-      printf ("%10llu  ", max_size);
-    else
-      printf ("%10llu  ", h->bytes_read);
-  }
-#else
-  if (M_DISPLAY_SIZE(mode))
-  {
-    if (h->overflow_count > 0)
+    // We reserve ten characters for digits followed by two spaces
+    if (h->bytes_read > 9999999999LL)
       printf ("9999999999  ");
     else
-      printf ("%10lu  ", h->bytes_read);
-  }
-#endif
+      printf ("%10"PRIu64"  ", h->bytes_read);      
+  }	
 }
 
 
-void display_match_result(off_t mode, hash_info *h)
+void display_match_result(uint64_t mode, hash_info *h)
 {  
   int status;
   char *known_fn;
@@ -282,7 +243,7 @@ void display_match_result(off_t mode, hash_info *h)
 }
 
 
-void display_hash(off_t mode, hash_info *h)
+void display_hash(uint64_t mode, hash_info *h)
 {
   /* We can't call display_size here because we don't know if we're
      going to display *anything* yet. If we're in matching mode, we
@@ -303,7 +264,7 @@ void display_hash(off_t mode, hash_info *h)
 }
 
 
-void hash(off_t mode, hash_info *h)
+void hash(uint64_t mode, hash_info *h)
 {
   HASH_CONTEXT md;
   unsigned char sum[HASH_LENGTH];
@@ -311,14 +272,8 @@ void hash(off_t mode, hash_info *h)
   static char hex[] = "0123456789abcdef";
   int i;
 
-#ifdef __WIN32
-  h->last_read = 0;
-  h->overflow_count = 0;
-#endif
-
   h->bytes_read = 0;
   h->result = NULL;
-
   HASH_Init(&md);
 
   if (!compute_hash(mode,h,&md))
@@ -344,7 +299,7 @@ void hash(off_t mode, hash_info *h)
 int my_basename(char *s)
 {
   unsigned long pos = strlen(s);
-  if (0 == pos || pos > PATH_MAX)
+  if (pos == 0 || pos > PATH_MAX)
     return TRUE;
   
   while(s[pos] != DIR_SEPARATOR && pos > 0)
@@ -361,7 +316,7 @@ int my_basename(char *s)
 }
 
 
-int setup_barename(off_t mode, hash_info *h, char *file_name)
+int setup_barename(uint64_t mode, hash_info *h, char *file_name)
 {
   char *basen = strdup(file_name);
   if (basen == NULL)
@@ -381,7 +336,7 @@ int setup_barename(off_t mode, hash_info *h, char *file_name)
 }
 
 
-void hash_file(off_t mode, char *file_name)
+void hash_file(uint64_t mode, char *file_name)
 {
   hash_info *h = (hash_info *)malloc(sizeof(hash_info));
 
@@ -395,15 +350,16 @@ void hash_file(off_t mode, char *file_name)
   else
     h->full_name = file_name;
 
-  // We have a separate 'match name' because these values are
-  // different when processing stdin. They are the same for normal files
+  /* We have a separate 'match name' because the text to display in
+     matching mode is different from the filename when processing stdin */
   h->match_name = h->full_name;
 
   if ((h->handle = fopen(file_name,"rb")) != NULL)
   {
     if (M_ESTIMATE(mode))
     {
-      h->total_megs = find_file_size(h->handle) / ONE_MEGABYTE;
+      // The find file size returns a value of type off_t 
+      h->total_megs = (uint64_t)(find_file_size(h->handle) / ONE_MEGABYTE);
       h->short_name = (char *)malloc(sizeof(char) * MAX_FILENAME_LENGTH);
       shorten_filename(h->short_name,h->full_name);    
     }    
@@ -423,7 +379,7 @@ void hash_file(off_t mode, char *file_name)
   free(h);
 }
 
-void hash_stdin(off_t mode)
+void hash_stdin(uint64_t mode)
 {
   hash_info *h = (hash_info *)malloc(sizeof(hash_info));
 
@@ -435,7 +391,7 @@ void hash_stdin(off_t mode)
   if (M_ESTIMATE(mode))
   {
     h->short_name = strdup("stdin");
-    h->total_megs = 0;
+    h->total_megs = 0LL;
   }
 
   hash(mode,h);

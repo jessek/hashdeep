@@ -2,7 +2,7 @@
 RAW_CC = gcc
 RAW_FLAGS = -Wall -O2
 LINK_OPT = -lm
-VERSION = 1.6
+VERSION = 1.7
 
 # Where we get installed
 PREFIX = /usr/local
@@ -52,7 +52,7 @@ CR_ALL_GOALS = $(CR_MD5) $(CR_SHA1) $(CR_SHA256) $(CR_WHIRL)
 WINCC = $(RAW_CC) $(RAW_FLAGS) -D__WIN32
 
 # Generic "how to compile C files"
-CC = $(RAW_CC) $(RAW_FLAGS) -D__UNIX
+CC = $(RAW_CC) $(RAW_FLAGS)
 .c.o: 
 	$(CC) -c $<
 
@@ -81,7 +81,6 @@ sunos: solaris
 solaris: CC += -D__SOLARIS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 solaris: goals
 
-mac: CC += -D__MACOSX
 mac: goals
 
 unix: goals
@@ -191,7 +190,7 @@ uninstall:
 # check for all RBF tags; thus showing the developer what needs to be
 # fixed before the program can be released.
 preflight:
-	grep -n RBF *.1 *.h *.c README CHANGES
+	@grep -n RBF *.1 *.h *.c README CHANGES
 
 nice:
 	rm -f -- *~

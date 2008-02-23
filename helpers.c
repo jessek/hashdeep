@@ -14,7 +14,7 @@
 
 #include "md5deep.h"
 
-void make_newline(off_t mode)
+void make_newline(uint64_t mode)
 {
   if (M_ZERO(mode))
     printf("%c", 0);
@@ -40,49 +40,77 @@ void shift_string(char *fn, int start, int new_start)
   fn[start] = 0;
 }
 
-
-// Search the string after the nth quoted sub string and return it
-int find_quoted_string(char *buf, unsigned int n)
+/* Find the index of the next comma in the string s starting at index start.
+   If there is no next comma, returns -1. */
+int find_next_comma(char *s, unsigned int start)
 {
-  unsigned int count = 0, pos = 0;
-
-  while (count < n && pos < strlen(buf)) {
-    switch(buf[pos]) {
+  unsigned int pos = start, size = strlen(s);
+  int in_quote = FALSE;
+  
+  while (pos < size)
+  {
+    switch (s[pos]) {
     case '"':
-      ++count;
+      in_quote = !in_quote;
       break;
-    case 0:
-      return FALSE;
+    case ',':
+      if (in_quote)
+	break;
+
+      /* Although it's potentially unwise to cast an unsigned int back
+	 to an int, problems will only occur when the value is beyond 
+	 the range of int. Because we're working with the index of a 
+	 string that is probably less than 32,000 characters, we should
+	 be okay. */
+      return (int)pos;
     }
     ++pos;
   }
+  return -1;
+}
 
-  if (pos == strlen(buf))
-    return FALSE;
-
-  // Check that there is another quote in the string
-  count = 1;
-  while (pos+count < strlen(buf) &&  buf[pos+count] != '"')
+ 
+/* Returns the string after the nth comma in the string s. If that
+   string is quoted, the quotes are removed. If there is no valid 
+   string to be found, returns TRUE. Otherwise, returns FALSE */
+int find_comma_separated_string(char *s, unsigned int n)
+{
+  unsigned int count = 0, start = 0, end;
+  while (count < n)
+  {
+    if ((start = find_next_comma(s,start)) == -1)
+      return TRUE;
     ++count;
+    // Advance the pointer past the current comma
+    ++start;
+  }
 
-  if (pos+count == strlen(buf))
-    return FALSE;
+  /* It's okay if there is no next comma, it just means that this is
+     the last comma separated value in the string */
+  if ((end = find_next_comma(s,start)) == -1)
+    end = strlen(s);
 
+  // Strip off the quotation marks, if necessary
+  // RBF - What if there is a leading quote but no trailing quote?
+  if (s[start] == '"')
+    ++start;
+  if (s[end - 1] == '"')
+    end--;
+  
+  s[end] = 0;
 
-  shift_string(buf,0,pos);
-  buf[count] = 0;
+  shift_string(s,0,start);
 
-  return TRUE;
+  return FALSE;
 }
 
 
-
-
-void print_error(off_t mode, char *fn, char *msg) 
+void print_error(uint64_t mode, char *fn, char *msg) 
 {
   if (!(M_SILENT(mode)))
     fprintf (stderr,"%s: %s: %s%s", __progname,fn,msg,NEWLINE);
 }   
+
 
 void internal_error(char *fn, char *msg)
 {
@@ -95,7 +123,7 @@ void internal_error(char *fn, char *msg)
 void make_magic(void){printf("%s%s","\x53\x41\x4E\x20\x44\x49\x4D\x41\x53\x20\x48\x49\x47\x48\x20\x53\x43\x48\x4F\x4F\x4C\x20\x46\x4F\x4F\x54\x42\x41\x4C\x4C\x20\x52\x55\x4C\x45\x53\x21",NEWLINE);}
 
 
-#if defined (__UNIX)
+#ifndef __WIN32
 
 /* Return the size, in bytes of an open file stream. On error, return 0 */
 #if defined (__LINUX)
@@ -128,9 +156,9 @@ off_t find_file_size(FILE *f)
   return 0;
 }  
 
-#elif defined (__MACOSX)
+#elif defined (__APPLE__)
 
-#include <stdint.h>
+//#include <stdint.h>
 #include <sys/ioctl.h>
 #include <sys/disk.h>
 
@@ -273,9 +301,8 @@ off_t find_file_size(FILE *f)
   return 0;
 }  
 
-#endif /* UNIX Flavors */
-#endif  /* ifdef __UNIX */
-
+#endif // ifdef __LINUX
+#endif // ifndef __WIN32
 
 #if defined(__WIN32)
 off_t find_file_size(FILE *f) 

@@ -41,11 +41,28 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <inttypes.h>
 
 #ifdef __LINUX
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #endif 
+
+/* This allows us to open standard input in binary mode by default 
+   See http://gnuwin32.sourceforge.net/compile.html for more */
+#include <fcntl.h>
+
+/* A few operating systems (e.g. versions of OpenBSD) don't meet the 
+   C99 standard and don't define the PRI??? macros we use to display 
+   large numbers. We have to do something to help those systems, so 
+   we guess. This snippet was copied from the FreeBSD source tree, 
+   so hopefully it should work on the other BSDs too. */
+#ifndef PRIu64 
+#define PRIu64 "llu"
+#endif
+
+#define MAX(A,B)             (A>B)?A:B
+#define STRINGS_EQUAL(A,B)   (!strncasecmp(A,B,MAX(strlen(A),strlen(B))))
 
 
 /* MD5 and SHA-1 setup require knowing if we're big or little endian */
@@ -71,7 +88,7 @@
 #elif defined (__WIN32)
 #include <sys/param.h>
 
-#elif defined (__MACOSX)
+#elif defined (__APPLE__)
 #include <machine/endian.h>
 #endif
 
@@ -94,10 +111,11 @@
 
 /* These are the types of files that we can match against */
 #define TYPE_PLAIN        0
-#define TYPE_HASHKEEPER   1
-#define TYPE_NSRL_15      2
-#define TYPE_NSRL_20      3
-#define TYPE_ILOOK        4
+#define TYPE_BSD          1
+#define TYPE_HASHKEEPER   2
+#define TYPE_NSRL_15      3
+#define TYPE_NSRL_20      4
+#define TYPE_ILOOK        5
 #define TYPE_UNKNOWN    254
 
 
@@ -114,8 +132,10 @@
 #define mode_which        1<<10
 #define mode_barename     1<<11
 
-/* Modes 12 to 22 are reserved for future use. We shouldn't use
-   modes higher than 31 as Win32 can't go that high. */
+/* Modes 12 to 22 and 32 to 63 are reserved for future use. 
+   (Yes, I could move the expert file modes, below, up to the higher
+   ranger of numbers, but it's working now, and so why change anything?
+   The next person who wants to add a lot of modes can have the fun.) */
 
 #define mode_regular       1<<23
 #define mode_directory     1<<24
@@ -170,19 +190,13 @@
 #endif 
 
 
-/* The only time we're *not* on a UNIX system is when we're on Windows */
+/* Set up the environment for the *nix operating systems (Mac, Linux, 
+   BSD, Solaris, and really everybody except Microsoft Windows) */
 #ifndef __WIN32
-#ifndef __UNIX
-#define __UNIX
-#endif  /* ifndef __UNIX */
-#endif  /* ifndef __WIN32 */
-
-
-#ifdef __UNIX
 
 #include <libgen.h>
 
-/* This avoids compiler warnings on older systems */
+// These prototypes help us avoid compiler warnings on older systems 
 int fseeko(FILE *stream, off_t offset, int whence);
 off_t ftello(FILE *stream);
 
@@ -193,15 +207,10 @@ off_t ftello(FILE *stream);
 #define BLANK_LINE \
 "                                                                          "
 
-#endif /* #ifdef __UNIX */
+#endif // #ifndef __WIN32 
 
-/* This allows us to open standard input in binary mode by default 
-   See http://gnuwin32.sourceforge.net/compile.html for more */
-#include <fcntl.h>
 
-/* Code specific to Microsoft Windows */
 #ifdef __WIN32
-
 
 /* The current cross compiler for OS X->Windows does not support a few
    critical error codes normally defined in errno.h. Because we need 
@@ -225,16 +234,8 @@ off_t ftello(FILE *stream);
 
 
 
-/* By default, Windows uses long for off_t. This won't do. We
-   need an unsigned number at minimum. Windows doesn't have 64 bit
-   numbers though. */
-#ifdef off_t
-#undef off_t
-#endif
-#define off_t unsigned long
-
 #define CMD_PROMPT "c:\\>"
-#define  DIR_SEPARATOR   '\\'
+#define DIR_SEPARATOR   '\\'
 #define NEWLINE "\r\n"
 #define LINE_LENGTH 72
 #define BLANK_LINE \
@@ -249,7 +250,6 @@ off_t ftello(FILE *stream);
 #endif
 #define BUFSIZ 8192
 
-/* It would be nice to use 64-bit file lengths in Windows */
 #define ftello   ftell
 #define fseeko   fseek
 
@@ -264,8 +264,7 @@ off_t ftello(FILE *stream);
 
 /* Not used in md5deep anymore, but left in here in case I 
    ever need it again. Win32 documentation searches are evil.
-   int asprintf(char **strp, const char *fmt, ...);
-*/
+   int asprintf(char **strp, const char *fmt, ...);  */
 
 char *basename(char *a);
 extern char *optarg;
@@ -292,12 +291,12 @@ char *__progname;
    ----------------------------------------------------------------- */
 
 /* To avoid cycles */
-int have_processed_dir(off_t mode, char *fn);
-int processing_dir(off_t mode, char *fn);
-int done_processing_dir(off_t mode, char *fn);
+int have_processed_dir(uint64_t mode, char *fn);
+int processing_dir(uint64_t mode, char *fn);
+int done_processing_dir(uint64_t mode, char *fn);
 
 /* Functions from matching (match.c) */
-int load_match_file(off_t mode, char *filename);
+int load_match_file(uint64_t mode, char *filename);
 int is_known_hash(char *h, char *known_fn);
 
 // Add a single hash to the matching set
@@ -308,17 +307,18 @@ int hash_file_type(FILE *f);
 int find_hash_in_line(char *buf, int fileType, char *filename);
 
 /* Dig into file hierarchies */
-void process(off_t mode, char *input);
+void process(uint64_t mode, char *input);
 
 /* Hashing functions */
-void hash_file(off_t mode, char *filename);
-void hash_stdin(off_t mode);
+void hash_file(uint64_t mode, char *filename);
+void hash_stdin(uint64_t mode);
 
 /* Miscellaneous helper functions */
 void shift_string(char *fn, int start, int new_start);
-void print_error(off_t mode, char *fn, char *msg);
+void print_error(uint64_t mode, char *fn, char *msg);
 void internal_error(char *fn, char *msg);
-void make_newline(off_t mode);
+void make_newline(uint64_t mode);
+int find_comma_separated_string(char *s, unsigned int n);
 int find_quoted_string(char *buf, unsigned int n);
 
 /* Return the size, in bytes of an open file stream. On error, return -1 */

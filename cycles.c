@@ -35,7 +35,7 @@ void dump_table(void)
 #endif
 
 
-int done_processing_dir(off_t mode, char *fn)
+int done_processing_dir(uint64_t mode, char *fn)
 {
   dir_table *last, *temp;
 
@@ -80,7 +80,7 @@ int done_processing_dir(off_t mode, char *fn)
 
 
 
-int processing_dir(off_t mode, char *fn)
+int processing_dir(uint64_t mode, char *fn)
 {
   dir_table *new, *temp;
   char *d_name = (char*)malloc(sizeof(char) * PATH_MAX);
@@ -119,7 +119,7 @@ int processing_dir(off_t mode, char *fn)
 }
 
 
-int have_processed_dir(off_t mode, char *fn)
+int have_processed_dir(uint64_t mode, char *fn)
 {
   dir_table *temp;
   char *d_name = (char*)malloc(sizeof(char) * PATH_MAX);

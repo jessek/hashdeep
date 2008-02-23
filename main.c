@@ -1,5 +1,5 @@
 
-/* MD5DEEP
+/* MD5DEEP - main.c
  *
  * By Jesse Kornblum
  *
@@ -60,7 +60,7 @@ void usage(void)
 }
 
 
-void setup_expert_mode(char *arg, off_t *mode) 
+void setup_expert_mode(char *arg, uint64_t *mode) 
 {
   unsigned int i = 0;
 
@@ -98,7 +98,7 @@ void setup_expert_mode(char *arg, off_t *mode)
 }
 
 
-void sanity_check(off_t mode, int condition, char *msg)
+void sanity_check(uint64_t mode, int condition, char *msg)
 {
   if (condition)
   {
@@ -112,7 +112,7 @@ void sanity_check(off_t mode, int condition, char *msg)
 }
       
 
-void check_flags_okay(off_t mode, int hashes_loaded)
+void check_flags_okay(uint64_t mode, int hashes_loaded)
 {
   sanity_check(mode,
 	       ((M_MATCH(mode) || M_MATCHNEG(mode)) && !hashes_loaded),
@@ -126,7 +126,7 @@ void check_flags_okay(off_t mode, int hashes_loaded)
 }
 
 
-void check_matching_modes(off_t mode)
+void check_matching_modes(uint64_t mode)
 {
   sanity_check(mode,
 	       (M_MATCH(mode) && M_MATCHNEG(mode)),
@@ -134,7 +134,7 @@ void check_matching_modes(off_t mode)
 }
 
 
-void process_command_line(int argc, char **argv, off_t *mode) {
+void process_command_line(int argc, char **argv, uint64_t *mode) {
 
   int i, hashes_loaded = FALSE;
   
@@ -253,7 +253,7 @@ int is_absolute_path(char *fn)
 }
 
 
-void generate_filename(off_t mode, char **argv, char *fn, char *cwd)
+void generate_filename(uint64_t mode, char **argv, char *fn, char *cwd)
 {
   if (M_RELATIVE(mode) || is_absolute_path(*argv))
     strncpy(fn,*argv,PATH_MAX);	
@@ -281,7 +281,7 @@ int main(int argc, char **argv)
 {
   char *fn;
   char *cwd;
-  off_t mode = mode_none;
+  uint64_t mode = mode_none;
 
 #ifndef __GLIBC__
   __progname  = basename(argv[0]);

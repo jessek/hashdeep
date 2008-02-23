@@ -1,3 +1,24 @@
+Version 1.7 - 23 May 2005
+
+- Added support for BSD style hashes
+- Fixed support for Hashkeeper files that have directory information.
+    Matt Kucenski helped to track this down.
+- While fixing Hashkeeper support, improved support for other hash
+    file formats and generalized the code in files.c
+- Fixed a bug for displaying the correct matching filename in -w mode
+    (ensured that extra characters are erased)
+- Fixed cosmetic bug to avoid extra characters on time estimation mode
+- Removed 32-bit number limitation from Win32 code, which allows 
+    the display of file sizes larger than 4GB. (Note that time estimates
+    for files larger than 4GB is still not available on Windows.)
+- Switched printing of large numbers to C99 style (e.g. PRIu64 et al)
+- Simplified the operating systems defines in the Makefile. To wit:
+     - Removed -D__MACOSX for Mac. Instead check for __APPLE__, which 
+       the compiler defines by default for us.
+     - Removed the -D__UNIX directive. Instead just check the __WIN32
+       is *not* defined whenever we put in *nix code.
+
+
 Version 1.6 - 4 May 2005
 
 - Added Whirlpool algorithm to make whirlpooldeep.
