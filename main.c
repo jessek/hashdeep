@@ -52,7 +52,7 @@ void usage(void)
   fprintf(stderr,"-b  - prints only the bare name of files; all path information is omitted%s", NEWLINE);
   fprintf(stderr,"-l  - print relative paths for filenames%s", NEWLINE);
   fprintf(stderr,"-k  - print asterisk before hash%s", NEWLINE);
-  fprintf(stderr,"-o  - Only process certain types of files. Ssee README/manpage%s",NEWLINE);
+  fprintf(stderr,"-o  - Only process certain types of files. See README/manpage%s",NEWLINE);
   fprintf(stderr,"-v  - display version number and exit%s",NEWLINE);
 }
 

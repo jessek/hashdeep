@@ -4,7 +4,7 @@ CFLAGS   = -Wall -O3
 LINK_OPT = -lm
 
 NAME     = md5deep
-VERSION  = 1.9.3
+VERSION  = 1.10
 
 # Where we get installed
 PREFIX = /usr/local

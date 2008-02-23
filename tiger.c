@@ -21,32 +21,40 @@
 
 #include "md5deep.h"
 
+/* Test vectors from the NESSIE Project:
+   Note that the original version of this code included test vectors
+   in big endian format. These test vectors are in little endian format.
+   More of them are available at 
+   http://www.cs.technion.ac.il/~biham/Reports/Tiger/test-vectors-nessie-format.dat
 
-/*********************************
- * Okay, okay, this is not the fastest code - improvements are welcome.
- *
- */
+  message="" (empty string)
+  hash=3293AC630C13F0245F92BBB1766E16167A4E58492DDE73F3
 
-/* Some test vectors:
- * ""                   24F0130C63AC9332 16166E76B1BB925F F373DE2D49584E7A
- * "abc"                F258C1E88414AB2A 527AB541FFC5B8BF 935F7B951C132951
- * "Tiger"              9F00F599072300DD 276ABB38C8EB6DEC 37790C116F9D2BDF
- * "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-"
- *			87FB2A9083851CF7 470D2CF810E6DF9E B586445034A5A386
- * "ABCDEFGHIJKLMNOPQRSTUVWXYZ=abcdefghijklmnopqrstuvwxyz+0123456789"
- *			467DB80863EBCE48 8DF1CD1261655DE9 57896565975F9197
- * "Tiger - A Fast New Hash Function, by Ross Anderson and Eli Biham"
- *			0C410A042968868A 1671DA5A3FD29A72 5EC1E457D3CDB303
- * "Tiger - A Fast New Hash Function, by Ross Anderson and Eli Biham, proc"
- * "eedings of Fast Software Encryption 3, Cambridge."
- *			EBF591D5AFA655CE 7F22894FF87F54AC 89C811B6B0DA3193
- * "Tiger - A Fast New Hash Function, by Ross Anderson and Eli Biham, proc"
- * "eedings of Fast Software Encryption 3, Cambridge, 1996."
- *			3D9AEB03D1BD1A63 57B2774DFD6D5B24 DD68151D503974FC
- * "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-ABCDEF"
- * "GHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-"
- *			00B83EB4E53440C5 76AC6AAEE0A74858 25FD15E70A59FFE4
- */
+  message="a"
+  hash=77BEFBEF2E7EF8AB2EC8F93BF587A7FC613E247F5F247809
+
+  message="abc"
+  hash=2AAB1484E8C158F2BFB8C5FF41B57A525129131C957B5F93
+
+  message="message digest"
+  hash=D981F8CB78201A950DCF3048751E441C517FCA1AA55A29F6
+
+  message="abcdefghijklmnopqrstuvwxyz"
+  hash=1714A472EEE57D30040412BFCC55032A0B11602FF37BEEE9
+
+  message="abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+  hash=0F7BF9A19B9C58F2B7610DF7E84F0AC3A71C631E7B53F78E
+
+  message="A...Za...z0...9"
+  hash=8DCEA680A17583EE502BA38A3C368651890FFBCCDC49A8CC
+
+  message=8 times "1234567890"
+  hash=1C14795529FD9F207A958F84C52F11E887FA0CABDFD91BFD
+
+  message=1 million times "a"
+  hash=6DB0E2729CBEAD93D715C6A7D36302E9B3CEE0D2BC314B41
+*/
+
 
 
 static u64 sbox1[256] = {
@@ -803,6 +811,19 @@ tiger_final(byte hash[24], TIGER_CONTEXT *hd)
   #undef X
 
     /* unpack the hash */
+    // Modified by jk to produce little endian output like MD5 or SHA-1
+    j=0;
+    for (i=0; i<8; i++)
+      hash[j++] = (hd->a >> 8*i) & 0xff;
+    j=8;
+    for (i=0; i<8; i++)
+      hash[j++] = (hd->b >> 8*i) & 0xff;
+    j=16;
+    for (i=0; i<8; i++)
+      hash[j++] = (hd->c >> 8*i) & 0xff;
+
+
+    /* Original code, produces output in big endian     
     j=7;
     for (i=0; i<8; i++)
       hash[j--] = (hd->a >> 8*i) & 0xff;
@@ -812,5 +833,6 @@ tiger_final(byte hash[24], TIGER_CONTEXT *hd)
     j=23;
     for (i=0; i<8; i++)
       hash[j--] = (hd->c >> 8*i) & 0xff;
+    */
 }
 

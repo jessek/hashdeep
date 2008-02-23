@@ -1,6 +1,13 @@
 
+Version 1.10 - 2 Feb 2006
+
+- Fixed Tiger hashes being displayed in big endian instead of little endian
+    Thanks to Peter Chuenkov (aka ODB) for finding this bug
+- Fixed cosmetic bug in usage message
+
 Version 1.9.3 - 5 Jan 2006
 
+- Added Cygwin as a supported platform
 - Fixed expert mode to remove a number of logical errors
     that prevented the program from correctly identifying which 
     files should be hashed. Symbolic links, in particular, were not 

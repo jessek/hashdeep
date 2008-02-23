@@ -69,7 +69,7 @@ faster, but will ONLY run on G5 processors!
 Solaris:
 $ make solaris
 
-*BSD, and other Unicies:
+Cygwin, *BSD, and other Unicies:
 $ make unix
 
 
@@ -128,26 +128,11 @@ And you should have a working .exe executables for Win32.
 ----------------------------------------------------------------------
 CYGWIN
 
-Compiling md5deep using the Cygwin environment is *NOT* supported. Cygwin
-does not contain the libgen library, which is required for md5deep. (There
-is a version of libgen available at
-http://anfaenger.de/cygwin/cygwin-1.5/libgen/ , but I don't know much
-about it and can't vouch for its effectiveness or correctness.) If you
-want to try using md5deep under Cygwin, you MUST install this libgen
-library first. 
+As of version 1.9.3, Cygwin is a supported platform. You can obtain 
+Cygwin binaries at the md5deep web site or compile them yourself. You'll 
+need a default Cygwin install plus the "gcc" and "make" packages. After 
+those are installed, just type:
 
-Next, you will need to add "-liberty" (without the quotes) to the LINK_OPT
-directive at the top of the Makefile. 
+$ make unix
 
-With these two changes, it's possible to compile md5deep under Cygwin
-using the "make unix" directive, but this is not recommended. Not only
-will the resulting executable require the cygwin1.dll file to run, but the
-output for each file will be in "cygdrive" notation, which takes up extra
-space and may be confusing to those not familiar with the Cygwin
-environment. 
-
-
-
-
-
-Microsoft Windows is a registered trademark of the Microsoft Corporation.
+to compile the programs.
