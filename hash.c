@@ -4,36 +4,46 @@
 void updateDisplay(time_t elapsed,   off_t bytesRead, 
 		   off_t totalBytes, char *file_name) 
 {
+  char msg[LINE_LENGTH];
   unsigned int hour,min;
   off_t remaining, 
     mb_read    = bytesRead  / ONE_MEGABYTE,
     total_megs = totalBytes / ONE_MEGABYTE;
-  
+
   /* If we couldn't compute the input file size, punt */
   if (total_megs == 0) 
   {
-    fprintf(stderr,
-	    "\r%s: %lluMB done. Unable to estimate remaining time.",
-	    file_name,mb_read);
-    return;
+    /* Because the length of this style of line is guarenteed
+       only to increase, we don't worry about erasing anything 
+       already on the line. Thus, we don't need the trailing 
+       SPACE that's used for true time estimates below. */
+    snprintf(msg,LINE_LENGTH,
+	     "%s: %lluMB done. Unable to estimate remaining time.",
+	     file_name,mb_read);
   }
+  else 
+  {
   
-  /* Our estimate of the number of seconds remaining */
-  remaining = (off_t)floor(((double)total_megs/mb_read - 1) * elapsed);
+    /* Our estimate of the number of seconds remaining */
+    remaining = (off_t)floor(((double)total_megs/mb_read - 1) * elapsed);
 
-  /* We don't care if the remaining time is more than one day.
-     If you're hashing something that big, to quote the movie Jaws:
-     
-                   "We're gonna need a bigger boat."                   */
+    /* We don't care if the remaining time is more than one day.
+       If you're hashing something that big, to quote the movie Jaws:
+       
+              "We're gonna need a bigger boat."                   */
+    
+    hour = floor((double)remaining/3600);
+    remaining -= (hour * 3600);
+    
+    min = floor((double)remaining/60);
+    remaining -= min * 60;
+    
+    snprintf(msg,LINE_LENGTH,
+	     "%s: %lluMB of %lluMB done, %02u:%02u:%02llu left%s",
+	     file_name,mb_read,total_megs,hour,min,remaining,BLANK_LINE);
+  }    
 
-  hour = floor((double)remaining/3600);
-  remaining -= (hour * 3600);
-  
-  min = floor((double)remaining/60);
-  remaining -= min * 60;
-  
-  fprintf(stderr,"\r%s: %lluMB of %lluMB done, %02u:%02u:%02llu left",
-	  file_name,mb_read,total_megs,hour,min,remaining);
+  fprintf(stderr,"\r%s",msg);
 }
 
 
@@ -44,15 +54,31 @@ int fatal_error()
 	  errno == EIO);       /* Input/Output error */
 }
 
+void shorten_filename(char *dest, char *src)
+{
+  char *temp;
+
+  if (strlen(src) < MAX_FILENAME_LENGTH)
+    /* Technically we could use strcpy and not strncpy, but it's good
+       practice to ALWAYS use strncpy! */
+    strncpy(dest,src,MAX_FILENAME_LENGTH);
+  else
+  {
+    temp = (char *)malloc(sizeof(char) * MAX_FILENAME_LENGTH);
+    snprintf(temp,MAX_FILENAME_LENGTH-3,src);
+    snprintf(dest,MAX_FILENAME_LENGTH,"%s...",temp);
+    free(temp);
+  }
+}
 
 /* Returns TRUE if the file reads successfully, FALSE on failure */
-int compute_md5(off_t mode, FILE *fp, char *file_name, off_t file_size, 
-		int estimate_time, MD5_CTX *md)
+int compute_md5(off_t mode, FILE *fp, char *file_name, char *short_name,
+		off_t file_size, int estimate_time, MD5_CTX *md)
 {
   time_t start_time,current_time,last_time = 0;
   off_t position = 0, bytes_read;
   unsigned char buffer[BUFSIZ];
-  
+
   if (estimate_time)
   {
     time(&start_time);
@@ -77,7 +103,9 @@ int compute_md5(off_t mode, FILE *fp, char *file_name, off_t file_size,
       position += BUFSIZ;
       
       if (fatal_error())
+      {
 	return FALSE;
+      }
 
       clearerr(fp);
       
@@ -97,7 +125,8 @@ int compute_md5(off_t mode, FILE *fp, char *file_name, off_t file_size,
     {	
       /* If we've been printing, we now need to clear the line. */
       if (estimate_time)   
-	fprintf(stderr,"\r                                                                        \r"); 
+	fprintf(stderr,"\r%s\r",BLANK_LINE);
+
       return TRUE;
     }
     
@@ -107,7 +136,7 @@ int compute_md5(off_t mode, FILE *fp, char *file_name, off_t file_size,
       /* We only update the display only if a full second has elapsed */
       if (last_time != current_time) {
 	last_time = current_time;
-	updateDisplay((current_time-start_time),position,file_size,file_name);
+	updateDisplay((current_time-start_time),position,file_size,short_name);
       }
     }
   }      
@@ -120,26 +149,26 @@ char *md5_file(off_t mode, FILE *fp, char *file_name)
   unsigned char sum[MD5_HASH_LENGTH];
   static char result[2 * MD5_HASH_LENGTH + 1];
   static char hex[] = "0123456789abcdef";
-  int i, estimate_time = FALSE;
-  
+  int i, status;
+  char *temp, *basen = strdup(file_name),
+    *short_name = (char *)malloc(sizeof(char) * PATH_MAX);
+
   if (M_ESTIMATE(mode))
   {
     file_size = find_file_size(fp);
-    
-    /* If were are unable to compute the file size, we can't very well
-       estimate how long it's going to take us, now can we! That being
-       said, we don't want to change the global variable in case there
-       are other files later on that we can compute estimates for. */
-    if (file_size != 0) 
-    {
-      estimate_time = TRUE;
-      file_name = basename(file_name);
-    }
-  }
+
+    temp = basename(basen);
+    shorten_filename(short_name,temp);
+    free(basen);
+  }    
 
   MD5Init(&md);
-  if (!compute_md5(mode,fp,file_name,file_size,estimate_time,&md))
+  status = compute_md5(mode,fp,file_name,short_name,file_size,
+		       M_ESTIMATE(mode),&md);
+  free(short_name);
+  if (!status)
     return NULL;
+
   MD5Final(sum, &md);
   
   for (i = 0; i < MD5_HASH_LENGTH; i++) {

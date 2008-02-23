@@ -16,7 +16,8 @@
 #ifndef __MD5DEEP_H
 #define __MD5DEEP_H
 
-#define VERSION     "1.0"
+/* Version information is defined in the Makefile */
+
 #define AUTHOR      "Jesse Kornblum"
 #define COPYRIGHT   "This program is a work of the US Government. "\
 "In accordance with 17 USC 105,\n"\
@@ -53,6 +54,19 @@
    The NSRL is already larger than 256 bytes. We go longer to be safer. */
 #define MAX_STRING_LENGTH   1024
 #define HASH_STRING_LENGTH    32
+
+/* The length of BLANK_LINE define should correspond to the line length! */
+#ifdef __WIN32
+#define LINE_LENGTH 72
+#define BLANK_LINE \
+"                                                                        "
+#else
+#define LINE_LENGTH 74
+#define BLANK_LINE \
+"                                                                          "
+#endif
+
+#define MAX_FILENAME_LENGTH   LINE_LENGTH - 41
 
 /* These are the types of files that we can match against */
 #define TYPE_PLAIN        0
@@ -144,6 +158,10 @@ off_t ftello(FILE *stream);
 
 /* Code specific to Microsoft Windows */
 #ifdef __WIN32
+
+/* Allows us to open standard input in binary mode by default 
+   See http://gnuwin32.sourceforge.net/compile.html for more */
+#include <fcntl.h>
 
 /* By default BUFSIZ is 512 on Windows. We make it 8192 so that it's 
    the same as UNIX. While that shouldn't mean anything in terms of

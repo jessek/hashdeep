@@ -1,6 +1,3 @@
 
-Version 1.0 complete.
-All further requirements have been pushed to the next version.
-See the Sourceforge page for details.
-http://sourceforge.net/projects/md5deep/
+- Add support for STDIN on MSDOS
 

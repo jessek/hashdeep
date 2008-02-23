@@ -1,4 +1,11 @@
 
+Version 1.1 - 25 Mar 04
+
+- Fixed processing of standard input on Windows
+- Fixed cosmetic errors with time estimation to now produce a fixed length
+   output and avoid spanning multiple lines
+
+
 Version 1.0 - 15 Mar 04
 (better late than never!)
 

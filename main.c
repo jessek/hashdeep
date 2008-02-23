@@ -14,10 +14,15 @@
    
 #include "md5deep.h"
 
+#ifdef __WIN32 
+/* Allows us to open standard input in binary mode by default 
+   See http://gnuwin32.sourceforge.net/compile.html for more */
+int _CRT_fmode = _O_BINARY;
+#endif
+
 
 /* The usage function should, at most, display 22 lines of text to fit
    on a single screen */
-
 void usage() 
 {
   fprintf(stderr,"%s version %s by %s.\n",__progname,VERSION,AUTHOR);
@@ -182,7 +187,9 @@ int main(int argc, char **argv)
 
   argv += optind;
   if (*argv == NULL)
+  { 
     printf("%s\n",md5_file(mode,stdin,"STDIN"));
+  }
 
   else
   {

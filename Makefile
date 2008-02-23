@@ -12,8 +12,8 @@ CROSSBASE = /home/jessek/bin/cross-tools
 # You shouldn't need to change anything below this line
 #---------------------------------------------------------------------
 
-# This is used when generating packages
-VERSION = 1.0
+VERSION = 1.1
+CC_OPTS += -DVERSION=\"$(VERSION)\"
 
 # This should be commented out when debugging is done
 #CC_OPTS += -D__DEBUG -ggdb
@@ -91,7 +91,7 @@ uninstall:
 
 # This is used for debugging
 preflight:
-	grep -n RBF *.h *.c README
+	grep -n RBF *.h *.c README CHANGES
 
 prep:
 	rm -f $(OBJ)
