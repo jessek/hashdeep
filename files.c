@@ -83,11 +83,27 @@ int isNSRL20File(char *buf)
 }
 
 
-int isiLookFile(char *buf) {
+int isiLookFile(char *buf) 
+{
   return (!strncmp(buf,ILOOK_HEADER,strlen(ILOOK_HEADER)));
 }
 
-int findPlainHashinLine(char *buf) {
+
+void chop_line(char *s)
+{
+  unsigned int pos = strlen(s);
+
+  if (s[pos - 2] == '\r' && s[pos - 1] == '\n')
+    s[pos - 2] = 0;
+  else if (s[pos-1] == '\n')
+    s[pos - 1] = 0;
+
+}
+
+
+int findPlainHashinLine(char *buf, char *known_fn) 
+{
+  unsigned int p = HASH_STRING_LENGTH;
 
   /* We have to include a validity check here so that we don't
      mistake SHA-1 hashes for MD5 hashes, among other things */
@@ -96,6 +112,12 @@ int findPlainHashinLine(char *buf) {
       (buf[HASH_STRING_LENGTH] != ' '))
     return FALSE;
 
+  strncpy(known_fn,buf,PATH_MAX);
+  while(p < strlen(known_fn) && !(isalnum(known_fn[p])))
+    ++p;
+  shift_string(known_fn,0,p);
+  chop_line(known_fn);
+
   buf[HASH_STRING_LENGTH] = 0;
   return (valid_hash(buf));
 }  
@@ -103,8 +125,8 @@ int findPlainHashinLine(char *buf) {
 
 
 /* Attempts to find a hash value after the nth quotation mark in buf */
-int find_hash_after_quotes(char *buf, unsigned int n) {
-
+int find_hash_after_quotes(char *buf, unsigned int n) 
+{
   unsigned int count = 0, pos = 0;
 
   do {
@@ -133,27 +155,57 @@ int find_hash_after_quotes(char *buf, unsigned int n) {
   return TRUE;
 }
 
-int findHashkeeperHashinLine(char *buf) 
+int findHashkeeperHashinLine(char *buf, char *known_fn) 
 {
 #ifdef SUPPORT_HASHKEEPER
+  char *fn = strdup(buf);
+  if (fn == NULL)
+    return FALSE;
+
+  if (!find_quoted_string(fn,1))
+    return FALSE;
+
+  strncpy(known_fn,fn,PATH_MAX);
+  free(fn);
+
   return (find_hash_after_quotes(buf,SUPPORT_HASHKEEPER));
 #else
   return FALSE;
 #endif
 }
 
-int findNSRL15HashinLine(char *buf) 
+int findNSRL15HashinLine(char *buf, char *known_fn) 
 {
 #ifdef SUPPORT_NSRL_15
+  char *fn = strdup(buf);
+  if (fn == NULL)
+    return FALSE;
+
+  if (!find_quoted_string(fn,3))
+    return FALSE;
+
+  strncpy(known_fn,fn,PATH_MAX);
+  free(fn);
+
   return (find_hash_after_quotes(buf,SUPPORT_NSRL_15));
 #else
   return FALSE;
 #endif
 } 
 
-int findNSRL20HashinLine(char *buf) 
+int findNSRL20HashinLine(char *buf, char *known_fn) 
 {
 #ifdef SUPPORT_NSRL_20
+  char *fn = strdup(buf);
+  if (fn == NULL)
+    return FALSE;
+
+  if (!find_quoted_string(fn,7))
+    return FALSE;
+
+  strncpy(known_fn,fn,PATH_MAX);
+  free(fn);
+
   return (find_hash_after_quotes(buf,SUPPORT_NSRL_20));
 #else
   return FALSE;
@@ -164,18 +216,19 @@ int findNSRL20HashinLine(char *buf)
 
 /* iLook files have the MD5 hash as the first 32 characters. 
    As a result, we can just treat these files like plain hash files  */
-int findiLookHashinLine(char *buf) 
+int findiLookHashinLine(char *buf, char *known_fn) 
 {
 #ifdef SUPPORT_ILOOK
-  return (findPlainHashinLine(buf));
+  return (findPlainHashinLine(buf,known_fn));
 #else
   return FALSE;
 #endif
 }
 
 
-int hash_file_type(FILE *f) {
-
+int hash_file_type(FILE *f) 
+{
+  char *known_fn;
   char buf[MAX_STRING_LENGTH + 1];
   rewind(f);
 
@@ -213,11 +266,16 @@ int hash_file_type(FILE *f) {
   /* Plain files can have comments, so the first line(s) may not
      contain a valid hash. But if we should process this file
      if we can find even *one* valid hash */
+  known_fn = (char *)malloc(sizeof(char) * PATH_MAX);
   do 
   {
-    if (findPlainHashinLine(buf))
+    if (findPlainHashinLine(buf,known_fn))
+    {
+      free(known_fn);
       return TYPE_PLAIN;
+    }
   } while ((fgets(buf,MAX_STRING_LENGTH,f)) != NULL);
+  free(known_fn);
 #endif  
 
   return TYPE_UNKNOWN;
@@ -228,30 +286,30 @@ int hash_file_type(FILE *f) {
 /* Given an input string buf and the type of file it came from, finds
    the MD5 hash specified in the line if there is one and returns TRUE.
    If there is no valid hash in the line, returns FALSE. */
-int find_hash_in_line(char *buf, int fileType) {
-  
+int find_hash_in_line(char *buf, int fileType, char *known_fn) 
+{
   int status = FALSE;
 
   switch(fileType) {
 
     /* The findPlain already does a validity check for us */
   case TYPE_PLAIN:
-    return findPlainHashinLine(buf);
+    return findPlainHashinLine(buf,known_fn);
     
   case TYPE_HASHKEEPER:
-    status = findHashkeeperHashinLine(buf);
+    status = findHashkeeperHashinLine(buf,known_fn);
     break;
     
   case TYPE_NSRL_15:
-    status = findNSRL15HashinLine(buf);
+    status = findNSRL15HashinLine(buf,known_fn);
     break;
 
   case TYPE_NSRL_20:
-    status = findNSRL20HashinLine(buf);
+    status = findNSRL20HashinLine(buf,known_fn);
     break;
     
   case TYPE_ILOOK:
-    status = findiLookHashinLine(buf);
+    status = findiLookHashinLine(buf,known_fn);
     break;
   }
 

@@ -51,7 +51,9 @@
 /* MD5 and SHA-1 setup require knowing if we're big or little endian */
 #ifdef __LINUX
 
+#ifndef __USE_BSD
 #define __USE_BSD
+#endif
 #include <endian.h>
 
 #elif defined (__SOLARIS)
@@ -109,8 +111,10 @@
 #define mode_display_size  1<<7
 #define mode_zero          1<<8
 #define mode_relative      1<<9
+#define mode_which        1<<10
+#define mode_barename     1<<11
 
-/* Modes 10 to 22 are reserved for future use. We shouldn't use
+/* Modes 12 to 22 are reserved for future use. We shouldn't use
    modes higher than 31 as Win32 can't go that high. */
 
 #define mode_regular       1<<23
@@ -144,6 +148,9 @@
 #define M_DISPLAY_SIZE(A)  A & mode_display_size
 #define M_ZERO(A)          A & mode_zero
 #define M_RELATIVE(A)      A & mode_relative
+#define M_WHICH(A)         A & mode_which
+#define M_BARENAME(A)      A & mode_barename
+
 
 #define M_EXPERT(A)        A & mode_expert
 #define M_REGULAR(A)       A & mode_regular
@@ -194,6 +201,29 @@ off_t ftello(FILE *stream);
 
 /* Code specific to Microsoft Windows */
 #ifdef __WIN32
+
+
+/* The current cross compiler for OS X->Windows does not support a few
+   critical error codes normally defined in errno.h. Because we need 
+   these to detect fatal errors while reading files, we have them here. 
+   These will hopefully get wrapped into the Windows API sometime soon. */
+#ifndef ENOTBLK
+#define ENOTBLK   15   // Not a block device
+#endif
+
+#ifndef ETXTBSY
+#define ETXTBSY   26   // Text file busy
+#endif
+
+#ifndef EAGAIN
+#define EAGAIN    35   // Resource temporarily unavailable
+#endif
+
+#ifndef EALREADY
+#define EALREADY  37   // Operation already in progress
+#endif
+
+
 
 /* By default, Windows uses long for off_t. This won't do. We
    need an unsigned number at minimum. Windows doesn't have 64 bit
@@ -268,11 +298,14 @@ int done_processing_dir(off_t mode, char *fn);
 
 /* Functions from matching (match.c) */
 int load_match_file(off_t mode, char *filename);
-int is_known_hash(char *h);
+int is_known_hash(char *h, char *known_fn);
+
+// Add a single hash to the matching set
+void add_hash(char *h, char *fn);
 
 /* Functions for file evaluation (files.c) */
 int hash_file_type(FILE *f);
-int find_hash_in_line(char *buf, int fileType);
+int find_hash_in_line(char *buf, int fileType, char *filename);
 
 /* Dig into file hierarchies */
 void process(off_t mode, char *input);
@@ -286,6 +319,7 @@ void shift_string(char *fn, int start, int new_start);
 void print_error(off_t mode, char *fn, char *msg);
 void internal_error(char *fn, char *msg);
 void make_newline(off_t mode);
+int find_quoted_string(char *buf, unsigned int n);
 
 /* Return the size, in bytes of an open file stream. On error, return -1 */
 off_t find_file_size(FILE *f);

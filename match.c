@@ -23,6 +23,7 @@ int load_match_file(off_t mode, char *fn) {
 
   off_t line_number = 0;
   char buf[MAX_STRING_LENGTH + 1];
+  char *known_fn;
   int file_type;
   FILE *f;
 
@@ -54,13 +55,18 @@ int load_match_file(off_t mode, char *fn) {
   else 
     line_number++;
   
+  if ((known_fn = (char *)malloc(sizeof(char) * PATH_MAX)) == NULL)
+  {
+    print_error(mode,fn,"Out of memory before read");
+    return FALSE;
+  }
+
   while (fgets(buf,MAX_STRING_LENGTH,f)) {
 
     ++line_number;
 
-    if (find_hash_in_line(buf,file_type) != TRUE) 
+    if (find_hash_in_line(buf,file_type,known_fn) != TRUE) 
     {
-
       if (!(M_SILENT(mode)))
       {
 	fprintf(stderr,"%s: %s: No hash found in line %llu\n", 
@@ -70,10 +76,21 @@ int load_match_file(off_t mode, char *fn) {
     } 
     else 
     {
-      hashTableAdd(&knownHashes,buf);
+      if (hashTableAdd(&knownHashes,buf,known_fn))
+      {
+	if (!(M_SILENT(mode)))
+	{
+	  fprintf(stderr,"%s: %s: Out of memory at line %llu\n",
+		  __progname, fn, line_number);
+	}
+	fclose(f);
+	free(known_fn);
+	return FALSE;
+      }
     }
   }
 
+  free(known_fn);
   fclose(f);
 
 #ifdef __DEBUG
@@ -84,8 +101,14 @@ int load_match_file(off_t mode, char *fn) {
 }
 
 
+void add_hash(char *h, char *fn)
+{
+  hashTableAdd(&knownHashes,h,fn);
+}
 
-int is_known_hash(char *h) {
-  return (hashTableContains(&knownHashes,h));
+
+int is_known_hash(char *h, char *known_fn) 
+{
+  return (hashTableContains(&knownHashes,h,known_fn));
 }
 

@@ -40,6 +40,44 @@ void shift_string(char *fn, int start, int new_start)
   fn[start] = 0;
 }
 
+
+// Search the string after the nth quoted sub string and return it
+int find_quoted_string(char *buf, unsigned int n)
+{
+  unsigned int count = 0, pos = 0;
+
+  while (count < n && pos < strlen(buf)) {
+    switch(buf[pos]) {
+    case '"':
+      ++count;
+      break;
+    case 0:
+      return FALSE;
+    }
+    ++pos;
+  }
+
+  if (pos == strlen(buf))
+    return FALSE;
+
+  // Check that there is another quote in the string
+  count = 1;
+  while (pos+count < strlen(buf) &&  buf[pos+count] != '"')
+    ++count;
+
+  if (pos+count == strlen(buf))
+    return FALSE;
+
+
+  shift_string(buf,0,pos);
+  buf[count] = 0;
+
+  return TRUE;
+}
+
+
+
+
 void print_error(off_t mode, char *fn, char *msg) 
 {
   if (!(M_SILENT(mode)))

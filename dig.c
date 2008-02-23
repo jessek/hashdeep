@@ -267,12 +267,12 @@ int file_type_helper(struct stat sb)
   if (S_ISCHR(sb.st_mode))
     return file_character;
   
-  /* These file types do not exist in Win32 */
-#ifndef __WIN32
-  
   if (S_ISFIFO(sb.st_mode))
     return file_pipe;
 
+  /* These file types do not exist in Win32 */
+#ifndef __WIN32
+  
   if (S_ISSOCK(sb.st_mode))
     return file_socket;
   

@@ -27,7 +27,7 @@
 #define HASH_TABLE_SIZE   1048577
 
 typedef struct hashNode {
-  char *data;
+  char *data, *filename;
   struct hashNode *next;
 } hashNode;
 
@@ -37,8 +37,17 @@ typedef hashNode *hashTable[HASH_TABLE_SIZE + 1];
 /* --- Everything below this line is public --- */
 
 void hashTableInit(hashTable *knownHashes);
-void hashTableAdd(hashTable *knownHashes, char *n);
-int hashTableContains(hashTable *knownHashes, char *n);
+
+/* Adds the string n to the hashTable, along with the filename fn.
+   Returns TRUE if an error occured (i.e. Out of memory) */
+int hashTableAdd(hashTable *knownHashes, char *n, char *fn);
+
+/* Returns TRUE if the hashTable contains the hash n and stores the
+   filename of the known hash in known. Returns FALSE and does not
+   alter known if the hashTable does not contain n. This function
+   assumes that fn has already been malloc'ed to hold at least 
+   PATH_MAX characters */
+int hashTableContains(hashTable *knownHashes, char *n, char *known);
 
 /* This function is for debugging */
 void hashTableEvaluate(hashTable *knownHashes);

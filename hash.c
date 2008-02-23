@@ -14,6 +14,10 @@
 
 #include "md5deep.h"
 
+#ifndef HASH_ALGORITHM
+#error No hash algorithm defined! See algorithms.h
+#endif
+
 typedef struct hash_info {
   char *full_name;
   char *short_name;
@@ -104,9 +108,25 @@ void shorten_filename(char *dest, char *src)
 }
 
 
+/* Returns TRUE if errno is currently set to a fatal error. That is,
+   an error that can't possibly be fixed while trying to read this file */
 int fatal_error(void)
 {
-  return (errno == EACCES);
+  switch(errno) 
+    {
+    case EACCES:   // Permission denied
+    case ENODEV:   // Operation not supported (e.g. trying to read 
+                   //   a write only device such as a printer)
+    case EBADF:    // Bad file descriptor
+    case EFBIG:    // File too big
+    case ETXTBSY:  // Text file busy
+      /* The file is being written to by another process.
+	 This happens with Windows system files */
+
+      return TRUE;  
+    }
+  
+  return FALSE;
 }
 
 
@@ -226,7 +246,16 @@ void display_size(off_t mode, hash_info *h)
 
 void display_match_result(off_t mode, hash_info *h)
 {  
-  int status = is_known_hash(h->result);
+  int status;
+  char *known_fn;
+
+  if ((known_fn = (char *)malloc(sizeof(char) * PATH_MAX)) == NULL)
+  {
+    print_error(mode,h->full_name,"Out of memory");
+    return;
+  }
+
+  status = is_known_hash(h->result,known_fn);
   if ((status && M_MATCH(mode)) || (!status && M_MATCHNEG(mode)))
   {
     display_size(mode,h);
@@ -235,16 +264,32 @@ void display_match_result(off_t mode, hash_info *h)
     {
       printf ("%s  ", h->result);
     }
-    printf ("%s", h->match_name);
+
+    if (M_WHICH(mode))
+    {
+      if (status && M_MATCH(mode))
+	printf ("%s matched %s", h->match_name,known_fn);
+      else
+	printf ("%s does NOT match", h->match_name);
+    }
+    else
+      printf ("%s", h->match_name);
+
     make_newline(mode);
   }
+  
+  free(known_fn);
 }
 
 
 void display_hash(off_t mode, hash_info *h)
 {
+  /* We can't call display_size here because we don't know if we're
+     going to display *anything* yet. If we're in matching mode, we
+     have to evaluate if there was a match first! */
   if (M_MATCH(mode) || M_MATCHNEG(mode))
     display_match_result(mode,h);
+
   else 
   {
     display_size(mode,h);
@@ -291,13 +336,68 @@ void hash(off_t mode, hash_info *h)
 }
 
 
+/* The basename function kept misbehaving on OS X, so I rewrote it.
+   This function isn't perfect, nor is it designed to be. Because
+   we're guarenteed to be working with a filename here, there's no way
+   that s will end with a DIR_SEPARATOR (e.g. /foo/bar/). This function
+   will not work properly for a string that ends in a DIR_SEPARATOR */
+int my_basename(char *s)
+{
+  unsigned long pos = strlen(s);
+  if (0 == pos || pos > PATH_MAX)
+    return TRUE;
+  
+  while(s[pos] != DIR_SEPARATOR && pos > 0)
+    --pos;
+  
+  // If there were no DIR_SEPARATORs in the string, we were still successful!
+  if (0 == pos)
+    return FALSE;
+
+  // The current character is a DIR_SEPARATOR. We advance one to ignore it
+  ++pos;
+  shift_string(s,0,pos);
+  return FALSE;
+}
+
+
+int setup_barename(off_t mode, hash_info *h, char *file_name)
+{
+  char *basen = strdup(file_name);
+  if (basen == NULL)
+  {
+    print_error(mode,file_name,"Out of memory");
+    return TRUE;
+  }
+
+  if (my_basename(basen))
+  {
+    free(basen);
+    print_error(mode,file_name,"Illegal filename");
+    return TRUE;
+  }
+  h->full_name = basen;
+  return FALSE;
+}
+
+
 void hash_file(off_t mode, char *file_name)
 {
   hash_info *h = (hash_info *)malloc(sizeof(hash_info));
 
-  h->full_name = file_name;
-  h->match_name = file_name;
   h->is_stdin = FALSE;
+
+  if (M_BARENAME(mode))
+  {
+    if (setup_barename(mode,h,file_name))
+      return;
+  }
+  else
+    h->full_name = file_name;
+
+  // We have a separate 'match name' because these values are
+  // different when processing stdin. They are the same for normal files
+  h->match_name = h->full_name;
 
   if ((h->handle = fopen(file_name,"rb")) != NULL)
   {
@@ -313,6 +413,9 @@ void hash_file(off_t mode, char *file_name)
 
     if (M_ESTIMATE(mode))
       free(h->short_name);
+
+    if (M_BARENAME(mode))
+      free(h->full_name);
   }
   else
     print_error(mode,file_name,strerror(errno));

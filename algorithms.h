@@ -34,10 +34,10 @@
       using your algorithm. Usually this means:
        a. Add the progname name to the goals directive.
        b. Create a set of rules to create files-[alg].o, hash-[alg].o,
-          hashTable-[alg].o and [alg].o. For SHA-256, this might look like:
+          and [alg].o. For COWS, this might look like:
 
-          files-sha256.o: files.c
-	    $(CC) -DSHA256 -c files.c -o files-sha256.c
+          files-cows.o: files.c
+	    $(CC) -DCOWS -c files.c -o files-cows.o
 
    5. Add your algorithm to the documentation! 
    -------------------------------------------------------------------- */
@@ -52,4 +52,8 @@
 
 #ifdef SHA256
 #include "sha256.h"
+#endif
+
+#ifdef WHIRLPOOL
+#include "whirlpool.h"
 #endif

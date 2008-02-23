@@ -1,24 +1,39 @@
-.TH MD5DEEP "1" "v1.5 \- Aug 2004" "AFOSI" "United States Air Force"
+.TH MD5DEEP "1" "v1.6 \- 4 May 2005" "AFOSI" "United States Air Force"
 
 .SH NAME
 md5deep \- Compute MD5 message digests
+.br
+sha1deep \- Compute SHA-1 message digests
+.br
+sha256deep \- Compute SHA-256 message digests
+.br
+whirlpooldeep \- Compute Whirlpool message digests
 
 .SH SYNOPSIS
 .B md5deep 
-[\-v|\-V|\-h] [\-m|\-M|\-x|\-X <file>] [\-zres0lbt] [\-o <fbcplsd>] \fBFILES\fR
+-v | -V | -h
+.br
+.B md5deep
+[\-m|\-M|\-x|\-X <file>]  [-a|-A <hash>]
+[\-wzres0lb] [\-o <fbcplsd>] [\fBFILES\fR]
 
 .SH DESCRIPTION
 .PP
-Computes the MD5 message digest for any number of files while 
-optionally
-recursively digging through the directory structure. MD5 message
-digests are computed as defined in RFC 1321. 
+Computes the hashes, or message digest, 
+for any number of files while 
+optionally recursively digging through the directory structure.
+Can also take a list of known hashes and display the filenames
+of input files whose hashes either do or do not match any of the
+known hashes.
 Errors are reported to standard error. If no FILES are specified,
 reads from standard input.
 
 .TP
 \fB\-r\fR
-Enables recursive mode. All subdirectories are traversed.
+Enables recursive mode. All subdirectories are traversed. Please note
+that recursive mode cannot be used to examine all files of a given 
+file extension. For example, calling md5deep -r *.txt will examine
+all files in \fIdirectories\fR that end in .txt. 
 
 .TP
 \fB\-e\fR
@@ -41,19 +56,38 @@ if the input matches one of the hashes in the list of known hashes. If the
 hash does not match, the program displays no output.
 .br
 \fB\fR
-This flag may not be used in conjunction with the \-x flag.
+This flag may not be used in conjunction with the \-x, \-X, or \-A flags.
 
 .TP
 \fB\-x\fR <file>
 Same as the \-m flag above, but does negative matching. That is, only 
 those files NOT in the list of known hashes are displayed. 
 \fB\fR
-This flag may not be used in conjunction with the \-m flag.
+This flag may not be used in conjunction with the \-m, \-M, or \-a flags.
 
 .TP
 \fB\-M and -X\fR <file>
 Same as \-m and \-x above, but displays the hash for each file that 
 does (or does not) match the list of known hashes. 
+
+.TP
+\fB\-a\fR <hash>
+Adds a single hash to the list of known hashes used for matching mode,
+and if not already enabled, enables matching mode. Adding single
+hashes cannot, by itself, be used to print the hashes of matching files
+like the \-M flag does.
+\fB\fR
+This flag may not be used in conjunction with the \-x, \-X, or -A flags.
+
+.TP
+\fB\-A\fR <hash>
+Same as \-a above, but does negative matching.
+This flag may not be used in conjunction with the \-m flag.
+
+.TP
+\fB\-w\fR
+During any of the matching mode (\-m,\-M,\-x,or \-X), displays the filename
+of the known hash that matched the input file.
 
 .TP
 \fB\-s\fR
@@ -77,7 +111,7 @@ Useful for processing filenames with strange characters.
 \fB\-l\fR
 Enables relative file paths. Instead of printing the absolute path for
 each file, displays the relative file path as indicated on the command 
-line.
+line. This flag may not be used in conjunction with the \-b flag.
 
 .TP
 \fB\-o\fR <bcpflsd>
@@ -112,8 +146,11 @@ Show the version number and exit.
 Show copyright information and exit.
 
 .TP
-\fB\-b\fR and \fB\-t\fR
-Ignored. Present only for compatibility with md5sum
+\fB\-b\fR
+Enables bare mode. Strips any leading directory information from 
+displayed filenames.
+This flag may not be used in conjunction with the \-b flag.
+
 
 .SH RETURN VALUE
 Returns zero on a successful operation. (Successful operations can 
@@ -123,12 +160,15 @@ same time. Returns two on an internal error. All internal errors should
 be reported to the developer! See the section "Reporting Bugs" below.
 
 .SH AUTHOR
-md5deep was written by Jesse Kornblum.
+md5deep was written by Jesse Kornblum, md5deep [at] jessekornblum [dot] com.
 
 .SH KNOWN ISSUES
 The Windows version is not able to process files with Unicode 
 characters in their filenames or produce accurate time estimates 
 for files larger than 4GB.
+
+Using the \-r flag cannot be used to process all files of a given extension.
+This is a feature, not a bug. 
 
 .SH REPORTING BUGS
 We take all bug reports \fIvery\fR seriously. Any bug that jeopardizes the
@@ -137,21 +177,38 @@ people's lives. When submitting a bug report, please include a description
 of the problem, how you found it, and your contact information.
 .PP
 Send bug reports to:
-md5deep@jessekornblum.com
+md5deep [at] jessekornblum [dot] com
 
 .PP
 .SH COPYRIGHT
 This program is a work of the US Government. In accordance with 17 USC 105,
 copyright protection is not available for any work of the US Government.
+Lawyer to English translation: This program is PUBLIC DOMAIN. 
+Not only is this program not copyrighted,
+but IT CANNOT BE COPYRIGHTED BY ANYBODY AT ANY TIME UNDER ANY CIRCUMSTANCES.
 .PP
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+There is NO warranty for this program; 
+not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 .SH SEE ALSO
-sha1deep(1), sha256deep(1)
-.PP
-More information and installation instructions can be found in the README file.
+More information and installation instructions can be found in the README 
+and Frequently Asked Questions files. Current versions of both documents
+can be found on the project homepage: 
+.br
+http://md5deep.sourceforge.net/
 .PP
 The MD5 specification, RFC 1321, is available at
 .br
 http://www.ietf.org/rfc/rfc1321.txt
+.PP
+The SHA-1 specification, RFC 3174, is available at
+.br
+http://www.faqs.org/rfcs/rfc3174.html
+.PP
+The SHA-256 specification, FIPS 180-2, is available at
+.br
+http://csrc.nist.gov/publications/fips/fips180-2/fips180-2.pdf
+.PP
+The Whirlpool specification is available at
+.br
+http://planeta.terra.com.br/informatica/paulobarreto/WhirlpoolPage.html

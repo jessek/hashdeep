@@ -27,35 +27,36 @@ void try_msg(void)
 }
 
 
-/* The usage function should, at most, display 22 lines of text to fit
-   on a single screen */
+/* The usage function must not produce more than 22 lines of text 
+   in order to fit on a single screen */
 void usage(void) 
 {
   fprintf(stderr,"%s version %s by %s.%s",__progname,VERSION,AUTHOR,NEWLINE);
-  fprintf(stderr,"%s %s [-v|-V|-h] [-m|-M|-x|-X <file>] ",
-	  CMD_PROMPT,__progname);
-  fprintf(stderr,"[-resz0lbt] [-o fbcplsd] FILES%s%s",NEWLINE,NEWLINE);
+  fprintf(stderr,"%s %s [OPTION]... [FILES]%s%s",
+	  CMD_PROMPT,__progname,NEWLINE,NEWLINE);
 
-  fprintf(stderr,"-v  - display version number and exit%s",NEWLINE);
-  fprintf(stderr,"-V  - display copyright information and exit%s",NEWLINE);
-  fprintf(stderr,"-m  - enables matching mode. See README/man page%s",NEWLINE);
-  fprintf(stderr,"-x  - enables negative matching mode. See README/man page%s",
-	  NEWLINE);
-  fprintf(stderr,"-M and -X are the same as -m and -x but also print hashes of each file%s",NEWLINE);
-  fprintf(stderr,"-r  - enables recursive mode. All subdirectories are traversed%s",NEWLINE);
+  fprintf (stderr,"See the man page or README.txt file for the full list of options%s", NEWLINE);
+  fprintf(stderr,"-r  - recursive mode. All subdirectories are traversed%s",NEWLINE);
   fprintf(stderr,"-e  - compute estimated time remaining for each file%s",
 	  NEWLINE);
-  fprintf(stderr,"-s  - enables silent mode. Suppress all error messages%s",
+  fprintf(stderr,"-s  - silent mode. Suppress all error messages%s",
 	  NEWLINE);
   fprintf(stderr,"-z  - display file size before hash%s", NEWLINE);
-  fprintf(stderr,"-b and -t are ignored; present only for compatibility with md5sum\n");
+  fprintf(stderr,"-m <file> - enables matching mode. See README/man page%s",NEWLINE);
+  fprintf(stderr,"-x <file> - enables negative matching mode. See README/man page%s",
+	  NEWLINE);
+  fprintf(stderr,"-M and -X are the same as -m and -x but also print hashes of each file%s",NEWLINE);
+  fprintf(stderr,"-w  - displays which known file generated a match%s", NEWLINE);
+  fprintf(stderr,"-a and -A add a single hash to the positive or negative matching set%s", NEWLINE);
+  fprintf(stderr,"-b  - prints only the bare name of files; all path information is omitted%s", NEWLINE);
+  fprintf(stderr,"-l  - print relative paths for filenames%s", NEWLINE);
   fprintf(stderr,"-0  - use /0 as line terminator%s", NEWLINE);
-  fprintf(stderr,"-l  - use relative paths%s", NEWLINE);
   fprintf(stderr,"-o  - Only process certain types of files:%s",NEWLINE);
   fprintf(stderr,"      f - Regular File       l - Symbolic Link%s",NEWLINE);
   fprintf(stderr,"      b - Block Device       s - Socket%s",NEWLINE);
   fprintf(stderr,"      c - Character Device   d - Solaris Door%s",NEWLINE);
   fprintf(stderr,"      p - Named Pipe (FIFO)%s",NEWLINE);
+  fprintf(stderr,"-v  - display version number and exit%s",NEWLINE);
 }
 
 
@@ -97,30 +98,39 @@ void setup_expert_mode(char *arg, off_t *mode)
 }
 
 
-void check_matching_okay(off_t mode, int hashes_loaded)
+void sanity_check(off_t mode, int condition, char *msg)
 {
-  if ((M_MATCH(mode) || M_MATCHNEG(mode)) && !hashes_loaded)
-  {
-    if (!(M_SILENT(mode)))
-    {  
-      fprintf(stderr,"%s: Unable to load any matching files.%s",
-	      __progname,NEWLINE);
-      try_msg();
-    }
-    exit (1);
-  }
-
-  if (M_MATCH(mode) && M_MATCHNEG(mode))
+  if (condition)
   {
     if (!(M_SILENT(mode)))
     {
-      fprintf(stderr,
-	      "%s: Regular and negative matching are mutually exclusive.%s",
-	      __progname,NEWLINE);
+      fprintf(stderr,"%s: %s%s", __progname, msg, NEWLINE);
       try_msg();
     }
     exit (1);
   }
+}
+      
+
+void check_flags_okay(off_t mode, int hashes_loaded)
+{
+  sanity_check(mode,
+	       ((M_MATCH(mode) || M_MATCHNEG(mode)) && !hashes_loaded),
+	       "Unable to load any matching files");
+
+  sanity_check(mode,
+	       (M_RELATIVE(mode) && (M_BARENAME(mode))),
+	       "Relative paths and bare filenames are mutally exclusive");
+
+  // Additional sanity checks will go here as needed... 
+}
+
+
+void check_matching_modes(off_t mode)
+{
+  sanity_check(mode,
+	       (M_MATCH(mode) && M_MATCHNEG(mode)),
+	       "Regular and negative matching are mutually exclusive.");
 }
 
 
@@ -128,9 +138,27 @@ void process_command_line(int argc, char **argv, off_t *mode) {
 
   int i, hashes_loaded = FALSE;
   
-  while ((i=getopt(argc,argv,"M:X:x:m:u:o:zserhvV0lbt")) != -1) { 
+  while ((i=getopt(argc,argv,"M:X:x:m:u:o:A:a:wzserhvV0lb")) != -1) { 
     switch (i) {
 
+    case 'w':
+      *mode |= mode_which;
+      break;
+
+    case 'a':
+      *mode |= mode_match;
+      check_matching_modes(*mode);
+      add_hash(optarg,"(command line arg)");
+      hashes_loaded = TRUE;
+      break;
+
+    case 'A':
+      *mode |= mode_match_neg;
+      check_matching_modes(*mode);
+      add_hash(optarg,"(command line arg)");
+      hashes_loaded = TRUE;
+      break;
+      
     case 'l':
       *mode |= mode_relative;
       break;
@@ -144,6 +172,7 @@ void process_command_line(int argc, char **argv, off_t *mode) {
       *mode |= mode_display_hash;
     case 'm':
       *mode |= mode_match;
+      check_matching_modes(*mode);
       if (load_match_file(*mode,optarg))
 	hashes_loaded = TRUE;
       break;
@@ -152,6 +181,7 @@ void process_command_line(int argc, char **argv, off_t *mode) {
       *mode |= mode_display_hash;
     case 'x':
       *mode |= mode_match_neg;
+      check_matching_modes(*mode);
       if (load_match_file(*mode,optarg))
 	hashes_loaded = TRUE;
       break;
@@ -191,10 +221,14 @@ void process_command_line(int argc, char **argv, off_t *mode) {
       printf ("%s", COPYRIGHT);
       exit (0);
 
-      /* These are here only for compatibility with md5sum */
+
     case 'b':
-    case 't':
+      *mode |= mode_barename;
       break;
+
+      /* These are here only for compatibility with md5sum */
+      //    case 't':
+      //      break;
 
     default:
       try_msg();
@@ -202,7 +236,7 @@ void process_command_line(int argc, char **argv, off_t *mode) {
 
     }
   }
-  check_matching_okay(*mode, hashes_loaded);
+  check_flags_okay(*mode, hashes_loaded);
 }
 
 
@@ -210,7 +244,7 @@ int is_absolute_path(char *fn)
 {
 #ifdef __WIN32
   /* Windows has so many ways to make absolute paths (UNC, C:\, etc)
-     that it's silly to keep track. It doesn't hurt us
+     that it's hard to keep track. It doesn't hurt us
      to call realpath as there are no symbolic links to lose. */
   return FALSE;
 #else
@@ -245,8 +279,8 @@ void generate_filename(off_t mode, char **argv, char *fn, char *cwd)
 
 int main(int argc, char **argv) 
 {
-  char *fn   = (char *)malloc(sizeof(char)* PATH_MAX);
-  char *cwd  = (char *)malloc(sizeof(char)* PATH_MAX);
+  char *fn;
+  char *cwd;
   off_t mode = mode_none;
 
 #ifndef __GLIBC__
@@ -264,6 +298,8 @@ int main(int argc, char **argv)
     hash_stdin(mode);
   else
   {
+    fn  = (char *)malloc(sizeof(char)* PATH_MAX);
+    cwd = (char *)malloc(sizeof(char)* PATH_MAX);
     cwd = getcwd(cwd,PATH_MAX);
     while (*argv != NULL)
     {  
@@ -271,9 +307,9 @@ int main(int argc, char **argv)
       process(mode,fn);
       ++argv;
     }
+    free(fn);
+    free(cwd);
   }
 
-  free(fn);
-  free(cwd);
   return 0;
 }

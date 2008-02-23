@@ -2,14 +2,23 @@
 RAW_CC = gcc
 RAW_FLAGS = -Wall -O2
 LINK_OPT = -lm
-VERSION = 1.5
+VERSION = 1.6
 
-# You can cross compile this program for Win32 using Linux and the 
-# MinGW compiler. See the README for details. If you have already
-# installed MinGW, put the location ($PREFIX) here:
+# Where we get installed
+PREFIX = /usr/local
+
+# You can cross compile this program for Win32 using the MinGW compiler
+# See README for details. Put the $PREFIX used to install MinGW in CR_BASE
+# The values below are used by the developer on the test platforms
+
+# On OS X:
 CR_BASE = /Users/jessekornblum/bin/cross-tools/i386-mingw32msvc/bin
 
-# You shouldn't need to change anything below this line
+# On Linux:
+#CR_BASE = /home/jessek/cross-tools/i386-mingw32msvc/bin
+
+#---------------------------------------------------------------------
+# You shouldn't need to change anything below this point
 #---------------------------------------------------------------------
 
 # This should be commented out when debugging is done
@@ -20,16 +29,14 @@ NAME = md5deep
 MD5GOAL = md5deep
 SHA1GOAL = sha1deep
 SHA256GOAL = sha256deep
-ALL_GOALS = $(MD5GOAL) $(SHA1GOAL) $(SHA256GOAL)
-RM_GOALS = $(MD5GOAL),$(SHA1GOAL),$(SHA256GOAL)
-MAN_PAGES = $(MD5GOAL).1 $(SHA1GOAL).1 $(SHA256GOAL).1
-RM_DOCS = $(MD5GOAL).1,$(SHA1GOAL).1,$(SHA256GOAL).1
+WHIRLGOAL = whirlpooldeep
+ALL_GOALS = $(MD5GOAL) $(SHA1GOAL) $(SHA256GOAL) $(WHIRLGOAL)
+RM_GOALS = $(MD5GOAL),$(SHA1GOAL),$(SHA256GOAL),$(WHIRLGOAL)
+
+MAN_PAGES = md5deep.1
+RM_DOCS = md5deep.1,sha1deep.1,sha256deep.1,whirlpooldeep.1
 
 RAW_FLAGS += -DVERSION=\"$(VERSION)\"
-
-# Where we get installed
-BIN = /usr/local/bin
-MAN = /usr/local/man/man1
 
 # Setup for compiling and cross-compiling for Windows
 # The CR_ prefix refers to cross compiling from OSX to Windows
@@ -37,9 +44,11 @@ CR_CC = $(CR_BASE)/gcc
 CR_OPT = $(RAW_FLAGS) -D__WIN32
 CR_LINK = -liberty
 CR_STRIP = $(CR_BASE)/strip
-CR_MD5GOAL = md5deep.exe
-CR_SHA1GOAL = sha1deep.exe
-CR_SHA256GOAL = sha256deep.exe
+CR_MD5 = md5deep.exe
+CR_SHA1 = sha1deep.exe
+CR_SHA256 = sha256deep.exe
+CR_WHIRL = whirlpooldeep.exe
+CR_ALL_GOALS = $(CR_MD5) $(CR_SHA1) $(CR_SHA256) $(CR_WHIRL)
 WINCC = $(RAW_CC) $(RAW_FLAGS) -D__WIN32
 
 # Generic "how to compile C files"
@@ -48,11 +57,12 @@ CC = $(RAW_CC) $(RAW_FLAGS) -D__UNIX
 	$(CC) -c $<
 
 # Definitions we'll need later (and that should rarely change)
-HEADER_FILES = $(NAME).h hashTable.h algorithms.h sha256.h md5.h sha1.h
-SRC =  main.c match.c files.c hashTable.c helpers.c dig.c 
-SRC += md5.c sha1.c hash.c cycles.c sha256.c
-OBJ =  main.o match.o helpers.o dig.o cycles.o
-DOCS = Makefile README CHANGES $(MAN_PAGES)  
+HEADER_FILES = $(NAME).h hashTable.h algorithms.h
+HEADER_FILES += sha256.h md5.h sha1.h whirlpool.h
+SRC =  main.c match.c files.c hashTable.c helpers.c dig.c
+SRC += md5.c sha1.c hash.c cycles.c sha256.c whirlpool.c
+OBJ =  main.o match.o helpers.o dig.o cycles.o hashTable.o
+DOCS = Makefile README CHANGES $(MAN_PAGES)
 WINDOC = README.txt CHANGES.txt
 
 
@@ -64,7 +74,7 @@ all: linux
 
 goals: $(ALL_GOALS)
 
-linux: CC += -D__LINUX -DLARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+linux: CC += -D__LINUX -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 linux: goals
 
 sunos: solaris
@@ -80,10 +90,11 @@ unix: goals
 # Common commands for compiling versions for Windows. 
 # See cross and windows directives below.
 win_general: LINK_OPT = $(CR_LINK)
-win_general: MD5GOAL = $(CR_MD5GOAL)
-win_general: SHA1GOAL = $(CR_SHA1GOAL)
-win_general: SHA256GOAL = $(CR_SHA256GOAL)
-win_general: ALL_GOALS = $(MD5GOAL) $(SHA1GOAL) $(SHA256GOAL)
+win_general: MD5GOAL = $(CR_MD5)
+win_general: SHA1GOAL = $(CR_SHA1)
+win_general: SHA256GOAL = $(CR_SHA256)
+win_general: WHIRLGOAL = $(CR_WHIRL)
+win_general: ALL_GOALS = $(MD5GOAL) $(SHA1GOAL) $(SHA256GOAL) $(WHIRLGOAL)
 win_general: goals
 	$(STRIP) $(ALL_GOALS)
 
@@ -104,8 +115,17 @@ windows: win_general
 #   This section must be updated each time you add an algorithm
 #---------------------------------------------------------------------
 
-hashTable-md5.o: hashTable.c
-	$(CC) -DMD5 -c hashTable.c -o hashTable-md5.o
+files-whirlpool.o: files.c
+	$(CC) -DWHIRLPOOL -c files.c -o files-whirlpool.o
+hash-whirlpool.o: hash.c
+	$(CC) -DWHIRLPOOL -c hash.c -o hash-whirlpool.o
+whirlpool.o: whirlpool.c
+	$(CC) -DWHIRLPOOL -c whirlpool.c
+
+whirlpooldeep: $(OBJ) hash-whirlpool.o whirlpool.o files-whirlpool.o
+	$(CC) $(OBJ) *whirlpool.o -o $(WHIRLGOAL) $(LINK_OPT)
+
+
 files-md5.o: files.c
 	$(CC) -DMD5 -c files.c -o files-md5.o
 hash-md5.o: hash.c
@@ -113,13 +133,11 @@ hash-md5.o: hash.c
 md5.o: md5.c
 	$(CC) -DMD5 -c md5.c
 
-md5deep: $(OBJ) hash-md5.o md5.o files-md5.o hashTable-md5.o
+md5deep: $(OBJ) hash-md5.o md5.o files-md5.o 
 	$(CC) $(OBJ) *md5.o -o $(MD5GOAL) $(LINK_OPT)
 
 
 
-hashTable-sha256.o: hashTable.c
-	$(CC) -DSHA256 -c hashTable.c -o hashTable-sha256.o
 files-sha256.o: files.c
 	$(CC) -DSHA256 -c files.c -o files-sha256.o
 hash-sha256.o: hash.c
@@ -127,13 +145,11 @@ hash-sha256.o: hash.c
 sha256.o: sha256.c
 	$(CC) -DSHA256 -c sha256.c
 
-sha256deep: $(OBJ) hash-sha256.o sha256.o files-sha256.o hashTable-sha256.o
+sha256deep: $(OBJ) hash-sha256.o sha256.o files-sha256.o
 	$(CC) $(OBJ) *sha256.o -o $(SHA256GOAL) $(LINK_OPT)
 
 
 
-hashTable-sha1.o: hashTable.c
-	$(CC) -DSHA1 -c hashTable.c -o hashTable-sha1.o
 files-sha1.o: files.c
 	$(CC) -DSHA1 -c files.c -o files-sha1.o
 hash-sha1.o: hash.c
@@ -141,7 +157,7 @@ hash-sha1.o: hash.c
 sha1.o:
 	$(CC) -DSHA1 -c sha1.c
 
-sha1deep: $(OBJ) hash-sha1.o sha1.o files-sha1.o hashTable-sha1.o
+sha1deep: $(OBJ) hash-sha1.o sha1.o files-sha1.o
 	$(CC) $(OBJ) *sha1.o -o $(SHA1GOAL) $(LINK_OPT)
 
 
@@ -149,28 +165,31 @@ sha1deep: $(OBJ) hash-sha1.o sha1.o files-sha1.o hashTable-sha1.o
 # INSTALLATION AND REMOVAL 
 #---------------------------------------------------------------------
 
+BIN = $(PREFIX)/bin
+MAN = $(PREFIX)/man/man1
+
 install: goals
+	install -d $(BIN) $(MAN)
 	install -m 755 $(ALL_GOALS) $(BIN)
-	install -m 444 $(MAN_PAGES) $(MAN)
-
-macinstall: BIN = /usr/bin/
-macinstall: MAN = /usr/share/man/man1/
-macinstall: mac install
-
+	install -m 644 $(MAN_PAGES) $(MAN)
+	ln -fs md5deep.1 $(MAN)/sha1deep.1
+	ln -fs md5deep.1 $(MAN)/sha256deep.1
+	ln -fs md5deep.1 $(MAN)/whirlpooldeep.1
 
 uninstall:
 	rm -f -- $(BIN)/{$(RM_GOALS)}
 	rm -f -- $(MAN)/{$(RM_DOCS)}
 
-macuninstall: BIN = /usr/bin
-macuninstall: MAN = /usr/share/man/man1
-macuninstall: uninstall
-
 #---------------------------------------------------------------------
 # CLEAN UP
 #---------------------------------------------------------------------
 
-# This is used for debugging
+# Anything in the code that needs further attention is marked with the
+# letters 'RBF', which stand for "Remove Before Flight." This is similar
+# to how aircraft are marked with streamers to indicate maintaince is
+# required before the plane can fly. Typing 'make preflight' will do a
+# check for all RBF tags; thus showing the developer what needs to be
+# fixed before the program can be released.
 preflight:
 	grep -n RBF *.1 *.h *.c README CHANGES
 
@@ -178,9 +197,8 @@ nice:
 	rm -f -- *~
 
 clean: nice
-	rm -f -- *.o
-	rm -f -- $(ALL_GOALS)
-	rm -f -- $(CR_MD5GOAL) $(CR_SHA1GOAL) $(CR_SHA256GOAL) $(WINDOC)
+	rm -f -- *.o $(ALL_GOALS) $(WIN_DOC)
+	rm -f -- $(CR_ALL_GOALS)
 	rm -f -- $(TAR_FILE).gz $(DEST_DIR).zip $(DEST_DIR).zip.gpg
 
 #-------------------------------------------------------------------------
@@ -193,7 +211,7 @@ TAR_FILE = $(DEST_DIR).tar
 PKG_FILES = $(SRC) $(HEADER_FILES) $(DOCS) $(EXTRA_FILES)
 
 # This packages me up to send to somebody else
-package: clean
+package:
 	rm -f $(TAR_FILE) $(TAR_FILE).gz
 	mkdir $(DEST_DIR)
 	cp $(PKG_FILES) $(DEST_DIR)
@@ -202,24 +220,26 @@ package: clean
 	gzip $(TAR_FILE)
 
 
-# This Makefile is designed for Mac OSX to package the file. 
+# This Makefile is designed for Mac OS X to package the file. 
 # To do this on a linux box, The big line below starting with "/usr/bin/tbl"
 # should be replaced with:
 #
 #	man ./$(MD5GOAL).1 | col -bx > README.txt
 #
-# and the "flip -d" command should be replaced with dos2unix
+# and the "flip -d" command should be replaced with unix2dos
 #
 # The flip command can be found at:
 # http://ccrma-www.stanford.edu/~craig/utility/flip/#
 win-doc:
-	/usr/bin/tbl ./$(MD5GOAL).1 | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col > README.txt
+#	man ./$(MD5GOAL).1 | col -bx > README.txt
+	/usr/bin/tbl ./$(MD5GOAL).1 | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > README.txt
 	cp CHANGES CHANGES.txt
+#	unix2dos $(WINDOC)
 	flip -d $(WINDOC)
 
-cross-pkg: clean cross win-doc
+cross-pkg: cross win-doc
 	rm -f $(DEST_DIR).zip
-	zip $(DEST_DIR).zip $(CR_MD5GOAL) $(CR_SHA1GOAL) $(CR_SHA256GOAL) $(WINDOC)
+	zip $(DEST_DIR).zip $(CR_MD5) $(CR_SHA1) $(CR_SHA256) $(CR_WHIRL) $(WINDOC) 
 	rm -f $(WINDOC)
 
 world: package cross-pkg

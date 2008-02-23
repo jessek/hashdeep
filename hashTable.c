@@ -15,6 +15,11 @@
 #include "md5deep.h"
 #include "hashTable.h"
 
+
+#define MAX(A,B)             (A>B)?A:B
+#define STRINGS_EQUAL(A,B)   (!strncasecmp(A,B,MAX(strlen(A),strlen(B))))
+
+
 /* These two functions are the "hash" functions for the hash table. 
    Because the original implementation of this code was for storing
    md5 hashes, I used the name "translate" to avoid confusion. */
@@ -22,14 +27,14 @@
 
 /* Convert a single hexadecimal character to decimal. If c is not a valid
    hex character, returns 0. */
-int translateChar(char c) {
-
-  /* If this is a digit */
+int translateChar(char c) 
+{
+  // If this is a digit
   if (c > 47 && c < 58) 
     return (c - 48);
   
   c = toupper(c);
-  /* If this is a letter... 'A' should be equal to 10 */
+  // If this is a letter... 'A' should be equal to 10
   if (c > 64 && c < 71) 
     return (c - 55);
 
@@ -38,8 +43,8 @@ int translateChar(char c) {
     
 /* Translates a hex value into it's appropriate index in the array.
    In reality, this just turns the first HASH_SIG_FIGS into decimal */
-unsigned long translate(char *n) {
- 
+off_t translate(char *n) 
+{ 
   int count;
   unsigned long total = 0, power = 1;
   for (count = HASH_SIG_FIGS - 1 ; count >= 0 ; count--) {
@@ -54,70 +59,77 @@ unsigned long translate(char *n) {
 /* ---------------------------------------------------------------------- */
 
 
-void hashTableInit(hashTable *knownHashes) {
-  unsigned long count;
-  for (count = 0 ; count < HASH_TABLE_SIZE ; count++) {
+void hashTableInit(hashTable *knownHashes) 
+{
+  off_t count;
+  for (count = 0 ; count < HASH_TABLE_SIZE ; ++count) 
     (*knownHashes)[count] = NULL;
-  }
 }
 
 
-void hashTableAdd(hashTable *knownHashes, char *n) {
-
-  unsigned long key = translate(n);
+int hashTableAdd(hashTable *knownHashes, char *n, char *fn) 
+{
+  off_t key = translate(n);
   hashNode *new, *temp;
 
-  if ((*knownHashes)[key] == NULL) {
+  if ((*knownHashes)[key] == NULL) 
+  {
 
-    new = (hashNode*)malloc(sizeof(hashNode));    
-    new->data = strdup(n);
-    new->next = NULL;
+    if ((new = (hashNode*)malloc(sizeof(hashNode))) == NULL)
+      return TRUE;
+
+    new->data     = strdup(n);
+    new->filename = strdup(fn);
+    new->next     = NULL;
 
     (*knownHashes)[key] = new;
-    return;
+    return FALSE;
   }
 
   temp = (*knownHashes)[key];
 
-  /* If this value is already in the table, we don't need to add it again */
-  if (!strncasecmp(temp->data,n,HASH_STRING_LENGTH)) {
-    return;
-  }
-
-  while (temp->next != NULL) {
-
+  // If this value is already in the table, we don't need to add it again
+  if (STRINGS_EQUAL(temp->data,n))
+    return FALSE;
+  
+  while (temp->next != NULL)
+  {
     temp = temp->next;
-
-    if (!strncasecmp(temp->data,n,HASH_STRING_LENGTH)) {
-      return;
-    }
+    
+    if (STRINGS_EQUAL(temp->data,n))
+      return FALSE;
   }
-
-  new = (hashNode*)malloc(sizeof(hashNode));    
-  new->data = strdup(n);
-  new->next = NULL;
+  
+  if ((new = (hashNode*)malloc(sizeof(hashNode))) == NULL)
+    return TRUE;
+  
+  new->data     = strdup(n);
+  new->filename = strdup(fn);
+  new->next     = NULL;
 
   temp->next = new;
+  return FALSE;
 }
 
 
-
-int hashTableContains(hashTable *knownHashes, char *n) {
-
+int hashTableContains(hashTable *knownHashes, char *n, char *known) 
+{
   unsigned long key = translate(n);
   hashNode *temp;
 
-  if ((*knownHashes)[key] == NULL) {
+  if ((*knownHashes)[key] == NULL)
     return FALSE;
-  }
 
   /* Just because we matched keys doesn't mean we've found a hit yet.
      We still have to verify that we've found the real key. */
   temp = (*knownHashes)[key];
 
   do {
-    if (!strncasecmp(temp->data,n,HASH_STRING_LENGTH)) 
+    if (STRINGS_EQUAL(temp->data,n))
+    {
+      strncpy(known,temp->filename,PATH_MAX);
       return TRUE;
+    }
 
     temp = temp->next;
   }  while (temp != NULL);
