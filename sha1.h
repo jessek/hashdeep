@@ -23,8 +23,15 @@
 #endif
 
 #define PROGRAM_NAME       "sha1deep"
+
+/* Bytes in hash */
 #define HASH_LENGTH        20
+
+/* Characters needed to display hash. This is *usually* twice the
+   HASH_LENGTH defined above. This number is used to find and compare
+   hashes as part of the matching process. */
 #define HASH_STRING_LENGTH 40
+
 #define HASH_CONTEXT       SHA1_CTX
 #define HASH_Init(A)       SHA1Init(A)
 #define HASH_Update(A,B,C) SHA1Update(A,B,C)

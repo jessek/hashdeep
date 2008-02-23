@@ -50,3 +50,6 @@
 #include "sha1.h"
 #endif
 
+#ifdef SHA256
+#include "sha256.h"
+#endif

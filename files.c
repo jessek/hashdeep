@@ -156,7 +156,7 @@ int findNSRL20HashinLine(char *buf)
 #ifdef SUPPORT_NSRL_20
   return (find_hash_after_quotes(buf,SUPPORT_NSRL_20));
 #else
-  return FALSE
+  return FALSE;
 #endif
 } 
 

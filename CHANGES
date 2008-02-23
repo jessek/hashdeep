@@ -1,3 +1,12 @@
+Version 1.5 - 31 Aug 04
+
+- Added SHA-256 algorithm to make sha256deep. Special thanks to
+  Christophe Devine his SHA-256 implementation.
+- Fixed typo in files.c for unsupport file type processing
+- Fixed typo in sha1deep man page. (Had wrong reference in description.)
+- Man pages are now installed mode 444 instead of 755. (i.e. non-executable)
+- Cleaned up Makefile. Yes, again.
+
 
 Version 1.4 - 16 Aug 04
 

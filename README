@@ -8,8 +8,11 @@ Details on how to use md5deep are in the man page.
 The MD5 algorithm is defined in RFC 1321:
 http://www.ietf.org/rfc/rfc1321.txt
 
-The SHA1 algorithm is defined in FIPS PUB 180:
+The SHA1 algorithm is defined in FIPS 180-1:
 http://www.itl.nist.gov/fipspubs/fip180-1.htm
+
+The SHA256 algorithm is defined FIPS 180-2:
+http://csrc.nist.gov/publications/fips/fips180-2/fips180-2.pdf
 
 md5deep was written by Special Agent Jesse Kornblum, United States Air
 Force Office of Special Investigations. Send all correspondence to
@@ -19,7 +22,7 @@ md5deep is a work of the US Government. In accordance with 17 USC 105,
 works of the US Government are not entitled to Copyright protection. This
 program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.
+FOR A PARTICULAR PURPOSE. 
 
 
 
@@ -27,12 +30,12 @@ FOR A PARTICULAR PURPOSE.
 INSTALLATION INSTRUCTIONS 
 ---------------------------------------------------------
 
-Instructions for Linux, Solaris, OS X, *BSD, and Windows are provided below.
-For Windows, it's a LOT easier to just download the binary from 
+Instructions for Linux, Solaris, OS X, *BSD, and Windows are provided
+below. For Windows, it's a LOT easier to just download the binary from
 http://md5deep.sourceforge.net/#download
 
 Note that you will need to have root access to install md5deep in the
-default location!
+default location! 
 
 
 Linux:
@@ -64,44 +67,47 @@ If you ever need to remove md5deep from your system:
 
 # make uninstall
 
+On a Mac, use
+
+# make macuninstall
+
 
 ----------------------------------------------------------------------
 COMPILING FOR MICROSOFT WINDOWS(R)
 
-The easiest way to get md5deep for Windows is to download the binary 
-version. The current binary is available at:
+The easiest way to get md5deep for Windows is to download the binary
+version. The current binary is available at: 
 
 http://md5deep.sourceforge.net/#download
 
-If you want to compile md5deep yourself, I recommend using the (Free) 
+If you want to compile md5deep yourself, I recommend using the (Free)
 MingGW compiler. 
 
 First, obtain the MinGW toolkit from:  http://www.mingw.org/ Install MinGW
 according to the documentation. You will also need the "make" and "strip"
-components of mingw. Then change into the md5deep directory and enter:
+components of mingw. Then change into the md5deep directory and enter: 
 
 C:\md5deep\> make windows
 
-(make is installed by default as \mingw\bin\mingw32-make. You may need
-to type the whole long filename!)
+(make is installed by default as \mingw\bin\mingw32-make. You may need to
+type the whole long filename!)
 
 
 ----------------------------------------------------------------------
-CROSS COMPILING LINUX->WIN32
+CROSS COMPILING FOR WINDOWS
 
-The MinGW compiler can also be used to cross-compile md5deep for Win32 
-from a linux platform. (This is how the developer makes the Win32 builds!)
-The MinGW FAQ has a script that downloads, configures, and installs the
-MinGW compiler on a linux system:
+The MinGW compiler can also be used to cross-compile md5deep for Win32 on
+another platform. (I've used both linux and Mac OS X to make the Windows
+builds!) The MinGW FAQ lists a script that downloads, configures, and
+installs the MinGW compiler on a linux system:
 http://www.mingw.org/mingwfaq.shtml#faq-cross
 
 Once MinGW is installed on your linux system, edit the Makefile value for
-CROSSBASE with the $PREFIX you used for MinGW. Then just do:
+CROSSBASE with the $PREFIX you used for MinGW. Then just do: 
 
 $ make cross
 
-And you should have a working md5deep.exe and sha1deep.exe executables 
-for Win32.
+And you should have a working .exe executables for Win32.
 
 
 ----------------------------------------------------------------------
@@ -113,17 +119,17 @@ is a version of libgen available at
 http://anfaenger.de/cygwin/cygwin-1.5/libgen/ , but I don't know much
 about it and can't vouch for its effectiveness or correctness.) If you
 want to try using md5deep under Cygwin, you MUST install this libgen
-library first.
+library first. 
 
 Next, you will need to add "-liberty" (without the quotes) to the LINK_OPT
-directive at the top of the Makefile.
+directive at the top of the Makefile. 
 
 With these two changes, it's possible to compile md5deep under Cygwin
 using the "make unix" directive, but this is not recommended. Not only
 will the resulting executable require the cygwin1.dll file to run, but the
 output for each file will be in "cygdrive" notation, which takes up extra
 space and may be confusing to those not familiar with the Cygwin
-environment.
+environment. 
 
 
 

@@ -43,7 +43,7 @@ int load_match_file(off_t mode, char *fn) {
   file_type = hash_file_type(f);
   if (file_type == TYPE_UNKNOWN)
   {
-    print_error(mode,fn,"Unable to find hashes in file, skipped.");
+    print_error(mode,fn,"Unable to find any hashes in file, skipped.");
     return FALSE;
   }
 

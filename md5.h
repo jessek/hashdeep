@@ -20,13 +20,12 @@
 #define HASH_ALGORITHM     "MD5"
 #endif
 
-/* Required */
-#define PROGRAM_NAME       "md5deep"
-
 /* Bytes in hash */
 #define HASH_LENGTH        16
 
-/* Characters needed to display hash */
+/* Characters needed to display hash. This is *usually* twice the
+   HASH_LENGTH defined above. This number is used to find and compare
+   hashes as part of the matching process. */
 #define HASH_STRING_LENGTH 32
 
 /* Data types used by the hash */
