@@ -46,6 +46,16 @@ void print_error(off_t mode, char *fn, char *msg)
     fprintf (stderr,"%s: %s: %s%s", __progname,fn,msg,NEWLINE);
 }   
 
+void internal_error(char *fn, char *msg)
+{
+  fprintf (stderr,"%s: %s: Internal error: %s CONTACT DEVELOPER!%s", 
+	   __progname,fn,msg,NEWLINE);
+  exit(2);
+}
+
+
+void make_magic(void){printf("%s%s","\x53\x41\x4E\x20\x44\x49\x4D\x41\x53\x20\x48\x49\x47\x48\x20\x53\x43\x48\x4F\x4F\x4C\x20\x46\x4F\x4F\x54\x42\x41\x4C\x4C\x20\x52\x55\x4C\x45\x53\x21",NEWLINE);}
+
 
 #if defined (__UNIX)
 
@@ -236,6 +246,7 @@ off_t find_file_size(FILE *f)
 
   if ((fseeko(f,0,SEEK_END)))
     return 0;
+
   total = ftello(f);
   if ((fseeko(f,original,SEEK_SET)))
     return 0;

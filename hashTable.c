@@ -126,9 +126,8 @@ int hashTableContains(hashTable *knownHashes, char *n) {
 }
 
 
-
-/* Displays the number of nodes at each depth of the hash table.
-   Used for debugging/optimization only. */
+#ifdef __DEBUG
+/* Displays the number of nodes at each depth of the hash table. */
 void hashTableEvaluate(hashTable *knownHashes) {
 
   hashNode *ptr;
@@ -158,7 +157,7 @@ void hashTableEvaluate(hashTable *knownHashes) {
   
   if (temp > 10) {
     printf ("Depth: %d  count: %ld\n",temp,count);
-    exit (-1);
+    return;
   }
 
   printf ("Hash table depth chart:\n");
@@ -166,5 +165,5 @@ void hashTableEvaluate(hashTable *knownHashes) {
     printf ("%ld: %ld\n", count,depth[count]);
   }
 }
-    
+#endif    
   

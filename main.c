@@ -20,23 +20,24 @@
 int _CRT_fmode = _O_BINARY;
 #endif
 
-void try_msg()
+
+void try_msg(void)
 {
   fprintf(stderr,"Try `%s -h` for more information.%s", __progname,NEWLINE);
 }
 
+
 /* The usage function should, at most, display 22 lines of text to fit
    on a single screen */
-void usage() 
+void usage(void) 
 {
   fprintf(stderr,"%s version %s by %s.%s",__progname,VERSION,AUTHOR,NEWLINE);
-  fprintf(stderr,"Usage:%s%s %s [-v|-V|-h] [-m|-M|-x|-X <file>] ",
-	  NEWLINE,CMD_PROMPT,__progname);
-  fprintf(stderr,"[-zres0bt] [-o fbcplsd] FILES%s%s",NEWLINE,NEWLINE);
+  fprintf(stderr,"%s %s [-v|-V|-h] [-m|-M|-x|-X <file>] ",
+	  CMD_PROMPT,__progname);
+  fprintf(stderr,"[-resz0lbt] [-o fbcplsd] FILES%s%s",NEWLINE,NEWLINE);
 
   fprintf(stderr,"-v  - display version number and exit%s",NEWLINE);
   fprintf(stderr,"-V  - display copyright information and exit%s",NEWLINE);
-  fprintf(stderr,"-h  - display this help message and exit%s",NEWLINE);
   fprintf(stderr,"-m  - enables matching mode. See README/man page%s",NEWLINE);
   fprintf(stderr,"-x  - enables negative matching mode. See README/man page%s",
 	  NEWLINE);
@@ -47,22 +48,20 @@ void usage()
   fprintf(stderr,"-s  - enables silent mode. Suppress all error messages%s",
 	  NEWLINE);
   fprintf(stderr,"-z  - display file size before hash%s", NEWLINE);
-  fprintf(stderr,"-0  - Use /0 as line terminator%s", NEWLINE);
+  fprintf(stderr,"-b and -t are ignored; present only for compatibility with md5sum\n");
+  fprintf(stderr,"-0  - use /0 as line terminator%s", NEWLINE);
+  fprintf(stderr,"-l  - use relative paths%s", NEWLINE);
   fprintf(stderr,"-o  - Only process certain types of files:%s",NEWLINE);
-  fprintf(stderr,"      f - Regular File%s",NEWLINE);
-  fprintf(stderr,"      b - Block Device%s",NEWLINE);
-  fprintf(stderr,"      c - Character Device%s",NEWLINE);
+  fprintf(stderr,"      f - Regular File       l - Symbolic Link%s",NEWLINE);
+  fprintf(stderr,"      b - Block Device       s - Socket%s",NEWLINE);
+  fprintf(stderr,"      c - Character Device   d - Solaris Door%s",NEWLINE);
   fprintf(stderr,"      p - Named Pipe (FIFO)%s",NEWLINE);
-  fprintf(stderr,"      l - Symbolic Link%s",NEWLINE);
-  fprintf(stderr,"      s - Socket%s",NEWLINE);
-  fprintf(stderr,"      d - Solaris Door%s",NEWLINE);
 }
-
 
 
 void setup_expert_mode(char *arg, off_t *mode) 
 {
-  int i = 0;
+  unsigned int i = 0;
 
   while (i < strlen(arg)) {
     switch (*(arg+i)) {
@@ -97,9 +96,9 @@ void setup_expert_mode(char *arg, off_t *mode)
   }
 }
 
+
 void check_matching_okay(off_t mode, int hashes_loaded)
 {
-
   if ((M_MATCH(mode) || M_MATCHNEG(mode)) && !hashes_loaded)
   {
     if (!(M_SILENT(mode)))
@@ -124,12 +123,17 @@ void check_matching_okay(off_t mode, int hashes_loaded)
   }
 }
 
+
 void process_command_line(int argc, char **argv, off_t *mode) {
 
   int i, hashes_loaded = FALSE;
   
-  while ((i=getopt(argc,argv,"M:X:x:m:u:o:zserhvV0bt")) != -1) { 
+  while ((i=getopt(argc,argv,"M:X:x:m:u:o:zserhvV0lbt")) != -1) { 
     switch (i) {
+
+    case 'l':
+      *mode |= mode_relative;
+      break;
 
     case 'o':
       *mode |= mode_expert;
@@ -174,17 +178,20 @@ void process_command_line(int argc, char **argv, off_t *mode) {
 
     case 'h':
       usage();
-      exit (1);
+      exit (0);
 
     case 'v':
       printf ("%s%s",VERSION,NEWLINE);
-      exit (1);
+      exit (0);
 
     case 'V':
-      printf (COPYRIGHT);
-      exit (1);
+      /* We could just say printf(COPYRIGHT), but that's a good way
+	 to introduce a format string vulnerability. Better to always
+	 use good programming practice... */
+      printf ("%s", COPYRIGHT);
+      exit (0);
 
-      /* These are only for compatibility with md5sum */
+      /* These are here only for compatibility with md5sum */
     case 'b':
     case 't':
       break;
@@ -195,25 +202,55 @@ void process_command_line(int argc, char **argv, off_t *mode) {
 
     }
   }
-
   check_matching_okay(*mode, hashes_loaded);
 }
 
 
 int is_absolute_path(char *fn)
 {
+#ifdef __WIN32
+  /* Windows has so many ways to make absolute paths (UNC, C:\, etc)
+     that it's silly to keep track. It doesn't hurt us
+     to call realpath as there are no symbolic links to lose. */
+  return FALSE;
+#else
   return (fn[0] == DIR_SEPARATOR);
+#endif
+}
+
+
+void generate_filename(off_t mode, char **argv, char *fn, char *cwd)
+{
+  if (M_RELATIVE(mode) || is_absolute_path(*argv))
+    strncpy(fn,*argv,PATH_MAX);	
+  else
+  {
+    /* Windows systems don't have symbolic links, so we don't
+       have to worry about carefully preserving the paths 
+       they follow. Just use the system command to resolve the paths */   
+#ifdef __WIN32
+    realpath(*argv,fn);
+#else	  
+    if (cwd == NULL)
+      /* If we can't get the current working directory, we're not
+	 going to be able to build the relative path to this file anyway.
+	 So we just call realpath and make the best of things */
+      realpath(*argv,fn);
+    else
+      snprintf(fn,PATH_MAX,"%s%c%s",cwd,DIR_SEPARATOR,*argv);
+#endif   
+  }
 }
 
 
 int main(int argc, char **argv) 
 {
-  char *fn  = (char *)malloc(sizeof(char)* PATH_MAX);
-  char *cwd = (char *)malloc(sizeof(char)* PATH_MAX);
+  char *fn   = (char *)malloc(sizeof(char)* PATH_MAX);
+  char *cwd  = (char *)malloc(sizeof(char)* PATH_MAX);
   off_t mode = mode_none;
 
 #ifndef __GLIBC__
-  __progname = basename(argv[0]);
+  __progname  = basename(argv[0]);
 #endif
 
   process_command_line(argc,argv,&mode);
@@ -228,34 +265,9 @@ int main(int argc, char **argv)
   else
   {
     cwd = getcwd(cwd,PATH_MAX);
-
     while (*argv != NULL)
     {  
-
-      /* Windows systems don't have symbolic links, so we don't
-	 have to worry about carefully preserving the paths 
-	 they follow. Just use the system command to resolve the paths */
-
-#ifdef __WIN32
-      realpath(*argv,fn);
-#else
-      
-      if (is_absolute_path(*argv))
-      {
-	strncpy(fn,*argv,PATH_MAX);
-      }
-      else
-      {
-	if (cwd == NULL)
-	{  
-	  print_error(mode,*argv,"Unable to find path to file");
-	  ++argv;
-	  continue;
-	}
-	snprintf(fn,PATH_MAX,"%s%c%s",cwd,DIR_SEPARATOR,*argv);
-      }
-#endif      
-
+      generate_filename(mode,argv,fn,cwd);
       process(mode,fn);
       ++argv;
     }

@@ -16,15 +16,17 @@
 #ifndef __MD5DEEP_H
 #define __MD5DEEP_H
 
-
 /* Version information is defined in the Makefile */
 
 #define AUTHOR      "Jesse Kornblum"
+
+/* We use \r\n for newlines as this has to work on Win32. It's redundant for
+   everybody else, but shouldn't cause any harm. */
 #define COPYRIGHT   "This program is a work of the US Government. "\
-"In accordance with 17 USC 105,\n"\
-"copyright protection is not available for any work of the US Government.\n"\
-"This is free software; see the source for copying conditions. There is NO\n"\
-"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+"In accordance with 17 USC 105,\r\n"\
+"copyright protection is not available for any work of the US Government.\r\n"\
+"This is free software; see the source for copying conditions. There is NO\r\n"\
+"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\r\n"
 
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -106,9 +108,10 @@
 #define mode_display_hash  1<<6
 #define mode_display_size  1<<7
 #define mode_zero          1<<8
+#define mode_relative      1<<9
 
-
-/* Modes 9 to 22 are reserved for future use */
+/* Modes 10 to 22 are reserved for future use. We shouldn't use
+   modes higher than 31 as Win32 can't go that high. */
 
 #define mode_regular       1<<23
 #define mode_directory     1<<24
@@ -140,6 +143,7 @@
 #define M_DISPLAY_HASH(A)  A & mode_display_hash
 #define M_DISPLAY_SIZE(A)  A & mode_display_size
 #define M_ZERO(A)          A & mode_zero
+#define M_RELATIVE(A)      A & mode_relative
 
 #define M_EXPERT(A)        A & mode_expert
 #define M_REGULAR(A)       A & mode_regular
@@ -191,7 +195,16 @@ off_t ftello(FILE *stream);
 /* Code specific to Microsoft Windows */
 #ifdef __WIN32
 
+/* By default, Windows uses long for off_t. This won't do. We
+   need an unsigned number at minimum. Windows doesn't have 64 bit
+   numbers though. */
+#ifdef off_t
+#undef off_t
+#endif
+#define off_t unsigned long
+
 #define CMD_PROMPT "c:\\>"
+#define  DIR_SEPARATOR   '\\'
 #define NEWLINE "\r\n"
 #define LINE_LENGTH 72
 #define BLANK_LINE \
@@ -211,8 +224,6 @@ off_t ftello(FILE *stream);
 #define fseeko   fseek
 
 #define  snprintf         _snprintf
-
-#define  DIR_SEPARATOR   '\\'
 #define  u_int32_t        unsigned long
 
 /* We create macros for the Windows equivalent UNIX functions.
@@ -267,13 +278,13 @@ int find_hash_in_line(char *buf, int fileType);
 void process(off_t mode, char *input);
 
 /* Hashing functions */
-char *hash_file(off_t mode, FILE *fp, char *file_name);
-void hash(off_t mode, char *filename);
+void hash_file(off_t mode, char *filename);
 void hash_stdin(off_t mode);
 
 /* Miscellaneous helper functions */
 void shift_string(char *fn, int start, int new_start);
 void print_error(off_t mode, char *fn, char *msg);
+void internal_error(char *fn, char *msg);
 void make_newline(off_t mode);
 
 /* Return the size, in bytes of an open file stream. On error, return -1 */

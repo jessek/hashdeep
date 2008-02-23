@@ -2,7 +2,7 @@
 RAW_CC = gcc
 RAW_FLAGS = -Wall -O2
 LINK_OPT = -lm
-VERSION = 1.3
+VERSION = 1.4
 
 # You can cross compile this program for Win32 using Linux and the 
 # MinGW compiler. See the README for details. If you have already

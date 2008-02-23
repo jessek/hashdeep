@@ -14,46 +14,65 @@
 
 #include "md5deep.h"
 
-void updateDisplay(time_t elapsed,   off_t bytesRead, 
-		   off_t totalBytes, char *file_name) 
+typedef struct hash_info {
+  char *full_name;
+  char *short_name;
+  char *match_name;
+
+  /* We never use the total number of bytes in a file, 
+     only the number of megabytes when we display a time estimate */
+  off_t total_megs;
+  off_t bytes_read;
+
+#ifdef __WIN32
+  /* Win32 is a 32-bit operating system and can't handle file sizes
+     larger than 4GB. We use this to keep track of overflows */
+  off_t last_read;
+  off_t overflow_count;
+#endif
+
+  char *result;
+
+  FILE *handle;
+  int is_stdin;
+} hash_info;
+
+
+void update_display(time_t elapsed, hash_info *h)
 {
   char msg[LINE_LENGTH];
   unsigned int hour,min;
-  off_t remaining, 
-    mb_read    = bytesRead  / ONE_MEGABYTE,
-    total_megs = totalBytes / ONE_MEGABYTE;
+  off_t seconds, mb_read = h->bytes_read / ONE_MEGABYTE;
 
-  /* If we couldn't compute the input file size, punt */
-  if (total_megs == 0) 
+#ifdef __WIN32
+  mb_read += h->overflow_count * 4096;
+#endif
+
+  if (h->total_megs == 0) 
   {
-    /* Because the length of this style of line is guarenteed
-       only to increase, we don't worry about erasing anything 
-       already on the line. Thus, we don't need the trailing 
-       SPACE that's used for true time estimates below. */
     snprintf(msg,LINE_LENGTH,
 	     "%s: %lluMB done. Unable to estimate remaining time.",
-	     file_name,mb_read);
+	     h->short_name,mb_read);
   }
   else 
   {
-  
     /* Our estimate of the number of seconds remaining */
-    remaining = (off_t)floor(((double)total_megs/mb_read - 1) * elapsed);
+    seconds = (off_t)floor(((double)h->total_megs/mb_read - 1) * elapsed);
 
     /* We don't care if the remaining time is more than one day.
        If you're hashing something that big, to quote the movie Jaws:
        
               "We're gonna need a bigger boat."                   */
     
-    hour = floor((double)remaining/3600);
-    remaining -= (hour * 3600);
+    hour = floor((double)seconds/3600);
+    seconds -= (hour * 3600);
     
-    min = floor((double)remaining/60);
-    remaining -= min * 60;
+    min = floor((double)seconds/60);
+    seconds -= min * 60;
     
     snprintf(msg,LINE_LENGTH,
 	     "%s: %lluMB of %lluMB done, %02u:%02u:%02llu left%s",
-	     file_name,mb_read,total_megs,hour,min,remaining,BLANK_LINE);
+	     h->short_name,mb_read,h->total_megs,hour,min,seconds,BLANK_LINE);
   }    
 
   fprintf(stderr,"\r%s",msg);
@@ -62,37 +81,42 @@ void updateDisplay(time_t elapsed,   off_t bytesRead,
 
 void shorten_filename(char *dest, char *src)
 {
-  char *temp;
+  char *chopped, *basen;
 
   if (strlen(src) < MAX_FILENAME_LENGTH)
-    /* Technically we could use strcpy and not strncpy, but it's good
-       practice to ALWAYS use strncpy! */
-    strncpy(dest,src,MAX_FILENAME_LENGTH);
-  else
   {
-    temp = strdup(src);
-    temp[MAX_FILENAME_LENGTH - 3] = 0;
-    sprintf(dest,"%s...",temp);
-    free(temp);
+    strncpy(dest,src,MAX_FILENAME_LENGTH);
+    return;
   }
+
+  basen = strdup(src);
+  chopped = basename(basen);  
+  free(basen);
+
+  if (strlen(chopped) < MAX_FILENAME_LENGTH)
+  {
+    strncpy(dest,chopped,MAX_FILENAME_LENGTH);
+    return;
+  }
+  
+  chopped[MAX_FILENAME_LENGTH - 3] = 0;
+  snprintf(dest,MAX_FILENAME_LENGTH,"%s...",chopped);
 }
 
 
-int fatal_error()
+int fatal_error(void)
 {
   return (errno == EACCES);
 }
 
 
-/* Returns TRUE if the file reads successfully, FALSE on failure */
-int compute_hash(off_t mode, FILE *fp, char *file_name, char *short_name,
-		 off_t file_size, int estimate_time, HASH_CONTEXT *md)
+int compute_hash(off_t mode, hash_info *h, HASH_CONTEXT *md)
 {
   time_t start_time,current_time,last_time = 0;
-  off_t position = 0, bytes_read;
+  off_t current_read;
   unsigned char buffer[BUFSIZ];
 
-  if (estimate_time)
+  if (M_ESTIMATE(mode))
   {
     time(&start_time);
     last_time = start_time;
@@ -103,175 +127,221 @@ int compute_hash(off_t mode, FILE *fp, char *file_name, char *short_name,
     /* clear the buffer in case we hit an error and need to pad the hash */
     memset(buffer,0,BUFSIZ);
     
-    bytes_read = fread(buffer, 1, BUFSIZ, fp);
-    
+    current_read = fread(buffer, 1, BUFSIZ, h->handle);
+
     /* If an error occured, display a message but still add this block */
-    if (ferror(fp))
+    if (ferror(h->handle))
     {
       if (!(M_SILENT(mode)))
 	fprintf(stderr,"%s: %s: error at offset %llu: %s%s", 
-		__progname,file_name,position,strerror(errno),NEWLINE);
+		__progname,h->full_name,h->bytes_read,strerror(errno),NEWLINE);
       
       if (fatal_error())
 	return FALSE;
 
       HASH_Update(md, buffer, BUFSIZ);
-      position += BUFSIZ;
-      
-      clearerr(fp);
+      h->bytes_read += BUFSIZ;
+
+      clearerr(h->handle);
       
       /* The file pointer's position is now undefined. We have to manually
 	 advance it to the start of the next buffer to read. */
-      fseek(fp,SEEK_SET,position);      
+      fseek(h->handle,SEEK_SET,h->bytes_read);
     } 
     else
     {
-      /* If we hit the end of the file, we read less than BUFSIZ bytes! */
-      HASH_Update(md, buffer, bytes_read);
-      position += bytes_read;
+      /* If we hit the end of the file, we read less than BUFSIZ bytes
+         and must reflect that in how we update the hash. */
+      HASH_Update(md, buffer, current_read);
+      h->bytes_read += current_read;
     }
 
+#ifdef __WIN32
+    /* We have to update the overflow counter here. If it's only in 
+       update_display() then it's possible that we roll over but never
+       see it. This causes an error when we try to display the final size. */
+    if (h->last_read > h->bytes_read)
+      h->overflow_count++;
+    h->last_read = h->bytes_read;
+#endif
+    
     /* Check if we've hit the end of the file */
-    if (feof(fp))
+    if (feof(h->handle))
     {	
       /* If we've been printing, we now need to clear the line. */
-      if (estimate_time)   
+      if (M_ESTIMATE(mode))
 	fprintf(stderr,"\r%s\r",BLANK_LINE);
 
       return TRUE;
     }
     
-    if (estimate_time) {
+    if (M_ESTIMATE(mode)) 
+    {
       time(&current_time);
       
       /* We only update the display only if a full second has elapsed */
-      if (last_time != current_time) {
+      if (last_time != current_time) 
+      {
 	last_time = current_time;
-	updateDisplay((current_time-start_time),position,file_size,short_name);
+	update_display(current_time - start_time,h);
       }
     }
   }      
 }
 
 
-
-
-char *hash_file(off_t mode, FILE *fp, char *file_name) 
+void display_size(off_t mode, hash_info *h)
 {
-  off_t file_size = 0;
-  HASH_CONTEXT md;
-  unsigned char sum[HASH_LENGTH];
-  static char result[2 * HASH_LENGTH + 1];
-  static char hex[] = "0123456789abcdef";
-  int i, status;
-  char *temp, *basen = strdup(file_name),
-    *short_name = (char *)malloc(sizeof(char) * PATH_MAX);
+#ifndef __WIN32
+  off_t max_size = 999999999;
+  max_size *= 10;
+  max_size += 9;
 
-  if (M_ESTIMATE(mode))
-  {
-    file_size = find_file_size(fp);
-    temp = basename(basen);
-    shorten_filename(short_name,temp);
-  }    
+  /* We don't have Windows code for a "max value" because Win32 can
+     only handle 32 bit numbers, or 2^32. This is far less than the
+     ten digits we can display. If we go over 2^32 we overflow and
+     there's no way to compute the true number of bytes.
 
-  HASH_Init(&md);
-  status = compute_hash(mode,fp,file_name,short_name,file_size,
-			M_ESTIMATE(mode),&md);
-  free(short_name);
-  if (!status)
-    return NULL;
+     Also, Mac and *BSD don't like using ten digit constants, so we
+     compute the max_size of 9999999999 instead. */
 
-  HASH_Final(sum, &md);
-  
-  for (i = 0; i < HASH_LENGTH; i++) {
-    result[2 * i] = hex[(sum[i] >> 4) & 0xf];
-    result[2 * i + 1] = hex[sum[i] & 0xf];
-  }
-
-  return result;
-}
-
-
-void display_size(off_t mode, FILE *handle)
-{
-  off_t size;
   if (M_DISPLAY_SIZE(mode))
   {
-    size = ftello(handle);
-    
-    if (size > 9999999999)
+    if (h->bytes_read > max_size)
+      printf ("%10llu  ", max_size);
+    else
+      printf ("%10llu  ", h->bytes_read);
+  }
+#else
+  if (M_DISPLAY_SIZE(mode))
+  {
+    if (h->overflow_count > 0)
       printf ("9999999999  ");
     else
-      printf ("%10llu  ", size);
+      printf ("%10lu  ", h->bytes_read);
   }
+#endif
 }
 
 
-void display_match_result(off_t mode, char *result, char *file_name, FILE *handle)
+void display_match_result(off_t mode, hash_info *h)
 {  
-  int status = is_known_hash(result);
+  int status = is_known_hash(h->result);
   if ((status && M_MATCH(mode)) || (!status && M_MATCHNEG(mode)))
   {
-    display_size(mode,handle);
+    display_size(mode,h);
 
     if (M_DISPLAY_HASH(mode))
     {
-      printf ("%s  ", result);
+      printf ("%s  ", h->result);
     }
-    printf ("%s", file_name);
+    printf ("%s", h->match_name);
     make_newline(mode);
   }
 }
 
 
-
-
-void do_hash(off_t mode, FILE *handle, char *file_name,unsigned int is_stdin)
+void display_hash(off_t mode, hash_info *h)
 {
-  char *result;
-
-  if (is_stdin)
-    result = hash_file(mode,handle,"stdin");
-  else
-    result = hash_file(mode,handle,file_name);
-
-  if (result != NULL)
+  if (M_MATCH(mode) || M_MATCHNEG(mode))
+    display_match_result(mode,h);
+  else 
   {
-    if (M_MATCH(mode) || M_MATCHNEG(mode))
-      display_match_result(mode,result,file_name,handle);
-    else 
-    {
-      display_size(mode,handle);
-
-      printf ("%s", result);
-      if (!is_stdin)
-	printf("  %s",file_name);
-
-      make_newline(mode);
-    }
+    display_size(mode,h);
+      
+    printf ("%s", h->result);
+    if (!(h->is_stdin))
+      printf("  %s", h->full_name);
+    
+    make_newline(mode);
   }
-}  
+}
 
 
-void hash(off_t mode, char *file_name) 
+void hash(off_t mode, hash_info *h)
 {
-  FILE *handle;
+  HASH_CONTEXT md;
+  unsigned char sum[HASH_LENGTH];
+  static char result[2 * HASH_LENGTH + 1];
+  static char hex[] = "0123456789abcdef";
+  int i;
 
-  if ((handle = fopen(file_name,"rb")) != NULL) 
+#ifdef __WIN32
+  h->last_read = 0;
+  h->overflow_count = 0;
+#endif
+
+  h->bytes_read = 0;
+  h->result = NULL;
+
+  HASH_Init(&md);
+
+  if (!compute_hash(mode,h,&md))
+    return;
+
+  HASH_Final(sum, &md);  
+  for (i = 0; i < HASH_LENGTH; ++i) {
+    result[2 * i] = hex[(sum[i] >> 4) & 0xf];
+    result[2 * i + 1] = hex[sum[i] & 0xf];
+  }
+  
+  h->result = strdup(result);
+  display_hash(mode,h);
+  free(h->result);
+}
+
+
+void hash_file(off_t mode, char *file_name)
+{
+  hash_info *h = (hash_info *)malloc(sizeof(hash_info));
+
+  h->full_name = file_name;
+  h->match_name = file_name;
+  h->is_stdin = FALSE;
+
+  if ((h->handle = fopen(file_name,"rb")) != NULL)
   {
-    do_hash(mode,handle,file_name,FALSE);
-    fclose(handle);
+    if (M_ESTIMATE(mode))
+    {
+      h->total_megs = find_file_size(h->handle) / ONE_MEGABYTE;
+      h->short_name = (char *)malloc(sizeof(char) * MAX_FILENAME_LENGTH);
+      shorten_filename(h->short_name,h->full_name);    
+    }    
+
+    hash(mode,h);
+    fclose(h->handle);
+
+    if (M_ESTIMATE(mode))
+      free(h->short_name);
   }
   else
     print_error(mode,file_name,strerror(errno));
+  
+  free(h);
 }
-
 
 void hash_stdin(off_t mode)
 {
-  /* The "filename" stdin_matches is used for the positive and
-     negative matching. The TRUE value we submit will set the progress
-     meter's name to stdin. */
-  do_hash(mode,stdin,"stdin matches",TRUE);
-}
+  hash_info *h = (hash_info *)malloc(sizeof(hash_info));
 
+  h->full_name = strdup("stdin");
+  h->match_name = strdup("stdin matches");
+  h->is_stdin = TRUE;
+  h->handle = stdin;
+
+  if (M_ESTIMATE(mode))
+  {
+    h->short_name = strdup("stdin");
+    h->total_megs = 0;
+  }
+
+  hash(mode,h);
+
+  free(h->full_name);
+  free(h->match_name);
+
+  if (M_ESTIMATE(mode))
+    free(h->short_name);
+
+  free(h);
+}

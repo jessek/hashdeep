@@ -144,7 +144,12 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
     MD5Transform(ctx->buf, (u_int32_t *) ctx->in);
     byteReverse((unsigned char *) ctx->buf, 4);
     memcpy(digest, ctx->buf, 16);
-    memset(ctx, 0, sizeof(ctx));	/* In case it's sensitive */
+
+    memset(ctx, 0, sizeof(* ctx));	/* In case it's sensitive */
+    /* The original version of this code omitted the asterisk. In
+       effect, only the first part of ctx was wiped with zeros, not
+       the whole thing. Bug found by Derek Jones. Original line: */
+    // memset(ctx, 0, sizeof(ctx));	/* In case it's sensitive */
 }
 
 #ifndef ASM_MD5

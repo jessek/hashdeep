@@ -103,7 +103,7 @@ int findPlainHashinLine(char *buf) {
 
 
 /* Attempts to find a hash value after the nth quotation mark in buf */
-int find_hash_after_quotes(char *buf, int n) {
+int find_hash_after_quotes(char *buf, unsigned int n) {
 
   unsigned int count = 0, pos = 0;
 

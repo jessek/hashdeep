@@ -63,14 +63,14 @@ int load_match_file(off_t mode, char *fn) {
 
       if (!(M_SILENT(mode)))
       {
-	fprintf(stderr,"%s: %s: WARNING: No hash found in line %llu\n", 
+	fprintf(stderr,"%s: %s: No hash found in line %llu\n", 
 		__progname,fn,line_number);
       }
 
-    } else {
-
+    } 
+    else 
+    {
       hashTableAdd(&knownHashes,buf);
-
     }
   }
 

@@ -1,14 +1,31 @@
 
-Version 1.3 - 25 May 04
+Version 1.4 - 16 Aug 04
 
-- Windows version can process physical devices like
-  \\.\PhysicalDrive0 and \\.\tape0
+- Added relative paths mode
+- Fixed printing of file sizes larger than 9GB for Mac, *BSD.
+- Changed return values so that always returns 0 on success
+    positive integer on failure (1 = user error, 2 = internal error)
+- Fixed memory leak on directory open failures in dig.c
+- Fixed memory leak in directory release code in cycles.c
+- Fixed potential information leak in md5.c (thanks to Derek Jones) 
+- Removed possible supression of critical error messages in cycles.c
+- Fixed size computation for standard input
+- Added support for Win32 logical drives (e.g. \\.\C:)
+- Changed data structures in hash.c for ease of reading
+- Added overflow counter for Win32 for files larger than 4GB
+- Put Windows style newlines in copyright message
+
+
+Version 1.3 - 24 Jun 04
+
+- Fixed Windows version to handle physical devices and UNC paths
+   (e.g. \\.\PhysicalDrive0  \\.\tape0  \\server\share\file  etc)
 - Removed halting on fatal errors except "Permission Denied"
 - Added error checking for cycles created by symbolic links
 - Added -z flag to print file sizes
 - Added -0 flag to end lines with /0 instead of newlines
-- Updated documentation regarding md5deep and Cygwin
-- Cleaned up Makefile, fixed support for native "make windows"
+- Updated documentation regarding Cygwin and Win32 compilation
+- Cleaned up Makefile, fixed "make windows"
 
 
 Version 1.2 - 16 Apr 04
