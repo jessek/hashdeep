@@ -20,9 +20,12 @@ void display_banner(state *s)
   print_status("filename");
 
   print_status("## Invoked from: %s", s->cwd);
-  printf ("## %s ", CMD_PROMPT);  
+  fprintf (stdout,"## %s", CMD_PROMPT);  
   for (argc = 0 ; argc < s->argc ; ++argc)
-    display_filename(stdout,s->argv[argc]);
+    {
+      fprintf(stdout," ");
+      display_filename(stdout,s->argv[argc]);
+    }
 
   printf("%s", NEWLINE);
 
