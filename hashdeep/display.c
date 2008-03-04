@@ -1,7 +1,7 @@
 
 #include "main.h"
 
-/* $Id: display.c,v 1.11 2007/12/27 20:52:03 jessekornblum Exp $ */
+/* $Id$ */
 
 void display_banner(state *s)
 {
