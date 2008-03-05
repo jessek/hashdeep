@@ -19,18 +19,17 @@ static void usage(void)
   print_status("-m - Matching mode. Requires -k");
   print_status("-x - Negative matching mode. Requires -k");
 
-  print_status("-k <file> - Add a file of known hashes");
+  print_status("-k - Add a file of known hashes");
 
-  print_status("-r  - recursive mode. All subdirectories are traversed");
-  print_status("-e  - compute estimated time remaining for each file");
-  print_status("-s  - silent mode. Suppress all error messages");
-  print_status("-p  - piecewise mode. Files are broken into blocks for hashing");
-  print_status("-w  - displays which known file generated a match");
-  print_status("-b  - prints only the bare name of files; all path information is omitted");
-  print_status("-l  - print relative paths for filenames");
-
-  print_status("-V  - display version number and exit");
-  print_status("-v  - Verbose mode. Use again to be more verbose.");
+  print_status("-r - recursive mode. All subdirectories are traversed");
+  print_status("-e - compute estimated time remaining for each file");
+  print_status("-s - silent mode. Suppress all error messages");
+  print_status("-p - piecewise mode. Files are broken into blocks for hashing");
+  print_status("-w - displays which known file generated a match");
+  print_status("-b - prints only the bare name of files; all path information is omitted");
+  print_status("-l - print relative paths for filenames");
+  print_status("-V - display version number and exit");
+  print_status("-v - Verbose mode. Use again to be more verbose.");
 }
 
 
@@ -306,13 +305,25 @@ static int process_command_line(state *s, int argc, char **argv)
 	  case status_ok: 
 	    s->hashes_loaded = TRUE;
 	    break;
+
+	  case status_contains_no_hashes:
+	    /* Trying to load an empty file is fine, but we shouldn't
+	       change s->hashes_loaded */
+	    break;
+
 	  case status_contains_bad_hashes:
 	    s->hashes_loaded = TRUE;
 	    print_error(s,"%s: %s: contains some bad hashes, using anyway", __progname, optarg);
 	    break;
+
 	  case status_unknown_filetype:
 	    print_error(s,"%s: %s: unknown filetype, skipping", __progname, optarg);
 	    break;
+
+	  case status_file_error:
+	    /* The loading code has already printed an error */
+	    break;
+
 	  default:
 	    print_error(s,"%s: %s: unknown error, skipping", __progname, optarg);
 	    break;

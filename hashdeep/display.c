@@ -3,7 +3,7 @@
 
 /* $Id$ */
 
-void display_banner(state *s)
+static void display_banner(state *s)
 {
   hashname_t i;
   int argc;
@@ -33,7 +33,8 @@ void display_banner(state *s)
 }
 
 
-static int display_hash_simple(state *s)
+static int 
+display_hash_simple(state *s)
 {
   hashname_t i;
 
@@ -55,59 +56,6 @@ static int display_hash_simple(state *s)
 }
 
 
-static int 
-display_match(state *s)
-{
-  if (NULL == s)
-    return TRUE;
-
-  switch (is_known_file(s))
-    {
-    case status_match:
-      display_filename(stdout,s->full_name);
-      return FALSE;
-      
-    case status_partial_match:
-      print_status("%s: WARNING: Partial file match", s->full_name);
-      return FALSE;
-
-    case status_omg_ponies:
-      fatal_error(s,"OMG! PONIES!1!!");
-      
-    default:
-      return TRUE;
-    }
-  
-
-
-  return FALSE;
-}
-
-static int 
-display_match_neg(state *s)
-{
-  if (NULL == s)
-    return TRUE;
-
-  switch (is_known_file(s))
-    {
-    case status_match:
-      return FALSE;
-      
-    case status_no_match:
-      display_filename(stdout,s->full_name);
-      print_status("");
-      return FALSE;
-
-    default:
-      return FALSE;
-    }
-
-
-  return FALSE;
-}
-
-
 int display_hash(state *s)
 {
   if (NULL == s)
@@ -116,9 +64,14 @@ int display_hash(state *s)
   switch (s->primary_function)
     {
     case primary_compute: return display_hash_simple(s);
-    case primary_match: return display_match(s);
-    case primary_match_neg: return display_match_neg(s);
-    case primary_audit: return audit_update(s);
+    case primary_match: 
+    case primary_match_neg: 
+      print_status("Function not implemented yet");
+      return FALSE;
+
+    case primary_audit: 
+      return audit_update(s);
+
     default:
       return FALSE;
     }

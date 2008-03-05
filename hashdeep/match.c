@@ -12,6 +12,39 @@ identify_file(state *s, char *fn, FILE *handle)
 }
 
 
+
+status_t add_hash_to_algorithm(state *s,
+			       algorithm_t *a,
+			       file_data_t *f)
+{
+  if (NULL == s || NULL == s || NULL == a)
+    return status_unknown_error;
+  
+  
+
+  return status_ok;
+}
+
+
+
+status_t add_hash(state *s, file_data_t *f)
+{
+  uint8_t i;
+
+  if (NULL == s || NULL == s)
+    return status_unknown_error;
+
+  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+    {
+      if (s->hashes[i]->inuse)
+	add_hash_to_algorithm(s,s->hashes[i],f);
+    }
+
+  return status_ok;
+
+}
+
+
 status_t load_match_file(state *s, char *fn)
 {
   FILE * handle;

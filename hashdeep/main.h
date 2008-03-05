@@ -59,6 +59,7 @@ typedef enum
     /* Loading sets of hashes */
     status_unknown_filetype,
     status_contains_bad_hashes,
+    status_contains_no_hashes,
     status_file_error,
 
     /* General errors */
@@ -133,8 +134,8 @@ typedef struct _algorithm_t
 {
   char        * name;
   uint16_t      byte_length;
-
   void        * hash_context; 
+
   int ( *f_init)(void *);
   int ( *f_update)(void *, unsigned char *, uint64_t );
   int ( *f_finalize)(void *, unsigned char *);
@@ -144,7 +145,6 @@ typedef struct _algorithm_t
   unsigned char   * hash_sum;
   int             inuse;
   uint64_t        howmany;
-
 } algorithm_t;
 
 
@@ -165,44 +165,41 @@ struct _state {
   uint64_t        mode;
 
   /* Command line arguments */
-  TCHAR        **argv;
-  int            argc;
-  TCHAR        * cwd;
+  TCHAR        ** argv;
+  int             argc;
+  TCHAR         * cwd;
 
- time_t        start_time, last_time;
+  time_t          start_time, last_time;
 
- /* The input file */
   /* The file currently being hashed */
   file_data_t   * current_file;
   int             is_stdin;
   FILE          * handle;
   unsigned char * buffer;
+  uint64_t        total_megs;
+  uint64_t        total_bytes;
+  uint64_t        bytes_read;
+  TCHAR         * full_name;
+  TCHAR         * short_name;
+  TCHAR         * msg;
 
-  /* The size of the input file, in megabytes */
-  uint64_t      total_megs;
-  uint64_t      total_bytes;
-  uint64_t      bytes_read;
-
+  /* The set of known hashes */
   int             hashes_loaded;
   uint64_t        next_known_id;
-
   algorithm_t   * hashes[NUM_ALGORITHMS];
 
   int             banner_displayed;
 
   /* Size of blocks used in normal hashing */
-  uint64_t      block_size;
+  uint64_t        block_size;
 
   /* Size of blocks used in piecewise hashing */
-  uint64_t      piecewise_size;
-
-  // These strings are used in hash.c to hold the filename
-  TCHAR          * full_name;
-  TCHAR          * short_name;
-  TCHAR          * msg;
-
-  /* Audit Mode*/
-  uint64_t        match_exact, match_partial, match_moved, match_unused, match_unknown, match_total;
+  uint64_t        piecewise_size;
+  
+  // RBF - Should audit variables be moved out of the state?
+  /* For audit mode, the number of each type of file */
+  uint64_t        match_exact, match_expect,
+    match_partial, match_moved, match_unused, match_unknown, match_total;
 };
 
 #include "ui.h"
@@ -219,12 +216,9 @@ status_t hashtable_add(state *s, file_data_t *f);
 status_t hashtable_contains(state *s, file_data_t *f);
 
 /* MULTIHASHING */
-
-
 void multihash_initialize(state *s);
 void multihash_update(state *s, unsigned char *buf, uint64_t len);
 void multihash_finalize(state *s);
-
 
 
 /* MATCHING MODES */
@@ -244,7 +238,6 @@ int audit_update(state *s);
 int hash_file(state *s, TCHAR *file_name);
 int hash_stdin(state *s);
 
-void display_banner(state *s);
 
 /* HELPER FUNCTIONS */
 void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
