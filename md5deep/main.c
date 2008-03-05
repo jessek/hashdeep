@@ -11,7 +11,7 @@
  *
  */
 
-// $Id: main.c,v 1.3 2007/12/08 16:34:50 jessekornblum Exp $
+// $Id$
 
 #include "main.h"
 

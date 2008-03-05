@@ -1,7 +1,7 @@
 
 #include "main.h"
 
-/* $Id: display.c,v 1.1 2007/12/09 18:58:06 jessekornblum Exp $ */
+/* $Id$ */
 
 static void display_size(state *s)
 {

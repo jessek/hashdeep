@@ -56,7 +56,7 @@
  *
  */
 
-/* $Id: whirlpool.c,v 1.2 2007/12/08 16:00:08 jessekornblum Exp $ */
+/* $Id$ */
 
 #include "main.h"
 #include "whirlpool.h"

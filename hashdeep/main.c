@@ -1,5 +1,5 @@
 
-/* $Id: main.c,v 1.11 2007/12/27 20:52:03 jessekornblum Exp $ */
+/* $Id$ */
 
 #include "main.h"
 

@@ -12,7 +12,7 @@
  *
  */
 
-/* $Id: ui.c,v 1.1 2007/12/07 04:37:15 jessekornblum Exp $ */
+/* $Id$ */
 
 #include "main.h"
 #include <stdarg.h>

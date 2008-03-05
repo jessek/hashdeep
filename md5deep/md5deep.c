@@ -1,5 +1,5 @@
 
-/* $Id: md5deep.c,v 1.2 2007/12/08 16:00:11 jessekornblum Exp $ */
+/* $Id$ */
 
 //#include "main.h"
 //#include "md5.h"

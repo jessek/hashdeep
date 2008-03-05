@@ -1,5 +1,5 @@
 
-/* $Id: common.h,v 1.6 2007/12/08 16:34:50 jessekornblum Exp $ */
+/* $Id$ */
 
 #ifndef __COMMON_H
 #define __COMMON_H

@@ -12,7 +12,7 @@
  *
  */
 
-/* $Id: sha256.h,v 1.3 2007/12/10 04:37:17 jessekornblum Exp $ */
+/* $Id$ */
 
 #ifndef _SHA256_H
 #define _SHA256_H

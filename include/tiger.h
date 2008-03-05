@@ -12,7 +12,7 @@
  *
  */
 
-/* $Id: tiger.h,v 1.2 2007/12/08 16:00:09 jessekornblum Exp $ */
+/* $Id$ */
 
 #ifndef __TIGER_H
 #define __TIGER_H

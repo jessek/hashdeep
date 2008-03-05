@@ -12,7 +12,7 @@
  *
  */
 
-/* $Id: sha1.c,v 1.4 2007/12/12 00:19:16 jessekornblum Exp $ */
+/* $Id$ */
 
 #include "main.h"
 //#include "sha1.h"

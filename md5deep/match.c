@@ -12,7 +12,7 @@
  *
  */
 
-/* $Id: match.c,v 1.1 2007/12/07 04:20:02 jessekornblum Exp $ */
+/* $Id$ */
 
 #include "main.h"
 #include "hashTable.h"

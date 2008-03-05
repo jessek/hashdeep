@@ -11,7 +11,7 @@
  *  http://www.cr0.net:8040/code/crypto/sha256/ whenever possible.
  */
 
-/* $Id: sha256.c,v 1.3 2007/12/10 04:37:17 jessekornblum Exp $ */
+/* $Id$ */
 
 #include "main.h"
 #include <string.h>

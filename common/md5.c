@@ -15,7 +15,7 @@
  * will fill a supplied 16-byte array with the digest.
  */
 
-/* $Id: md5.c,v 1.2 2007/12/08 16:00:07 jessekornblum Exp $ */
+/* $Id$ */
 
 #include "common.h"
 //#include "main.h"

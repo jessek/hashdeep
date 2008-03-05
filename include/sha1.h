@@ -12,7 +12,7 @@
  *
  */
 
-/* $Id: sha1.h,v 1.5 2007/12/12 00:19:17 jessekornblum Exp $ */
+/* $Id$ */
 
 #ifndef __SHA1_H
 #define __SHA1_H

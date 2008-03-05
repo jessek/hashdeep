@@ -1,5 +1,5 @@
 
-/* $Id: tigerdeep.c,v 1.1 2007/12/07 04:20:09 jessekornblum Exp $ */
+/* $Id$ */
 
 #include "main.h"
 #include "tiger.h"

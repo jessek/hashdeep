@@ -1,7 +1,7 @@
 
 #include "main.h"
 
-/* $Id: hashtable.c,v 1.3 2007/12/28 01:49:36 jessekornblum Exp $ */
+/* $Id$ */
 
 status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
 {

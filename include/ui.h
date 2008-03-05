@@ -1,5 +1,5 @@
 
-/* $Id: ui.h,v 1.2 2007/12/09 18:58:06 jessekornblum Exp $ */
+/* $Id$ */
 
 /* User Interface Functions */
 

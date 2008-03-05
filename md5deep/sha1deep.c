@@ -1,5 +1,5 @@
 
-/* $Id: sha1deep.c,v 1.1 2007/12/07 04:20:05 jessekornblum Exp $ */
+/* $Id$ */
 
 #include "main.h"
 #include "sha1.h"

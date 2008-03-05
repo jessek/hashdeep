@@ -1,5 +1,5 @@
 
-/* $Id: whirlpooldeep.c,v 1.1 2007/12/07 04:20:10 jessekornblum Exp $ */
+/* $Id$ */
 
 #include "main.h"
 #include "whirlpool.h"

@@ -1,5 +1,5 @@
 
-/* $Id: multihash.c,v 1.6 2007/12/14 11:50:28 jessekornblum Exp $ */
+/* $Id$ */
 
 #include "main.h"
 

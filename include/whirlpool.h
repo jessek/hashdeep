@@ -1,5 +1,5 @@
 
-/* $Id: whirlpool.h,v 1.3 2007/12/08 16:00:10 jessekornblum Exp $ */
+/* $Id$ */
 
 #ifndef __WHIRLPOOL_H
 #define __WHIRLPOOL_H

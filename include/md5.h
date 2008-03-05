@@ -12,7 +12,7 @@
  *
  */
 
-/* $Id: md5.h,v 1.2 2007/12/08 16:00:09 jessekornblum Exp $ */
+/* $Id$ */
 
 #ifndef __MD5_H
 #define __MD5_H

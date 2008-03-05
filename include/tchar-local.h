@@ -1,5 +1,5 @@
 
-/* $Id: tchar-local.h,v 1.1 2007/12/07 04:19:52 jessekornblum Exp $ */
+/* $Id$ */
 
 #ifndef __TCHAR_LOCAL_H
 #define __TCHAR_LOCAL_H

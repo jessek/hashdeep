@@ -1,5 +1,5 @@
 
-/* $Id: match.c,v 1.7 2007/12/28 01:49:36 jessekornblum Exp $ */
+/* $Id$ */
 
 #include "main.h"
 
