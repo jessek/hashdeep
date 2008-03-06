@@ -32,7 +32,7 @@ status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
   if (a->file_size != b->file_size)
     return status_file_size_mismatch;
   
-  if (!(STRINGS_EQUAL(a->file_name,b->file_name)))
+  if (!(WSTRINGS_EQUAL(a->file_name,b->file_name)))
     return status_file_name_mismatch;
   
   return status_match;
@@ -136,14 +136,88 @@ status_t hashtable_add(state *s, hashname_t alg, file_data_t *f)
 }
 
 
-status_t hashtable_contains(state *s, hashtable_t *t, file_data_t *f)
+
+void hashtable_destroy(hashtable_entry_t *e)
 {
-  hashname_t i, first_alg = alg_unknown;
+  hashtable_entry_t *tmp;
 
-  if (NULL == s || NULL == f || NULL == t)
-    return status_unknown_error;
+  if (NULL == e)
+    return;
   
-  
+  tmp = e->next;
+  while (e != NULL)
+    {
+      free(e);
+      e = tmp;
+      tmp = e->next;
+    }
+}
 
-  return status_match;
+
+
+/* RBF - The function hashtable_contains needs testing! */
+hashtable_entry_t * 
+hashtable_contains(state *s, hashname_t alg)
+{
+  hashtable_entry_t *ret = NULL, *new, *temp, *last = NULL;
+  hashtable_t *t = s->hashes[alg]->known;
+  uint64_t key;
+  file_data_t * f;
+  status_t status;
+
+  if (NULL == s)
+    internal_error("%s: state is NULL in hashtable_contains", __progname);
+  
+  f = s->current_file;
+  if (NULL == f)
+    internal_error("%s: current_file is in hashtable_contains", __progname);
+
+  key = translate(f->hash[alg]);
+
+  if (NULL == t->member[key])
+    return NULL;
+
+  print_status("Found one or more hits.");
+  
+  temp = t->member[key];
+
+  status = file_data_compare(s,temp->data,f);
+  if (status != status_no_match)
+    {
+      ret = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
+      ret->next = NULL;
+      ret->status = status;
+      ret->data = temp->data;
+      last = ret;
+    }
+
+  while (temp->next != NULL)
+    {
+      temp = temp->next;
+    
+      status = file_data_compare(s,temp->data,f);
+      
+      if (status != status_no_match)
+	{
+	  if (NULL == ret)
+	    {
+	      ret = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
+	      ret->next = NULL;
+	      ret->data = temp->data;
+	      ret->status = status;
+	      last = ret;
+	    }
+	  else
+	    {
+	      new = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
+	      new->next = NULL;
+	      new->data = temp->data;
+	      new->status = status;
+	      last->next = new;
+	      last = new;
+	    }
+	}
+    }
+  
+  return ret;
 }

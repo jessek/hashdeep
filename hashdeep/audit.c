@@ -88,7 +88,7 @@ int audit_update(state *s)
     case status_no_match:
       if (s->mode & mode_more_verbose)
 	{
-	  display_filename(stdout,s->full_name);
+	  display_filename(stdout,s->current_file->file_name);
 	  print_status(" did not match");
 	}
 
@@ -99,8 +99,9 @@ int audit_update(state *s)
       /* Implies all hashes and file size match */   
       if (s->mode & mode_more_verbose)
 	{
+	  /* RBF - This is wrong somehow */
 	  print_status("%s moved to ", s->current_file->file_name);
-	  display_filename(stdout,s->full_name);	  
+	  display_filename(stdout,s->current_file->file_name);
 	}
       s->match_moved++;
       break;

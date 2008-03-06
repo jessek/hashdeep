@@ -8,13 +8,24 @@ void multihash_initialize(state *s)
   hashname_t i;
 
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-  {
-    if (s->hashes[i]->inuse)
     {
-      memset(s->hashes[i]->result,0,s->hashes[i]->byte_length);
-      s->hashes[i]->f_init(s->hashes[i]->hash_context);
+      if (s->hashes[i]->inuse)
+	{
+	  
+	  /* RBF - Can we move this check somewhere else so that it's
+	     RBF - only executed once? */
+	  if (NULL == s->current_file->hash[i])
+	    {
+	      s->current_file->hash[i] = (char *)malloc(sizeof(char) * s->hashes[i]->byte_length);
+	      if (NULL == s->current_file->hash[i])
+		fatal_error(s,"%s: Out of memory", __progname);
+	    }
+	  
+	  //      memset(s->hashes[i]->result,0,s->hashes[i]->byte_length);
+	  memset(s->current_file->hash[i],0,s->hashes[i]->byte_length);
+	  s->hashes[i]->f_init(s->hashes[i]->hash_context);
+	}
     }
-  }
 }
 
 
@@ -44,22 +55,29 @@ void multihash_finalize(state *s)
   uint16_t j, len;
   static char hex[] = "0123456789abcdef";
 
+  char * result;
+
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-  {
-    if (s->hashes[i]->inuse)
     {
-       s->hashes[i]->f_finalize(s->hashes[i]->hash_context,
-			       s->hashes[i]->hash_sum);
-       
-       len = s->hashes[i]->byte_length / 2;       
-       for (j = 0; j < len ; ++j) 
-       {
-	 s->hashes[i]->result[2 * j] = hex[(s->hashes[i]->hash_sum[j] >> 4) & 0xf];
-	 s->hashes[i]->result[2 * j + 1] = hex[s->hashes[i]->hash_sum[j] & 0xf];
-       }
-       s->hashes[i]->result[s->hashes[i]->byte_length] = 0;
+      if (s->hashes[i]->inuse)
+	{
+	  s->hashes[i]->f_finalize(s->hashes[i]->hash_context,
+				   s->hashes[i]->hash_sum);
+	  
+	  len = s->hashes[i]->byte_length / 2;       
+	  
+	  /* Shorthand to make the code easier to read */
+	  result = s->current_file->hash[i];
+
+	  for (j = 0; j < len ; ++j) 
+	    {
+	      result[2 * j] = hex[(s->hashes[i]->hash_sum[j] >> 4) & 0xf];
+	      result[2 * j + 1] = hex[s->hashes[i]->hash_sum[j] & 0xf];
+	      
+	    }
+	  result[s->hashes[i]->byte_length] = 0;
+	}
     }
-  }
   
   /* RBF - Write filename and filesize into the file_data structure */
 }

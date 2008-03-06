@@ -1,3 +1,13 @@
+2008-03-06 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Reworked hashtable code to return a linked list of 
+	  file_data_t values, complete with status values.
+	  This required me to slightly alter how the program
+	  stores the computed hashes. The current version works,
+	  but is ugly as all get out. It's a great proof of
+	  concept, that's all.
+
+
 2008-03-04 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Working on hashdeep matching, auditing code

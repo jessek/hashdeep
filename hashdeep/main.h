@@ -104,7 +104,7 @@ typedef struct _file_data_t
 {
   char      * hash[NUM_ALGORITHMS];
   uint64_t    file_size;
-  char      * file_name;
+  TCHAR      * file_name;
   int         used;
   /* ID number in set of known hashes. Unique per execution */
   uint64_t    id;  
@@ -112,11 +112,11 @@ typedef struct _file_data_t
 } file_data_t;
 
 
-
 typedef struct _hashtable_entry_t
 {
+  status_t                     status; 
   file_data_t                * data;
-  struct _hashtable_entry_t * next;   
+  struct _hashtable_entry_t  * next;   
 } hashtable_entry_t;
 
 /* HASH_TABLE_SIZE must be at least 16 to the power of HASH_TABLE_SIG_FIGS */
@@ -141,7 +141,10 @@ typedef struct _algorithm_t
   int ( *f_finalize)(void *, unsigned char *);
 
   hashtable_t     * known;
-  unsigned char   * result;
+
+  /* We always store the result in a file_data structure */
+  //  unsigned char   * result;
+
   unsigned char   * hash_sum;
   int             inuse;
   uint64_t        howmany;
@@ -177,9 +180,15 @@ struct _state {
   FILE          * handle;
   unsigned char * buffer;
   uint64_t        total_megs;
+
+  /* We don't want to use s->total_bytes, but it's required for hash.c */
   uint64_t        total_bytes;
+
   uint64_t        bytes_read;
+
+  /* We don't want to use s->full_name, but it's required for hash.c */
   TCHAR         * full_name;
+  
   TCHAR         * short_name;
   TCHAR         * msg;
 
@@ -214,7 +223,7 @@ struct _state {
 /* HASH TABLE */
 void hashtable_init(hashtable_t *t);
 status_t hashtable_add(state *s, hashname_t alg, file_data_t *f);
-status_t hashtable_contains(state *s, hashtable_t *t, file_data_t *f);
+hashtable_entry_t * hashtable_contains(state *s, hashname_t alg);
 
 /* MULTIHASHING */
 void multihash_initialize(state *s);

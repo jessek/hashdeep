@@ -46,10 +46,10 @@ display_hash_simple(state *s)
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {
     if (s->hashes[i]->inuse)
-      printf("%s,", s->hashes[i]->result);
+      printf("%s,", s->current_file->hash[i]);
   }
   
-  display_filename(stdout,s->full_name);
+  display_filename(stdout,s->current_file->file_name);
   fprintf(stdout,"%s", NEWLINE);
 
   return FALSE;
@@ -61,10 +61,13 @@ int display_hash(state *s)
   if (NULL == s)
     return TRUE;
 
+  s->current_file->file_name = s->full_name;
+  s->current_file->file_size = s->total_bytes;
+
   switch (s->primary_function)
     {
     case primary_compute: return display_hash_simple(s);
-    case primary_match: 
+    case primary_match: is_known_file(s); break;
     case primary_match_neg: 
       print_status("Function not implemented yet");
       return FALSE;
@@ -72,9 +75,9 @@ int display_hash(state *s)
     case primary_audit: 
       return audit_update(s);
 
-    default:
-      return FALSE;
     }
+
+  return FALSE;
 }
   
 

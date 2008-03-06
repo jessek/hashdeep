@@ -99,9 +99,11 @@ add_algorithm(state *s,
 
   hashtable_init(s->hashes[pos]->known); 
 
+  /* We always store the result in a file_data_t structure
   s->hashes[pos]->result = (unsigned char *)malloc(len);
   if (NULL == s->hashes[pos]->result)
     return TRUE;
+  */
 
   s->hashes[pos]->hash_sum = (unsigned char *)malloc(len * 2);
   if (NULL == s->hashes[pos]->hash_sum)
@@ -351,7 +353,6 @@ static int process_command_line(state *s, int argc, char **argv)
 	}            
     }
 
-  /* RBF - Add Sanity Checking */
   check_flags_okay(s);
 
   return FALSE;
@@ -365,6 +366,7 @@ static int initialize_state(state *s)
   if (setup_hashing_algorithms(s))
     return TRUE;
 
+  MD5DEEP_ALLOC(file_data_t,s->current_file,1);
   MD5DEEP_ALLOC(TCHAR,s->full_name,PATH_MAX);
   MD5DEEP_ALLOC(TCHAR,s->short_name,PATH_MAX);
   MD5DEEP_ALLOC(TCHAR,s->msg,PATH_MAX);
