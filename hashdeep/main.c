@@ -370,6 +370,7 @@ static int initialize_state(state *s)
   MD5DEEP_ALLOC(TCHAR,s->msg,PATH_MAX);
   MD5DEEP_ALLOC(unsigned char,s->buffer,MD5DEEP_IDEAL_BLOCK_SIZE);
 
+  s->known            = NULL;
   s->piecewise_size   = 0;
   s->primary_function = primary_compute;
   s->mode             = mode_none;

@@ -116,7 +116,7 @@ typedef struct _file_data_t
 typedef struct _hashtable_entry_t
 {
   file_data_t                * data;
-  struct _hash_table_entry_t * next;   
+  struct _hashtable_entry_t * next;   
 } hashtable_entry_t;
 
 /* HASH_TABLE_SIZE must be at least 16 to the power of HASH_TABLE_SIG_FIGS */
@@ -187,6 +187,7 @@ struct _state {
   int             hashes_loaded;
   uint64_t        next_known_id;
   algorithm_t   * hashes[NUM_ALGORITHMS];
+  file_data_t   * known;
 
   int             banner_displayed;
 
@@ -212,8 +213,8 @@ struct _state {
 
 /* HASH TABLE */
 void hashtable_init(hashtable_t *t);
-status_t hashtable_add(state *s, file_data_t *f);
-status_t hashtable_contains(state *s, file_data_t *f);
+status_t hashtable_add(state *s, hashname_t alg, file_data_t *f);
+status_t hashtable_contains(state *s, hashtable_t *t, file_data_t *f);
 
 /* MULTIHASHING */
 void multihash_initialize(state *s);

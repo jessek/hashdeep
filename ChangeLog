@@ -1,6 +1,8 @@
 2008-03-04 Jesse Kornblum <md5deep@jessekornblum.com>
 
-	* Working on matching, auditing code
+	* Working on hashdeep matching, auditing code
+
+	* Added a file_data_t, known, to the hashdeep state variable
 	
 
 2008-03-04 Jesse Kornblum <md5deep@jessekornblum.com>

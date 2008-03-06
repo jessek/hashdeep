@@ -8,7 +8,7 @@ void setup_audit(state *s)
   s->match_exact   = 0;
   s->match_partial = 0;
   s->match_moved   = 0;
-  s->match_unused  = s->next_known_id;
+  //  s->match_unused  = s->next_known_id;
   s->match_unknown = 0;
   s->match_total   = 0;
   s->match_expect  = 0;
@@ -17,6 +17,17 @@ void setup_audit(state *s)
 
 int audit_status(state *s)
 {
+  file_data_t * tmp = s->known;
+
+  s->match_unused = 0;
+
+  while (tmp != NULL)
+    {
+      if ( ! tmp->used)
+	s->match_unused++;
+      tmp = tmp->next;
+    }
+
   return (0 == s->match_unused  && 
 	  0 == s->match_unknown && 
 	  0 == s->match_moved);
