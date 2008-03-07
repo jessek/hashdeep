@@ -5,7 +5,7 @@
 
 status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
 {
-  int partial_match = FALSE;
+  int partial_match = FALSE, partial_failure = FALSE;
   hashname_t i;
   
   if (NULL == a || NULL == b || NULL == s)
@@ -17,17 +17,21 @@ status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
   {
     if (s->hashes[i]->inuse)
     {
-      if (!(STRINGS_EQUAL(a->hash[i],b->hash[i])))
-      {
-	if (partial_match)
-	  return status_partial_match;
-	else
-	  return status_no_match;
-	
+      if (STRINGS_EQUAL(a->hash[i],b->hash[i]))
 	partial_match = TRUE;
-      }
+      else
+	partial_failure = TRUE;
     }
   }
+
+  if (partial_failure)
+    {
+      if (partial_match)
+	return status_partial_match;
+      else
+	return status_no_match;
+    }
+
   
   if (a->file_size != b->file_size)
     return status_file_size_mismatch;
@@ -144,12 +148,11 @@ void hashtable_destroy(hashtable_entry_t *e)
   if (NULL == e)
     return;
   
-  tmp = e->next;
-  while (e != NULL)
+ while (e != NULL)
     {
+      tmp = e->next;
       free(e);
       e = tmp;
-      tmp = e->next;
     }
 }
 
@@ -160,7 +163,7 @@ hashtable_entry_t *
 hashtable_contains(state *s, hashname_t alg)
 {
   hashtable_entry_t *ret = NULL, *new, *temp, *last = NULL;
-  hashtable_t *t = s->hashes[alg]->known;
+  hashtable_t *t; 
   uint64_t key;
   file_data_t * f;
   status_t status;
@@ -173,17 +176,20 @@ hashtable_contains(state *s, hashname_t alg)
     internal_error("%s: current_file is in hashtable_contains", __progname);
 
   key = translate(f->hash[alg]);
+  t   = s->hashes[alg]->known;
 
   if (NULL == t->member[key])
     return NULL;
 
-  print_status("Found one or more hits.");
+  //  print_status("Found one or more possible hits.");
   
   temp = t->member[key];
 
   status = file_data_compare(s,temp->data,f);
+  //  print_status("First entry %d", status);
   if (status != status_no_match)
     {
+      //      print_status("hit on first entry %d", status);
       ret = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
       ret->next = NULL;
       ret->status = status;

@@ -1,6 +1,0 @@
-%%%% HASHDEEP-1.0
-%%%% size,md5,sha1,sha256,tiger,whirlpool,filename
-## Invoked from: /Users/jessekornblum/Documents/research/md5deep/src-2.0/hashdeep
-## $ ./hashdeep -c all Makefile main.h 
-18355,7a89afa2a871c1c02c94f5a7cfc62702,f5a8ddd2b9b9c3d55f1fefa24870453a0847ab65,707eba4a991f820b264c4b8f86745a4c147e05d13c5e9a59d5b01d8c2ab9442d,c14bd644684671a1d19815b0fcf1a7f63c431dcedeb02de9,238191a0e187d673a0070d24d679e3f0a9c91ee9ef7b275885a35ba4dd8cd0c0b1189a4a2ffc29a854ac4bdeb3fcab54f14df21b7dd526b1f91d7ccd09693172,/Users/jessekornblum/Documents/research/md5deep/src-2.0/hashdeep/Makefile
-5960,1578cc056c679fbe49cd1bb66d3b4585,0ac4e43e69cff6ca25489e71d60ef3b924c55615,f72f745ff428b27746d81dfef4b26f455bd01773c8221896a57e59a277d3fdcf,fd9df0d74db3319b61536b87467ae150f862d96a33ff2235,59bf75a2e2866da11244fbf01c1cf55991fe95520d16372980a7231239cfeb5d2642bdb23ea2f12e21f101d499a418f8c4cd5375339b440a627b0375f3f5058e,/Users/jessekornblum/Documents/research/md5deep/src-2.0/hashdeep/main.h

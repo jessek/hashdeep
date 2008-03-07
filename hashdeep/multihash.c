@@ -16,7 +16,7 @@ void multihash_initialize(state *s)
 	     RBF - only executed once? */
 	  if (NULL == s->current_file->hash[i])
 	    {
-	      s->current_file->hash[i] = (char *)malloc(sizeof(char) * s->hashes[i]->byte_length);
+	      s->current_file->hash[i] = (char *)malloc(sizeof(char) * s->hashes[i]->byte_length * 2);
 	      if (NULL == s->current_file->hash[i])
 		fatal_error(s,"%s: Out of memory", __progname);
 	    }

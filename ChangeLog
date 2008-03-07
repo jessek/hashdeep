@@ -1,3 +1,15 @@
+2008-03-07 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Updating audit mode to not use is_known_file
+	  function. This should help make the code cleaner.
+
+	* Fixed file_data_compare to handle files where
+	  the first hash doesn't match but the rest of 
+	  them do.
+
+	* Added WSTRINGS_EQUAL(A,B) macro to compare two TCHARs.
+	
+
 2008-03-06 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Reworked hashtable code to return a linked list of 

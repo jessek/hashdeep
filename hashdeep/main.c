@@ -57,8 +57,9 @@ static void check_flags_okay(state *s)
   */
 
   sanity_check(s,
-	       (s->mode & mode_which) && 
-	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)), 
+	       ((s->mode & mode_which) && 
+		(s->primary_function != primary_match && 
+		 s->primary_function != primary_match_neg)),
 	       "Matching or negative matching must be enabled to display which file matched");
   
 
@@ -275,7 +276,7 @@ static int process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"c:mxablk:respvVh")) != -1)
+  while ((i=getopt(argc,argv,"c:MmXxablk:respwvVh")) != -1)
     {
       switch (i)
 	{
@@ -288,8 +289,12 @@ static int process_command_line(state *s, int argc, char **argv)
 	  if (parse_hashing_algorithms(s,optarg))
 	    fatal_error(s,"%s: Unable to parse hashing algorithms",__progname);
 	  break;
-	  
+
+	  /* RBF - Document M and X modes */
+	case 'M': s->mode |= mode_display_hash;	  
 	case 'm': s->primary_function = primary_match;      break;
+
+	case 'X': s->mode |= mode_display_hash;
 	case 'x': s->primary_function = primary_match_neg;  break;
 	case 'a': s->primary_function = primary_audit;      break;
 	  
@@ -373,7 +378,9 @@ static int initialize_state(state *s)
   MD5DEEP_ALLOC(unsigned char,s->buffer,MD5DEEP_IDEAL_BLOCK_SIZE);
 
   s->known            = NULL;
+  s->last             = NULL;
   s->piecewise_size   = 0;
+  s->hash_round       = 0;
   s->primary_function = primary_compute;
   s->mode             = mode_none;
   s->hashes_loaded    = FALSE;

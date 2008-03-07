@@ -33,8 +33,7 @@ static void display_banner(state *s)
 }
 
 
-static int 
-display_hash_simple(state *s)
+int display_hash_simple(state *s)
 {
   hashname_t i;
 
@@ -66,11 +65,12 @@ int display_hash(state *s)
 
   switch (s->primary_function)
     {
-    case primary_compute: return display_hash_simple(s);
-    case primary_match: is_known_file(s); break;
+    case primary_compute: 
+      return display_hash_simple(s);
+
+    case primary_match: 
     case primary_match_neg: 
-      print_status("Function not implemented yet");
-      return FALSE;
+      is_known_file(s); break;
 
     case primary_audit: 
       return audit_update(s);

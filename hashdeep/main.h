@@ -105,7 +105,7 @@ typedef struct _file_data_t
   char      * hash[NUM_ALGORITHMS];
   uint64_t    file_size;
   TCHAR      * file_name;
-  int         used;
+  uint64_t    used;
   /* ID number in set of known hashes. Unique per execution */
   uint64_t    id;  
   struct _file_data_t * next;
@@ -196,7 +196,8 @@ struct _state {
   int             hashes_loaded;
   uint64_t        next_known_id;
   algorithm_t   * hashes[NUM_ALGORITHMS];
-  file_data_t   * known;
+  file_data_t   * known, * last;
+  uint64_t        hash_round;
 
   int             banner_displayed;
 
@@ -224,6 +225,7 @@ struct _state {
 void hashtable_init(hashtable_t *t);
 status_t hashtable_add(state *s, hashname_t alg, file_data_t *f);
 hashtable_entry_t * hashtable_contains(state *s, hashname_t alg);
+void hashtable_destroy(hashtable_entry_t *e);
 
 /* MULTIHASHING */
 void multihash_initialize(state *s);
@@ -235,6 +237,8 @@ void multihash_finalize(state *s);
 status_t load_match_file(state *s, char *fn);
 status_t is_known_file(state *s);
 
+
+int display_hash_simple(state *s);
 
 /* AUDIT MODE */
 
