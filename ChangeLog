@@ -3,6 +3,8 @@
 	* Separated the functions to display positive and negative
 	  match results. Cleaned up the function names for this too.
 	  Also updated audit mode so that it appears to work.
+
+	* Documented -M and -X mode in usage message.
 	
 
 2008-03-07 Jesse Kornblum <md5deep@jessekornblum.com>
