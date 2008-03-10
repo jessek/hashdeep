@@ -191,7 +191,7 @@ display_match(state *s, hashtable_entry_t * match)
   }
 }
 
-status_t is_known_file(state *s)
+status_t display_match_result(state *s)
 {
   status_t status = status_no_match;
   int should_display = FALSE;

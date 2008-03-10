@@ -235,8 +235,7 @@ void multihash_finalize(state *s);
 
 /* MATCHING MODES */
 status_t load_match_file(state *s, char *fn);
-status_t is_known_file(state *s);
-
+status_t display_match_result(state *s);
 
 int display_hash_simple(state *s);
 

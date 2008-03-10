@@ -55,13 +55,11 @@ int display_hash_simple(state *s)
 }
 
 
+/* This function is called by hash.c when the hashing operation is complete. */
 int display_hash(state *s)
 {
   if (NULL == s)
     return TRUE;
-
-  s->current_file->file_name = s->full_name;
-  s->current_file->file_size = s->total_bytes;
 
   switch (s->primary_function)
     {
@@ -70,11 +68,10 @@ int display_hash(state *s)
 
     case primary_match: 
     case primary_match_neg: 
-      is_known_file(s); break;
+      return display_match_result(s);
 
     case primary_audit: 
       return audit_update(s);
-
     }
 
   return FALSE;

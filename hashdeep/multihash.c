@@ -78,8 +78,9 @@ void multihash_finalize(state *s)
 	  result[s->hashes[i]->byte_length] = 0;
 	}
     }
-  
-  /* RBF - Write filename and filesize into the file_data structure */
+
+  s->current_file->file_name = s->full_name;
+  s->current_file->file_size = s->total_bytes;
 }
 
 
