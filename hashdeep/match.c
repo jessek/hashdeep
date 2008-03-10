@@ -117,9 +117,8 @@ status_t load_match_file(state *s, char *fn)
   }
   
   add_RBF_hash(s,
-	       _TEXT("/fake/dev/null"),
-	       "d41d8cd98f00b204e9800998ecf8427f",
-	       //	       "d41d8cd98f00b204e9800998ecf8427e",
+	       _TEXT("/dev/null"),
+	       "d41d8cd98f00b204e9800998ecf8427e",
 	       "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 	       0);
 
@@ -127,7 +126,7 @@ status_t load_match_file(state *s, char *fn)
 #ifdef __LINUX__
 	       _TEXT("/home/jdoe/md5deep/svn/trunk/hashdeep/abc"),
 #else
-	       _TEXT("/Users/jessekornblum/Documents/research/md5deep/svn/trunk/hashdeep/abc"),
+	       _TEXT("/Users/jessek/projects/md5deep/hashdeep/abc"),
 #endif
 	       "900150983cd24fb0d6963f7d28e17f72",
 	       "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
@@ -231,13 +230,16 @@ status_t display_match_neg(state *s)
 
 status_t display_match_result(state *s)
 {
-  TCHAR * matched_filename;
-  status_t status = status_no_match;
-  int should_display; // Was FALSE for ordinary match
-  hashtable_entry_t * ret , * tmp;
+  hashtable_entry_t *ret , *tmp;
+  TCHAR * matched_filename = NULL;
+  int should_display; 
   hashname_t i;
-  uint64_t my_round = s->hash_round;
+  uint64_t my_round;
 
+  if (NULL == s)
+    fatal_error(s,"%s: NULL state in display_match_result", __progname);
+
+  my_round = s->hash_round;
   s->hash_round++;
   if (my_round > s->hash_round)
       fatal_error(s,"%s: Too many input files", __progname);
@@ -265,6 +267,7 @@ status_t display_match_result(state *s)
 	case status_file_size_mismatch:
 	case status_partial_match:
 
+	  /* We only want to display a partial hash error once per input file */
 	  if (tmp->data->used != s->hash_round)
 	  {
 	    tmp->data->used = s->hash_round;
@@ -274,10 +277,13 @@ status_t display_match_result(state *s)
 	    fprintf(stderr,"%s", NEWLINE);
 
 	    /* Technically this wasn't a match, so we're still ok
-	       to not display this result at the end as not matching */
+	       with the match result we already have */
 	    break;
 	  }
-	    
+	
+	case status_unknown_error:
+	  return status_unknown_error;
+
 	default:
 	  break;
 	}
@@ -289,7 +295,7 @@ status_t display_match_result(state *s)
     }
   }
 
-  /* RBF - Can this code be abstracted? */
+  /* RBF - Can this code be abstracted? Should it be? */
   if (should_display)
   {
     if (s->mode & mode_display_hash)
@@ -300,11 +306,14 @@ status_t display_match_result(state *s)
       if (s->mode & mode_which && primary_match == s->primary_function)
       {
 	fprintf(stdout," matches ");
-	display_filename(stdout,matched_filename);
+	if (NULL == matched_filename)
+	  fprintf(stdout,"(unknown file)");
+	else
+	  display_filename(stdout,matched_filename);
       }
       print_status("");
     }
   }
   
-  return status;
+  return status_ok;
 }

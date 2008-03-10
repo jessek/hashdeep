@@ -67,10 +67,8 @@ int display_hash(state *s)
       return display_hash_simple(s);
 
     case primary_match: 
-
     case primary_match_neg: 
       return display_match_result(s);
-      //      return display_match_neg(s);
 
     case primary_audit: 
       return audit_update(s);

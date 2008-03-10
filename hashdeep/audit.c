@@ -49,8 +49,10 @@ int display_audit_results(state *s)
     print_status("%s: Audit passed", __progname);
   
   /* RBF - How should we display the audit results? */
-  if (s->mode & mode_verbose || status)
+  if (s->mode & mode_verbose)
     {
+      /* RBF - Should we display the known files that we're never matched? */
+      
       /*
       print_status("   Input files examined: %"PRIu64, s->match_total);
       print_status("  Known files expecting: %"PRIu64, s->match_expect);
@@ -67,57 +69,14 @@ int display_audit_results(state *s)
   return status;
 }
 
-static void update_audit_match(state *s, hashtable_entry_t * matches)
-{
-  switch(matches->status)
-  {
-  case status_match:
-    display_filename(stdout,matches->data->file_name);
-    print_status(" ok");
-    s->match_exact++;
-    break;
-    
-    /* RBF - This shouldn't happen? */
-  case status_no_match:
-    s->match_unknown++;
-    break;
-    
-  case status_file_name_mismatch:
-    /* Implies all hashes and file size match */   
-    if (s->mode & mode_more_verbose)
-      {
-	display_filename(stdout,matches->data->file_name);
-	fprintf(stdout," moved to ");
-	display_filename(stdout,s->current_file->file_name);
-	print_status("");
-      }
-    s->match_moved++;
-    break;
-    
-    /* Hash collision */
-  case status_partial_match:
-    s->match_partial++;
-    break;
-    
-  case status_file_size_mismatch:
-    /* Implies all hashes match, sizes different */
-    s->match_partial++;
-    break;
-    
-  case status_unknown_error:
-    // RBF - What do we do here?
-    
-  default:
-    break;
-  }
-}
-
 
 int audit_update(state *s)
 {
+  int no_match = FALSE, exact_match = FALSE, moved = FALSE, partial = FALSE;
   hashname_t i;
   hashtable_entry_t * matches, * tmp;
   uint64_t my_round = s->hash_round;
+  TCHAR * matched_file = NULL;
   
   if (NULL == s)
     return TRUE;
@@ -139,34 +98,97 @@ int audit_update(state *s)
     if (s->hashes[i]->inuse)
     {
       matches = hashtable_contains(s,i);
-
-      if (NULL == matches)
+      tmp = matches;
+      if (NULL == tmp)
       {
-	/* No matches found */
-	if (s->mode & mode_more_verbose)
+	no_match = TRUE;
+      }
+      else while (tmp != NULL)
+      {
+	if (tmp->data->used != s->hash_round)
 	{
-	  display_filename(stdout,s->current_file->file_name);
-	  print_status(" did not match");
+	  tmp->data->used = s->hash_round;
+	  switch (tmp->status) {
+	  case status_match:
+	    exact_match = TRUE;
+	    break;
+    
+	    /* RBF - This shouldn't happen? */
+	  case status_no_match:
+	    break;
+    
+	  case status_file_name_mismatch:
+	    moved = TRUE;
+	    break;
+    
+	    /* Hash collision */
+	  case status_partial_match:
+	    partial = TRUE;
+	    matched_file = tmp->data->file_name;
+	    break;
+	    
+	  case status_file_size_mismatch:
+	    /* Implies all hashes match, sizes different */
+	    partial = TRUE;
+	    break;
+	    
+	  case status_unknown_error:
+	    // RBF - What do we do here?
+	    
+	    
+	  default:
+	    break;
+	  }
 	}
-	
-	s->match_unknown++;
-	return FALSE;
-      }
-      else if (NULL == matches->next)
-      {
-	if (matches->data->used != 0)
-	  
 
-	update_audit_match(s,matches);
-	hashtable_destroy(matches);
+	tmp = tmp->next;
       }
-      else
-      {
-	print_status("Found multiple matches for %s", s->current_file->file_name);
-	hashtable_destroy(matches);
-      }
+      
+      hashtable_destroy(matches);
     }
   }
 
-  return FALSE;
+
+  if (exact_match)
+  {
+    if (s->mode & mode_more_verbose)
+    {
+      display_filename(stdout,matches->data->file_name);
+      print_status(" ok");
+    }
+    s->match_exact++;
+  }
+  else if (no_match)
+  {
+    s->match_unknown++;
+    if (s->mode & mode_more_verbose)
+    {
+      display_filename(stdout,s->current_file->file_name);
+      print_status(": No match");
+    }
+  } 
+  else if (moved)
+  {
+    if (s->mode & mode_more_verbose)
+    {
+	display_filename(stdout,matches->data->file_name);
+	fprintf(stdout," moved to ");
+	display_filename(stdout,s->current_file->file_name);
+	print_status("");
+    }
+    s->match_moved++;
+  }
+  else if (partial)
+  {
+    if (s->mode & mode_more_verbose)
+    {
+	display_filename(stdout,matches->data->file_name);
+	fprintf(stdout," partially matched ");
+	display_filename(stdout,matched_file);
+	print_status("");
+    }
+    s->match_partial++;
+  }
+  
+  return status_ok;
 }
