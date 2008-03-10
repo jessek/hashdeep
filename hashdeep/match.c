@@ -117,14 +117,9 @@ status_t load_match_file(state *s, char *fn)
   }
   
   add_RBF_hash(s,
-	       _TEXT("/dev/null"),
-	       "d41d8cd98f00b204e9800998ecf8427e",
-	       "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-	       0);
-
-  add_RBF_hash(s,
-	       _TEXT("/home/jdoe/md5deep/svn/trunk/hashdeep/bar"),
-	       "d41d8cd98f00b204e9800998ecf8427e",
+	       _TEXT("/fake/dev/null"),
+	       "d41d8cd98f00b204e9800998ecf8427f",
+	       //	       "d41d8cd98f00b204e9800998ecf8427e",
 	       "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 	       0);
 
@@ -158,43 +153,87 @@ char * status_to_str(status_t s)
   }      
 }
 
-static void
-display_match(state *s, hashtable_entry_t * match)
+
+status_t display_match_neg(state *s)
 {
-  /* RBF - Update this to display partial hash warnings */
-	  
-  if (s->mode & mode_display_hash)
-    display_hash_simple(s);
-  else
+  hashtable_entry_t * ret, * tmp;
+  int should_display = TRUE;
+  hashname_t i;
+  uint64_t my_round;
+ 
+  if (NULL == s)
+    return status_unknown_error;
+
+  my_round = s->hash_round;
+  s->hash_round++;
+  if (my_round > s->hash_round)
+    fatal_error(s,"%s: Too many input files", __progname);
+
+  for (i = 0 ; i < NUM_ALGORITHMS; ++i)
   {
-    display_filename(stdout,s->current_file->file_name);
-    if (s->mode & mode_which)
+    if (s->hashes[i]->inuse)
     {
-      fprintf(stdout," matches ");
-      display_filename(stdout,match->data->file_name);
-    }
+      ret = hashtable_contains(s,i);
+      tmp = ret;
+      while (tmp != NULL)
+      {
+	switch (tmp->status) {
 
-    print_status("");
+	  /* If only the name is different, it's still really a match
+	     as far as we're concerned. */
+	case status_file_name_mismatch:
+	case status_match:
+	  should_display = FALSE;
+	  break;
+	  
+	case status_file_size_mismatch:
+	case status_partial_match:
 
-    switch (match->status) {
-    case status_partial_match:
-      print_error_unicode(s,s->current_file->file_name,"Only some hashes matched. Hash collision!");
-      break;
+	  if (tmp->data->used != s->hash_round)
+	  {
+	    tmp->data->used = s->hash_round;
+	    display_filename(stderr,s->current_file->file_name);
+	    fprintf(stderr,": WARNING: Partial match ");
+	    display_filename(stderr,tmp->data->file_name);
+	    fprintf(stderr,"%s", NEWLINE);
+
+	    /* Technically this wasn't a match, so we're still ok
+	       to display this result at the end as not matching */
+	    break;
+	  }
+	    
+	default:
+	  break;
+	}
       
-    case status_file_size_mismatch:
-      print_error_unicode(s,s->current_file->file_name,"File size of input does not match known file. Hash collision!");
-      break;
-      
-      /* We don't need to print warnings on file name changes */
-    default: break;
+	tmp = tmp->next;
+      }
+
+      hashtable_destroy(ret);
     }
   }
+
+  if (should_display)
+  {
+    if (s->mode & mode_display_hash)
+      display_hash_simple(s);
+    else
+    {
+      display_filename(stdout,s->current_file->file_name);
+      print_status("");
+    }
+  }
+
+  return status_ok;
 }
+
+
 
 status_t display_match_result(state *s)
 {
+  TCHAR * matched_filename;
   status_t status = status_no_match;
-  int should_display = FALSE;
+  int should_display; // Was FALSE for ordinary match
   hashtable_entry_t * ret , * tmp;
   hashname_t i;
   uint64_t my_round = s->hash_round;
@@ -203,47 +242,69 @@ status_t display_match_result(state *s)
   if (my_round > s->hash_round)
       fatal_error(s,"%s: Too many input files", __progname);
 
+  should_display = (primary_match_neg == s->primary_function);
+
   for (i = 0 ; i < NUM_ALGORITHMS; ++i)
   {
-    /* RBF - Do we need to do this for each hash algorithm? */
     if (s->hashes[i]->inuse)
     {
       ret = hashtable_contains(s,i);
-      if (ret != NULL && primary_match == s->primary_function)
-	{
-	  tmp = ret;
-	  while (tmp != NULL)
-	    {
-	      if (tmp->data->used != s->hash_round)
-		{
-		  tmp->data->used = s->hash_round;
-	
-		  display_match(s,tmp);
-	  	
-		
-		  status = tmp->status;
-		}
-	      
-	      tmp = tmp->next;
-	    }
-	  hashtable_destroy(ret);
+      tmp = ret;
+      while (tmp != NULL)
+      {
+	switch (tmp->status) {
+
+	  /* If only the name is different, it's still really a match
+	     as far as we're concerned. */
+	case status_file_name_mismatch:
+	case status_match:
+	  matched_filename = tmp->data->file_name;
+	  should_display = (primary_match_neg != s->primary_function);
+	  break;
+	  
+	case status_file_size_mismatch:
+	case status_partial_match:
+
+	  if (tmp->data->used != s->hash_round)
+	  {
+	    tmp->data->used = s->hash_round;
+	    display_filename(stderr,s->current_file->file_name);
+	    fprintf(stderr,": WARNING: Partial match ");
+	    display_filename(stderr,tmp->data->file_name);
+	    fprintf(stderr,"%s", NEWLINE);
+
+	    /* Technically this wasn't a match, so we're still ok
+	       to not display this result at the end as not matching */
+	    break;
+	  }
+	    
+	default:
+	  break;
 	}
       
-      else if (primary_match_neg == s->primary_function)
-	should_display = (NULL == ret);
+	tmp = tmp->next;
+      }
+
+      hashtable_destroy(ret);
     }
   }
 
+  /* RBF - Can this code be abstracted? */
   if (should_display)
+  {
+    if (s->mode & mode_display_hash)
+      display_hash_simple(s);
+    else
     {
-      if (s->mode & mode_display_hash)
-	display_hash_simple(s);
-      else
-	{
-	  display_filename(stdout,s->current_file->file_name);
-	  print_status("");
-	}
+      display_filename(stdout,s->current_file->file_name);
+      if (s->mode & mode_which && primary_match == s->primary_function)
+      {
+	fprintf(stdout," matches ");
+	display_filename(stdout,matched_filename);
+      }
+      print_status("");
     }
+  }
   
   return status;
 }
