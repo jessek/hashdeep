@@ -1,3 +1,10 @@
+2008-03-11 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Separated the functions to display positive and negative
+	  match results. Cleaned up the function names for this too.
+	  Also updated audit mode so that it appears to work.
+	
+
 2008-03-07 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Updating audit mode to not use is_known_file
