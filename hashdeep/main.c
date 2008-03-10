@@ -8,9 +8,10 @@
 static void usage(void) 
 {
   print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
-  print_status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,__progname);
+  /* print_status("%s %s [OPTION]... [FILES]...",CMD_PROMPT,__progname); */
+  print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-V|-h] ... [FILES]...",CMD_PROMPT,__progname);
 
-  print_status("See the man page or README.txt file for the full list of options");
+  print_status("");
 
   print_status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-1");
   print_status("         available values are md5,sha1,sha256,tiger,whirlpool");
@@ -18,18 +19,18 @@ static void usage(void)
   print_status("-a - Audit mode. Validates FILES against known hashes. Requires -k");
   print_status("-m - Matching mode. Requires -k");
   print_status("-x - Negative matching mode. Requires -k");
-
+  print_status("-w - In -m mode, displays which known file was matched");
+  print_status("-M and -X act like -m and -x, but display hashes of matching files");
   print_status("-k - Add a file of known hashes");
 
   print_status("-r - recursive mode. All subdirectories are traversed");
   print_status("-e - compute estimated time remaining for each file");
   print_status("-s - silent mode. Suppress all error messages");
   print_status("-p - piecewise mode. Files are broken into blocks for hashing");
-  print_status("-w - displays which known file generated a match");
   print_status("-b - prints only the bare name of files; all path information is omitted");
   print_status("-l - print relative paths for filenames");
-  print_status("-V - display version number and exit");
   print_status("-v - Verbose mode. Use again to be more verbose.");
+  print_status("-V - display version number and exit");
 }
 
 
