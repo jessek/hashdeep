@@ -280,6 +280,7 @@ static int read_file(state *s, char *fn, FILE *handle)
       fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
 		  __progname, fn, line_number);
 
+
     /* RBF - Are we hardcoded to 10 values? */
     char **ap, *argv[10];
     for (ap = argv ; (*ap = strsep(&tmp,",")) != NULL ; )

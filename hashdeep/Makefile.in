@@ -60,8 +60,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(hashdeep_SOURCES)
-DIST_SOURCES = $(hashdeep_SOURCES)
+SOURCES = $(hashdeep_SOURCES) $(EXTRA_hashdeep_SOURCES)
+DIST_SOURCES = $(hashdeep_SOURCES) $(EXTRA_hashdeep_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -173,8 +173,9 @@ ${COMMON_DIR}/tiger.c    \
 ${COMMON_DIR}/whirlpool.c 
 
 hashdeep_SOURCES = main.c audit.c match.c multihash.c display.c \
-                   hashtable.c ${COMMON_SRC}
+                   hashtable.c ${COMMON_SRC} ${EXTRA_HASHDEEP}
 
+EXTRA_hashdeep_SOURCES = lib-strsep.c
 EXTRA_DIST = main.h
 all: all-am
 
@@ -249,6 +250,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hashtable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/helpers.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lib-strsep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Po@am__quote@

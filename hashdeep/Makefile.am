@@ -19,6 +19,8 @@ ${COMMON_DIR}/tiger.c    \
 ${COMMON_DIR}/whirlpool.c 
 
 hashdeep_SOURCES = main.c audit.c match.c multihash.c display.c \
-                   hashtable.c ${COMMON_SRC}
+                   hashtable.c ${COMMON_SRC} ${EXTRA_HASHDEEP}
+
+EXTRA_hashdeep_SOURCES = lib-strsep.c
 
 EXTRA_DIST = main.h

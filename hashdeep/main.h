@@ -6,8 +6,12 @@
 
 #include "common.h"
 
+#ifndef HAVE_STRSEP
+# include "strsep.h"
+#endif
 
 /* HOW TO ADD A NEW HASHING ALGORITHM
+   RBF - Update HOW TO ADD A NEW HASHING ALGORITHM
 
   * Add a value for the algorithm to the hashname_t enumeration
 
