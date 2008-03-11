@@ -200,76 +200,55 @@ static int initialize_hashing_algorithms(state *s)
 }
 
 
-/* RBF - Replace homebrew crap with strtok */
 static int parse_hashing_algorithms(state *s, char *val)
 {
-  size_t len = strlen(val), pos = 0, local_pos;
-  char buf[ALGORITHM_NAME_LENGTH];
-  
-  if (0 == len || NULL == s)
+  uint8_t i;
+  char **ap, *buf[MAX_KNOWN_COLUMNS];
+
+  if (NULL == s || NULL == val)
     return TRUE;
-  
-  while (pos < len)
+
+  for (ap = buf ; (*ap = strsep(&val,",")) != NULL ; )
+    if (*ap != '\0')
+      if (++ap >= &buf[MAX_KNOWN_COLUMNS])
+	break;
+
+  for (i = 0 ; i < MAX_KNOWN_COLUMNS && buf[i] != NULL ; i++)
   {
-    local_pos = 0;
-    while (val[pos] != ',' && 
-	   pos < len && 
-	   local_pos < ALGORITHM_NAME_LENGTH)
-    {    
-      buf[local_pos] = val[pos];
-      
-      ++pos;
-      ++local_pos;
-    }
-
-    if (',' == val[pos] || pos == len)
+    if (STRINGS_EQUAL(buf[i],"md5"))
+      s->hashes[alg_md5]->inuse = TRUE;
+    
+    else if (STRINGS_EQUAL(buf[i],"sha1") || 
+	     STRINGS_EQUAL(buf[i],"sha-1"))
+      s->hashes[alg_sha1]->inuse = TRUE;
+    
+    else if (STRINGS_EQUAL(buf[i],"sha256") || 
+	     STRINGS_EQUAL(buf[i],"sha-256"))
+      s->hashes[alg_sha256]->inuse = TRUE;
+    
+    else if (STRINGS_EQUAL(buf[i],"tiger"))
+      s->hashes[alg_tiger]->inuse = TRUE;
+    
+    else if (STRINGS_EQUAL(buf[i],"whirlpool"))
+      s->hashes[alg_whirlpool]->inuse = TRUE;
+    
+    else if (STRINGS_EQUAL(buf[i],"all"))
     {
-      buf[local_pos] = 0; 
+      hashname_t count;
+      for (count = 0 ; count < NUM_ALGORITHMS ; ++count)
+	s->hashes[count]->inuse = TRUE;
+      return FALSE;
+    }
       
-      if (STRINGS_EQUAL(buf,"md5"))
-	s->hashes[alg_md5]->inuse = TRUE;
-      
-      else if (STRINGS_EQUAL(buf,"sha1") || 
-	       STRINGS_EQUAL(buf,"sha-1"))
-	s->hashes[alg_sha1]->inuse = TRUE;
-      
-      else if (STRINGS_EQUAL(buf,"sha256") || 
-	       STRINGS_EQUAL(buf,"sha-256"))
-	s->hashes[alg_sha256]->inuse = TRUE;
-      
-      else if (STRINGS_EQUAL(buf,"tiger"))
-	s->hashes[alg_tiger]->inuse = TRUE;
-      
-      else if (STRINGS_EQUAL(buf,"whirlpool"))
-	s->hashes[alg_whirlpool]->inuse = TRUE;
-
-      else if (STRINGS_EQUAL(buf,"all"))
-      {
-	hashname_t count;
-	for (count = 0 ; count < NUM_ALGORITHMS ; ++count)
-	  s->hashes[count]->inuse = TRUE;
-	return FALSE;
-      }
-      
-      else
-      {
-	print_error(s,"%s: %s: Unknown algorithm", __progname, buf);
-	try_msg();
-	exit(EXIT_FAILURE);
-      }
-
-      /* Skip over the comma that's separating this value from the next.
-	 It's okay if we're working with the last value in the string.
-	 The loop invariant is that pos < len (where len is the length
-	 of the string). We won't reference anything out of bounds. */
-      ++pos;
+    else
+    {
+      print_error(s,"%s: %s: Unknown algorithm", __progname, buf);
+      try_msg();
+      exit(EXIT_FAILURE);
     }
     
-    else
-      return TRUE;
   }
-
-
+    
   return FALSE;
 }
 

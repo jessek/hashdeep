@@ -5,98 +5,74 @@
 
 static int parse_hashing_algorithms(state *s, char *fn, char *val)
 {
+  uint8_t i;
   int done = FALSE;
-  size_t len = strlen(val), pos = 0, local_pos;
-  char buf[ALGORITHM_NAME_LENGTH];
+  char **ap, *buf[MAX_KNOWN_COLUMNS];
   /* The first position is always the file size, so we start with an 
      the first position of one. */
   uint8_t order = 1;
   
-  if (0 == len || NULL == s)
+  if (NULL == s || NULL == fn || NULL == val)
     return TRUE;
 
+  for (ap = buf ; (*ap = strsep(&val,",")) != NULL ; )
+    if (*ap != '\0')
+      if (++ap >= &buf[MAX_KNOWN_COLUMNS])
+	break;
 
-
-  /* RBF - Replace homebrew crap with strsep */ 
-  
-  while (pos < len && !done)
+  for (i = 0 ; i < MAX_KNOWN_COLUMNS && buf[i] != NULL ; i++)
   {
-    local_pos = 0;
-    while (val[pos] != ',' && 
-	   pos < len && 
-	   local_pos < ALGORITHM_NAME_LENGTH)
-    {    
-      buf[local_pos] = val[pos];
+    if (STRINGS_EQUAL(buf[i],"md5"))
+    {
+      s->hashes[alg_md5]->inuse = TRUE;
+      s->hash_order[order] = alg_md5;
+    }
+    
+    else if (STRINGS_EQUAL(buf[i],"sha1") || 
+	     STRINGS_EQUAL(buf[i],"sha-1"))
+    {
+      s->hashes[alg_sha1]->inuse = TRUE;
+      s->hash_order[order] = alg_sha1;
+    }
+    
+    else if (STRINGS_EQUAL(buf[i],"sha256") || 
+	     STRINGS_EQUAL(buf[i],"sha-256"))
+    {
+      s->hashes[alg_sha256]->inuse = TRUE;
+      s->hash_order[order] = alg_sha256;
+    }
       
-      ++pos;
-      ++local_pos;
+    else if (STRINGS_EQUAL(buf[i],"tiger"))
+    {
+      s->hashes[alg_tiger]->inuse = TRUE;
+      s->hash_order[order] = alg_tiger;
+    }
+      
+    else if (STRINGS_EQUAL(buf[i],"whirlpool"))
+    {
+      s->hashes[alg_whirlpool]->inuse = TRUE;
+      s->hash_order[order] = alg_whirlpool;
     }
 
-
-    if (',' == val[pos] || pos == len)
+    else if (STRINGS_EQUAL(buf[i],"filename"))
     {
-      buf[local_pos] = 0; 
-      
-      if (STRINGS_EQUAL(buf,"md5"))
-	{
-	  s->hashes[alg_md5]->inuse = TRUE;
-	  s->hash_order[order] = alg_md5;
-	}
-      
-      else if (STRINGS_EQUAL(buf,"sha1") || 
-	       STRINGS_EQUAL(buf,"sha-1"))
-	{
-	  s->hashes[alg_sha1]->inuse = TRUE;
-	  s->hash_order[order] = alg_sha1;
-	}
-      
-      else if (STRINGS_EQUAL(buf,"sha256") || 
-	       STRINGS_EQUAL(buf,"sha-256"))
-	{
-	  s->hashes[alg_sha256]->inuse = TRUE;
-	  s->hash_order[order] = alg_sha256;
-	}
-      
-      else if (STRINGS_EQUAL(buf,"tiger"))
-	{
-	  s->hashes[alg_tiger]->inuse = TRUE;
-	  s->hash_order[order] = alg_tiger;
-	}
-      
-      else if (STRINGS_EQUAL(buf,"whirlpool"))
-	{
-	  s->hashes[alg_whirlpool]->inuse = TRUE;
-	  s->hash_order[order] = alg_whirlpool;
-	}
-
-      else if (STRINGS_EQUAL(buf,"filename"))
+      if (buf[i+1] != NULL)
       {
-	if (pos != len)
-	  {
-	    print_error(s,"%s: %s: Badly formatted file", __progname, fn);
-	    try_msg();
-	    exit(EXIT_FAILURE);
-	  }
-	done = TRUE;
-      }
-      
-      else
-      {
-	print_error(s,"%s: %s: Unknown algorithm", __progname, buf);
+	print_error(s,"%s: %s: Badly formatted file", __progname, fn);
 	try_msg();
 	exit(EXIT_FAILURE);
       }
-
-      /* Skip over the comma that's separating this value from the next.
-	 It's okay if we're working with the last value in the string.
-	 The loop invariant is that pos < len (where len is the length
-	 of the string). We won't reference anything out of bounds. */
-      ++pos;
-      ++order;
+      done = TRUE;
+    }
+      
+    else
+    {
+      print_error(s,"%s: %s: Unknown algorithm", __progname, buf);
+      try_msg();
+      exit(EXIT_FAILURE);
     }
     
-    else
-      return TRUE;
+    ++order;
   }
 
   s->hash_order[order] = alg_unknown;
@@ -165,18 +141,19 @@ identify_file(state *s, char *fn, FILE *handle)
 
   parse_hashing_algorithms(s,fn,buf + 10);
 
-  /*
+#ifdef DEBUG
+  uint8_t i;
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
     print_status("%s: %s", s->hashes[i]->name, s->hashes[i]->inuse?"ON":"-");
 
   print_status("File in order:%ssize", NEWLINE); 
   i = 1;
-  while (s->hash_order[i] != alg_unknown)
+  while (s->hash_order[i] != alg_unknown && i < NUM_ALGORITHMS)
     {
       print_status("%s", s->hashes[s->hash_order[i]]->name);
       ++i;
     }
-  */
+#endif
 
   free(buf);
 
