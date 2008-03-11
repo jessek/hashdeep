@@ -6,15 +6,19 @@
 
 /* So that the usage message fits in a standard DOS window, this
    function should produce no more than 22 lines of text. */
-static void usage(void) 
+static void usage(state *s)
 {
+  hashname_t i;
+
   print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
   print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-V|-h] [FILES]",CMD_PROMPT,__progname);
 
   print_status("");
 
   print_status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-1");
-  print_status("         available values are md5,sha1,sha256,tiger,whirlpool");
+  fprintf(stdout,"     legal values are ");
+  for (i = 0 ; i < NUM_ALGORITHMS ; i++)
+    fprintf(stdout,"%s%s",s->hashes[i]->name,(i+1<NUM_ALGORITHMS)?",":NEWLINE);
 
   print_status("-a - Audit mode. Validates FILES against known hashes. Requires -k");
   print_status("-m - Matching mode. Requires -k");
@@ -242,7 +246,7 @@ static int parse_hashing_algorithms(state *s, char *val)
       
     else
     {
-      print_error(s,"%s: %s: Unknown algorithm", __progname, buf);
+      print_error(s,"%s: Unknown algorithm: %s", __progname, buf[i]);
       try_msg();
       exit(EXIT_FAILURE);
     }
@@ -338,7 +342,7 @@ static int process_command_line(state *s, int argc, char **argv)
 	  exit(EXIT_SUCCESS);
 	  
 	case 'h':
-	  usage();
+	  usage(s);
 	  exit(EXIT_SUCCESS);
 	  
 	default:

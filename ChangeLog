@@ -24,6 +24,8 @@
 
 	* Added comments to configure.ac and Makefile.am
 
+	* Made usage message dynamic to display available algorithms
+
 
 2008-03-11 Jesse Kornblum <md5deep@jessekornblum.com>
 
