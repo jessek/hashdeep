@@ -53,7 +53,6 @@ am_hashdeep_OBJECTS = main.$(OBJEXT) audit.$(OBJEXT) match.$(OBJEXT) \
 	$(am__objects_1)
 hashdeep_OBJECTS = $(am_hashdeep_OBJECTS)
 am__DEPENDENCIES_1 =
-hashdeep_DEPENDENCIES = $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -179,6 +178,7 @@ hashdeep_SOURCES = main.c audit.c match.c multihash.c display.c \
 
 EXTRA_hashdeep_SOURCES = lib-strsep.c
 hashdeep_LDADD = ${EXTRA_HASHDEEP}
+hashdeep_DEPENDENCIES = ${EXTRA_HASHDEEP}
 EXTRA_DIST = main.h
 all: all-am
 

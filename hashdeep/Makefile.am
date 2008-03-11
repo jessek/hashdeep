@@ -20,5 +20,6 @@ hashdeep_SOURCES = main.c audit.c match.c multihash.c display.c \
                    hashtable.c ${COMMON_SRC}
 EXTRA_hashdeep_SOURCES = lib-strsep.c
 hashdeep_LDADD = ${EXTRA_HASHDEEP}
+hashdeep_DEPENDENCIES = ${EXTRA_HASHDEEP}
 
 EXTRA_DIST = main.h
