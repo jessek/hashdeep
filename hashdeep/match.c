@@ -15,6 +15,8 @@ static int parse_hashing_algorithms(state *s, char *fn, char *val)
   if (0 == len || NULL == s)
     return TRUE;
 
+
+
   /* RBF - Replace homebrew crap with strsep */ 
   
   while (pos < len && !done)
@@ -281,7 +283,7 @@ static int read_file(state *s, char *fn, FILE *handle)
 		  __progname, fn, line_number);
 
 
-    /* RBF - Are we hardcoded to 10 values? */
+    /* RBF - Are we hardcoded to 10 values for strsep? */
     char **ap, *argv[10];
     for (ap = argv ; (*ap = strsep(&tmp,",")) != NULL ; )
       if (**ap != '\0')

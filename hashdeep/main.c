@@ -9,7 +9,7 @@ static void usage(void)
 {
   print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
   /* print_status("%s %s [OPTION]... [FILES]...",CMD_PROMPT,__progname); */
-  print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-V|-h] ... [FILES]...",CMD_PROMPT,__progname);
+  print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXnrespblvv] [-V|-h] ... [FILES]...",CMD_PROMPT,__progname);
 
   print_status("");
 
@@ -48,23 +48,7 @@ static void check_flags_okay(state *s)
 	       (s->mode & mode_relative) && (s->mode & mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
-  /* If we try to display non-matching files but haven't initialized the
-     list of matching files in the first place, bad things will happen. */
-  /* RBF - Will hashdeep have non-matching mode? 
-  sanity_check(s,
-	       (s->mode & mode_not_matched) && 
-	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)),
-	       "Matching or negative matching must be enabled to display non-matching files");
-  */
-
-  sanity_check(s,
-	       ((s->mode & mode_which) && 
-		(s->primary_function != primary_match && 
-		 s->primary_function != primary_match_neg)),
-	       "Matching or negative matching must be enabled to display which file matched");
-  
-
-  // Additional sanity checks will go here as needed... 
+  /* Additional sanity checks will go here as needed... */
 }
 
 
