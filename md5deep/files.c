@@ -82,18 +82,6 @@ int valid_hash(state *s, char *buf)
 }
 
 
-// Remove the newlines, if any. Works on both DOS and *nix newlines
-void chop_line(char *s)
-{
-  size_t pos = strlen(s);
-
-  if (s[pos - 2] == '\r' && s[pos - 1] == '\n')
-    s[pos - 2] = 0;
-  else if (s[pos-1] == '\n')
-    s[pos - 1] = 0;
-}
-
-
 int find_plain_hash(state *s, char *buf, char *known_fn) 
 {
   size_t p = HASH_STRING_LENGTH;
@@ -260,7 +248,7 @@ static int check_for_encase(state *s, FILE *f)
   
   if (sizeof(ENCASE_HASH_HEADER) != fread(h,1,sizeof(ENCASE_HASH_HEADER),f))
   {
-    free(f);
+    free(h);
     return FALSE;
   }
   
