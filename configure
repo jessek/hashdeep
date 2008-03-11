@@ -6663,7 +6663,7 @@ echo "${ECHO_T}$ac_cv_func_strsep" >&6; }
 if test $ac_cv_func_strsep = yes; then
   :
 else
-  EXTRA_HASHDEEP=lib-strsep.c
+  EXTRA_HASHDEEP=lib-strsep.$(OBJEXT)
 fi
 
 
