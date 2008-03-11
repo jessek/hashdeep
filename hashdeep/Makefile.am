@@ -1,5 +1,3 @@
-
-
 AM_LDFLAGS = -lm
 INCLUDES   = -I@top_srcdir@/include
 COMMON_DIR = @top_srcdir@/common
@@ -21,7 +19,6 @@ ${COMMON_DIR}/whirlpool.c
 hashdeep_SOURCES = main.c audit.c match.c multihash.c display.c \
                    hashtable.c ${COMMON_SRC}
 hashdeep_LDADD = ${EXTRA_HASHDEEP}
-hashdeep_DEPENDENCIES= ${EXTRA_HASHDEEP}
 
 EXTRA_hashdeep_SOURCES = lib-strsep.c
 
