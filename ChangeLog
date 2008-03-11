@@ -5,6 +5,9 @@
 	  values. This is for one instance in match.c, need to update
 	  the others.
 
+	* While reading files on known hashes, convert filenames
+	  to Unicode before storing.
+
 
 2008-03-11 Jesse Kornblum <md5deep@jessekornblum.com>
 
