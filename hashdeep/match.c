@@ -8,13 +8,14 @@ static int parse_hashing_algorithms(state *s, char *fn, char *val)
   int done = FALSE;
   size_t len = strlen(val), pos = 0, local_pos;
   char buf[ALGORITHM_NAME_LENGTH];
-  /* The first position is always the file size */
+  /* The first position is always the file size, so we start with an 
+     the first position of one. */
   uint8_t order = 1;
   
   if (0 == len || NULL == s)
     return TRUE;
 
-  /* RBF - Replace homebrew crap with strtok */
+  /* RBF - Replace homebrew crap with strsep */ 
   
   while (pos < len && !done)
   {
@@ -253,6 +254,23 @@ int add_RBF_hash(state *s, TCHAR *fn, char *md5, char *sha256, uint64_t size)
   return FALSE;
 }
 
+void display_file_data(state *s, file_data_t * t)
+{
+  int i;
+
+  fprintf(stdout,"Filename: ");
+  display_filename(stdout,t->file_name);
+  fprintf(stdout,"%s",NEWLINE);
+
+  print_status("Size: %"PRIu64, t->file_size);
+
+  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+    print_status("%s: %s", s->hashes[i]->name, t->hash[i]);
+  print_status("");
+}
+
+ 
+
 
 static int read_file(state *s, char *fn, FILE *handle)
 {
@@ -272,7 +290,7 @@ static int read_file(state *s, char *fn, FILE *handle)
     line_number++;
     chop_line(buf);
 
-    if (buf[0] == '#')
+    if ('#' == buf[0])
       continue;
 
     t = (file_data_t *)malloc(sizeof(file_data_t));
@@ -287,7 +305,6 @@ static int read_file(state *s, char *fn, FILE *handle)
       fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
 		  __progname, fn, line_number);
 
-
     char **ap, *argv[10];
     for (ap = argv ; (*ap = strsep(&tmp,",")) != NULL ; )
       if (**ap != '\0')
@@ -296,28 +313,19 @@ static int read_file(state *s, char *fn, FILE *handle)
 
     /* The first value is always the file size */
     t->file_size = (uint64_t)strtoll(argv[0],NULL,10);
-    //    print_status("Size: %"PRIu64, sz);
-
-    
 
     int i = 1;
-    while (s->hash_order[i] != alg_unknown)
-      {
-	t->hash[s->hash_order[i]] = strdup(argv[i]);
-	i++;
-      }
+    while (s->hash_order[i] != alg_unknown && 
+	   i <= NUM_ALGORITHMS)
+    {
+      t->hash[s->hash_order[i]] = strdup(argv[i]);
+      i++;
+    }
 
     /* RBF - We must convert this value to a TCHAR */
     t->file_name = strdup(argv[i]);
     
-    /*
-    fprintf(stdout,"Filename: ");
-    display_filename(stdout,t->file_name);
-    fprintf(stdout,"%s",NEWLINE);
-    for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-      print_status("%s: %s", s->hashes[i]->name, t->hash[i]);
-    print_status("");
-    */
+    //    display_file_data(s,t);
 
     add_hash(s,t);    
 
@@ -327,7 +335,6 @@ static int read_file(state *s, char *fn, FILE *handle)
   free(buf);
   return FALSE;
 }
-
 
 
 status_t load_match_file(state *s, char *fn)
