@@ -149,6 +149,9 @@ identify_file(state *s, char *fn, FILE *handle)
   /* RBF - Should we Save the list of currently enabled algorithms if this is
      not the first file being loaded? If changes are made, error! */
   clear_algorithms_inuse(s);
+  hashname_t i;
+  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+    s->hash_order[i] = alg_unknown;
 
   parse_hashing_algorithms(s,fn,buf + 10);
 
