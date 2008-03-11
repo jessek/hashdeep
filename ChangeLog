@@ -5,6 +5,15 @@
 	  Also updated audit mode so that it appears to work.
 
 	* Documented -M and -X mode in usage message.
+
+	* Updated file_* types used in include/common.h to avoid
+	  the conflict with file_unknown. Moved filetype_t to
+	  include/common.h as well. 
+
+	* Starting to write code to load files of known hashes 
+
+	* Fixed obscure bug in md5deep/files.c when checking for 
+	  EnCase hash files when loading a very small known file.
 	
 
 2008-03-07 Jesse Kornblum <md5deep@jessekornblum.com>

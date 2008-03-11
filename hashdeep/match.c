@@ -3,13 +3,174 @@
 
 #include "main.h"
 
+static int parse_hashing_algorithms(state *s, char *fn, char *val)
+{
+  int done = FALSE;
+  size_t len = strlen(val), pos = 0, local_pos;
+  char buf[ALGORITHM_NAME_LENGTH];
+  /* The first position is always the file size */
+  uint8_t order = 1;
+  
+  if (0 == len || NULL == s)
+    return TRUE;
+
+  /* RBF - Replace homebrew crap with strtok */
+  
+  while (pos < len && !done)
+  {
+    local_pos = 0;
+    while (val[pos] != ',' && 
+	   pos < len && 
+	   local_pos < ALGORITHM_NAME_LENGTH)
+    {    
+      buf[local_pos] = val[pos];
+      
+      ++pos;
+      ++local_pos;
+    }
+
+
+    if (',' == val[pos] || pos == len)
+    {
+      buf[local_pos] = 0; 
+      
+      if (STRINGS_EQUAL(buf,"md5"))
+	{
+	  s->hashes[alg_md5]->inuse = TRUE;
+	  s->hash_order[order] = alg_md5;
+	}
+      
+      else if (STRINGS_EQUAL(buf,"sha1") || 
+	       STRINGS_EQUAL(buf,"sha-1"))
+	{
+	  s->hashes[alg_sha1]->inuse = TRUE;
+	  s->hash_order[order] = alg_sha1;
+	}
+      
+      else if (STRINGS_EQUAL(buf,"sha256") || 
+	       STRINGS_EQUAL(buf,"sha-256"))
+	{
+	  s->hashes[alg_sha256]->inuse = TRUE;
+	  s->hash_order[order] = alg_sha256;
+	}
+      
+      else if (STRINGS_EQUAL(buf,"tiger"))
+	{
+	  s->hashes[alg_tiger]->inuse = TRUE;
+	  s->hash_order[order] = alg_tiger;
+	}
+      
+      else if (STRINGS_EQUAL(buf,"whirlpool"))
+	{
+	  s->hashes[alg_whirlpool]->inuse = TRUE;
+	  s->hash_order[order] = alg_whirlpool;
+	}
+
+      else if (STRINGS_EQUAL(buf,"filename"))
+      {
+	if (pos != len)
+	  {
+	    print_error(s,"%s: %s: Badly formatted file", __progname, fn);
+	    try_msg();
+	    exit(EXIT_FAILURE);
+	  }
+	done = TRUE;
+      }
+      
+      else
+      {
+	print_error(s,"%s: %s: Unknown algorithm", __progname, buf);
+	try_msg();
+	exit(EXIT_FAILURE);
+      }
+
+      /* Skip over the comma that's separating this value from the next.
+	 It's okay if we're working with the last value in the string.
+	 The loop invariant is that pos < len (where len is the length
+	 of the string). We won't reference anything out of bounds. */
+      ++pos;
+      ++order;
+    }
+    
+    else
+      return TRUE;
+  }
+
+  s->hash_order[order] = alg_unknown;
+
+  if (done)
+    return FALSE;
+  return TRUE;
+}
+
+
+
 static filetype_t 
 identify_file(state *s, char *fn, FILE *handle)
 {
   if (NULL == s || NULL == fn || NULL == handle)
     internal_error("%s: NULL values in identify_file", __progname);
-  
-  
+
+  char * buf = (char *)malloc(MAX_STRING_LENGTH);
+  if (NULL == buf)
+    return file_unknown;
+
+  /* Find the header */
+  if ((fgets(buf,MAX_STRING_LENGTH,handle)) == NULL) 
+    {
+      free(buf);
+      return file_unknown;
+    }
+
+  chop_line(buf);
+
+  if ( ! STRINGS_EQUAL(buf,HASHDEEP_HEADER_10))
+    {
+      free(buf);
+      return file_unknown;
+    }
+
+  /* Find which hashes are in this file */
+  if ((fgets(buf,MAX_STRING_LENGTH,handle)) == NULL) 
+    {
+      free(buf);
+      return file_unknown;
+    }
+
+  chop_line(buf);
+
+  if (strncasecmp("%%%% size,",buf,10))
+    {
+      free(buf);
+      return file_unknown;
+    }
+
+  /* RBF - Save the list of currently enabled algorithms if this is
+     not the first file being loaded. If changes are made, error! */
+  hashname_t i;
+  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+    {
+      s->hashes[i]->inuse = FALSE;
+      s->hash_order[i] = alg_unknown;
+    }
+
+  parse_hashing_algorithms(s,fn,buf + 10);
+
+  /*
+  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+    print_status("%s: %s", s->hashes[i]->name, s->hashes[i]->inuse?"ON":"-");
+
+  print_status("File in order:%ssize", NEWLINE); 
+  i = 1;
+  while (s->hash_order[i] != alg_unknown)
+    {
+      print_status("%s", s->hashes[s->hash_order[i]]->name);
+      ++i;
+    }
+  */
+
+  free(buf);
+
   return file_hashdeep_10;
 }
 
@@ -93,13 +254,38 @@ int add_RBF_hash(state *s, TCHAR *fn, char *md5, char *sha256, uint64_t size)
 }
 
 
+static int read_file(state *s, char *fn, FILE *handle)
+{
+  int done = FALSE;
+  char * buf;
+  
+  if (NULL == s || NULL == fn || NULL == handle)
+    return TRUE;
+
+  buf = (char *)malloc(sizeof(char) * MAX_STRING_LENGTH);
+  if (NULL == buf)
+    fatal_error(s,"%s: Out of memory while trying to read %s", __progname,fn);
+
+  while (fgets(buf,MAX_STRING_LENGTH,handle))
+  {
+    chop_line(buf);
+
+  }
+
+  free(buf);
+  return FALSE;
+}
+
+
+
 status_t load_match_file(state *s, char *fn)
 {
+  status_t status = status_ok;
   FILE * handle;
   filetype_t type;
 
   if (NULL == s || NULL == fn)
-    return status_omg_ponies;
+    return status_unknown_error;
 
   handle = fopen(fn,"rb");
   if (NULL == handle)
@@ -115,7 +301,15 @@ status_t load_match_file(state *s, char *fn)
     fclose(handle);
     return status_file_error;
   }
+
+  if (read_file(s,fn,handle))
+    status = status_file_error;
   
+  fclose(handle);
+  return status;
+}
+
+  /*
   add_RBF_hash(s,
 	       _TEXT("/dev/null"),
 	       "d41d8cd98f00b204e9800998ecf8427e",
@@ -131,11 +325,8 @@ status_t load_match_file(state *s, char *fn)
 	       "900150983cd24fb0d6963f7d28e17f72",
 	       "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
 	       3);
+  */
 
-
-  fclose(handle);
-  return status_ok;
-}
 
 char * status_to_str(status_t s)
 {

@@ -16,6 +16,18 @@
 
 #include "main.h"
 
+/* Remove the newlines, if any. Works on both DOS and *nix newlines */
+void chop_line(char *s)
+{
+  size_t pos = strlen(s);
+
+  if (s[pos - 2] == '\r' && s[pos - 1] == '\n')
+    s[pos - 2] = 0;
+  else if (s[pos-1] == '\n')
+    s[pos - 1] = 0;
+}
+
+
 void sanity_check(state *s, int condition, char *msg)
 {
   if (condition)

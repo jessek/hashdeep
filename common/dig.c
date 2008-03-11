@@ -294,28 +294,28 @@ static int process_dir(state *s, TCHAR *fn)
 static int file_type_helper(_tstat_t sb)
 {
   if (S_ISREG(sb.st_mode))
-    return file_regular;
+    return stat_regular;
   
   if (S_ISDIR(sb.st_mode))
-    return file_directory;
+    return stat_directory;
   
   if (S_ISBLK(sb.st_mode))
-    return file_block;
+    return stat_block;
   
   if (S_ISCHR(sb.st_mode))
-    return file_character;
+    return stat_character;
   
   if (S_ISFIFO(sb.st_mode))
-    return file_pipe;
+    return stat_pipe;
 
   /* These file types do not exist in Win32 */
 #ifndef _WIN32
   
   if (S_ISSOCK(sb.st_mode))
-    return file_socket;
+    return stat_socket;
   
   if (S_ISLNK(sb.st_mode))
-    return file_symlink;  
+    return stat_symlink;  
 #endif   /* ifndef _WIN32 */
 
 
@@ -323,11 +323,11 @@ static int file_type_helper(_tstat_t sb)
 #ifdef S_IFDOOR
 #ifdef S_ISDOOR
   if (S_ISDOOR(sb.st_mode))
-    return file_door;
+    return stat_door;
 #endif
 #endif
 
-  return file_unknown;
+  return stat_unknown;
 }
 
 
@@ -338,7 +338,7 @@ static int file_type(state *s, TCHAR *fn)
   if (_lstat(fn,&sb))
   {
     print_error_unicode(s,fn,"%s", strerror(errno));
-    return file_unknown;
+    return stat_unknown;
   }
 
   return file_type_helper(sb);
@@ -362,7 +362,7 @@ static int should_hash_expert(state *s, TCHAR *fn, int type)
   switch(type)
   {
 
-  case file_directory:
+  case stat_directory:
     if (s->mode & mode_recursive)
       process_dir(s,fn);
     else
@@ -375,19 +375,19 @@ static int should_hash_expert(state *s, TCHAR *fn, int type)
        a 64-bit value. When that value gets converted back to int,
        the high part of it is lost. */
 
-  case file_regular:   RETURN_IF_MODE(mode_regular);
+  case stat_regular:   RETURN_IF_MODE(mode_regular);
 
-  case file_block:     RETURN_IF_MODE(mode_block);
+  case stat_block:     RETURN_IF_MODE(mode_block);
     
-  case file_character: RETURN_IF_MODE(mode_character);
+  case stat_character: RETURN_IF_MODE(mode_character);
 
-  case file_pipe:      RETURN_IF_MODE(mode_pipe);
+  case stat_pipe:      RETURN_IF_MODE(mode_pipe);
 
-  case file_socket:    RETURN_IF_MODE(mode_socket);
+  case stat_socket:    RETURN_IF_MODE(mode_socket);
     
-  case file_door:      RETURN_IF_MODE(mode_door);
+  case stat_door:      RETURN_IF_MODE(mode_door);
 
-  case file_symlink: 
+  case stat_symlink: 
 
     /* Although it might appear that we need nothing more than
           return (s->mode & mode_symlink);
@@ -425,7 +425,7 @@ static int should_hash_symlink(state *s, TCHAR *fn, int *link_type)
 
   type = file_type_helper(sb);
 
-  if (type == file_directory)
+  if (type == stat_directory)
   {
     if (s->mode & mode_recursive)
       process_dir(s,fn);
@@ -452,7 +452,7 @@ static int should_hash(state *s, TCHAR *fn)
   if (s->mode & mode_expert)
     return (should_hash_expert(s,fn,type));
 
-  if (type == file_directory)
+  if (type == stat_directory)
   {
     if (s->mode & mode_recursive)
       process_dir(s,fn);
@@ -464,11 +464,11 @@ static int should_hash(state *s, TCHAR *fn)
   }
 
 #ifndef _WIN32
-  if (type == file_symlink)
+  if (type == stat_symlink)
     return should_hash_symlink(s,fn,NULL);
 #endif
 
-  if (type == file_unknown)
+  if (type == stat_unknown)
     return FALSE;
 
   /* By default we hash anything we can't identify as a "bad thing" */

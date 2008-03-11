@@ -8,7 +8,7 @@ static void display_banner(state *s)
   hashname_t i;
   int argc;
   
-  print_status("%sHASHDEEP-%s", HASHDEEP_PREFIX, HASHDEEP_VERSION);
+  print_status("%s", HASHDEEP_HEADER_10);
   printf ("%ssize,",HASHDEEP_PREFIX);
   
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)

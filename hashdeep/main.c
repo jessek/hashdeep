@@ -116,6 +116,7 @@ add_algorithm(state *s,
   if (NULL == s->hashes[pos]->hash_context)
     return TRUE;
   
+  s->hashes[pos]->position    = pos;
   s->hashes[pos]->f_init      = func_init;
   s->hashes[pos]->f_update    = func_update;
   s->hashes[pos]->f_finalize  = func_finalize;
@@ -200,7 +201,7 @@ void clear_algorithms_inuse(state *s)
 
 
 
-/* RBF - Can we reuse parse_hashing_algorithms while importing hashdeep files? */
+/* RBF - Replace homebrew crap with strtok */
 static int parse_hashing_algorithms(state *s, char *val)
 {
   size_t len = strlen(val), pos = 0, local_pos;
