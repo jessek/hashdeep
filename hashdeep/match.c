@@ -287,7 +287,20 @@ static int read_file(state *s, char *fn, FILE *handle)
 
     /* The last value is always the filename */
     /* RBF - We must convert the filename to a TCHAR */
-    t->file_name = strdup(argv[i]);
+
+    size_t sz = strlen(argv[i]);
+    t->file_name = (TCHAR *)malloc(sizeof(TCHAR) * sz);
+    // RBF - Error check if t->file_name is null
+
+    if (MultiByteToWideChar(CP_UTF8,
+			    MB_PRECOMPOSED,
+			    argv[i],
+			    sz,
+			    t->file_name,
+			    sz))
+      fatal_error(s,"RBF failed");
+
+      //    t->file_name = _tcsdup(_TEXT(argv[i]));
     
 #ifdef DEBUG
     display_file_data(s,t);
