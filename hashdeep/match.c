@@ -278,30 +278,42 @@ static int read_file(state *s, char *fn, FILE *handle)
     t->file_size = (uint64_t)strtoll(argv[0],NULL,10);
 
     int i = 1;
-    while (s->hash_order[i] != alg_unknown && 
+    while (argv[i] != NULL && 
+	   s->hash_order[i] != alg_unknown && 
 	   i <= NUM_ALGORITHMS)
     {
       t->hash[s->hash_order[i]] = strdup(argv[i]);
       i++;
     }
 
-    /* The last value is always the filename */
+    /* The last value is always the filename. */
 #ifdef _WIN32
     size_t sz = strlen(argv[i]);
-    t->file_name = (TCHAR *)malloc(sizeof(TCHAR) * sz);
+    t->file_name = (TCHAR *)malloc(sizeof(TCHAR) * (sz+1));
+    if (NULL == t->file_name)
       fatal_error(s,"%s: Out of memory", __progname);
 
-    if (MultiByteToWideChar(CP_UTF8,
-			    MB_PRECOMPOSED,
-			    argv[i],
-			    sz,
-			    t->file_name,
-			    sz))
-      fatal_error(s,"%s: Out of memory", __progname);
+    /* On Windows we must convert the filename from ANSI to Unicode.
+       The -1 parameter for the input length asserts that the input
+       string, argv[i] is NULL terminated and that the function should
+       process the whole thing. The full definition of this function:
+       http://msdn2.microsoft.com/en-us/library/ms776413(VS.85).aspx */
+    if ( ! MultiByteToWideChar(CP_ACP,
+			       MB_PRECOMPOSED,
+			       argv[i],
+			       -1,   
+			       t->file_name,
+			       sz+1))
+      {
+	fatal_error(s,"%s: MultiByteToWideChar failed (%d)", 
+		    __progname, 
+		    GetLastError());
+      }
 #else
     t->file_name = strdup(argv[i]);
     if (NULL == t->file_name)
-      fatal_error(s,"%s: Out of memory", __progname);
+      fatal_error(s,"%s: Out of memory while allocating filename %s", 
+		  __progname, argv[i]);
 #endif
     
     
@@ -510,7 +522,6 @@ status_t display_match_result(state *s)
     }
   }
 
-  /* RBF - Can this code be abstracted? Should it be? */
   if (should_display)
   {
     if (s->mode & mode_display_hash)

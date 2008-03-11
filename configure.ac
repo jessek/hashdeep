@@ -66,6 +66,10 @@ AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MEMCMP
 AC_FUNC_STAT
 AC_FUNC_VPRINTF
+
+# We use strsep do our string processing, but some operating systems
+# don't have it yet (e.g. OpenSolaris). We if don't have strsep
+# we compile it ourselves using a local copy.
 AC_CHECK_FUNC([strsep],
               [AC_DEFINE([HAVE_STRSEP], [1],	
 			 [Define if we have strsep.])],

@@ -121,8 +121,6 @@ typedef struct _hash_table_t {
 } hashtable_t;
 
 
-typedef struct _state state;
-
 typedef struct _algorithm_t
 {
   char        * name;

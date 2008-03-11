@@ -95,7 +95,7 @@ typedef struct _state {
   char          * hash_result;
   char          * known_fn;
 
-} state;
+} _state;
 
 
 

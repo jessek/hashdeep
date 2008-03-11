@@ -6579,6 +6579,10 @@ fi
 done
 
 
+
+# We use strsep do our string processing, but some operating systems
+# don't have it yet (e.g. OpenSolaris). We if don't have strsep
+# we compile it ourselves using a local copy.
 { echo "$as_me:$LINENO: checking for strsep" >&5
 echo $ECHO_N "checking for strsep... $ECHO_C" >&6; }
 if test "${ac_cv_func_strsep+set}" = set; then

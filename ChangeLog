@@ -8,6 +8,22 @@
 	* While reading files on known hashes, convert filenames
 	  to Unicode before storing.
 
+	* Changed NEWLINE on Win32 to be just "\n" instead of "\r\n"
+	  There was a problem using files of known hashes and reading
+	  the file header.
+
+	* Fixed parameters to and error checking from call to 
+	  MultiByteToWideChar in match.c. Not only we were passing in
+	  the wrong values, but we were always error'ing out.
+
+	* Starting to update man page, TODO
+
+	* Moved piecewise parsing code from md5deep/main.c to 
+	  common/helpers.c. Enabled piecewise mode in hashdeep.
+	  Also moved definition of _state to include/common.h.
+
+	* Added comments to configure.ac and Makefile.am
+
 
 2008-03-11 Jesse Kornblum <md5deep@jessekornblum.com>
 
@@ -75,6 +91,7 @@
 	* Fixed hashdeep current working directory and filesize display
 	  when hashing standard input.
 
+	
 2007-12-11 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Got multihashing working. It turns out that the SHA-1

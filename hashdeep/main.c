@@ -3,13 +3,13 @@
 
 #include "main.h"
 
+
 /* So that the usage message fits in a standard DOS window, this
    function should produce no more than 22 lines of text. */
 static void usage(void) 
 {
   print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
-  /* print_status("%s %s [OPTION]... [FILES]...",CMD_PROMPT,__progname); */
-  print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXnrespblvv] [-V|-h] ... [FILES]...",CMD_PROMPT,__progname);
+  print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-V|-h] [FILES]",CMD_PROMPT,__progname);
 
   print_status("");
 
@@ -256,7 +256,7 @@ static int process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"c:MmXxablk:respwvVh")) != -1)
+  while ((i=getopt(argc,argv,"c:MmXxablk:resp:wvVh")) != -1)
     {
       switch (i)
 	{
@@ -283,7 +283,16 @@ static int process_command_line(state *s, int argc, char **argv)
 	case 'e': s->mode |= mode_estimate;     break;
 	case 'r': s->mode |= mode_recursive;    break;
 	case 's': s->mode |= mode_silent;       break;
-	case 'p': s->mode |= mode_piecewise;    break;
+
+	case 'p':
+	  s->mode |= mode_piecewise;
+	  s->piecewise_size = find_block_size(s, optarg);
+	  if (0 == s->piecewise_size)
+	    fatal_error(s,"%s: Piecewise blocks of zero bytes are impossible", 
+			__progname);
+	  
+	  break;
+
 	case 'w': s->mode |= mode_which;        break;
 	  
 	case 'k':

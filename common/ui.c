@@ -30,6 +30,9 @@ va_end(ap); fprintf (HANDLE,"%s", NEWLINE);
 
 void print_debug(char *fmt, ... )
 {
+  if (NULL == fmt)
+    return;
+
 #ifdef __DEBUG
   printf ("DEBUG: ");
   MD5DEEP_PRINT_MSG(stderr,fmt)

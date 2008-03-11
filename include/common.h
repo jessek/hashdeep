@@ -182,7 +182,8 @@ char *__progname;
 
 #define CMD_PROMPT "c:\\>"
 #define DIR_SEPARATOR   '\\'
-#define NEWLINE "\r\n"
+/* RBF - Can NEWLINE be moved out of conditional defines? */
+#define NEWLINE "\n"
 #define LINE_LENGTH 72
 #define BLANK_LINE \
 "                                                                        "
@@ -301,7 +302,7 @@ typedef enum
 
 
 
-
+typedef struct _state state;
 
 /* ----------------------------------------------------------------
    CYCLE CHECKING
@@ -313,6 +314,10 @@ int done_processing_dir(TCHAR *fn);
 /* ------------------------------------------------------------------
    HELPER FUNCTIONS
    ------------------------------------------------------------------ */
+void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
+
+uint64_t find_block_size(state *s, char *input_str);
+
 void chop_line(char *s);
 
 

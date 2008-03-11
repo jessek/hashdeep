@@ -192,8 +192,7 @@ ${COMMON_DIR}/helpers.c
 
 base_src = main.c files.c ${COMMON_SRC} \
                 match.c hashTable.c display.c \
-		md5.h sha1.h sha256.h tiger.h whirlpool.h \
-		main.h tchar-local.h hashTable.h common.h ui.h
+		main.h hashTable.h 
 
 md5deep_SOURCES = ${base_src} ${COMMON_DIR}/md5.c md5deep.c   
 sha1deep_SOURCES = ${base_src} ${COMMON_DIR}/sha1.c sha1deep.c

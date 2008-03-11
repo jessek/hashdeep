@@ -16,6 +16,45 @@
 
 #include "main.h"
 
+uint64_t find_block_size(state *s, char *input_str)
+{
+  unsigned char c;
+  uint64_t multiplier = 1;
+
+  if (isalpha(input_str[strlen(input_str) - 1]))
+    {
+      c = tolower(input_str[strlen(input_str) - 1]);
+      // There are deliberately no break statements in this switch
+      switch (c) {
+      case 'e':
+	multiplier *= 1024;    
+      case 'p':
+	multiplier *= 1024;    
+      case 't':
+	multiplier *= 1024;    
+      case 'g':
+	multiplier *= 1024;    
+      case 'm':
+	multiplier *= 1024;
+      case 'k':
+	multiplier *= 1024;
+      case 'b':
+	break;
+      default:
+	print_error(s,"%s: Improper piecewise multiplier ignored", __progname);
+      }
+      input_str[strlen(input_str) - 1] = 0;
+    }
+
+#ifdef __HPUX
+  return (strtoumax ( input_str, (char**)0, 10) * multiplier);
+#else
+  return (atoll(input_str) * multiplier);
+#endif
+}
+
+      
+
 /* Remove the newlines, if any. Works on both DOS and *nix newlines */
 void chop_line(char *s)
 {

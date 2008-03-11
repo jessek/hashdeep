@@ -1,9 +1,11 @@
 SUBDIRS = md5deep hashdeep
 
-EXTRA_DIST=config.guess config.sub
+EXTRA_DIST = config.guess config.sub  \
+   include/md5.h include/sha1.h include/sha256.h include/tiger.h \
+   include/whirlpool.h include/common.h include/ui.h include/tchar-local.h
 
 nice:
-	rm -f *~
+	rm -f *~ md5deep/*~ hashdeep/*~
 
 preflight:
 	@grep RBF ${SUBDIRS}/*.c ${SUBDIRS}/*.h ${SUBDIRS}/*.1 \
@@ -14,9 +16,6 @@ todo:
 	@echo
 	@echo From TODO file:
 	@cat TODO
-
-reconfig:
-	aclocal && autoconf && autoheader && automake && ./config.status
 
 
 # This Makefile is designed to package Windows distributions from Mac OS X
@@ -53,6 +52,3 @@ cross: ${WINDOC}
 	make distclean
 
 world: dist cross
-
-MAINTAINERCLEANFILES= md5deep-${VERSION}.zip md5deep-${VERSION}.tar.gz \
-                     ${ALL_GOALS}deep.exe

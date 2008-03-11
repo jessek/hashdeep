@@ -1,6 +1,9 @@
 
-*** Add man pages
+*** Update top level Makefile.am to generate a proper Windows package
+
+*** Write hashdeep man page
+
+*** Add support for hashdeep to use NSRL files
 
 *** Add 'make test' directive to run compiled programs on test files 
-    and insure compilation was successful. 
-
+    and ensure compilation was successful. 
