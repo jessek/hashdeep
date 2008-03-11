@@ -256,9 +256,10 @@ int add_RBF_hash(state *s, TCHAR *fn, char *md5, char *sha256, uint64_t size)
 
 static int read_file(state *s, char *fn, FILE *handle)
 {
-  int done = FALSE;
   char * buf;
-  
+  file_data_t * t;
+  uint64_t line_number = 0;
+
   if (NULL == s || NULL == fn || NULL == handle)
     return TRUE;
 
@@ -268,8 +269,59 @@ static int read_file(state *s, char *fn, FILE *handle)
 
   while (fgets(buf,MAX_STRING_LENGTH,handle))
   {
+    line_number++;
     chop_line(buf);
 
+    if (buf[0] == '#')
+      continue;
+
+    t = (file_data_t *)malloc(sizeof(file_data_t));
+    if (NULL == t)
+      fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
+		  __progname, fn, line_number);
+
+    initialize_file_data(t);
+
+    char * tmp = strdup(buf);
+    if (NULL == tmp)
+      fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
+		  __progname, fn, line_number);
+
+
+    char **ap, *argv[10];
+    for (ap = argv ; (*ap = strsep(&tmp,",")) != NULL ; )
+      if (**ap != '\0')
+	if (++ap >= &argv[10])
+	  break;
+
+    /* The first value is always the file size */
+    t->file_size = (uint64_t)strtoll(argv[0],NULL,10);
+    //    print_status("Size: %"PRIu64, sz);
+
+    
+
+    int i = 1;
+    while (s->hash_order[i] != alg_unknown)
+      {
+	t->hash[s->hash_order[i]] = strdup(argv[i]);
+	i++;
+      }
+
+    /* RBF - We must convert this value to a TCHAR */
+    t->file_name = strdup(argv[i]);
+    
+    /*
+    fprintf(stdout,"Filename: ");
+    display_filename(stdout,t->file_name);
+    fprintf(stdout,"%s",NEWLINE);
+    for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+      print_status("%s: %s", s->hashes[i]->name, t->hash[i]);
+    print_status("");
+    */
+
+    add_hash(s,t);    
+
+    free(tmp);
   }
 
   free(buf);
