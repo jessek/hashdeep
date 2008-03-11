@@ -52,6 +52,7 @@ am_hashdeep_OBJECTS = main.$(OBJEXT) audit.$(OBJEXT) match.$(OBJEXT) \
 	multihash.$(OBJEXT) display.$(OBJEXT) hashtable.$(OBJEXT) \
 	$(am__objects_1)
 hashdeep_OBJECTS = $(am_hashdeep_OBJECTS)
+am__DEPENDENCIES_1 =
 DEFAULT_INCLUDES = -I. -I$(top_builddir)@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -83,6 +84,7 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+EXTRA_HASHDEEP = @EXTRA_HASHDEEP@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@

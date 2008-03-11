@@ -701,6 +701,7 @@ CPP
 GREP
 EGREP
 LIBOBJS
+EXTRA_HASHDEEP
 LTLIBOBJS'
 ac_subst_files=''
       ac_precious_vars='build_alias
@@ -6666,6 +6667,7 @@ else
 fi
 
 
+
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -7397,10 +7399,11 @@ CPP!$CPP$ac_delim
 GREP!$GREP$ac_delim
 EGREP!$EGREP$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
+EXTRA_HASHDEEP!$EXTRA_HASHDEEP$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 88; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 89; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
