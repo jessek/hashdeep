@@ -200,6 +200,9 @@ struct _state {
 #include "whirlpool.h"
 #include "tiger.h"
 
+/* GENERIC ROUTINES */
+void clear_algorithms_inuse(state *s);
+
 /* HASH TABLE */
 void hashtable_init(hashtable_t *t);
 status_t hashtable_add(state *s, hashname_t alg, file_data_t *f);

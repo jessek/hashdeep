@@ -10,18 +10,7 @@ void multihash_initialize(state *s)
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
     {
       if (s->hashes[i]->inuse)
-	{
-	  
-	  /* RBF - Can we move this check somewhere else so that it's
-	     RBF - only executed once? */
-	  if (NULL == s->current_file->hash[i])
-	    {
-	      s->current_file->hash[i] = (char *)malloc(sizeof(char) * s->hashes[i]->byte_length * 2);
-	      if (NULL == s->current_file->hash[i])
-		fatal_error(s,"%s: Out of memory", __progname);
-	    }
-	  
-	  //      memset(s->hashes[i]->result,0,s->hashes[i]->byte_length);
+	{	  
 	  memset(s->current_file->hash[i],0,s->hashes[i]->byte_length);
 	  s->hashes[i]->f_init(s->hashes[i]->hash_context);
 	}

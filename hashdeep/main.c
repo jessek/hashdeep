@@ -111,7 +111,7 @@ add_algorithm(state *s,
   if (NULL == s->hashes[pos]->hash_sum)
     return TRUE;
 
-  /* RBF - How big does hash_context need to be? */
+  /* RBF - Hash context initialized to hold 256 bytes, a fixed value */
   s->hashes[pos]->hash_context = malloc(256);
   if (NULL == s->hashes[pos]->hash_context)
     return TRUE;
@@ -199,6 +199,23 @@ void clear_algorithms_inuse(state *s)
   }
 }
 
+
+static int initialize_hashing_algorithms(state *s)
+{
+  hashname_t i;
+  
+  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+  {
+    if (NULL == s->current_file->hash[i])
+    {
+      s->current_file->hash[i] = (char *)malloc(sizeof(char) * s->hashes[i]->byte_length * 2);
+      if (NULL == s->current_file->hash[i])
+	fatal_error(s,"%s: Out of memory", __progname);
+    }
+  }
+
+  return FALSE;
+}
 
 
 /* RBF - Replace homebrew crap with strtok */
@@ -292,12 +309,12 @@ static int process_command_line(state *s, int argc, char **argv)
 	    fatal_error(s,"%s: Unable to parse hashing algorithms",__progname);
 	  break;
 
-	  /* RBF - Document M and X modes */
 	case 'M': s->mode |= mode_display_hash;	  
 	case 'm': s->primary_function = primary_match;      break;
 
 	case 'X': s->mode |= mode_display_hash;
 	case 'x': s->primary_function = primary_match_neg;  break;
+
 	case 'a': s->primary_function = primary_audit;      break;
 	  
 	case 'b': s->mode |= mode_barename;     break;
@@ -439,7 +456,10 @@ int main(int argc, char **argv)
   }
 
   process_command_line(s,argc,argv);
-    
+ 
+  if (initialize_hashing_algorithms(s))
+    return EXIT_FAILURE;
+   
   if (primary_audit == s->primary_function)
     setup_audit(s);
 

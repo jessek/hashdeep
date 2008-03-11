@@ -146,14 +146,9 @@ identify_file(state *s, char *fn, FILE *handle)
       return file_unknown;
     }
 
-  /* RBF - Save the list of currently enabled algorithms if this is
-     not the first file being loaded. If changes are made, error! */
-  hashname_t i;
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-    {
-      s->hashes[i]->inuse = FALSE;
-      s->hash_order[i] = alg_unknown;
-    }
+  /* RBF - Should we Save the list of currently enabled algorithms if this is
+     not the first file being loaded? If changes are made, error! */
+  clear_algorithms_inuse(s);
 
   parse_hashing_algorithms(s,fn,buf + 10);
 
@@ -177,9 +172,9 @@ identify_file(state *s, char *fn, FILE *handle)
 
 
 
-status_t add_hash_to_algorithm(state *s,
-			       hashname_t alg,
-			       file_data_t *f)
+static status_t add_hash_to_algorithm(state *s,
+				      hashname_t alg,
+				      file_data_t *f)
 {
   if (NULL == s || NULL == f)
     return status_unknown_error;
@@ -188,8 +183,7 @@ status_t add_hash_to_algorithm(state *s,
 }
 
 
-
-status_t add_hash(state *s, file_data_t *f)
+static status_t add_hash(state *s, file_data_t *f)
 {
   hashname_t i;
 
@@ -209,16 +203,16 @@ status_t add_hash(state *s, file_data_t *f)
 
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
     {
-      /* RBF - Error check this function */
       if (s->hashes[i]->inuse)
-	add_hash_to_algorithm(s,i,f);
+	if (add_hash_to_algorithm(s,i,f) != status_ok)
+	  return status_unknown_error;
     }
 
   return status_ok;
 
 }
 
-int initialize_file_data(file_data_t *f)
+static int initialize_file_data(file_data_t *f)
 {
   if (NULL == f)
     return TRUE;
@@ -231,30 +225,8 @@ int initialize_file_data(file_data_t *f)
 }
 
 
-int add_RBF_hash(state *s, TCHAR *fn, char *md5, char *sha256, uint64_t size)
-{
-  file_data_t * tmp;
-
-  tmp = (file_data_t *)malloc(sizeof(file_data_t));
-  if (NULL == tmp)
-    return TRUE;
-
-  if (initialize_file_data(tmp))
-    return TRUE;
-
-  tmp->file_name = _tcsdup(fn);
-  tmp->hash[alg_md5] = strdup(md5);
-  tmp->hash[alg_sha256] = strdup(sha256);
-  tmp->file_size = size;
-
-  //  print_status("%s %s", tmp->hash[alg_md5], tmp->hash[alg_sha256]);
-
-  add_hash(s,tmp);
-
-  return FALSE;
-}
-
-void display_file_data(state *s, file_data_t * t)
+#ifdef _DEBUG
+static void display_file_data(state *s, file_data_t * t)
 {
   int i;
 
@@ -268,8 +240,7 @@ void display_file_data(state *s, file_data_t * t)
     print_status("%s: %s", s->hashes[i]->name, t->hash[i]);
   print_status("");
 }
-
- 
+#endif
 
 
 static int read_file(state *s, char *fn, FILE *handle)
@@ -290,6 +261,7 @@ static int read_file(state *s, char *fn, FILE *handle)
     line_number++;
     chop_line(buf);
 
+    /* Ignore comments in the input file */
     if ('#' == buf[0])
       continue;
 
@@ -305,6 +277,7 @@ static int read_file(state *s, char *fn, FILE *handle)
       fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
 		  __progname, fn, line_number);
 
+    /* RBF - Are we hardcoded to 10 values? */
     char **ap, *argv[10];
     for (ap = argv ; (*ap = strsep(&tmp,",")) != NULL ; )
       if (**ap != '\0')
@@ -322,13 +295,17 @@ static int read_file(state *s, char *fn, FILE *handle)
       i++;
     }
 
-    /* RBF - We must convert this value to a TCHAR */
+    /* The last value is always the filename */
+    /* RBF - We must convert the filename to a TCHAR */
     t->file_name = strdup(argv[i]);
     
-    //    display_file_data(s,t);
+#ifdef DEBUG
+    display_file_data(s,t);
+#endif
 
-    add_hash(s,t);    
-
+    if (add_hash(s,t))
+      return TRUE;
+    
     free(tmp);
   }
 
@@ -367,24 +344,6 @@ status_t load_match_file(state *s, char *fn)
   fclose(handle);
   return status;
 }
-
-  /*
-  add_RBF_hash(s,
-	       _TEXT("/dev/null"),
-	       "d41d8cd98f00b204e9800998ecf8427e",
-	       "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-	       0);
-
-  add_RBF_hash(s,
-#ifdef __LINUX__
-	       _TEXT("/home/jdoe/md5deep/svn/trunk/hashdeep/abc"),
-#else
-	       _TEXT("/Users/jessek/projects/md5deep/hashdeep/abc"),
-#endif
-	       "900150983cd24fb0d6963f7d28e17f72",
-	       "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
-	       3);
-  */
 
 
 char * status_to_str(status_t s)
