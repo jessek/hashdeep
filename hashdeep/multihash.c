@@ -25,8 +25,6 @@ void multihash_update(state *s, unsigned char *buf, uint64_t len)
   /* We have to copy the data being hashed from the buffer we were
      passed into another structure because the SHA-1 update 
      routine modifies it. */
-  /* RBF - Can we optimize multihash_update by only recopying after SHA-1? */
-
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {
     if (s->hashes[i]->inuse)

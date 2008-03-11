@@ -11,7 +11,6 @@
 #endif
 
 /* HOW TO ADD A NEW HASHING ALGORITHM
-   RBF - Update HOW TO ADD A NEW HASHING ALGORITHM
 
   * Add a value for the algorithm to the hashname_t enumeration
 
@@ -24,10 +23,13 @@
 
    * Update parse_algorithm_name in main.c to handle your algorithm. 
 
-   * Verify that ALGORITHM_NAME_LENGTH doesn't need to be increased.
+   * See if you need to increase ALGORITHM_NAME_LENGTH or
+     ALGORITHM_CONTEXT_SIZE for your algorithm.
 
    * Update the usage function and man page to include the function
 
+   * Update the matching code in match.c to search for your hash in 
+     known files.
 */
 
 typedef enum
@@ -47,6 +49,16 @@ typedef enum
 /* When parsing algorithm names supplied by the user, they must be 
    fewer than ALGORITHM_NAME_LENGTH characters. */
 #define ALGORITHM_NAME_LENGTH 15 
+
+/* The largest number of bytes needed for a hash algorithm's context
+   variable. They all get initialized to this size. */
+#define ALGORITHM_CONTEXT_SIZE 256
+
+/* The largest number of columns we can expect in a file of knowns.
+   Normally this should be the number of hash algorithms plus a column
+   for file size, file name, and, well, some fudge factors */
+#define MAX_KNOWN_COLUMNS  (NUM_ALGORITHMS + 6)
+   
 
 /* Return codes */
 typedef enum 
@@ -190,7 +202,6 @@ struct _state {
   /* Size of blocks used in piecewise hashing */
   uint64_t        piecewise_size;
   
-  // RBF - Should audit variables be moved out of the state?
   /* For audit mode, the number of each type of file */
   uint64_t        match_exact, match_expect,
     match_partial, match_moved, match_unused, match_unknown, match_total;

@@ -34,7 +34,6 @@ static void usage(void)
 }
 
 
-/* RBF - Update sanity checks for hashdeep */
 static void check_flags_okay(state *s)
 {
   sanity_check(s,
@@ -95,8 +94,7 @@ add_algorithm(state *s,
   if (NULL == s->hashes[pos]->hash_sum)
     return TRUE;
 
-  /* RBF - Hash context initialized to hold 256 bytes, a fixed value */
-  s->hashes[pos]->hash_context = malloc(256);
+  s->hashes[pos]->hash_context = malloc(ALGORITHM_CONTEXT_SIZE);
   if (NULL == s->hashes[pos]->hash_context)
     return TRUE;
   

@@ -148,12 +148,20 @@ identify_file(state *s, char *fn, FILE *handle)
       return file_unknown;
     }
 
-  /* RBF - Should we Save the list of currently enabled algorithms if this is
-     not the first file being loaded? If changes are made, error! */
-  clear_algorithms_inuse(s);
-  hashname_t i;
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-    s->hash_order[i] = alg_unknown;
+  /* If this is the first file of hashes being loaded, clear out the 
+     list of known values. Otherwise, record the current values to
+     make sure they don't change when we load the new file of knowns. */
+  if ( ! s->hashes_loaded )
+    {
+      clear_algorithms_inuse(s);
+      hashname_t i;
+      for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+	s->hash_order[i] = alg_unknown;
+    }
+  else
+    {
+      // RBF - Save current hash->inuse values.
+    }
 
   parse_hashing_algorithms(s,fn,buf + 10);
 
@@ -283,11 +291,10 @@ static int read_file(state *s, char *fn, FILE *handle)
 		  __progname, fn, line_number);
 
 
-    /* RBF - Are we hardcoded to 10 values for strsep? */
-    char **ap, *argv[10];
+    char **ap, *argv[MAX_KNOWN_COLUMNS];
     for (ap = argv ; (*ap = strsep(&tmp,",")) != NULL ; )
       if (**ap != '\0')
-	if (++ap >= &argv[10])
+	if (++ap >= &argv[MAX_KNOWN_COLUMNS])
 	  break;
 
     /* The first value is always the file size */

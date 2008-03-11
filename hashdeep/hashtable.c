@@ -99,8 +99,6 @@ status_t hashtable_add(state *s, hashname_t alg, file_data_t *f)
   
   uint64_t key = translate(f->hash[alg]);
   
-  /* RBF - Should we Add check for a valid hash in hashtable_add? */
-
   if (NULL == t->member[key])
     {
       new = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
@@ -157,8 +155,6 @@ void hashtable_destroy(hashtable_entry_t *e)
 }
 
 
-
-/* RBF - The function hashtable_contains needs testing! */
 hashtable_entry_t * 
 hashtable_contains(state *s, hashname_t alg)
 {

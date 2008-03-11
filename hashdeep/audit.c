@@ -48,11 +48,8 @@ int display_audit_results(state *s)
   else
     print_status("%s: Audit passed", __progname);
   
-  /* RBF - How should we display the audit results? */
   if (s->mode & mode_verbose)
     {
-      /* RBF - Should we display the known files that we're never matched? */
-      
       /*
       print_status("   Input files examined: %"PRIu64, s->match_total);
       print_status("  Known files expecting: %"PRIu64, s->match_expect);
@@ -85,12 +82,7 @@ int audit_update(state *s)
   if (my_round > s->hash_round)
     fatal_error(s,"%s: Too many input files", __progname);
 
-  // RBF - Do we care?
-  /* In an audit, each file should be matched exactly once. 
-     As such, their hash_round value should be zero when we
-     get here. */
-
-  // RBF - Does anybody ever use match total? 
+  /* Although nobody uses match_total right now, they may in the future */
   s->match_total++;
 
   for (i = 0 ; i < NUM_ALGORITHMS; ++i)
@@ -113,7 +105,7 @@ int audit_update(state *s)
 	    exact_match = TRUE;
 	    break;
     
-	    /* RBF - This shouldn't happen? */
+	    /* This shouldn't happen */
 	  case status_no_match:
 	    break;
     
@@ -133,8 +125,7 @@ int audit_update(state *s)
 	    break;
 	    
 	  case status_unknown_error:
-	    // RBF - What do we do here?
-	    
+	    return status_unknown_error;
 	    
 	  default:
 	    break;
