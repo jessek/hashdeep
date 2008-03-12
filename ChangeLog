@@ -1,5 +1,8 @@
 2008-03-12 Jesse Kornblum <md5deep@jessekornblum.com>
 
+        * Changed md5deep Makefile to explicitly name man
+          man pages in copy operation.
+
 	* Moved prototypes for process_normal and process_win32
 	  to include/common.h to avoid compiler warnings and
 	  repitions. 
