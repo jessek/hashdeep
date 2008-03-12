@@ -1,20 +1,18 @@
-.TH HASHDEEP "1" "v2.1 \- RBF DATE" "AFOSI" "United States Air Force"
+.TH HASHDEEP "1" "v3.0 \- RBF DATE" "AFOSI" "United States Air Force"
 
 .SH NAME
 hashdeep \- Compute and compare multiple message digests
 
 .SH SYNOPSIS
-.B hashdeep 
-[-V | -h]
-.br
 .B hashdeep
 [-c <alg1>[,<alg2>]] [-k <file>] [-amxwMXrespblvv] [\fBFILES\fR]
+.br
+.B hashdeep 
+[-V | -h]
 
 
 .SH DESCRIPTION
 .PP
-RBF WRITE MAN PAGE
-
 Computes multiple hashes, or message digests, 
 for any number of files while 
 optionally recursively digging through the directory structure.
@@ -23,6 +21,7 @@ to \-c md5,sha256.
 Can also take a list of known hashes and display the filenames
 of input files whose hashes either do or do not match any of the
 known hashes.
+Can also use a list of known hashes to audit a set of FILES.
 Errors are reported to standard error. If no FILES are specified,
 reads from standard input.
 
@@ -34,17 +33,42 @@ Computation mode. Compute hashes of FILES using the algorithms
 specified. Legal values are md5, sha1, sha256, tiger, and
 whirlpool. 
 
+
 .TP
 \fB\-k \fR
 Load a file of known hashes. 
 This flag is required when using any of the matching or audit
 modes (i.e. \-m, \-x, \-M, \-X, or \-a)
 This flag may be used more than once
-to add multiple sets of known hashes.
+to add multiple sets of known hashes. 
+
+Loading sets with different hash algorithms
+can sometimes generate spurrious hash collisions. For
+example, let's say we have two hash sets, A and B, 
+which have some overlapping files. For example, the file
+/usr/bin/bad is in both sets. In A we've recorded the MD5 and SHA-256.
+In B we've recorded the MD5, SHA-1, and SHA-256. Because these
+two records are different, they will both be loaded. When the 
+program computes all three hashes and compares them to the set 
+of knowns, we will get an exact match from the record in B 
+and a collision from the record in A. 
+
 
 .TP
 \fB\-a \fR
-Audit mode.
+Audit mode. Each input file is compared against the set of knowns. 
+An audit is said to pass if each input file is matched against exactly
+one file in set of knowns. Any collisions, new files, or missing
+files will make the audit fail. Using this flag alone produces a
+message, either "Audit passed" or "Audit Failed". Use the
+verbose modes, \-v, for more details. Using \-v prints the number 
+of files in each category. Using \-v a second time prints any
+discrepancies. Using \-v a third time prints the results for every file
+examined and every known file.
+.br
+Due to limitations in the program, any filenames with Unicode characters
+will appear to have moved during an audit. See the section "UNICODE
+SUPPORT" below.
 
 .TP
 \fB\-m \fR
@@ -59,7 +83,7 @@ if the input matches one of the hashes in the list of known hashes. If the
 hash does not match, the program displays no output.
 .br
 \fB\fR
-This flag may not be used in conjunction with the \-x, \-X, or \-A flags.
+This flag may not be used in conjunction with the \-x, \-X, or \-a flags.
 See the section "UNICODE SUPPORT" below.
 
 .TP
@@ -74,22 +98,23 @@ See the section "UNICODE SUPPORT" below.
 
 .TP
 \fB\-w \fR
-When used with positive matching modes 
-During any of the matching modes (\-m,\-M) displays the filename
+When used with positive matching modes (\-m,\-M) displays the filename
 of the known hash that matched the input file. 
 See the section "UNICODE SUPPORT" below.
 
 .TP
-\fB\-M\fR and \fB-X\fR <file>
+\fB\-M\fR and \fB-X\fR
 Same as \-m and \-x above, but displays the hash for each file that 
 does (or does not) match the list of known hashes. 
+
 
 .TP
 \fB\-r\fR
 Enables recursive mode. All subdirectories are traversed. Please note
 that recursive mode cannot be used to examine all files of a given 
-file extension. For example, calling md5deep -r *.txt will examine
+file extension. For example, calling hashdeep -r *.txt will examine
 all files in \fIdirectories\fR that end in .txt. 
+
 
 .TP
 \fB\-e\fR
@@ -98,9 +123,11 @@ remaining for each file being processed. Time estimates for files
 larger than 4GB are not available on Windows. This mode may not be
 used with th \-p mode.
 
+
 .TP
 \fB\-s\fR
 Enables silent mode. All error messages are supressed.
+
 
 .TP
 \fB\-p\fR
@@ -122,6 +149,11 @@ each file, displays the relative file path as indicated on the command
 line. This flag may not be used in conjunction with the \-b flag.
 
 .TP
+\fB\-v\fR
+Enables verbose mode. Use again to make the program more verbose. 
+This mostly changes the behvaior of the audit mode, \-a.
+
+.TP
 \fB\-h\fR
 Show a help screen and exit.
 
@@ -129,20 +161,17 @@ Show a help screen and exit.
 \fB\-V\fR
 Show the version number and exit.
 
-.TP
-\fB\-v\fR
-Enables verbose mode. Use again to make more verbose. This mostly 
-changes the behvaior of the audit mode, \-a.
 
 
 .SH UNICODE SUPPORT
-As of version 2.0 the program supports Unicode characters in filenames
-on Microsoft Windows systems. Due to limitations in Windows, however,
-each Unicode character is represented as a question mark (?) in the output.
+As of version 2.0 the program can process input files with 
+Unicode characters in their filenames on Windows systems.
+In the program's output, however, each Unicode character
+is represented with a question mark (?). 
 Note that Unicode characters are \fBnot\fR supported in the files
 containing known hashes. You can specify a file of known hashes that has
 Unicode characters in its name by using tab completition or an asterisk
-(e.g. md5deep -mk *.txt where there is only one file with a .txt extension).
+(e.g. hashdeep -mk *.txt where there is only one file with a .txt extension).
 
 .SH RETURN VALUE
 Returns zero on success, one on error. 

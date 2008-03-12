@@ -5,7 +5,7 @@
 
 status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
 {
-  int partial_match = FALSE, partial_failure = FALSE;
+  int partial_null = FALSE, partial_match = FALSE, partial_failure = FALSE;
   hashname_t i;
   
   if (NULL == a || NULL == b || NULL == s)
@@ -17,20 +17,29 @@ status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
   {
     if (s->hashes[i]->inuse)
     {
-      if (STRINGS_EQUAL(a->hash[i],b->hash[i]))
+      //      print_status("Hash %d %s %s", i, a->hash[i], b->hash[i]);
+
+      /* We have to avoid calling STRINGS_EQUAL on NULL values */
+      if (NULL == a->hash[i] || NULL == b->hash[i])
+	partial_null = TRUE;
+      else if (STRINGS_EQUAL(a->hash[i],b->hash[i]))
 	partial_match = TRUE;
       else
 	partial_failure = TRUE;
     }
   }
 
+  /* Check for when there are no intersecting hashes */
+  if (!partial_match && !partial_failure)
+    return status_no_match;
+
   if (partial_failure)
-    {
-      if (partial_match)
-	return status_partial_match;
-      else
-	return status_no_match;
-    }
+  {
+    if (partial_match)
+      return status_partial_match;
+    else
+      return status_no_match;
+  }
 
   
   if (a->file_size != b->file_size)
@@ -174,6 +183,8 @@ hashtable_contains(state *s, hashname_t alg)
   key = translate(f->hash[alg]);
   t   = s->hashes[alg]->known;
 
+  //  print_status("key: %"PRIx64, key);
+
   if (NULL == t->member[key])
     return NULL;
 
@@ -185,7 +196,7 @@ hashtable_contains(state *s, hashname_t alg)
   //  print_status("First entry %d", status);
   if (status != status_no_match)
     {
-      //      print_status("hit on first entry %d", status);
+      //  print_status("hit on first entry %d", status);
       ret = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
       ret->next = NULL;
       ret->status = status;

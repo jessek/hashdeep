@@ -180,7 +180,7 @@ char *__progname;
 #endif
 
 
-#define CMD_PROMPT "c:\\>"
+#define CMD_PROMPT "C:\\>"
 #define DIR_SEPARATOR   '\\'
 /* RBF - Can NEWLINE be moved out of conditional defines? */
 #define NEWLINE "\n"
@@ -240,8 +240,9 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 #define mode_piecewise    1<<15
 #define mode_verbose      1<<16
 #define mode_more_verbose 1<<17
+#define mode_insanely_verbose 1 <<18
 
-/* Modes 18-48 are reserved for future use.
+/* Modes 19-48 are reserved for future use.
 
    Note that the LL is required to avoid overflows of 32-bit words.
    LL must be used for any value equal to or above 1<<31. 
@@ -334,6 +335,11 @@ int find_quoted_string(char *buf, unsigned int n);
 off_t find_file_size(FILE *f);
 
 
+/* ------------------------------------------------------------------
+   MAIN PROCESSING
+   ------------------------------------------------------------------ */
+int process_win32(state *s, TCHAR *fn);
+int process_normal(state *s, TCHAR *fn);
 
 
 

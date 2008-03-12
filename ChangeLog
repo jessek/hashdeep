@@ -1,4 +1,22 @@
 2008-03-12 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Moved prototypes for process_normal and process_win32
+	  to include/common.h to avoid compiler warnings and
+	  repitions. 
+
+	* Cleaned up audit code slightly
+
+	* Fixed display banner to treat current working directory
+	  as a Unicode string.
+
+	* Enabled and allowed the user load known files that have
+	  different kinds of hashes in them.
+
+	* Version bump to 3.0. I've made so many changes to the
+	  common code that it warrants the jump.
+
+	
+2008-03-11 Jesse Kornblum <md5deep@jessekornblum.com>
 	
 	* Added strsep (and appropriate autoconf/automake checks)
 	  in place to ugly homebrew code to separate out string 
@@ -27,7 +45,7 @@
 	* Made usage message dynamic to display available algorithms
 
 
-2008-03-11 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-10 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Separated the functions to display positive and negative
 	  match results. Cleaned up the function names for this too.

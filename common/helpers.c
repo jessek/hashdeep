@@ -96,7 +96,7 @@ static int is_absolute_path(TCHAR *fn)
 
 void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input)
 {
-  if (NULL == fn || NULL == input)
+  if (NULL == fn || NULL == input || NULL == cwd || NULL == s)
     internal_error("Error calling generate_filename");
 
   if ((s->mode & mode_relative) || is_absolute_path(input))

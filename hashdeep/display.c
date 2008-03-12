@@ -9,7 +9,7 @@ static void display_banner(state *s)
   int argc;
   
   print_status("%s", HASHDEEP_HEADER_10);
-  printf ("%ssize,",HASHDEEP_PREFIX);
+  fprintf (stdout,"%ssize,",HASHDEEP_PREFIX);
   
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {
@@ -19,15 +19,29 @@ static void display_banner(state *s)
   
   print_status("filename");
 
-  print_status("## Invoked from: %s", s->cwd);
-  fprintf (stdout,"## %s", CMD_PROMPT);  
-  for (argc = 0 ; argc < s->argc ; ++argc)
-    {
-      fprintf(stdout," ");
-      display_filename(stdout,s->argv[argc]);
-    }
+  fprintf(stdout,"## Invoked from: ");
+  display_filename(stdout,s->cwd);
+  fprintf(stdout,"%s",NEWLINE);
 
-  printf("%s", NEWLINE);
+  
+  /* Display the command prompt as the user saw it */
+  fprintf(stdout,"## ");
+#ifdef _WIN32
+  _ftprintf(stdout,_TEXT("%c:\\>"), s->cwd[0]);
+#else
+  if (0 == geteuid())
+    fprintf(stdout,"#");
+  else
+    fprintf(stdout,"$");
+#endif
+
+  for (argc = 0 ; argc < s->argc ; ++argc)
+  {
+    fprintf(stdout," ");
+    display_filename(stdout,s->argv[argc]);
+  }
+
+  fprintf(stdout,"%s", NEWLINE);
 
   s->banner_displayed = TRUE;
 }

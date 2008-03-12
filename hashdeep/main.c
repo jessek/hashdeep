@@ -69,11 +69,6 @@ add_algorithm(state *s,
   if (NULL == s)
     return TRUE;
 
-  /*
-  printf ("Setting up %s in slot %d %"PRIu16" bytes (%s)\n", 
-	  name, pos, len, inuse?"ON":"OFF");
-  */
-
   s->hashes[pos] = (algorithm_t *)malloc(sizeof(algorithm_t));
   if (NULL == s->hashes[pos])
     return TRUE;
@@ -87,12 +82,6 @@ add_algorithm(state *s,
     return TRUE;
 
   hashtable_init(s->hashes[pos]->known); 
-
-  /* We always store the result in a file_data_t structure
-  s->hashes[pos]->result = (unsigned char *)malloc(len);
-  if (NULL == s->hashes[pos]->result)
-    return TRUE;
-  */
 
   s->hashes[pos]->hash_sum = (unsigned char *)malloc(len * 2);
   if (NULL == s->hashes[pos]->hash_sum)
@@ -119,7 +108,7 @@ int setup_hashing_algorithms(state *s)
   if (NULL == s)
     return TRUE;
 
-  /* Only MD5 and SHA-256 are enabled by default */
+  /* The DEFAULT_ENABLE variables are in main.h */
 
   if (add_algorithm(s,
 		    alg_md5,
@@ -128,7 +117,7 @@ int setup_hashing_algorithms(state *s)
 		    hash_init_md5,
 		    hash_update_md5,
 		    hash_final_md5,
-		    TRUE))
+		    DEFAULT_ENABLE_MD5))
     return TRUE;
   if (add_algorithm(s,
 		    alg_sha1,
@@ -137,7 +126,7 @@ int setup_hashing_algorithms(state *s)
 		    hash_init_sha1,
 		    hash_update_sha1,
 		    hash_final_sha1,
-		    FALSE))
+		    DEFAULT_ENABLE_SHA1))
     return TRUE;
   if (add_algorithm(s,
 		    alg_sha256,
@@ -146,7 +135,7 @@ int setup_hashing_algorithms(state *s)
 		    hash_init_sha256,
 		    hash_update_sha256,
 		    hash_final_sha256,
-		    TRUE))
+		    DEFAULT_ENABLE_SHA256))
     return TRUE;
   if (add_algorithm(s,
 		    alg_tiger,
@@ -155,7 +144,7 @@ int setup_hashing_algorithms(state *s)
 		    hash_init_tiger,
 		    hash_update_tiger,
 		    hash_final_tiger,
-		    FALSE))
+		    DEFAULT_ENABLE_TIGER))
     return TRUE;
   if (add_algorithm(s,
 		    alg_whirlpool,
@@ -164,7 +153,7 @@ int setup_hashing_algorithms(state *s)
 		    hash_init_whirlpool,
 		    hash_update_whirlpool, 
 		    hash_final_whirlpool,
-		    FALSE))
+		    DEFAULT_ENABLE_WHIRLPOOL))
     return TRUE;
 
   return FALSE;
@@ -261,96 +250,98 @@ static int process_command_line(state *s, int argc, char **argv)
   int i;
   
   while ((i=getopt(argc,argv,"c:MmXxablk:resp:wvVh")) != -1)
+  {
+    switch (i)
     {
-      switch (i)
+	  
+    case 'c': 
+      s->primary_function = primary_compute;
+      /* Before we parse which algorithms we're using now, we have 
+	 to erase the default values */
+      clear_algorithms_inuse(s);
+      if (parse_hashing_algorithms(s,optarg))
+	fatal_error(s,"%s: Unable to parse hashing algorithms",__progname);
+      break;
+      
+    case 'M': s->mode |= mode_display_hash;	  
+    case 'm': s->primary_function = primary_match;      break;
+      
+    case 'X': s->mode |= mode_display_hash;
+    case 'x': s->primary_function = primary_match_neg;  break;
+      
+    case 'a': s->primary_function = primary_audit;      break;
+      
+    case 'b': s->mode |= mode_barename;     break;
+    case 'l': s->mode |= mode_relative;     break;
+    case 'e': s->mode |= mode_estimate;     break;
+    case 'r': s->mode |= mode_recursive;    break;
+    case 's': s->mode |= mode_silent;       break;
+      
+    case 'p':
+      s->mode |= mode_piecewise;
+      s->piecewise_size = find_block_size(s, optarg);
+      if (0 == s->piecewise_size)
+	fatal_error(s,"%s: Piecewise blocks of zero bytes are impossible", 
+		    __progname);
+      
+      break;
+      
+    case 'w': s->mode |= mode_which;        break;
+      
+    case 'k':
+      switch (load_match_file(s,optarg))
 	{
-	  
-	case 'c': 
-	  s->primary_function = primary_compute;
-	  /* Before we parse which algorithms we're using now, we have 
-	     to erase the default values */
-	  clear_algorithms_inuse(s);
-	  if (parse_hashing_algorithms(s,optarg))
-	    fatal_error(s,"%s: Unable to parse hashing algorithms",__progname);
+	case status_ok: 
+	  s->hashes_loaded = TRUE;
 	  break;
-
-	case 'M': s->mode |= mode_display_hash;	  
-	case 'm': s->primary_function = primary_match;      break;
-
-	case 'X': s->mode |= mode_display_hash;
-	case 'x': s->primary_function = primary_match_neg;  break;
-
-	case 'a': s->primary_function = primary_audit;      break;
 	  
-	case 'b': s->mode |= mode_barename;     break;
-	case 'l': s->mode |= mode_relative;     break;
-	case 'e': s->mode |= mode_estimate;     break;
-	case 'r': s->mode |= mode_recursive;    break;
-	case 's': s->mode |= mode_silent;       break;
-
-	case 'p':
-	  s->mode |= mode_piecewise;
-	  s->piecewise_size = find_block_size(s, optarg);
-	  if (0 == s->piecewise_size)
-	    fatal_error(s,"%s: Piecewise blocks of zero bytes are impossible", 
-			__progname);
-	  
+	case status_contains_no_hashes:
+	  /* Trying to load an empty file is fine, but we shouldn't
+	     change s->hashes_loaded */
 	  break;
-
-	case 'w': s->mode |= mode_which;        break;
 	  
-	case 'k':
-	  switch (load_match_file(s,optarg))
-	  {
-	  case status_ok: 
-	    s->hashes_loaded = TRUE;
-	    break;
-
-	  case status_contains_no_hashes:
-	    /* Trying to load an empty file is fine, but we shouldn't
-	       change s->hashes_loaded */
-	    break;
-
-	  case status_contains_bad_hashes:
-	    s->hashes_loaded = TRUE;
-	    print_error(s,"%s: %s: contains some bad hashes, using anyway", __progname, optarg);
-	    break;
-
-	  case status_unknown_filetype:
-	    print_error(s,"%s: %s: unknown filetype, skipping", __progname, optarg);
-	    break;
-
-	  case status_file_error:
-	    /* The loading code has already printed an error */
-	    break;
-
-	  default:
-	    print_error(s,"%s: %s: unknown error, skipping", __progname, optarg);
-	    break;
-	  }
+	case status_contains_bad_hashes:
+	  s->hashes_loaded = TRUE;
+	  print_error(s,"%s: %s: contains some bad hashes, using anyway", 
+		      __progname, optarg);
 	  break;
-
-	case 'v':
-	  if (s->mode & mode_verbose)
-	    s->mode |= mode_more_verbose;
-	  else
-	    s->mode |= mode_verbose;
-	  break;
-
-	case 'V':
-	  print_status("%s", VERSION);
-	  exit(EXIT_SUCCESS);
 	  
-	case 'h':
-	  usage(s);
-	  exit(EXIT_SUCCESS);
-	  
+	case status_unknown_filetype:
+	case status_file_error:
+	  /* The loading code has already printed an error */
+	    break;
+	    
 	default:
-	  try_msg();
-	  exit(EXIT_FAILURE);
-	}            
-    }
-
+	  print_error(s,"%s: %s: unknown error, skipping", __progname, optarg);
+	  break;
+	}
+      break;
+      
+    case 'v':
+      if (s->mode & mode_insanely_verbose)
+	print_error(s,"%s: User request for insane verbosity denied", __progname);
+      else if (s->mode & mode_more_verbose)
+	s->mode |= mode_insanely_verbose;
+      else if (s->mode & mode_verbose)
+	s->mode |= mode_more_verbose;
+      else
+	s->mode |= mode_verbose;
+      break;
+      
+    case 'V':
+      print_status("%s", VERSION);
+	  exit(EXIT_SUCCESS);
+	  
+    case 'h':
+      usage(s);
+      exit(EXIT_SUCCESS);
+      
+    default:
+      try_msg();
+      exit(EXIT_FAILURE);
+    }            
+  }
+  
   check_flags_okay(s);
 
   return FALSE;
@@ -377,7 +368,6 @@ static int initialize_state(state *s)
   s->primary_function = primary_compute;
   s->mode             = mode_none;
   s->hashes_loaded    = FALSE;
-  s->next_known_id    = 0;
   s->banner_displayed = FALSE;
   s->block_size       = MD5DEEP_IDEAL_BLOCK_SIZE;
 

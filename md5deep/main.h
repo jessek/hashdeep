@@ -106,10 +106,6 @@ void sanity_check(state *s, int condition, char *msg);
    PROGRAM ENGINE
    ---------------------------------------------------------------- */
 
-/* Dig into the file hierachy and hash file accordingly */
-int process_normal(state *s, TCHAR *input);
-int process_win32(state *s, TCHAR *fn);
-
 /* Hashing functions */
 int hash_file(state *s, TCHAR *file_name);
 int hash_stdin(state *s);

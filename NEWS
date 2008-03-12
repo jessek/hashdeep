@@ -1,4 +1,4 @@
-** Changes in version 2.1 (RBF DATE)
+** Changes in version 3.0 (RBF DATE)
 
 * New Features
 
@@ -10,12 +10,14 @@
 	attempting to check a very small file for EnCase hashes
 
 
+
 ** Changes in version 2.0.1 (31 Oct 2007)
 
 * Bug Fixes
 
 	Added support for older Linux systems that don't have the
 	latest and greatest ioctl functions.
+
 
 
 ** Changes in version 2.0 (15 Oct 2007)

@@ -209,6 +209,9 @@ static int is_win32_device_file(TCHAR *fn)
 
 static void clean_name(state *s, TCHAR *fn)
 {
+  if (NULL == s)
+    return;
+
 #ifdef _WIN32
   clean_name_win32(fn);
 #else

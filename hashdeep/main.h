@@ -17,38 +17,47 @@
   * Add the functions to compute the hashes. There should be three functions,
     an initialization route, an update routine, and a finalize routine.
     The convention, for an algorithm "foo", is 
-    foo_init, foo_update, and foo_final.
+    foo_init, foo_update, and foo_final. 
 
-   * Add a call to insert the algorithm in setup_hashing_algorithms
+  * Add your new code to Makefile.am under hashdeep_SOURCES
 
-   * Update parse_algorithm_name in main.c to handle your algorithm. 
+  * Add a call to insert the algorithm in setup_hashing_algorithms
 
-   * See if you need to increase ALGORITHM_NAME_LENGTH or
-     ALGORITHM_CONTEXT_SIZE for your algorithm.
+  * Update parse_algorithm_name in main.c and parse_hashing_algorithms
+    in match.c to handle your algorithm. 
 
-   * Update the usage function and man page to include the function
+  * See if you need to increase ALGORITHM_NAME_LENGTH or
+    ALGORITHM_CONTEXT_SIZE for your algorithm.
 
-   * Update the matching code in match.c to search for your hash in 
-     known files.
-*/
+  * Update the usage function and man page to include the function     */
+
 
 typedef enum
-  { 
-    alg_md5=0, 
-    alg_sha1, 
-    alg_sha256, 
-    alg_tiger,
-    alg_whirlpool, 
-
-    /* alg_unknown must always be last in this list */
+{ 
+  alg_md5=0, 
+  alg_sha1, 
+  alg_sha256, 
+  alg_tiger,
+  alg_whirlpool, 
+  
+  /* alg_unknown must always be last in this list. It's used
+     as a loop terminator in many functions. */
   alg_unknown 
-  } hashname_t;  
+} hashname_t;
 
 #define NUM_ALGORITHMS  alg_unknown
 
+
+#define DEFAULT_ENABLE_MD5         TRUE
+#define DEFAULT_ENABLE_SHA1        FALSE
+#define DEFAULT_ENABLE_SHA256      TRUE
+#define DEFAULT_ENABLE_TIGER       FALSE
+#define DEFAULT_ENABLE_WHIRLPOOL   FALSE
+
+
 /* When parsing algorithm names supplied by the user, they must be 
    fewer than ALGORITHM_NAME_LENGTH characters. */
-#define ALGORITHM_NAME_LENGTH 15 
+#define ALGORITHM_NAME_LENGTH  15 
 
 /* The largest number of bytes needed for a hash algorithm's context
    variable. They all get initialized to this size. */
@@ -56,7 +65,13 @@ typedef enum
 
 /* The largest number of columns we can expect in a file of knowns.
    Normally this should be the number of hash algorithms plus a column
-   for file size, file name, and, well, some fudge factors */
+   for file size, file name, and, well, some fudge factors. Any values
+   after this number will be ignored. For example, if the user invokes
+   the program as:
+
+   hashdeep -c md5,md5,md5,md5,...,md5,md5,md5,md5,md5,md5,md5,whirlpool
+
+   the whirlpool will not be registered. */
 #define MAX_KNOWN_COLUMNS  (NUM_ALGORITHMS + 6)
    
 
@@ -93,14 +108,13 @@ typedef enum
 #define HASHDEEP_PREFIX     "%%%% "
 #define HASHDEEP_HEADER_10  "%%%% HASHDEEP-1.0"
 
+
 typedef struct _file_data_t
 {
-  char      * hash[NUM_ALGORITHMS];
-  uint64_t    file_size;
-  TCHAR      * file_name;
-  uint64_t    used;
-  /* ID number in set of known hashes. Unique per execution */
-  uint64_t    id;  
+  char                * hash[NUM_ALGORITHMS];
+  uint64_t              file_size;
+  TCHAR               * file_name;
+  uint64_t              used;
   struct _file_data_t * next;
 } file_data_t;
 
@@ -123,21 +137,19 @@ typedef struct _hash_table_t {
 
 typedef struct _algorithm_t
 {
-  char        * name;
-  uint16_t      byte_length;
-  void        * hash_context; 
+  char          * name;
+  uint16_t        byte_length;
+  void          * hash_context; 
 
   int ( *f_init)(void *);
   int ( *f_update)(void *, unsigned char *, uint64_t );
   int ( *f_finalize)(void *, unsigned char *);
 
-  hashtable_t     * known;
-
-  /* We always store the result in a file_data structure */
-  //  unsigned char   * result;
+  /* The set of known hashes for this algorithm */
+  hashtable_t   * known;
 
   uint8_t         position;
-  unsigned char   * hash_sum;
+  unsigned char * hash_sum;
   int             inuse;
   uint64_t        howmany;
 } algorithm_t;
@@ -186,7 +198,6 @@ struct _state {
 
   /* The set of known hashes */
   int             hashes_loaded;
-  uint64_t        next_known_id;
   algorithm_t   * hashes[NUM_ALGORITHMS];
   file_data_t   * known, * last;
   uint64_t        hash_round;
@@ -250,10 +261,5 @@ int hash_stdin(state *s);
 /* HELPER FUNCTIONS */
 void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
 void sanity_check(state *s, int condition, char *msg);
-
-/* ----------------------------------------------------------------
-   INPUT FILE PROCESSING
-   ---------------------------------------------------------------- */
-int process_normal(state *s, TCHAR *fn);
 
 #endif /* ifndef __HASHDEEP_H */

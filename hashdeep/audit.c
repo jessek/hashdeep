@@ -21,12 +21,19 @@ int audit_status(state *s)
   s->match_unused = 0;
 
   while (tmp != NULL)
+  {
+    if (0 == tmp->used)
     {
-      if (0 == tmp->used)
-	s->match_unused++;
-      tmp = tmp->next;
+      s->match_unused++;
+      if (s->mode & mode_more_verbose)
+      {
+	display_filename(stdout,tmp->file_name);
+	print_status(": Known file not used");
+      }
     }
-
+    tmp = tmp->next;
+  }
+    
   return (0 == s->match_unused  && 
 	  0 == s->match_unknown && 
 	  0 == s->match_moved);
@@ -70,20 +77,21 @@ int display_audit_results(state *s)
 int audit_update(state *s)
 {
   int no_match = FALSE, exact_match = FALSE, moved = FALSE, partial = FALSE;
-  hashname_t i;
+  file_data_t * moved_file = NULL, * partial_file = NULL;
   hashtable_entry_t * matches, * tmp;
-  uint64_t my_round = s->hash_round;
-  TCHAR * matched_file = NULL;
+  uint64_t my_round;
+  hashname_t i;
   
   if (NULL == s)
     return TRUE;
 
+  my_round = s->hash_round;
   s->hash_round++;
   if (my_round > s->hash_round)
     fatal_error(s,"%s: Too many input files", __progname);
 
-  /* Although nobody uses match_total right now, they may in the future */
-  s->match_total++;
+  /* Although nobody uses match_total right now, we may in the future */
+  //  s->match_total++;
 
   for (i = 0 ; i < NUM_ALGORITHMS; ++i)
   {
@@ -97,6 +105,8 @@ int audit_update(state *s)
       }
       else while (tmp != NULL)
       {
+	//	print_status("Got status %d for %s", tmp->status, tmp->data->file_name);
+
 	if (tmp->data->used != s->hash_round)
 	{
 	  tmp->data->used = s->hash_round;
@@ -107,21 +117,22 @@ int audit_update(state *s)
     
 	    /* This shouldn't happen */
 	  case status_no_match:
+	    no_match = TRUE;
+	    print_error_unicode(s,s->current_file->file_name,
+				"Internal error: Got match for \"no match\"");
+	     
 	    break;
     
 	  case status_file_name_mismatch:
 	    moved = TRUE;
+	    moved_file = tmp->data;
 	    break;
     
 	    /* Hash collision */
 	  case status_partial_match:
-	    partial = TRUE;
-	    matched_file = tmp->data->file_name;
-	    break;
-	    
 	  case status_file_size_mismatch:
-	    /* Implies all hashes match, sizes different */
 	    partial = TRUE;
+	    partial_file = tmp->data;
 	    break;
 	    
 	  case status_unknown_error:
@@ -133,22 +144,27 @@ int audit_update(state *s)
 	}
 
 	tmp = tmp->next;
+
       }
-      
       hashtable_destroy(matches);
     }
   }
 
+  /* If there was an exact match, that overrides any other matching
+     'moved' file. Usually this happens when the same file exists
+     in two places. In this case we find an exact match and a case
+     where the filenames don't match. */
 
   if (exact_match)
   {
-    if (s->mode & mode_more_verbose)
-    {
-      display_filename(stdout,matches->data->file_name);
-      print_status(" ok");
-    }
     s->match_exact++;
+    if (s->mode & mode_insanely_verbose)
+    {
+      display_filename(stdout,s->current_file->file_name);
+      print_status(": Ok");
+    }
   }
+
   else if (no_match)
   {
     s->match_unknown++;
@@ -158,28 +174,38 @@ int audit_update(state *s)
       print_status(": No match");
     }
   } 
+
   else if (moved)
   {
-    if (s->mode & mode_more_verbose)
-    {
-	display_filename(stdout,matches->data->file_name);
-	fprintf(stdout," moved to ");
-	display_filename(stdout,s->current_file->file_name);
-	print_status("");
-    }
     s->match_moved++;
-  }
-  else if (partial)
-  {
     if (s->mode & mode_more_verbose)
     {
-	display_filename(stdout,matches->data->file_name);
-	fprintf(stdout," partially matched ");
-	display_filename(stdout,matched_file);
+	display_filename(stdout,s->current_file->file_name);
+	fprintf(stdout,": Moved from ");
+	display_filename(stdout,moved_file->file_name);
 	print_status("");
     }
-    s->match_partial++;
+
   }
   
-  return status_ok;
+  /* A file can have a hash collision even if it matches an otherwise
+     known good. For example, an evil version of ntoskrnl.exe should
+     have an exact match to EVILEVIL.EXE but still have a collision 
+     with the real ntoskrnl.exe. When this happens we should report
+     both results. */
+  if (partial)
+  {
+    /* We only record the hash collision if it wasn't anything else */
+    if (!exact_match && !moved && !no_match)
+      s->match_partial++;
+    if (s->mode & mode_more_verbose)
+    {
+	display_filename(stdout,s->current_file->file_name);
+	fprintf(stdout,": Hash collision with");
+	display_filename(stdout,partial_file->file_name);
+	print_status("");
+    }
+  }
+  
+  return FALSE;
 }

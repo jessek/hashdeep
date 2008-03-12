@@ -87,6 +87,9 @@ static int parse_hashing_algorithms(state *s, char *fn, char *val)
 static filetype_t 
 identify_file(state *s, char *fn, FILE *handle)
 {
+  hashname_t i;
+  hashname_t current_order[NUM_ALGORITHMS];
+ 
   if (NULL == s || NULL == fn || NULL == handle)
     internal_error("%s: NULL values in identify_file", __progname);
 
@@ -118,42 +121,45 @@ identify_file(state *s, char *fn, FILE *handle)
 
   chop_line(buf);
 
+  /* We don't use STRINGS_EQUAL here because we only care about
+     the first ten characters for right now. */
   if (strncasecmp("%%%% size,",buf,10))
-    {
-      free(buf);
-      return file_unknown;
-    }
+  {
+    free(buf);
+    return file_unknown;
+  }
 
   /* If this is the first file of hashes being loaded, clear out the 
      list of known values. Otherwise, record the current values to
-     make sure they don't change when we load the new file of knowns. */
+     let the user know if they have changed when we load the new file. */
   if ( ! s->hashes_loaded )
-    {
-      clear_algorithms_inuse(s);
-      hashname_t i;
-      for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-	s->hash_order[i] = alg_unknown;
-    }
+  {
+    clear_algorithms_inuse(s);
+  }
   else
-    {
-      // RBF - Save current hash->inuse values.
-    }
+  {
+    for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+      current_order[i] = s->hash_order[i];
+  }
 
+  /* We have to clear out the algorithm order to remove the values
+     from the previous file. This file may have different ones */
+  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+    s->hash_order[i] = alg_unknown;
+
+  /* Skip the "%%%% size," when parsing the list of hashes */
   parse_hashing_algorithms(s,fn,buf + 10);
 
-#ifdef DEBUG
-  uint8_t i;
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-    print_status("%s: %s", s->hashes[i]->name, s->hashes[i]->inuse?"ON":"-");
-
-  print_status("File in order:%ssize", NEWLINE); 
-  i = 1;
-  while (s->hash_order[i] != alg_unknown && i < NUM_ALGORITHMS)
-    {
-      print_status("%s", s->hashes[s->hash_order[i]]->name);
-      ++i;
-    }
-#endif
+  if (s->hashes_loaded)
+  {
+    i = 0;
+    while (i < NUM_ALGORITHMS && 
+	   s->hash_order[i] == current_order[i])
+      i++;
+    if (i < NUM_ALGORITHMS)
+      print_error(s,"%s: %s: Hashes not in same format as previously loaded",
+		  __progname, fn);
+  }
 
   free(buf);
 
@@ -162,26 +168,14 @@ identify_file(state *s, char *fn, FILE *handle)
 
 
 
-static status_t add_hash_to_algorithm(state *s,
-				      hashname_t alg,
-				      file_data_t *f)
+static status_t add_file(state *s, file_data_t *f)
 {
-  if (NULL == s || NULL == f)
-    return status_unknown_error;
-  
-  return (hashtable_add(s,alg,f));
-}
-
-
-static status_t add_hash(state *s, file_data_t *f)
-{
+  status_t st;
   hashname_t i;
 
-  if (NULL == s || NULL == s)
+  if (NULL == s || NULL == f)
     return status_unknown_error;
 
-  f->id = s->next_known_id;
-  s->next_known_id++;
   f->next = NULL;
 
   if (NULL == s->known)
@@ -191,12 +185,14 @@ static status_t add_hash(state *s, file_data_t *f)
 
   s->last = f;
 
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-    {
-      if (s->hashes[i]->inuse)
-	if (add_hash_to_algorithm(s,i,f) != status_ok)
-	  return status_unknown_error;
-    }
+  i = 1;
+  while (s->hash_order[i] != alg_unknown)
+  {
+    st = hashtable_add(s,s->hash_order[i],f);
+    if (st != status_ok)
+      return st;
+    ++i;
+  }
 
   return status_ok;
 
@@ -204,12 +200,16 @@ static status_t add_hash(state *s, file_data_t *f)
 
 static int initialize_file_data(file_data_t *f)
 {
+  hashname_t i;
+
   if (NULL == f)
     return TRUE;
 
   f->next = NULL;
-  f->id   = 0;
-  f->used = FALSE;
+  f->used = 0;
+
+  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+    f->hash[i] = NULL;
 
   return FALSE;
 }
@@ -220,24 +220,45 @@ static void display_file_data(state *s, file_data_t * t)
 {
   int i;
 
-  fprintf(stdout,"Filename: ");
+  fprintf(stdout,"  Filename: ");
   display_filename(stdout,t->file_name);
   fprintf(stdout,"%s",NEWLINE);
 
-  print_status("Size: %"PRIu64, t->file_size);
+  print_status("      Size: %"PRIu64, t->file_size);
 
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-    print_status("%s: %s", s->hashes[i]->name, t->hash[i]);
+    print_status("%10s: %s", s->hashes[i]->name, t->hash[i]);
   print_status("");
+}
+
+static void display_all_known_files(state *s)
+{
+  if (NULL == s)
+    return;
+
+  if (NULL == s->known)
+  {
+    print_status("No known hashes");
+    return;
+  }
+
+  file_data_t * tmp = s->known;
+  while (tmp != NULL)
+  {
+    display_file_data(s,tmp);
+    tmp = tmp->next;
+  }
 }
 #endif
 
 
-static int read_file(state *s, char *fn, FILE *handle)
+int read_file(state *s, char *fn, FILE *handle)
 {
+  uint8_t i;
   char * buf;
   file_data_t * t;
   uint64_t line_number = 0;
+  char **ap, *argv[MAX_KNOWN_COLUMNS];
 
   if (NULL == s || NULL == fn || NULL == handle)
     return TRUE;
@@ -267,8 +288,6 @@ static int read_file(state *s, char *fn, FILE *handle)
       fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
 		  __progname, fn, line_number);
 
-
-    char **ap, *argv[MAX_KNOWN_COLUMNS];
     for (ap = argv ; (*ap = strsep(&tmp,",")) != NULL ; )
       if (**ap != '\0')
 	if (++ap >= &argv[MAX_KNOWN_COLUMNS])
@@ -277,7 +296,7 @@ static int read_file(state *s, char *fn, FILE *handle)
     /* The first value is always the file size */
     t->file_size = (uint64_t)strtoll(argv[0],NULL,10);
 
-    int i = 1;
+    i = 1;
     while (argv[i] != NULL && 
 	   s->hash_order[i] != alg_unknown && 
 	   i <= NUM_ALGORITHMS)
@@ -304,11 +323,9 @@ static int read_file(state *s, char *fn, FILE *handle)
 			       -1,   
 			       t->file_name,
 			       sz+1))
-      {
-	fatal_error(s,"%s: MultiByteToWideChar failed (%d)", 
-		    __progname, 
-		    GetLastError());
-      }
+      fatal_error(s,"%s: MultiByteToWideChar failed (%d)", 
+		  __progname, 
+		  GetLastError()); 
 #else
     t->file_name = strdup(argv[i]);
     if (NULL == t->file_name)
@@ -317,11 +334,7 @@ static int read_file(state *s, char *fn, FILE *handle)
 #endif
     
     
-#ifdef DEBUG
-    display_file_data(s,t);
-#endif
-
-    if (add_hash(s,t))
+    if (add_file(s,t))
       return TRUE;
     
     free(tmp);
@@ -330,6 +343,7 @@ static int read_file(state *s, char *fn, FILE *handle)
   free(buf);
   return FALSE;
 }
+
 
 
 status_t load_match_file(state *s, char *fn)
@@ -353,17 +367,23 @@ status_t load_match_file(state *s, char *fn)
   {
     print_error(s,"%s: %s: Unable to identify file format", __progname, fn);
     fclose(handle);
-    return status_file_error;
+    return status_unknown_filetype;
   }
 
   if (read_file(s,fn,handle))
     status = status_file_error;
   
   fclose(handle);
+
+
+  //  display_all_known_files(s);
+
+
   return status;
 }
 
 
+/* We don't use this function anymore, but it's handy to have just in case
 char * status_to_str(status_t s)
 {
   switch (s) {
@@ -378,81 +398,7 @@ char * status_to_str(status_t s)
     return "unknown";
   }      
 }
-
-
-status_t display_match_neg(state *s)
-{
-  hashtable_entry_t * ret, * tmp;
-  int should_display = TRUE;
-  hashname_t i;
-  uint64_t my_round;
- 
-  if (NULL == s)
-    return status_unknown_error;
-
-  my_round = s->hash_round;
-  s->hash_round++;
-  if (my_round > s->hash_round)
-    fatal_error(s,"%s: Too many input files", __progname);
-
-  for (i = 0 ; i < NUM_ALGORITHMS; ++i)
-  {
-    if (s->hashes[i]->inuse)
-    {
-      ret = hashtable_contains(s,i);
-      tmp = ret;
-      while (tmp != NULL)
-      {
-	switch (tmp->status) {
-
-	  /* If only the name is different, it's still really a match
-	     as far as we're concerned. */
-	case status_file_name_mismatch:
-	case status_match:
-	  should_display = FALSE;
-	  break;
-	  
-	case status_file_size_mismatch:
-	case status_partial_match:
-
-	  if (tmp->data->used != s->hash_round)
-	  {
-	    tmp->data->used = s->hash_round;
-	    display_filename(stderr,s->current_file->file_name);
-	    fprintf(stderr,": WARNING: Partial match ");
-	    display_filename(stderr,tmp->data->file_name);
-	    fprintf(stderr,"%s", NEWLINE);
-
-	    /* Technically this wasn't a match, so we're still ok
-	       to display this result at the end as not matching */
-	    break;
-	  }
-	    
-	default:
-	  break;
-	}
-      
-	tmp = tmp->next;
-      }
-
-      hashtable_destroy(ret);
-    }
-  }
-
-  if (should_display)
-  {
-    if (s->mode & mode_display_hash)
-      display_hash_simple(s);
-    else
-    {
-      display_filename(stdout,s->current_file->file_name);
-      print_status("");
-    }
-  }
-
-  return status_ok;
-}
-
+*/
 
 
 status_t display_match_result(state *s)
@@ -499,14 +445,15 @@ status_t display_match_result(state *s)
 	  {
 	    tmp->data->used = s->hash_round;
 	    display_filename(stderr,s->current_file->file_name);
-	    fprintf(stderr,": WARNING: Partial match ");
+	    fprintf(stderr,": Hash collision with ");
 	    display_filename(stderr,tmp->data->file_name);
 	    fprintf(stderr,"%s", NEWLINE);
 
 	    /* Technically this wasn't a match, so we're still ok
 	       with the match result we already have */
-	    break;
+
 	  }
+	  break;
 	
 	case status_unknown_error:
 	  return status_unknown_error;
