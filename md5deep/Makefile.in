@@ -689,10 +689,10 @@ install-exec-hook: update-manpages
 	rm -f ${man1dir}/${ALL_GOALS}deep.1
 
 update-manpages: md5deep.1
-	cp $< sha1deep.1
-	cp $< sha256deep.1
-	cp $< tigerdeep.1
-	cp $< whirlpooldeep.1
+	cp md5deep.1 sha1deep.1
+	cp md5deep.1 sha256deep.1
+	cp md5deep.1 tigerdeep.1
+	cp md5deep.1 whirlpooldeep.1
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
