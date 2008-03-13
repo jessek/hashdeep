@@ -1,5 +1,5 @@
 
-This program is divided into two parts, the Tiger code and everything
+This program is divided into two parts, the Tiger+strsep ccode and everything
 else. Let's start with everything else:
 
 This program is a work of the US Government. In accordance with 17 USC
@@ -9,7 +9,10 @@ NO warranty for this program; not even for MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.
 
 The code for Tiger comes from the GnuPG project and is licensed under
-the General Public License (GPL). Because the vast majority of this
+the General Public License (GPL). The code from strsep comes from
+the gnulib library and is also GPL'ed. 
+
+Because the vast majority of this
 program is public domain, the license of this project as whole remains
 public domain. The Tiger code itself is still licensed under the GPL.
 Note that this dual licensing scheme does not violate the terms of 
@@ -21,8 +24,8 @@ http://www.fsf.org/licensing/licenses/gpl-faq.html#GPLUSGov
 
 
 
-In order to comply with the terms of the GPL for Tiger.c, here is the
-full text of the license for that file:
+In order to comply with the terms of the GPL, here is the
+full text of the license for those files:
 
 		    GNU GENERAL PUBLIC LICENSE
 		       Version 2, June 1991

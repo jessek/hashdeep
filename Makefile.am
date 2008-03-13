@@ -18,37 +18,49 @@ todo:
 	@cat TODO
 
 
-# This Makefile is designed to package Windows distributions from Mac OS X
-# To do this on a Linux box, The big line below starting with "/usr/bin/tbl"
-# should be replaced with:
-#
-#       man ./$(MAN_PAGE) | col -bx > README.txt
-#
-# and the "flip -d" command should be replaced with unix2dos. Note that
-# these commands are included below but are commented out.
-#
 # The flip command can be found at:
 # http://ccrma-www.stanford.edu/~craig/utility/flip/#
 
-WINDOC=CHANGES.TXT README.TXT
+SUFFIXES = .TXT .1
+
+.1.TXT:
+	/usr/bin/tbl $< | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > $@
+
+#.1.TXT: 
+#	man $< | col -bx > $@
+
+
+WINDOWSDOCS = MD5DEEP.TXT HASHDEEP.TXT CHANGES.TXT COPYING.TXT
+
+COPYING.TXT: COPYING
+	cp COPYING COPYING.TXT
 
 CHANGES.TXT: NEWS
 	cp NEWS CHANGES.TXT
-	flip -d CHANGES.TXT
-#	unix2dos CHANGES.TXT
 
-README.TXT:
-	/usr/bin/tbl ./md5deep.1 | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > README.TXT
-	flip -d README.TXT
-#	man ./md5deep.1 | col -bx > README.TXT
-#	unix2dos README.TXT
+MD5DEEP.1: 
+	cp md5deep/md5deep.1   MD5DEEP.1
+HASHDEEP.1:
+	cp hashdeep/hashdeep.1 HASHDEEP.1
 
-cross: ${WINDOC}
+win-docs:  $(WINDOWSDOCS)
+	flip -d $(WINDOWSDOCS)
+#	unix2dos $(WINDOWSDOCS)
+
+win-prep: 
+	rm -f $(WINDOWSDOCS)
+
+win-package: win-prep win-docs
+	rm -rf $(distdir).zip $(distdir)
+	$(STRIP) md5deep/*.exe hashdeep/hashdeep.exe
+	mkdir $(distdir)
+	cp $(WINDOWSDOCS) md5deep/*.exe hashdeep/hashdeep.exe $(distdir)
+	zip -r9 $(distdir).zip $(distdir)
+	rm -rf $(distdir) $(WINDOWSDOCS) MD5DEEP.1 HASHDEEP.1
+
+world: distclean
 	./configure --host=mingw32
-	make all
-	mingw32-strip ${ALL_GOALS}deep.exe
-	zip -9 md5deep-${VERSION}.zip ${ALL_GOALS}deep.exe $(WINDOC)
-	rm -f ${WINDOC}
-	make distclean
+	make
+	make win-package
+	make dist
 
-world: dist cross

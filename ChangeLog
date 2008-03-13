@@ -1,5 +1,9 @@
 2008-03-13 Jesse Kornblum <md5deep@jessekornblum.com>
 
+	* Updated make world directive to make Windows package
+
+	* Updated COPYING to note more than one file under GPL
+	
         * Changed md5deep Makefile to explicitly name man
           man pages in copy operation.
 
