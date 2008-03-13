@@ -17,8 +17,6 @@ status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
   {
     if (s->hashes[i]->inuse)
     {
-      //      print_status("Hash %d %s %s", i, a->hash[i], b->hash[i]);
-
       /* We have to avoid calling STRINGS_EQUAL on NULL values */
       if (NULL == a->hash[i] || NULL == b->hash[i])
 	partial_null = TRUE;
@@ -40,11 +38,13 @@ status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
     else
       return status_no_match;
   }
-
   
   if (a->file_size != b->file_size)
     return status_file_size_mismatch;
   
+  /* We can't compare something that's NULL */
+  if (NULL == a->file_name || NULL == b->file_name)
+    return status_file_name_mismatch;
   if (!(WSTRINGS_EQUAL(a->file_name,b->file_name)))
     return status_file_name_mismatch;
   
@@ -59,14 +59,14 @@ status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
 
 /* Convert a single hexadecimal character to decimal. If c is not a valid
    hex character, returns 0. */
-static int translateChar(char c) 
+static int translate_char(char c) 
 {
-  // If this is a digit
+  /* If this is a digit */
   if (c > 47 && c < 58) 
     return (c - 48);
   
   c = toupper(c);
-  // If this is a letter... 'A' should be equal to 10
+  /* If this is a letter... 'A' should be equal to 10 */
   if (c > 64 && c < 71) 
     return (c - 55);
 
@@ -79,8 +79,13 @@ static uint64_t translate(char *n)
 { 
   int count;
   uint64_t total = 0, power = 1;
-  for (count = HASH_TABLE_SIG_FIGS - 1 ; count >= 0 ; count--) {
-    total += translateChar(n[count]) * power;
+
+  if (NULL == n)
+    internal_error("%s: translate called on NULL string", __progname);
+
+  for (count = HASH_TABLE_SIG_FIGS - 1 ; count >= 0 ; count--) 
+  {
+    total += translate_char(n[count]) * power;
     power *= 16;
   }
 
@@ -109,17 +114,17 @@ status_t hashtable_add(state *s, hashname_t alg, file_data_t *f)
   uint64_t key = translate(f->hash[alg]);
   
   if (NULL == t->member[key])
-    {
-      new = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
-      if (NULL == new)
-	return status_out_of_memory;
-
-      new->next = NULL;
-      new->data = f;
-
-      t->member[key] = new;
+  {
+    new = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
+    if (NULL == new)
+      return status_out_of_memory;
+    
+    new->next = NULL;
+    new->data = f;
+    
+    t->member[key] = new;
       return status_ok;
-    }
+  }
 
   temp = t->member[key];
 
@@ -128,12 +133,12 @@ status_t hashtable_add(state *s, hashname_t alg, file_data_t *f)
     return status_ok;
 
   while (temp->next != NULL)
-    {
-      temp = temp->next;
+  {
+    temp = temp->next;
     
-      if (file_data_compare(s,temp->data,f) == status_match)
-	return status_ok;
-    }
+    if (file_data_compare(s,temp->data,f) == status_match)
+      return status_ok;
+  }
 
   new = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
   if (NULL == new)
@@ -156,11 +161,11 @@ void hashtable_destroy(hashtable_entry_t *e)
     return;
   
  while (e != NULL)
-    {
-      tmp = e->next;
-      free(e);
-      e = tmp;
-    }
+  {
+    tmp = e->next;
+    free(e);
+    e = tmp;
+  }
 }
 
 

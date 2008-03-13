@@ -5,9 +5,10 @@
 
 static int parse_hashing_algorithms(state *s, char *fn, char *val)
 {
-  uint8_t i;
-  int done = FALSE;
   char **ap, *buf[MAX_KNOWN_COLUMNS];
+  int done = FALSE;
+  uint8_t i;
+
   /* The first position is always the file size, so we start with an 
      the first position of one. */
   uint8_t order = 1;
@@ -162,7 +163,6 @@ identify_file(state *s, char *fn, FILE *handle)
   }
 
   free(buf);
-
   return file_hashdeep_10;
 }
 
@@ -197,6 +197,7 @@ static status_t add_file(state *s, file_data_t *f)
   return status_ok;
 
 }
+
 
 static int initialize_file_data(file_data_t *f)
 {

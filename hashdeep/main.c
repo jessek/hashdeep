@@ -91,13 +91,11 @@ add_algorithm(state *s,
   if (NULL == s->hashes[pos]->hash_context)
     return TRUE;
   
-  s->hashes[pos]->position    = pos;
   s->hashes[pos]->f_init      = func_init;
   s->hashes[pos]->f_update    = func_update;
   s->hashes[pos]->f_finalize  = func_finalize;
   s->hashes[pos]->byte_length = len;
   s->hashes[pos]->inuse       = inuse;
-  s->hashes[pos]->howmany     = 0;
 
   return FALSE;
 }
@@ -238,12 +236,12 @@ static int parse_hashing_algorithms(state *s, char *val)
       print_error(s,"%s: Unknown algorithm: %s", __progname, buf[i]);
       try_msg();
       exit(EXIT_FAILURE);
-    }
-    
+    }    
   }
     
   return FALSE;
 }
+
 
 static int process_command_line(state *s, int argc, char **argv)
 {
@@ -257,7 +255,7 @@ static int process_command_line(state *s, int argc, char **argv)
     case 'c': 
       s->primary_function = primary_compute;
       /* Before we parse which algorithms we're using now, we have 
-	 to erase the default values */
+	 to erase the default (or previously entered) values */
       clear_algorithms_inuse(s);
       if (parse_hashing_algorithms(s,optarg))
 	fatal_error(s,"%s: Unable to parse hashing algorithms",__progname);
@@ -330,7 +328,7 @@ static int process_command_line(state *s, int argc, char **argv)
       
     case 'V':
       print_status("%s", VERSION);
-	  exit(EXIT_SUCCESS);
+      exit(EXIT_SUCCESS);
 	  
     case 'h':
       usage(s);
@@ -346,6 +344,7 @@ static int process_command_line(state *s, int argc, char **argv)
 
   return FALSE;
 }
+
 
 static int initialize_state(state *s) 
 {
@@ -473,12 +472,3 @@ int main(int argc, char **argv)
 
   return status;
 }
-
-
-
-
-
-
-
-
-

@@ -148,10 +148,8 @@ typedef struct _algorithm_t
   /* The set of known hashes for this algorithm */
   hashtable_t   * known;
 
-  uint8_t         position;
   unsigned char * hash_sum;
   int             inuse;
-  uint64_t        howmany;
 } algorithm_t;
 
 

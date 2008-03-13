@@ -5,24 +5,22 @@
 
 static void display_banner(state *s)
 {
-  hashname_t i;
   int argc;
+  hashname_t i;
   
   print_status("%s", HASHDEEP_HEADER_10);
-  fprintf (stdout,"%ssize,",HASHDEEP_PREFIX);
-  
+
+  fprintf (stdout,"%ssize,",HASHDEEP_PREFIX);  
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {
     if (s->hashes[i]->inuse)
       printf ("%s,", s->hashes[i]->name);
-  }
-  
+  }  
   print_status("filename");
 
   fprintf(stdout,"## Invoked from: ");
   display_filename(stdout,s->cwd);
   fprintf(stdout,"%s",NEWLINE);
-
   
   /* Display the command prompt as the user saw it */
   fprintf(stdout,"## ");
@@ -40,8 +38,7 @@ static void display_banner(state *s)
     fprintf(stdout," ");
     display_filename(stdout,s->argv[argc]);
   }
-
-  fprintf(stdout,"%s", NEWLINE);
+  fprintf(stdout,"%s",NEWLINE);
 
   s->banner_displayed = TRUE;
 }
@@ -63,7 +60,7 @@ int display_hash_simple(state *s)
   }
   
   display_filename(stdout,s->current_file->file_name);
-  fprintf(stdout,"%s", NEWLINE);
+  fprintf(stdout,"%s",NEWLINE);
 
   return FALSE;
 }
@@ -90,5 +87,3 @@ int display_hash(state *s)
 
   return FALSE;
 }
-  
-
