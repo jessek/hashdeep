@@ -1,3 +1,8 @@
+2008-03-16 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Added missing space to hash collision message in audit.c
+
+	
 2008-03-13 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Updated make world directive to make Windows package

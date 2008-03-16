@@ -201,7 +201,7 @@ int audit_update(state *s)
     if (s->mode & mode_more_verbose)
     {
 	display_filename(stdout,s->current_file->file_name);
-	fprintf(stdout,": Hash collision with");
+	fprintf(stdout,": Hash collision with ");
 	display_filename(stdout,partial_file->file_name);
 	print_status("");
     }
