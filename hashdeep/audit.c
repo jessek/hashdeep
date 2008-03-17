@@ -195,16 +195,15 @@ int audit_update(state *s)
      both results. */
   if (partial)
   {
-    /* We only record the hash collision if it wasn't anything else */
+    /* We only record the hash collision if it wasn't anything else.
+       At the same time, however, a collision is such a significant
+       event that we print it no matter what. */
     if (!exact_match && !moved && !no_match)
       s->match_partial++;
-    if (s->mode & mode_more_verbose)
-    {
-	display_filename(stdout,s->current_file->file_name);
-	fprintf(stdout,": Hash collision with ");
-	display_filename(stdout,partial_file->file_name);
-	print_status("");
-    }
+    display_filename(stdout,s->current_file->file_name);
+    fprintf(stdout,": Hash collision with ");
+    display_filename(stdout,partial_file->file_name);
+    print_status("");
   }
   
   return FALSE;

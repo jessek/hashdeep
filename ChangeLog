@@ -2,6 +2,8 @@
 
 	* Added missing space to hash collision message in audit.c
 
+	* Changed default behavior to always print hash collisions
+
 	
 2008-03-13 Jesse Kornblum <md5deep@jessekornblum.com>
 
