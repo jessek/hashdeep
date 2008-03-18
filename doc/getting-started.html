@@ -1,0 +1,535 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <!-- $Id$ -->
+  <title>Getting Started with md5deep</title></head>
+  
+  <link rel="stylesheet" type="text/css" href="style.css">
+  
+  <style type="text/css">
+  td {text-align: center}
+  </style>
+
+</head>
+
+<body>
+
+<h1>
+Getting Started with md5deep
+</h1>
+
+This document provides an introduction to using 
+<a href="/">md5deep</a> and was last updated on
+  <script type="text/javascript">
+  <!--
+    function mon_to_name(mon)
+    {
+      switch(mon)
+      {
+        case 0: return "Jan";
+        case 1: return "Feb";
+        case 2: return "Mar";
+        case 3: return "Apr";
+        case 4: return "May";
+        case 5: return "Jun";
+        case 6: return "Jul";
+        case 7: return "Aug";
+        case 8: return "Sep";
+        case 9: return "Oct";
+        case 10: return "Nov";
+        case 11: return "Dec";
+      }
+      return "";
+    }
+
+   var now = new Date(document.lastModified);
+   document.write(now.getDate() + " " + mon_to_name(now.getMonth()) + 
+                 " " + now.getFullYear() + ".");
+
+  // -->
+  </script>
+
+The current version of this document can be found on the
+md5deep web site at
+<a href="http://md5deep.sourceforge.net/">
+http://md5deep.sourceforge.net/</a>. 
+sha1deep, sha256deep, tigerdeep, and whirlpooldeep 
+work just like md5deep; all of the command line
+options are the same.
+
+<ul>
+<li> <a href="#install">Installing md5deep</a></li>
+<li> <a href="#basic">Basic Operation</a></li>
+<li> <a href="#error">Error Messages</a></li>
+<li> <a href="#recursive">Recursive Mode</a></li>
+<br>
+<li> <a href="#time">Time Estimation Mode</a></li>
+<li> <a href="#size">File Size Mode</a></li>
+<li> <a href="#match">Matching Mode</a></li>
+<li> <a href="#advmatch">Advanced Matching Mode</a></li>
+<li> <a href="#expert">Expert Mode</a></li>
+</ul>
+
+<hr>
+
+
+<h2 id="install">Installing md5deep </h2>
+
+<h3 id="windowsinstall"> Microsoft Windows </h3>
+
+<p>
+Users running Microsoft Windows are strongly encouraged to download the precompiled binaries
+from <a href="http://md5deep.sourceforge.net/">http://md5deep.sourceforge.net/</a>. 
+
+Please note that these binaries are created using a Mingw cross compiler.
+Compiling the programs directly from Windows <em>is not supported</em>.
+
+</p>
+
+
+<h3 id="autoinstall"> Automatic Installation </h3>
+
+Before you try to install md5deep manually, see if your operating system supports
+the programs via an automatic installation method. Some operating systems that
+provide this feature for md5deep are:
+
+</p>
+<p>
+
+<strong>Mac OS X: </strong>
+<a href="http://md5deep.darwinports.com/">DarwinPorts</a>, 
+<a href="http://pdb.finkproject.org/pdb/package.php/md5deep">Fink</a>
+
+<br>
+
+<strong> Linux: </strong>
+<a href="http://packages.ubuntu.com/feisty/utils/md5deep">Ubuntu</a>,
+<a href="http://dag.wieers.com/rpm/packages/md5deep/">Fedora</a>,
+<a href="http://gentoo-portage.com/app-crypt/md5deep">Gentoo</a>,
+<a href="http://rpmfind.net/linux/RPM/dag/redhat/el2.1/i386/md5deep-1.13-1.el2.rf.i386.html">RedHat Enterprise</a>,
+<a href="http://www.linuxpackages.net/pkg_details.php?id=9470">Slackware</a>
+
+<br>
+
+<strong> BSD: </strong>
+<a href="http://www.freebsd.org/cgi/cvsweb.cgi/ports/security/md5deep/">FreeBSD</a>
+
+</p>
+
+
+<h3 id="manualinstall"> Manual installation </h3>
+
+<p>
+If your operating system does not support the automatic installation
+methods described above, you will have to download the source code
+and compile the programs yourself.
+First download the latest tarball of the program from 
+<a href="http://md5deep.sourceforge.net/">http://md5deep.sourceforge.net/</a>. This file
+should be named something like <tt>md5deep-2.0.tar.gz</tt>. Uncompress the file with the
+following command:
+
+<pre>    $ tar zxvf md5deep-2.0.tar.gz </pre>
+
+</p>
+<p>
+
+Change into the decompressed directory
+
+<pre>    $ cd md5deep-2.0 </pre>
+
+and configure the program.
+
+<pre>    $ ./configure </pre>
+
+The configure script can accept lots of options. Run <tt>./configure --help</tt> for the
+complete list. The most common option used is the <tt>prefix</tt> option which installs
+the program in a location other than the default, <tt>/usr/local/bin</tt>. If you wanted
+to install the program elsewhere, for example, <tt>/tmp/md5deep</tt>, you would
+run <tt> ./configure --prefix=/tmp/md5deep</tt> instead.
+
+</p>
+<p>
+
+You can now compile the program using the make command:
+
+<pre>    $ make </pre>
+
+and install it:
+
+<pre>    $ make install </pre>
+
+Note that you must be root on most operating systems to install the program to its
+default location, <tt>/usr/local/bin</tt>. The tool <tt>sudo</tt> may help:
+
+<pre>    $ sudo make install </pre>
+
+<br>
+</p>
+
+
+
+<h2 id="basic"> Basic Operation </h2>
+
+<h3 id="commandprompt"> Opening a command prompt </h3>
+
+<p>
+md5deep is a command line program. You cannot run the program by 
+double clicking on it! On Microsoft Windows, click on the Start button
+and choose "Run..." from the menu. In this dialog box, type <tt>cmd.exe</tt>
+and hit enter. A command prompt should appear. In this window, type
+the full path to md5deep.exe. For example:
+
+<pre> c:\Documents and Settings\jessek\Desktop\md5deep.exe</pre>
+
+Note that you <em>can</em> drag the md5deep icon into this window and
+the operating system will fill in the path information for you. 
+You can also install the programs in a directory that is included in
+your <tt>PATH</tt> environment variable.
+
+</p>
+
+
+<h3> Computing hashes </h3>
+
+By default, md5deep generates MD5 hashes for each input file, 
+displaying the full path information for each file:
+
+<pre>$ md5deep config.h INSTALL README
+b08b18e0a3d2440feb0b321ea8080b36  /home/jessek/coreutils-5.2.0/config.h
+9f3e20fdff9c78aa8e3f9b42be166769  /home/jessek/coreutils-5.2.0/INSTALL
+4aa18483f73fc56c907f0ae9025e2582  /home/jessek/coreutils-5.2.0/README</pre>
+
+If no input files are specified, standard input is hashed. You can either
+pipe the output of other programs into md5deep or type manually at the 
+command line. (To end input from the command line, most shells use 
+Control-D. Note that Microsoft Windows <em>does not</em> support using
+Control-D to end the input. You cannot use a directly typed input
+on Windows, sorry!) 
+
+<pre>$ uname -a | md5deep
+f54c5e12c13791b67d299221424a5d80
+
+$ md5deep
+This is a test  [Control-D hit]
+ff22941336956098ae9a564289d1bf1b</pre>
+
+You can also have md5deep print relative filenames instead of absolute
+ones. That is, omit all of the path information except that specified 
+on the command line. To enable relative paths, use the <tt>-l</tt> flag. 
+Repeating our first example with the <tt>-l</tt> flag:
+
+<pre>$ md5deep -l ../*
+b08b18e0a3d2440feb0b321ea8080b36  ../config.h
+9f3e20fdff9c78aa8e3f9b42be166769  ../INSTALL
+4aa18483f73fc56c907f0ae9025e2582  ../README</pre>
+
+You can have md5deep only print out the basename of each 
+file it processes. That is, all directory information will be stripped
+off. To enable basename mode, use the <tt>-b</tt> flag:
+
+<pre>$ md5deep -b config.h INSTALL README
+b08b18e0a3d2440feb0b321ea8080b36  config.h
+9f3e20fdff9c78aa8e3f9b42be166769  INSTALL
+4aa18483f73fc56c907f0ae9025e2582  README</pre>
+
+Finally, if you need md5deep to insert an asterisk before the filename,
+similar to how md5sum does when you use the -b flag with that program,
+you can use the -k flag on md5deep. 
+
+<pre>$ md5deep -k config.h INSTALL README
+b08b18e0a3d2440feb0b321ea8080b36 */home/jessek/coreutils-5.2.0/config.h
+9f3e20fdff9c78aa8e3f9b42be166769 */home/jessek/coreutils-5.2.0/INSTALL
+4aa18483f73fc56c907f0ae9025e2582 */home/jessek/coreutils-5.2.0/README</pre>
+
+<br>
+<h2 id="error"> Error messages </h2>
+
+If an input file can't be found, an error message is normally printed.
+These, and all other error messages, can be surpressed by using the 
+<tt>-s</tt> flag.
+
+<pre>$ md5deep doesnotexist.txt
+md5deep: /home/jessek/doesnotexist.txt: No such file or directory
+
+$ md5deep -s doesnotexist.txt
+$</pre>
+
+
+<br>
+<h2 id="recursive">Recursive Mode</h2>
+
+Normally, attempting to process a directory will generate an error message.
+Under recursive mode, md5deep will hash files in the current directory
+<em>and</em> file in subdirectories. 
+Recursive mode is activated by using 
+the <tt>-r</tt> flag.
+
+<pre>$ md5deep *
+md5deep: /home/jessek/archives: Is a directory
+md5deep: /home/jessek/bin: Is a directory
+
+$ md5deep -r *
+ea024eaf04ee7a2a4270655d584445d2  /home/jessek/archives/coreutils-5.2.0.tar.bz2
+a07715c3344524da1270e9eb39f9b9e1  /home/jessek/archives/md5deep-0.16.tar.gz
+ef62d2a26c266df6151ae35447bfd2ad  /home/jessek/archives/dcfldd-1.0.tar.gz
+fb3dab239dd0baa0f4a1ccb10c3a5b0a  /home/jessek/bin/hex2dec</pre>
+
+
+<br>
+<h2 id="time"> Time Estimation Mode </h2>
+
+When processing large files, it is sometimes helpful to have an estimate
+of the time remaining in the operation. md5deep can generate an estimate
+of how long it will take to finish processing the <em>current file</em>.
+The <tt>-e</tt> flag prints this estimate to standard error, like this:
+
+<pre>$ md5deep -e /dev/hda1
+hda1: 1MB of 47MB done, 00:00:46 left
+</pre>
+
+When the file is completed, the last time estimate is removed and the
+hash is displayed:
+
+<pre>$ md5deep -e /dev/hda1
+ca1b8297dbceaa14682d889483320a1a  /dev/hda1
+</pre>
+
+
+<h2 id="size"> File Size Mode </h2>
+
+md5deep can optionally display a ten digit representation of each
+file's size along with the hash. The file size comes before the hash
+on the line. This mode is activated with the <em>-z</em> flag, like this:
+
+<pre>$ md5deep -z *.h
+      1666  3a5353527e28b1cb5b844d602094c25a  /home/jessek/md5deep/src/algorithms.h
+      1232  a27d2799c36c7c64e370bf480dd463c0  /home/jessek/md5deep/src/hashTable.h
+      1880  d8defb61898fe255c6d66c4d880a8536  /home/jessek/md5deep/src/md5.h</pre>
+
+Note that ten spaces are used, even if the file size doesn't require that
+much space. This is done to make sorting easier.
+
+<p>
+
+If the file size is larger than 9,999,999,999 bytes (about 9.3 GB), the
+program will display the size as 9999999999. 
+</p>
+<br>
+
+<h2 id="match"> Matching mode </h2>
+
+One of the more powerful features of md5deep is the ability to match
+the hashes of input files against a list of known hashes. You can
+do both <em>postive matching</em>, which displays those files that
+<b>do</b> match the list of known hashes, or <em>negative matching</em>,
+which displays those files that <b>do not</b> match the list of known
+hashes.
+
+<h3>Positive Matching</h3>
+
+Let's say that we have a text file <tt>known-hashes.txt</tt> which
+contains a few hashes:
+
+<pre>65e7d67f9dbc831d4334f23c7fb9cfb1  foo.doc
+406f25e49e9e08bb859b574a96746177  bar.gif</pre>
+
+You can use hash files generated by md5deep, md5sum, md5 (found on *BSD 
+systems), Hashkeeper, iLook,
+and the National Software Reference Library.
+We can specify to use this file for positive matching by using the
+<tt>-m</tt> flag. Then, any input files that match either of these
+hashes will be displayed.
+
+<pre>$ md5deep -m known-hashes.txt *
+/home/jessek/tmp/a-matching-file.doc
+/home/jessek/tmp/some-other-file.gif</pre>
+
+If you want to see the hashes along with the filenames, you can use the
+<tt>-M</tt>  flag instead.
+
+<pre>$ md5deep -M known-hashes.txt *
+65e7d67f9dbc831d4334f23c7fb9cfb1 /home/jessek/tmp/a-matching-file.doc
+406f25e49e9e08bb859b574a96746177 /home/jessek/tmp/some-other-file.gif</pre>
+
+If you need to match against a single hash, or would like to add a
+single hash to the set of known hashes, you can use the <tt>-a</tt> flag.
+This flag enables matching mode and add a single hash.
+
+<pre>$ md5deep -a 65e7d67f9dbc831d4334f23c7fb9cfb1 *
+/home/jessek/tmp/a-matching-file.doc</pre>
+
+If you would like to see filename of the known file that generated the
+match, use the <tt>-w</tt> flag. Continuing our example:
+
+<pre>$ md5deep -wM known-hashes.txt *
+65e7d67f9dbc831d4334f23c7fb9cfb1 /home/jessek/tmp/a-matching-file.doc matched foo.doc
+406f25e49e9e08bb859b574a96746177 /home/jessek/tmp/some-other-file.gif matched bar.gif</pre>
+
+
+
+<h3>Negative Matching</h3>
+
+<p>
+Negative matching is the same as positive matching, above, but displays
+those files that are not in the list of known hashes. Negative matching
+can be enabled using the <tt>-x</tt> flag, or the <tt>-X</tt> flag if
+you want to see the hashes along with the filenames. The <tt>-A</tt>
+flag will add a single hash to the set of hashes.
+
+</p>
+
+<br>
+<h2 id="advmatch"> Advanced Matching Modes </h2>
+
+<h3> Which File Matched </h3>
+
+First, the -w mode can be used
+to see which file an input matched. For example, let's say we have 
+a file of known hashes, <tt>known.txt</tt> that we're matching against.
+Normally we see a list of input files that matched any known file:
+
+<pre>$ md5deep -m known.txt *
+/home/jessek/an-input-file.txt
+/home/jessek/another-matching-file.txt</pre>
+
+When we add the -w mode to the command line, we see the filename in the
+list of known files that matched.
+
+<pre>$ md5deep -wm known.txt *
+/home/jessek/an-input-file.txt matched EVILEVIL.EXE
+/home/jessek/another-matching-file.txt matched san-dimas-high-school.jpg</pre>
+
+The -w flag only works with positive matching, or -m mode. Attempting to
+use -w mode with negative matching produces no more information that
+negative matching does normally:
+
+<pre>$ md5deep -wx known.txt *
+/home/jessek/unknown-file does NOT match</pre>
+
+</p>
+
+<h3> Unused Hashes </h3>
+
+<p>
+The second advanced matching mode, -n, indicates which known hashes were
+not matched by any of the input files. Using our example from above,
+let's say our file of known hashes, <tt>known.txt</tt> looked like this:
+
+<pre>
+3668422d5b728776cb8720de8496abc9  san-dimas-high-school.jpg
+b85444c8b82f208ad24e41f20c2b1831  EVILEVIL.EXE
+6e43e96bde5c9f8abdbc47661cf4975b  never-seen-again.dat</pre>
+
+If we run md5deep with the -n flag, we will get a listing of any hashes
+that were not matched to an input file. 
+
+<pre>$ md5deep -nm known.txt *
+never-seen-again.dat</pre>
+
+</p>
+
+
+<br>
+<h2 id="expert"> Expert Mode </h2>
+
+md5deep's expert mode allows you to specify which and only which types of
+files are processed. Although expert mode is supported on Windows, 
+Windows only has regular files.The available file types are:
+
+<ul>
+<li> Regular files, such as text, graphics, and executables.
+
+<li> Block files, such as devices, hard drives, tape drives, CDROMs, etc. 
+
+<li> Character devices, such as /dev/tty. 
+
+<li> Named Pipes
+
+<li> Symbolic Links - Soft links. Note that this option tells the program 
+to follow a symbolic link <em>provided</em> that you have also specified
+the parameter for whatever the link is pointing to. That is, if the 
+symlink points to a directory, you must have also specified -r. If the 
+symbolic links points to a regular file, you must have also specified
+the -o f mode.
+
+<li> Socket - Network connections
+
+<li> Solaris Door - Available only on Solaris
+
+</ul>
+
+To use expert mode, use the <tt>-o</tt> flag followed by the letter or
+letters corresponding to the types of files you want to process.
+
+<br>
+<br>
+
+<table border="1" align="center">
+
+<tr>
+  <td><b>File type</b></td>
+  <td><b>Letter</b></td>
+</tr>
+
+<tr>
+  <td>Regular</td>
+  <td>f</td>
+</tr>
+
+<tr>
+  <td>Block</td>
+  <td>b</td>
+</tr>
+
+<tr>
+  <td>Character</td>
+  <td>c</td>
+</tr>
+
+<tr>
+  <td>Named Pipe</td>
+  <td>p</td>
+</tr>
+
+<tr>
+  <td>Symbolic Link</td>
+  <td>l</td>
+</tr>
+
+<tr>
+  <td>Socket</td>
+  <td>s</td>
+</tr>
+
+<tr>
+  <td>Solaris Door</td>
+  <td>d</td>
+</tr>
+
+</table>
+<br>
+
+Let's say that in the current directory there are files hda (a block device),
+my-link, a symbolic link to a block device, and data.txt, a regular file.
+
+<pre>$ md5deep -o f *
+2e1582d37db445402faee0fc331e9032  /home/jessek/data.txt
+$</pre>
+
+Note that only the regular files are hashed. Conversely:
+
+<pre>$ md5deep -o lb *
+ee1615f01210aa22c27058db161d2160  /home/jessek/hda
+7fa749a2ea2cc635c77eb0a5370b93b0  /home/jessek/my-link
+$</pre>
+
+Note that the <a href="#recursive">recursive mode</a> can be used
+in conjunction with the expert mode. Directories are ignored without
+the recursive flag.
+
+<hr>
+<a href="http://sourceforge.net"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=67079&type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
+
+
+</body>
+</html>

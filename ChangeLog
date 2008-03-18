@@ -1,3 +1,8 @@
+2008-03-18 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Added doc directory to hold FAQ and other web pages
+
+
 2008-03-16 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Added missing space to hash collision message in audit.c

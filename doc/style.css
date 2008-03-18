@@ -1,0 +1,20 @@
+/* $Id$ */
+
+body { color: black;
+       background-color: #f6f6f6; }
+
+h1,h2 {padding: .5em; background-color: green ; color: white}
+
+h1 {font:x-large Trebuchet MS,Verdana,sans-serif;}
+h2 {font:large Trebuchet MS,Verdana,sans-serif;}
+
+a:visited {color: darkblue}
+a:link {color: blue}
+a:active {color: darkred}
+
+p.abstract {margin-left: 8ex; margin-right: 8ex; }
+
+span.papertitle {font-weight: bold;}
+span.journaltitle {font-style: italic;}
+
+td.hash {font-family: monospace;}

@@ -1,0 +1,161 @@
+<html>
+ <head>
+
+ <!-- $Id$ -->
+
+ <title> md5deep - Frequently Asked Questions </title>
+ <link rel="stylesheet" type="text/css" href="style.css">
+
+</head>
+<body>
+
+
+
+<h1> Frequently Asked Questions About md5deep </h1>
+
+<h4> General Questions </h4>
+<p>
+<a href="#shell">
+Q. Why can't I just use one line of shell to do what md5deep does?
+</a>
+</p>
+
+
+<h4> Algorithm Questions </h4>
+<p>
+<a href="#md5">
+Q. Is MD5 broken?
+</a>
+</p>
+
+
+
+
+<h2 id="general"> General Questions </h2>
+
+<h3 id="shell">
+Q. Why can't I just use one line of shell to do what md5deep does?
+</h3>
+
+<p>
+
+A. Because md5deep does more than just compute hashes. Yes, it's possible
+to recursively compute MD5 hashes with existing commands:
+
+<pre>$ find /usr -type f -exec md5sum '{}' \;</pre>
+
+There is no single line of shell code that can use a set of known
+hashes to search for files that do or do not match any of the known hashes.
+For example, here are the
+positive matches from a set of known malware to files in the /usr 
+directory. Note the rootkit we find:
+
+<pre>$ md5deep -r malware-samples/* > known.txt
+$ md5deep -wrm known.txt /usr 
+/usr/bin/.../ls matches /home/jessek/malware-samples/foo-rootkit/trojan-ls</pre>
+</p>
+
+
+<h2 id="algorithm"> Algorithm Questions </h2>
+
+<h3 id="md5"> 
+Q. Is MD5 broken?
+</h3>
+<p>
+A. Sort of. 
+
+</p>
+
+
+
+
+<h2 id="building"> Compiling md5deep </h2>
+
+<h3 id="windows">
+Q. How do I compile program for Windows?
+</h3>
+
+<p>
+The easiest method for getting md5deep to work on Microsoft Windows is to use
+the precompiled binaries available on the project web page, 
+<a href="http://md5deep.sourceforge.net/">http://md5deep.sourceforge.net/</a>.
+</p>
+
+<p>
+The developer uses a MinGW cross compiler to create these Win32 binaries
+from either Linux or OS X. You can get more information on how to set up
+your own cross compiler from the 
+<a href="http://www.mingw.org/MinGWiki/index.php/BuildMingwCross">MinGW wiki
+page on BuildMingwCross</a>. After you have a cross compiler installed,
+you can configure and build the programs using
+
+<pre>$ ./configure --host=mingw32</pre>
+</p>
+
+<p>
+You can use <a href="http://www.cygwin.com/">Cygwin</a> to build and install 
+the programs, but this will create a Cygwin version of the tools. Remember
+that because Cygwin is a kind of *nix, it must be built with the *nix style
+configuration:
+
+<pre>$ ./configure</pre>
+</p>
+
+<p>
+The following options are <em>not supported</em>, but may allow you compile
+a Windows binary that is not Cygwin dependent.
+<ul>
+<li> From the MinGW FAQ, <a href="http://www.mingw.org/mingwfaq.shtml#faq-usingwithcygwin"> How do I use MinGW with Cygwin?</a>: 
+
+<blockquote>
+Simply install Cygwin and the MinGW distribution in seperate directories (i.e. "C:\CYGWIN" and "C:\MINGW"), and make sure that the "/bin" subdirectory beneath your MinGW installation comes before Cygwin's "/bin" subdirectory in your PATH environment variable (i.e. "PATH=%PATH%;C:\MINGW\BIN;C:\CYGWIN\BIN"). This will allow you access to all the UNIX tools you want, while ensuring that the instance of GCC used is the MinGW version.
+</blockquote>
+</li>
+
+</ul>
+
+
+
+<h2 id="using"> Using md5deep </h2>
+
+<h3 id="nothinghappens">
+Q. Nothing happens when I double click on the program. What's wrong?
+</h3>
+
+<p>
+
+A. This is usually happens to Microsoft Windows users. md5deep is a
+command line program and does not work by double clicking on it.
+To run the program you must open a command prompt. Go to the "Start"
+menu and choose "Run". In the dialog box, type <code>cmd</code> and
+hit enter. When the command prompt comes up, change to the directory
+where you have decompressed the md5deep archive. For example:
+
+<pre>C:\> cd e:\temp\md5deep</pre>
+
+You can now run md5deep using this command window as described
+in the <a href="getting-started.html">Getting Started guide</a>.
+
+</p>
+
+
+
+<h3 id="Wood Chuck Wood">
+Q. How much wood could a wood chuck chuck if a wood chuck could chuck wood?
+</h3>
+
+A. 443 board feet (1.045 m^3).
+
+
+
+
+<hr>
+
+
+
+
+<a href="/">Return to md5deep homepage</a>
+
+</body>
+</html>
+
