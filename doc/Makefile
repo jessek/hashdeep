@@ -8,7 +8,7 @@
 USERNAME =jessekornblum
 DESTDIR  =shell.sourceforge.net:/home/groups/m/md/md5deep/htdocs
 
-RMAN = ~/rman-3.2/rman
+RMAN = /usr/local/bin/rman
 
 clean:
 	rm -f *~
