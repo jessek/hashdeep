@@ -214,6 +214,7 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 #define MD5DEEP_IDEAL_BLOCK_SIZE 8192
 
 /* Return values for the program */
+/* RBF - Document these return values for hashdeep */
 #define STATUS_OK                      0
 #define STATUS_UNUSED_HASHES           1
 #define STATUS_INPUT_DID_NOT_MATCH     2
