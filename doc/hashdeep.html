@@ -13,59 +13,59 @@
 hashdeep - Compute and compare multiple message digests 
 <p> 
 <h2><a name='sect1' href='#toc1'>Synopsis</a></h2>
-<b>hashdeep</b>
-[-c &lt;alg1&gt;[,&lt;alg2&gt;]] [-k &lt;file&gt;] [-amxwMXrespblvv] [<b>FILES</b>] <br>
-<b>hashdeep </b> [-V | -h] 
+<b>hashdeep
+</b> -V | -h <br>
+<b>hashdeep</b> [-c &lt;alg1&gt;[,&lt;alg2&gt;]] [-k &lt;file&gt;] [-amxwMXrespblvv] [<b>FILES</b>] 
 <p> 
 <p> 
 <h2><a name='sect2' href='#toc2'>Description</a></h2>
 <p>
-Computes multiple hashes, or message digests,
- for any number of files while  optionally recursively digging through
-the directory structure. By default the program computes MD5 and SHA-256
-hashes, equivalent to -c md5,sha256. Can also take a list of known hashes
-and display the filenames of input files whose hashes either do or do not
-match any of the known hashes. Can also use a list of known hashes to audit
-a set of FILES. Errors are reported to standard error. If no FILES are specified,
-reads from standard input. 
+Computes
+multiple hashes, or message digests,  for any number of files while  optionally
+recursively digging through the directory structure. By default the program
+computes MD5 and SHA-256 hashes, equivalent to -c md5,sha256. Can also take
+a list of known hashes and display the filenames of input files whose hashes
+either do or do not match any of the known hashes. Can also use a list of
+known hashes to audit a set of FILES. Errors are reported to standard error.
+If no FILES are specified, reads from standard input. 
 <p> 
 <p> 
 <p> 
 <dl>
 
 <dt><b>-c &lt;alg1&gt;[,&lt;alg2&gt;...]</b> </dt>
-<dd>Computation mode. Compute hashes
-of FILES using the algorithms  specified. Legal values are md5, sha1, sha256,
-tiger, and whirlpool.  
+<dd>Computation
+mode. Compute hashes of FILES using the algorithms  specified. Legal values
+are md5, sha1, sha256, tiger, and whirlpool.  
 <p> 
 <p> </dd>
 
 <dt><b>-k </b> </dt>
-<dd>Load a file of known hashes.  This flag is required
-when using any of the matching or audit modes (i.e. -m, -x, -M, -X, or -a) This
-flag may be used more than once to add multiple sets of known hashes.  
-<p>
-Loading sets with different hash algorithms can sometimes generate spurrious
-hash collisions. For example, let&rsquo;s say we have two hash sets, A and B, 
-which have some overlapping files. For example, the file /usr/bin/bad is
-in both sets. In A we&rsquo;ve recorded the MD5 and SHA-256. In B we&rsquo;ve recorded the
-MD5, SHA-1, and SHA-256. Because these two records are different, they will
-both be loaded. When the  program computes all three hashes and compares
-them to the set  of knowns, we will get an exact match from the record
-in B  and a collision from the record in A.  
+<dd>Load a file of known
+hashes.  This flag is required when using any of the matching or audit modes
+(i.e. -m, -x, -M, -X, or -a) This flag may be used more than once to add multiple
+sets of known hashes.  
+<p> Loading sets with different hash algorithms can
+sometimes generate spurrious hash collisions. For example, let&rsquo;s say we have
+two hash sets, A and B,  which have some overlapping files. For example,
+the file /usr/bin/bad is in both sets. In A we&rsquo;ve recorded the MD5 and SHA-256.
+In B we&rsquo;ve recorded the MD5, SHA-1, and SHA-256. Because these two records
+are different, they will both be loaded. When the  program computes all
+three hashes and compares them to the set  of knowns, we will get an exact
+match from the record in B  and a collision from the record in A.  
 <p> 
 <p> </dd>
 
-<dt><b>-a </b> </dt>
-<dd>Audit mode. Each input
-file is compared against the set of knowns.  An audit is said to pass if
-each input file is matched against exactly one file in set of knowns. Any
-collisions, new files, or missing files will make the audit fail. Using
-this flag alone produces a message, either "Audit passed" or "Audit Failed".
-Use the verbose modes, -v, for more details. Using -v prints the number  of
-files in each category. Using -v a second time prints any discrepancies. Using
--v a third time prints the results for every file examined and every known
-file. <br>
+<dt><b>-a </b>
+</dt>
+<dd>Audit mode. Each input file is compared against the set of knowns.  An audit
+is said to pass if each input file is matched against exactly one file
+in set of knowns. Any collisions, new files, or missing files will make
+the audit fail. Using this flag alone produces a message, either "Audit
+passed" or "Audit Failed". Use the verbose modes, -v, for more details. Using
+-v prints the number  of files in each category. Using -v a second time prints
+any discrepancies. Using -v a third time prints the results for every file
+examined and every known file. <br>
 Due to limitations in the program, any filenames with Unicode characters
 will appear to have moved during an audit. See the section "UNICODE SUPPORT"
 below. 
