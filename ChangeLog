@@ -1,3 +1,10 @@
+2008-03-19 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Added phrase "and compare" to manpage description of 
+	  the programs. This will hopefully reinforce the idea
+	  that md5deep cannot be replaced with one line of shell.
+	
+	
 2008-03-18 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Added doc directory to hold FAQ and other web pages
