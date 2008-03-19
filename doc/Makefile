@@ -6,7 +6,7 @@
 #
 
 USERNAME =jessekornblum
-DESTDIR  =/home/groups/m/md/md5deep/htdocs
+DESTDIR  =shell.sourceforge.net:/home/groups/m/md/md5deep/htdocs
 
 RMAN = ~/rman-3.2/rman
 
