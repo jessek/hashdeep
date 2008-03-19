@@ -62,8 +62,17 @@ $ md5deep -wrm known.txt /usr
 Q. Is MD5 broken?
 </h3>
 <p>
-A. Sort of. 
+A. Sort of. There have been a number of collision attacks against the
+algorithm. It's now possible for a bad guy to generate two different
+128 byte blocks that have the same MD5 hash. 
 
+<p>
+
+<p>
+Note that a bad guy can't
+(currently) create a new file that matches the hash of an existing file.
+This kind of attack, called a preimage attack, will be the absolute 
+end of the algorithm. 
 </p>
 
 
@@ -102,17 +111,13 @@ configuration:
 </p>
 
 <p>
-The following options are <em>not supported</em>, but may allow you compile
-a Windows binary that is not Cygwin dependent.
-<ul>
-<li> From the MinGW FAQ, <a href="http://www.mingw.org/mingwfaq.shtml#faq-usingwithcygwin"> How do I use MinGW with Cygwin?</a>: 
+The following option is <em>not supported</em>, but may allow you compile
+a Windows binary that is not Cygwin dependent. From the MinGW FAQ, <a href="http://www.mingw.org/mingwfaq.shtml#faq-usingwithcygwin"> How do I use MinGW with Cygwin?</a>: 
 
 <blockquote>
 Simply install Cygwin and the MinGW distribution in seperate directories (i.e. "C:\CYGWIN" and "C:\MINGW"), and make sure that the "/bin" subdirectory beneath your MinGW installation comes before Cygwin's "/bin" subdirectory in your PATH environment variable (i.e. "PATH=%PATH%;C:\MINGW\BIN;C:\CYGWIN\BIN"). This will allow you access to all the UNIX tools you want, while ensuring that the instance of GCC used is the MinGW version.
 </blockquote>
-</li>
-
-</ul>
+</p>
 
 
 
@@ -144,7 +149,7 @@ in the <a href="getting-started.html">Getting Started guide</a>.
 Q. How much wood could a wood chuck chuck if a wood chuck could chuck wood?
 </h3>
 
-A. 443 board feet (1.045 m^3).
+A. 443 board feet (1.045 m<sup>3</sup>).
 
 
 
