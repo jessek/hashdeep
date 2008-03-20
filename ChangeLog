@@ -1,3 +1,9 @@
+2008-03-20 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Added ability for hashdeep to detect and ignore badly
+	  formatted lines in files of known hashes.
+
+
 2008-03-19 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Added phrase "and compare" to manpage description of 

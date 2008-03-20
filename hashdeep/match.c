@@ -3,6 +3,24 @@
 
 #include "main.h"
 
+static int valid_hash(state *s, hashname_t a, char *buf)
+{
+  size_t pos = 0;
+
+  //  print_status("%d %d", strlen(buf), s->hashes[a]->byte_length);
+  
+  if (strlen(buf) < s->hashes[a]->byte_length)
+    return FALSE;
+  
+  for (pos = 0 ; pos < s->hashes[a]->byte_length ; pos++)
+  {
+    if (!isxdigit(buf[pos]))
+      return FALSE;
+  }
+  return TRUE;
+}
+      
+
 static int parse_hashing_algorithms(state *s, char *fn, char *val)
 {
   char **ap, *buf[MAX_KNOWN_COLUMNS];
@@ -253,16 +271,19 @@ static void display_all_known_files(state *s)
 #endif
 
 
-int read_file(state *s, char *fn, FILE *handle)
+status_t read_file(state *s, char *fn, FILE *handle)
 {
+  status_t st;
+  int contains_bad_lines = FALSE;
   uint8_t i;
   char * buf;
   file_data_t * t;
-  uint64_t line_number = 0;
+  /* We have to account for the two lines of the header */
+  uint64_t line_number = 2;
   char **ap, *argv[MAX_KNOWN_COLUMNS];
 
   if (NULL == s || NULL == fn || NULL == handle)
-    return TRUE;
+    return status_unknown_error;
 
   buf = (char *)malloc(sizeof(char) * MAX_STRING_LENGTH);
   if (NULL == buf)
@@ -297,13 +318,35 @@ int read_file(state *s, char *fn, FILE *handle)
     /* The first value is always the file size */
     t->file_size = (uint64_t)strtoll(argv[0],NULL,10);
 
+    /* RBF - We're printing the error message twice. 
+       How do we break out of this loop effectively? */
     i = 1;
     while (argv[i] != NULL && 
 	   s->hash_order[i] != alg_unknown && 
 	   i <= NUM_ALGORITHMS)
     {
+      if ( ! valid_hash(s,s->hash_order[i],argv[i]))
+      {
+	print_error(s,"%s: %s: Bad record at line %"PRIu64, 
+		    __progname, fn, line_number);
+	contains_bad_lines = TRUE;
+	argv[i] = NULL;
+	continue;
+      }
+
       t->hash[s->hash_order[i]] = strdup(argv[i]);
       i++;
+    }
+
+    /* If the current argv value is NULL, there weren't enough
+       columns in the line. We have to throw away this record,
+       but we should be able to continue. */
+    if (NULL == argv[i])
+    {
+      print_error(s,"%s: %s: Bad record at line %"PRIu64, 
+		  __progname, fn, line_number);
+      contains_bad_lines = TRUE;
+      continue;
     }
 
     /* The last value is always the filename. */
@@ -335,14 +378,19 @@ int read_file(state *s, char *fn, FILE *handle)
 #endif
     
     
-    if (add_file(s,t))
-      return TRUE;
+    st = add_file(s,t);
+    if (st != status_ok)
+      return st;
     
     free(tmp);
   }
 
   free(buf);
-  return FALSE;
+
+  if (contains_bad_lines)
+    return status_contains_bad_hashes;
+  
+  return st;
 }
 
 
@@ -371,11 +419,8 @@ status_t load_match_file(state *s, char *fn)
     return status_unknown_filetype;
   }
 
-  if (read_file(s,fn,handle))
-    status = status_file_error;
-  
+  status = read_file(s,fn,handle);
   fclose(handle);
-
 
   //  display_all_known_files(s);
 
