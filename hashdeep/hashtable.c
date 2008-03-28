@@ -41,6 +41,9 @@ status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
   
   if (a->file_size != b->file_size)
     return status_file_size_mismatch;
+
+  /* RBF - The WSTRINGS_EQUAL macro appears to be case insensitive.
+     In this case we need it to be case sensitive! */
   
   /* We can't compare something that's NULL */
   if (NULL == a->file_name || NULL == b->file_name)

@@ -1,3 +1,9 @@
+2008-03-28 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Noted WSTRING_EQUAL macro is case insensitive in a spot
+	  where we need it to be case sensitive.
+	
+
 2008-03-20 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Added ability for hashdeep to detect and ignore badly
