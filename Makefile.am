@@ -8,7 +8,7 @@ nice:
 	rm -f *~ md5deep/*~ hashdeep/*~
 
 preflight:
-	grep RBF md5deep/*.{c,h,1} hashdeep/*.{c,h,1} \
+	grep RBF md5deep/*.{c,h,1} hashdeep/*.{c,h,1} common/*.c doc/* \
                  AUTHORS README NEWS TODO ChangeLog 
 
 todo:
