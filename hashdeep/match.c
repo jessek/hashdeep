@@ -273,7 +273,7 @@ static void display_all_known_files(state *s)
 
 status_t read_file(state *s, char *fn, FILE *handle)
 {
-  status_t st;
+  status_t st = status_ok;
   int contains_bad_lines = FALSE;
   uint8_t i;
   char * buf;
@@ -347,8 +347,8 @@ status_t read_file(state *s, char *fn, FILE *handle)
 
     /* The last value is always the filename. */
 #ifdef _WIN32
-    size_t sz = strlen(argv[i]);
-    t->file_name = (TCHAR *)malloc(sizeof(TCHAR) * (sz+1));
+    size_t len = strlen(argv[i]);
+    t->file_name = (TCHAR *)malloc(sizeof(TCHAR) * (len+1));
     if (NULL == t->file_name)
       fatal_error(s,"%s: Out of memory", __progname);
 
@@ -362,7 +362,7 @@ status_t read_file(state *s, char *fn, FILE *handle)
 			       argv[i],
 			       -1,   
 			       t->file_name,
-			       sz+1))
+			       len+1))
       fatal_error(s,"%s: MultiByteToWideChar failed (%d)", 
 		  __progname, 
 		  GetLastError()); 
