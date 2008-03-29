@@ -3,6 +3,8 @@
 	* Changed WSTRINGS_EQUAL macro to make case sensitive comparisons
 	  Changed case insensitive char comparsion macro to 
 	  STRINGS_CASE_EQUAL.
+
+	* Fixed audit mode to return nonzero value for failed audit
 	
 
 2008-03-28 Jesse Kornblum <md5deep@jessekornblum.com>

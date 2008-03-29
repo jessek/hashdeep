@@ -42,15 +42,15 @@ int audit_status(state *s)
 
 int display_audit_results(state *s)
 {
-  if (NULL == s)
-    return TRUE;
+  int status = EXIT_SUCCESS;
 
-  int status = FALSE;
+  if (NULL == s)
+    return EXIT_FAILURE;
   
   if (!audit_status(s))
     {
       print_status("%s: Audit failed", __progname);
-      status = TRUE;
+      status = EXIT_FAILURE;
     }
   else
     print_status("%s: Audit passed", __progname);

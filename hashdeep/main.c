@@ -468,7 +468,7 @@ int main(int argc, char **argv)
   }
   
   if (primary_audit == s->primary_function)
-    display_audit_results(s);
+    status = display_audit_results(s);
 
   return status;
 }
