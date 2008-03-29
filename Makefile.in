@@ -615,8 +615,8 @@ nice:
 	rm -f *~ md5deep/*~ hashdeep/*~
 
 preflight:
-	@grep RBF ${SUBDIRS}/*.c ${SUBDIRS}/*.h ${SUBDIRS}/*.1 \
-                  AUTHORS README NEWS TODO ChangeLog 
+	grep RBF md5deep/*.{c,h,1} hashdeep/*.{c,h,1} \
+                 AUTHORS README NEWS TODO ChangeLog 
 
 todo:
 	@grep TODO *.c *.h ${man_MANS} AUTHORS README NEWS ChangeLog

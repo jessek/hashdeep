@@ -318,8 +318,6 @@ status_t read_file(state *s, char *fn, FILE *handle)
     /* The first value is always the file size */
     t->file_size = (uint64_t)strtoll(argv[0],NULL,10);
 
-    /* RBF - We're printing the error message twice. 
-       How do we break out of this loop effectively? */
     i = 1;
     while (argv[i] != NULL && 
 	   s->hash_order[i] != alg_unknown && 
