@@ -127,8 +127,9 @@ NEWLINE, NEWLINE, NEWLINE
 
 /* Note that STRINGS_EQUAL does not check if either A or B is NULL */
 #define _MAX(A,B)             (A>B)?A:B
-#define STRINGS_EQUAL(A,B)   (!strncasecmp(A,B,_MAX(strlen(A),strlen(B))))
-#define WSTRINGS_EQUAL(A,B)  (!_tcsnicmp(A,B,_MAX(_tcslen(A),_tcslen(B))))
+#define STRINGS_CASE_EQUAL(A,B)   (!strncasecmp(A,B,_MAX(strlen(A),strlen(B))))
+#define STRINGS_EQUAL(A,B)        (!strncmp(A,B,_MAX(strlen(A),strlen(B))))
+#define WSTRINGS_EQUAL(A,B)       (!_tcsncmp(A,B,_MAX(_tcslen(A),_tcslen(B))))
 
 
 

@@ -206,24 +206,24 @@ static int parse_hashing_algorithms(state *s, char *val)
 
   for (i = 0 ; i < MAX_KNOWN_COLUMNS && buf[i] != NULL ; i++)
   {
-    if (STRINGS_EQUAL(buf[i],"md5"))
+    if (STRINGS_CASE_EQUAL(buf[i],"md5"))
       s->hashes[alg_md5]->inuse = TRUE;
     
-    else if (STRINGS_EQUAL(buf[i],"sha1") || 
-	     STRINGS_EQUAL(buf[i],"sha-1"))
+    else if (STRINGS_CASE_EQUAL(buf[i],"sha1") || 
+	     STRINGS_CASE_EQUAL(buf[i],"sha-1"))
       s->hashes[alg_sha1]->inuse = TRUE;
     
-    else if (STRINGS_EQUAL(buf[i],"sha256") || 
-	     STRINGS_EQUAL(buf[i],"sha-256"))
+    else if (STRINGS_CASE_EQUAL(buf[i],"sha256") || 
+	     STRINGS_CASE_EQUAL(buf[i],"sha-256"))
       s->hashes[alg_sha256]->inuse = TRUE;
     
-    else if (STRINGS_EQUAL(buf[i],"tiger"))
+    else if (STRINGS_CASE_EQUAL(buf[i],"tiger"))
       s->hashes[alg_tiger]->inuse = TRUE;
     
-    else if (STRINGS_EQUAL(buf[i],"whirlpool"))
+    else if (STRINGS_CASE_EQUAL(buf[i],"whirlpool"))
       s->hashes[alg_whirlpool]->inuse = TRUE;
     
-    else if (STRINGS_EQUAL(buf[i],"all"))
+    else if (STRINGS_CASE_EQUAL(buf[i],"all"))
     {
       hashname_t count;
       for (count = 0 ; count < NUM_ALGORITHMS ; ++count)

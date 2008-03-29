@@ -101,14 +101,14 @@ int hashTableAdd(state *s, hashTable *knownHashes, char *n, char *fn)
   temp = (*knownHashes)[key];
 
   // If this value is already in the table, we don't need to add it again
-  if (STRINGS_EQUAL(temp->data,n))
+  if (STRINGS_CASE_EQUAL(temp->data,n))
     return HASHTABLE_OK;;
   
   while (temp->next != NULL)
   {
     temp = temp->next;
     
-    if (STRINGS_EQUAL(temp->data,n))
+    if (STRINGS_CASE_EQUAL(temp->data,n))
       return HASHTABLE_OK;
   }
   
@@ -136,7 +136,7 @@ int hashTableContains(hashTable *knownHashes, char *n, char *known)
   temp = (*knownHashes)[key];
 
   do {
-    if (STRINGS_EQUAL(temp->data,n))
+    if (STRINGS_CASE_EQUAL(temp->data,n))
     {
       temp->been_matched = TRUE;
       if (known != NULL)

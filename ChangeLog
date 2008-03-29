@@ -1,3 +1,10 @@
+2008-03-29 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Changed WSTRINGS_EQUAL macro to make case sensitive comparisons
+	  Changed case insensitive char comparsion macro to 
+	  STRINGS_CASE_EQUAL.
+	
+
 2008-03-28 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Noted WSTRING_EQUAL macro is case insensitive in a spot

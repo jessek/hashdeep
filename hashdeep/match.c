@@ -41,39 +41,39 @@ static int parse_hashing_algorithms(state *s, char *fn, char *val)
 
   for (i = 0 ; i < MAX_KNOWN_COLUMNS && buf[i] != NULL ; i++)
   {
-    if (STRINGS_EQUAL(buf[i],"md5"))
+    if (STRINGS_CASE_EQUAL(buf[i],"md5"))
     {
       s->hashes[alg_md5]->inuse = TRUE;
       s->hash_order[order] = alg_md5;
     }
     
-    else if (STRINGS_EQUAL(buf[i],"sha1") || 
-	     STRINGS_EQUAL(buf[i],"sha-1"))
+    else if (STRINGS_CASE_EQUAL(buf[i],"sha1") || 
+	     STRINGS_CASE_EQUAL(buf[i],"sha-1"))
     {
       s->hashes[alg_sha1]->inuse = TRUE;
       s->hash_order[order] = alg_sha1;
     }
     
-    else if (STRINGS_EQUAL(buf[i],"sha256") || 
-	     STRINGS_EQUAL(buf[i],"sha-256"))
+    else if (STRINGS_CASE_EQUAL(buf[i],"sha256") || 
+	     STRINGS_CASE_EQUAL(buf[i],"sha-256"))
     {
       s->hashes[alg_sha256]->inuse = TRUE;
       s->hash_order[order] = alg_sha256;
     }
       
-    else if (STRINGS_EQUAL(buf[i],"tiger"))
+    else if (STRINGS_CASE_EQUAL(buf[i],"tiger"))
     {
       s->hashes[alg_tiger]->inuse = TRUE;
       s->hash_order[order] = alg_tiger;
     }
       
-    else if (STRINGS_EQUAL(buf[i],"whirlpool"))
+    else if (STRINGS_CASE_EQUAL(buf[i],"whirlpool"))
     {
       s->hashes[alg_whirlpool]->inuse = TRUE;
       s->hash_order[order] = alg_whirlpool;
     }
 
-    else if (STRINGS_EQUAL(buf[i],"filename"))
+    else if (STRINGS_CASE_EQUAL(buf[i],"filename"))
     {
       if (buf[i+1] != NULL)
       {

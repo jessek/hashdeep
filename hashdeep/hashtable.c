@@ -17,10 +17,11 @@ status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
   {
     if (s->hashes[i]->inuse)
     {
-      /* We have to avoid calling STRINGS_EQUAL on NULL values */
+      /* We have to avoid calling STRINGS_EQUAL on NULL values, but
+         don't have to worry about capitalization */
       if (NULL == a->hash[i] || NULL == b->hash[i])
 	partial_null = TRUE;
-      else if (STRINGS_EQUAL(a->hash[i],b->hash[i]))
+      else if (STRINGS_CASE_EQUAL(a->hash[i],b->hash[i]))
 	partial_match = TRUE;
       else
 	partial_failure = TRUE;
@@ -42,9 +43,6 @@ status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
   if (a->file_size != b->file_size)
     return status_file_size_mismatch;
 
-  /* RBF - The WSTRINGS_EQUAL macro appears to be case insensitive.
-     In this case we need it to be case sensitive! */
-  
   /* We can't compare something that's NULL */
   if (NULL == a->file_name || NULL == b->file_name)
     return status_file_name_mismatch;
