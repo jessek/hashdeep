@@ -327,11 +327,9 @@ status_t read_file(state *s, char *fn, FILE *handle)
     {
       if ( ! valid_hash(s,s->hash_order[i],argv[i]))
       {
-	print_error(s,"%s: %s: Bad record at line %"PRIu64, 
-		    __progname, fn, line_number);
 	contains_bad_lines = TRUE;
 	argv[i] = NULL;
-	continue;
+	break;
       }
 
       t->hash[s->hash_order[i]] = strdup(argv[i]);

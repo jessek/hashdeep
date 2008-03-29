@@ -5,6 +5,8 @@
 	  STRINGS_CASE_EQUAL.
 
 	* Fixed audit mode to return nonzero value for failed audit
+
+	* Fixed hashdeep known file import to only display errors once
 	
 
 2008-03-28 Jesse Kornblum <md5deep@jessekornblum.com>
