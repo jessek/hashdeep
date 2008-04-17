@@ -29,8 +29,9 @@
 #define TYPE_NSRL_15      3
 #define TYPE_NSRL_20      4
 #define TYPE_ILOOK        5
-#define TYPE_MD5DEEP_SIZE 6
-#define TYPE_ENCASE       7
+#define TYPE_ILOOK3       6
+#define TYPE_MD5DEEP_SIZE 7
+#define TYPE_ENCASE       8
 #define TYPE_UNKNOWN    254
 
 
@@ -82,7 +83,7 @@ typedef struct _state {
   
   // Which filetypes this algorithm supports and their position in the file
   uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
-  uint8_t      h_ilook, h_nsrl15, h_nsrl20, h_encase;
+  uint8_t      h_ilook, h_ilook3, h_nsrl15, h_nsrl20, h_encase;
   
   // Function used to do the actual hashing
   int ( *hash_init)(void *);

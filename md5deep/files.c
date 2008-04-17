@@ -55,6 +55,9 @@ typedef struct _ENCASE_HASH_HEADER {
 #define ILOOK_HEADER   \
 "V1Hash,HashType,SetDescription,FileName,FilePath,FileSize"
 
+#define ILOOK3_HEADER \
+"V3Hash,HashSHA1,FileName,FilePath,FileSize,HashSHA256,HashSHA384,HashSHA512"
+
 #define NSRL_15_HEADER    \
 "\"SHA-1\",\"FileName\",\"FileSize\",\"ProductCode\",\"OpSystemCode\",\"MD4\",\"MD5\",\"CRC32\",\"SpecialCode\""
 
@@ -239,6 +242,7 @@ int find_ilook_hash(state *s, char *buf, char *known_fn)
     return FALSE;
 }
 
+
 static int check_for_encase(state *s, FILE *f)
 {
   ENCASE_HASH_HEADER *h = (ENCASE_HASH_HEADER *)malloc(sizeof(ENCASE_HASH_HEADER));
@@ -315,6 +319,17 @@ int hash_file_type(state *s, FILE *f)
 	  return TYPE_ILOOK;
       }
 
+    if (s->h_ilook3)
+      {
+	if (STRINGS_EQUAL(buf,ILOOK3_HEADER))
+	  {
+	    /* RBF - KLUDGE - This won't work with multiple files */
+	    if (255 == s->h_ilook3)
+	      s->h_ilook3 = 0;
+	    return TYPE_ILOOK3;
+	  }
+      }
+
   }
   
   
@@ -376,6 +391,9 @@ int find_hash_in_line(state *s, char *buf, int fileType, char *fn)
 
   case TYPE_ILOOK:
     return (find_ilook_hash(s,buf,fn));
+
+  case TYPE_ILOOK3:
+    return (find_rigid_hash(s,buf,fn,2,s->h_ilook3));
 
   case TYPE_MD5DEEP_SIZE:
     return (find_md5deep_size_hash(s,buf,fn));

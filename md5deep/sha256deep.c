@@ -12,7 +12,7 @@ int setup_hashing_algorithm(state *s)
   s->hash_finalize      = hash_final_sha256;
   
   s->h_plain = s->h_bsd = s->h_md5deep_size = 1;
-  
+  s->h_ilook3 = 5;
   s->h_hashkeeper = 0;
   s->h_nsrl15 = 0;
   s->h_nsrl20 = 0;
