@@ -338,6 +338,8 @@ int main(int argc, char **argv)
   else
   {
     MD5DEEP_ALLOC(TCHAR,fn,PATH_MAX);
+
+    /* RBF - This line seems to cause a crash on Open Solaris */
     MD5DEEP_ALLOC(TCHAR,cwd,PATH_MAX);
 
     cwd = _tgetcwd(cwd,PATH_MAX);
