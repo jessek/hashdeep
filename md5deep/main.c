@@ -337,8 +337,17 @@ int main(int argc, char **argv)
     hash_stdin(s);
   else
   {
-    MD5DEEP_ALLOC(TCHAR,fn,PATH_MAX);
-    MD5DEEP_ALLOC(TCHAR,cwd,PATH_MAX);
+    //    MD5DEEP_ALLOC(TCHAR,fn,PATH_MAX);
+    fn = (char *)malloc(sizeof(char) * PATH_MAX);
+    if (NULL == fn)
+      return STATUS_INTERNAL_ERROR;
+    memset(fn,0,PATH_MAX * sizeof(char));
+
+    //    MD5DEEP_ALLOC(TCHAR,cwd,PATH_MAX);
+    cwd = (char *)malloc(sizeof(char) * PATH_MAX);
+    if (NULL == cwd)
+      return STATUS_INTERNAL_ERROR;
+    memset(cwd,0,PATH_MAX * sizeof(char));
 
     cwd = _tgetcwd(cwd,PATH_MAX);
     if (NULL == cwd)
