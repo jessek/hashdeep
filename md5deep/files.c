@@ -58,6 +58,9 @@ typedef struct _ENCASE_HASH_HEADER {
 #define ILOOK3_HEADER \
 "V3Hash,HashSHA1,FileName,FilePath,FileSize,HashSHA256,HashSHA384,HashSHA512"
 
+#define ILOOK4_HEADER \
+"V4Hash,HashSHA1,FileName,FilePath,FileSize,HashSHA256,HashSHA384,HashSHA512,CreateTime,ModTime,LastAccessTime"
+
 #define NSRL_15_HEADER    \
 "\"SHA-1\",\"FileName\",\"FileSize\",\"ProductCode\",\"OpSystemCode\",\"MD4\",\"MD5\",\"CRC32\",\"SpecialCode\""
 
@@ -329,6 +332,12 @@ int hash_file_type(state *s, FILE *f)
 	  return TYPE_ILOOK3;
       }
 
+    if (s->h_ilook4)
+      {
+	if (STRINGS_EQUAL(buf,ILOOK4_HEADER))
+	  return TYPE_ILOOK3;
+      }
+
   }
   
   
@@ -392,6 +401,7 @@ int find_hash_in_line(state *s, char *buf, int fileType, char *fn)
     return (find_ilook_hash(s,buf,fn));
 
   case TYPE_ILOOK3:
+  case TYPE_ILOOK4:
     return (find_rigid_hash(s,buf,fn,3,s->h_ilook3));
 
   case TYPE_MD5DEEP_SIZE:

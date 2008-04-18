@@ -1,6 +1,16 @@
+2008-04-18 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Updated files.c et al to handle iLook version 4 hashes.
+	  These are similar enough that we can reuse most of the 
+	  iLook v3 routines.
+
+	
 2008-04-17 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Updated initial kludge to use iLook version 3 hashsets.
+
+	* The current version crashed on OpenSolaris during a malloc
+	  in main.c. This is confusing as I wasn't working on this code.
 	
 
 2008-04-16 Jesse Kornblum <md5deep@jessekornblum.com>

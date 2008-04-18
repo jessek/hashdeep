@@ -14,7 +14,7 @@ int setup_hashing_algorithm(state *s)
   s->hash_finalize      = hash_final_md5;
   
   s->h_plain = s->h_bsd = s->h_ilook = s->h_md5deep_size = 1;
-  s->h_ilook3 = 1;
+  s->h_ilook3 = s->h_ilook4 = 1;
   s->h_hashkeeper = 5;
   s->h_nsrl15 = 7;
   s->h_nsrl20 = 2;
