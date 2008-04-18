@@ -1,0 +1,7 @@
+%%%% HASHDEEP-1.0
+%%%% size,md5,sha256,filename
+## Invoked from: /Users/jessek/projects/md5deep/sample-hashes
+## $ ../hashdeep/hashdeep ilookv3.hsh md5deep-size.txt md5deep.txt
+622,6f4a8ac099c4fe85164b8631c7f0bd2b,2f1cf7a397bb8eed63b225d5d4fd5e2fc71788c8ae12db94147d1f5e227a4118,/Users/jessek/projects/md5deep/sample-hashes/ilookv3.hsh
+281,ddf0403ce196dc6c8e9018f319826513,fc481c44d88daea0fcfc97189fff08accdd47a2a0bbd5fefcb1c448a7d2e8dd0,/Users/jessek/projects/md5deep/sample-hashes/md5deep-size.txt
+233,394b38c0ed3d84aadd046e93ae8b8acc,d4fbf5d919350d1087d298fe8d87ab19e4688b8f77d9e7cd25accf5c0ae74f6e,/Users/jessek/projects/md5deep/sample-hashes/md5deep.txt

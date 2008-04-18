@@ -1,3 +1,13 @@
+2008-04-17 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Updated initial kludge to use iLook version 3 hashsets.
+	
+
+2008-04-16 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Updated md5deep to use iLook version 3 hashes.
+	
+
 2008-03-29 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Changed WSTRINGS_EQUAL macro to make case sensitive comparisons

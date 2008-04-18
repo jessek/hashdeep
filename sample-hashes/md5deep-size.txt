@@ -1,0 +1,4 @@
+    669416  92e792c43c35e96fed3f9566083326fc  /Users/jessek/a.out
+       298  4d46e4ef07fd0c7fa82bd5008b06db37  /Users/jessek/foo.cpp
+       299  fd6b1c066a26924224fbf02d876f0d45  /Users/jessek/foo.cpp~
+    729602  2662a090fb0d31ae27334a2393ef5240  /Users/jessek/nasm-2.02.tar.bz2

@@ -196,8 +196,9 @@ int find_bsd_hash(state *s, char *buf, char *fn)
 
    filename,junk,stuff,hash,stuff
 
-   you should call find_rigid_hash(buf,fn,0,3);
-*/
+   you should call find_rigid_hash(buf,fn,1,4);
+
+   Note that columns start with #1, not zero. */
 int find_rigid_hash(state *s, char *buf, char *fn, 
 		      unsigned int fn_location, 
 		      unsigned int hash_location)
@@ -205,14 +206,14 @@ int find_rigid_hash(state *s, char *buf, char *fn,
   char *temp = strdup(buf);
   if (temp == NULL)
     return FALSE;
-  if (find_comma_separated_string(temp,fn_location))
+  if (find_comma_separated_string(temp,fn_location-1))
   {
     free(temp);
     return FALSE;
   }
   strncpy(fn, temp, strlen(fn));
   free(temp);
-  if (find_comma_separated_string(buf,hash_location))
+  if (find_comma_separated_string(buf,hash_location-1))
     return FALSE;
   return valid_hash(s,buf);
 }
@@ -322,12 +323,7 @@ int hash_file_type(state *s, FILE *f)
     if (s->h_ilook3)
       {
 	if (STRINGS_EQUAL(buf,ILOOK3_HEADER))
-	  {
-	    /* RBF - KLUDGE - This won't work with multiple files */
-	    if (255 == s->h_ilook3)
-	      s->h_ilook3 = 0;
-	    return TYPE_ILOOK3;
-	  }
+	  return TYPE_ILOOK3;
       }
 
   }
@@ -380,20 +376,20 @@ int find_hash_in_line(state *s, char *buf, int fileType, char *fn)
     return find_bsd_hash(s,buf,fn);
 
   case TYPE_HASHKEEPER:
-    return (find_rigid_hash(s,buf,fn,2,s->h_hashkeeper));
+    return (find_rigid_hash(s,buf,fn,3,s->h_hashkeeper));
 
   case TYPE_NSRL_15:
-    return (find_rigid_hash(s,buf,fn,1,s->h_nsrl15));
+    return (find_rigid_hash(s,buf,fn,2,s->h_nsrl15));
     break;
 
   case TYPE_NSRL_20:
-    return (find_rigid_hash(s,buf,fn,3,s->h_nsrl20));
+    return (find_rigid_hash(s,buf,fn,4,s->h_nsrl20));
 
   case TYPE_ILOOK:
     return (find_ilook_hash(s,buf,fn));
 
   case TYPE_ILOOK3:
-    return (find_rigid_hash(s,buf,fn,2,s->h_ilook3));
+    return (find_rigid_hash(s,buf,fn,3,s->h_ilook3));
 
   case TYPE_MD5DEEP_SIZE:
     return (find_md5deep_size_hash(s,buf,fn));
