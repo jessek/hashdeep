@@ -1,8 +1,10 @@
-** Changes in version 3.0 (RBF DATE)
+** Changes in version 3.0 (10 May 2008)
 
 * New Features
 
 	Added hashdeep program to support multihashing
+
+	Added support for new iLook style hashes
 
 * Bug Fixes
 	
