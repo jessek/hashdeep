@@ -28,7 +28,7 @@
 <body>
 
 <h1>
-md5deep - Latest version 2.0.1 (Alpha 3.0)
+md5deep - Latest version 3.0
 </h1>
 
 <hr>
@@ -132,50 +132,28 @@ Download md5deep
 
 <p>
 The latest stable version of md5deep is 
-version 2.0.1
+version 3.0
 and was released on
-31 Oct 2007. You can take a look at the 
+10 May 2008. You can take a look at the 
 <a href="changes.txt">complete changelog</a>, but here are the 
 changes in the latest version:
 
 <h4> New Features </h4>
 <ul>
-<li>
-Using GNU Autotools for configuration and compilation. This
-should help avoid platform specific issues such as SHA-1
-problems previously found on 64-bit versions of AIX.
-</li><li>
-Added support for files with Unicode characters in their
-filenames on Microsoft Windows.
-</li><li>
-Added support for EnCase hash sets (.hash files).
-</li><li>
-Updated web site and quick start guide
-</li><li>
-Slightly reduced the size of all of the executables by removing
-duplicated code. 
-</li></ul>
+<li>Added hashdeep program to support multihashing
+</li>
+
+<li>Added support for new iLook style hashes
+</li>
+</ul>
+
 
 <h4> Bug Fixes </h4>
 
 <ul><li>
-Added support for older Linux systems that don't have the
-latest and greatest ioctl functions.
-</li><li>
-Fixed time estimation mode for block devices on OS X and Linux
-</li><li>
-Fixed cosmetic error where estimated time remaining mode is
-being used in conjunction with piecewise hashing. Time estimates
-are now based on the whole file, not just each piece.
-</li><li>
-Clarified licensing issues in COPYING for tiger.c
-</li><li>
-Changed some data types in hashing functions to C99 standard.
-Whirlpool seems to be working well enough without changes.
-</li><li>
-Wrapped all of the global variables into the state structure
+Fixed obscure bug that caused a crash (double free) when
+attempting to check a very small file for EnCase hashes
 </li></ul>
-
 
 
 </p>
@@ -186,36 +164,6 @@ Wrapped all of the global variables into the state structure
   <tbody>
 
      
-     <td rowspan="3">
-Version 2.0.1
-     </td>
-
-     <td rowspan="3">
- 31 Oct 2007
-     </td>
-
-
-
-<td><a href="http://downloads.sourceforge.net/md5deep/md5deep-2.0.1-001.zip">
-       Windows binary</a></td>
-<td class="hash"> SHA256 7c047c433de7009ab825205da283a9fdb5f4107a1534774a4a581cd829e0b8e1
-	</td>
-     </tr>
-
-     <tr>
- <td><a href="http://downloads.sourceforge.net/md5deep/md5deep-2.0-cygwin.zip">
- Cygwin binary </a></td>
- <td class="hash"> SHA256 e6d200ceb7ed0e326226e16a2d7c8bc4c2b074acf64400e070739411528ce284
- </td>
-     </tr>
-
-
-     <tr>
- <td><a href="http://downloads.sourceforge.net/md5deep/md5deep-2.0.1-001.tar.gz">
- source code</a></td>
- <td class="hash"> SHA256 7ea4ba5257a1e08beb1f05430bf33a9ac311048ed0920dcf6450dad1a75f146d
-	 </td>
-     </tr>
 
 
 
@@ -226,9 +174,10 @@ Version 2.0.1
 </table>
 
 
-<h3> Alpha Version </h3>
 
-<!--
+<h3> Beta Version </h3>
+
+
 <p> 
 There is no beta version of md5deep right now. If you have any
 problems or would like to see something added to md5deep, please
@@ -237,14 +186,14 @@ visit the
 <a href="http://sourceforge.net/projects/md5deep/">Sourceforge project
 page </a>.
 </p>
--->
 
+<!--
 <p>
 An <em>alpha</em> version of md5deep 3.0 is now available. 
-<!--
+
 If there are no problems found with this version, it will become the official 
 version on 1 May 2008.
--->
+
 This version is for your
 <em>testing</em> purposes only and should <em>NOT BE USED</em> for any
 serious/official/meaningful work. Changes in this new version:
@@ -277,20 +226,20 @@ Version 3.0-alpha1
 
 <td><a href="md5deep-3.0-alpha1.zip">
        Windows binary</a></td>
-<td class="hash"> SHA256 e9690944f498a927892d505276a74e845797e366fa10d28add22586fcad17766
+<td class="hash"> SHA256 
 </td>
      </tr>
      <tr>
  <td><a href="md5deep-3.0-alpha1.tar.gz">
  source code</a></td>
- <td class="hash"> SHA256 224692e137b7ac15f3d148bbd14447c84fb8b908bcc501645c915abe234df2e3
+ <td class="hash"> SHA256 
 </td>
      </tr>
   </tbody>
 </table>
 </p>
 
-
+-->
 
 <h3> Older Versions </h3>
 
@@ -321,6 +270,41 @@ document.write(old_link_text);
   </thead>
 
   <tbody>
+
+
+     <td rowspan="3">
+2.0.1
+     </td>
+
+     <td rowspan="3">
+ 31 Oct 2007
+     </td>
+
+
+
+<td><a href="http://downloads.sourceforge.net/md5deep/md5deep-2.0.1-001.zip">
+       Windows binary</a></td>
+<td class="hash"> SHA256 7c047c433de7009ab825205da283a9fdb5f4107a1534774a4a581cd829e0b8e1
+	</td>
+     </tr>
+
+     <tr>
+ <td><a href="http://downloads.sourceforge.net/md5deep/md5deep-2.0-cygwin.zip">
+ Cygwin binary </a></td>
+ <td class="hash"> SHA256 e6d200ceb7ed0e326226e16a2d7c8bc4c2b074acf64400e070739411528ce284
+ </td>
+     </tr>
+
+
+     <tr>
+ <td><a href="http://downloads.sourceforge.net/md5deep/md5deep-2.0.1-001.tar.gz">
+ source code</a></td>
+ <td class="hash"> SHA256 7ea4ba5257a1e08beb1f05430bf33a9ac311048ed0920dcf6450dad1a75f146d
+	 </td>
+     </tr>
+
+
+
 
      <td rowspan="3">
 2.0
