@@ -1,3 +1,8 @@
+2008-05-17 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Applied patch 1961973 to fix man page installation.
+	
+
 2008-04-18 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Updated files.c et al to handle iLook version 4 hashes.
