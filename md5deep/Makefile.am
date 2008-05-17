@@ -27,8 +27,9 @@ ALL_GOALS={md5,sha1,sha256,tiger,whirlpool}
 
 # We erase the old man pages, just in case they might be symbolic links
 # (symbolic links were used in a previous release)
-install-exec-hook: update-manpages
-	rm -f ${man1dir}/${ALL_GOALS}deep.1
+install-man: update-manpages
+	rm -f $(DESTDIR)${man1dir}/${ALL_GOALS}deep.1
+	$(MAKE) install-man1
 
 update-manpages: md5deep.1
 	cp md5deep.1 sha1deep.1
