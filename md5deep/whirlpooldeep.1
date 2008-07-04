@@ -17,7 +17,7 @@ whirlpooldeep \- Compute and compare Whirlpool message digests
 .br
 .B md5deep
 [\-m|\-M|\-x|\-X <file>]  [-a|-A <hash>]
-[\-p <size>] [\-nwzresS0lbkq] [\-o <fbcplsd>] [\fBFILES\fR]
+[\-p <size>] [\-i <size>] [\-nwzresS0lbkq] [\-o <fbcplsd>] [\fBFILES\fR]
 
 .SH DESCRIPTION
 .PP
@@ -36,6 +36,12 @@ Piecewise mode. Breaks files into chunks before hashing. Chunks may
 be specified using multiplers b,k,m,g,t,p, and e. (Never let it be
 said that the author didn't plan ahead.) 
 This mode cannot be used with the \-z mode.
+
+.TP
+\fB\-i <size> \fR
+Size threshold mode. Only hash files smaller than the given the 
+threshold. Sizes may be specified 
+using multiplers b,k,m,g,t,p, and e.
 
 .TP
 \fB\-r\fR
