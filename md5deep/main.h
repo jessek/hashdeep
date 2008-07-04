@@ -68,8 +68,11 @@ typedef struct _state {
   /* Size of blocks used in normal hashing */
   uint64_t      block_size;
 
-  /* Size of blocks used in piecewise hashing */
+  // Size of blocks used in piecewise hashing
   uint64_t      piecewise_size;
+
+  // Size threshold for hashing small files only
+  uint64_t      size_threshold;
 
   // These strings are used in hash.c to hold the filename
   TCHAR         * full_name;

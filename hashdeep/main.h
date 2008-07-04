@@ -183,9 +183,11 @@ struct _state {
   unsigned char * buffer;
   uint64_t        total_megs;
 
-  /* We don't want to use s->total_bytes, but it's required for hash.c */
+  // We don't want to use s->total_bytes but it is
+  // required for hash.c
   uint64_t        total_bytes;
 
+  uint64_t        size_threshold;
   uint64_t        bytes_read;
 
   /* We don't want to use s->full_name, but it's required for hash.c */

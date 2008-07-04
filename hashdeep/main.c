@@ -20,12 +20,12 @@ static void usage(state *s)
   for (i = 0 ; i < NUM_ALGORITHMS ; i++)
     fprintf(stdout,"%s%s",s->hashes[i]->name,(i+1<NUM_ALGORITHMS)?",":NEWLINE);
 
-  print_status("-a - Audit mode. Validates FILES against known hashes. Requires -k");
-  print_status("-m - Matching mode. Requires -k");
-  print_status("-x - Negative matching mode. Requires -k");
-  print_status("-w - In -m mode, displays which known file was matched");
+  print_status("-a - audit mode. Validates FILES against known hashes. Requires -k");
+  print_status("-m - matching mode. Requires -k");
+  print_status("-x - negative matching mode. Requires -k");
+  print_status("-w - in -m mode, displays which known file was matched");
   print_status("-M and -X act like -m and -x, but display hashes of matching files");
-  print_status("-k - Add a file of known hashes");
+  print_status("-k - add a file of known hashes");
 
   print_status("-r - recursive mode. All subdirectories are traversed");
   print_status("-e - compute estimated time remaining for each file");
@@ -33,7 +33,8 @@ static void usage(state *s)
   print_status("-p - piecewise mode. Files are broken into blocks for hashing");
   print_status("-b - prints only the bare name of files; all path information is omitted");
   print_status("-l - print relative paths for filenames");
-  print_status("-v - Verbose mode. Use again to be more verbose.");
+  print_status("-i  - only process files smaller than the given threshold");
+  print_status("-v - verbose mode. Use again to be more verbose.");
   print_status("-V - display version number and exit");
 }
 
@@ -247,11 +248,22 @@ static int process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"c:MmXxablk:resp:wvVh")) != -1)
+  while ((i=getopt(argc,argv,"i:c:MmXxablk:resp:wvVh")) != -1)
   {
     switch (i)
     {
 	  
+    case 'i':
+      s->mode |= mode_size;
+      s->size_threshold = find_block_size(s,optarg);
+      if (0 == s->size_threshold)
+      {
+	print_error(s,"%s: Requested size threshold implies not hashing anything",
+		    __progname);
+	exit(STATUS_USER_ERROR);
+      }
+      break;
+
     case 'c': 
       s->primary_function = primary_compute;
       /* Before we parse which algorithms we're using now, we have 
@@ -369,6 +381,7 @@ static int initialize_state(state *s)
   s->hashes_loaded    = FALSE;
   s->banner_displayed = FALSE;
   s->block_size       = MD5DEEP_IDEAL_BLOCK_SIZE;
+  s->size_threshold   = 0;
 
   return FALSE;
 }

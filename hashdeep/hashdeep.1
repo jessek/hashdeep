@@ -8,7 +8,7 @@ hashdeep \- Compute, compare, or audit multiple message digests
 -V | -h
 .br
 .B hashdeep
-[-c <alg1>[,<alg2>]] [-k <file>] [-amxwMXrespblvv] [\fBFILES\fR]
+[-c <alg1>[,<alg2>]] [-k <file>] [-i <size>] [-amxwMXrespblvv] [\fBFILES\fR]
 
 
 .SH DESCRIPTION
@@ -123,6 +123,11 @@ remaining for each file being processed. Time estimates for files
 larger than 4GB are not available on Windows. This mode may not be
 used with th \-p mode.
 
+.TP
+\fB\-i <size> \fR
+Size threshold mode. Only hash files smaller than the given the 
+threshold. Sizes may be specified 
+using multiplers b,k,m,g,t,p, and e.
 
 .TP
 \fB\-s\fR

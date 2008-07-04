@@ -380,6 +380,12 @@ int hash_file(state *s, TCHAR *fn)
   {
     s->total_bytes = find_file_size(s->handle);
 
+    if (s->mode & mode_size && s->total_bytes > s->size_threshold)
+    {
+      fclose(s->handle);
+      return STATUS_OK;
+    }
+
     if (s->mode & mode_estimate)
     {
       // The find file size returns a value of type off_t, so we must cast it

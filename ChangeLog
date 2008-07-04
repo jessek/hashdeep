@@ -1,3 +1,11 @@
+2008-07-04 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Added size mode, -i, to only process files smaller than
+	  a given size threshold. Reused code from piecewise mode
+	  to parse user input. Added to md5deep and hashdeep.
+	  Added to SF at Feature Request 2010771.
+
+	
 2008-05-17 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Applied patch 1961973 to fix man page installation.

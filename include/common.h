@@ -243,8 +243,9 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 #define mode_verbose      1<<16
 #define mode_more_verbose 1<<17
 #define mode_insanely_verbose 1 <<18
+#define mode_size         1<<19
 
-/* Modes 19-48 are reserved for future use.
+/* Modes 20-48 are reserved for future use.
 
    Note that the LL is required to avoid overflows of 32-bit words.
    LL must be used for any value equal to or above 1<<31. 

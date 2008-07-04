@@ -38,7 +38,7 @@ static void usage(void)
   print_status("-r  - recursive mode. All subdirectories are traversed");
   print_status("-e  - compute estimated time remaining for each file");
   print_status("-s  - silent mode. Suppress all error messages");
-  print_status("-S  - Displays warnings on bad hashes only");
+  print_status("-S  - displays warnings on bad hashes only");
   print_status("-z  - display file size before hash");
   print_status("-m <file> - enables matching mode. See README/man page");
   print_status("-x <file> - enables negative matching mode. See README/man page");
@@ -50,7 +50,8 @@ static void usage(void)
   print_status("-b  - prints only the bare name of files; all path information is omitted");
   print_status("-l  - print relative paths for filenames");
   print_status("-k  - print asterisk before filename");
-  print_status("-o  - Only process certain types of files. See README/manpage");
+  print_status("-i  - only process files smaller than the given threshold");
+  print_status("-o  - only process certain types of files. See README/manpage");
   print_status("-v  - display version number and exit");
 }
 
@@ -128,8 +129,19 @@ void process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"M:X:x:m:o:A:a:nwzsSp:erhvV0lbkqU")) != -1) { 
+  while ((i=getopt(argc,argv,"i:M:X:x:m:o:A:a:nwzsSp:erhvV0lbkqU")) != -1) { 
     switch (i) {
+
+    case 'i':
+      s->mode |= mode_size;
+      s->size_threshold = find_block_size(s,optarg);
+      if (0 == s->size_threshold)
+      {
+	print_error(s,"%s: Requested size threshold implies not hashing anything",
+		    __progname);
+	exit(STATUS_USER_ERROR);
+      }
+      break;
 
     case 'p':
       s->mode |= mode_piecewise;
@@ -266,6 +278,7 @@ static int initialize_state(state *s)
   s->hashes_loaded   = FALSE;
   s->return_value    = STATUS_OK;
   s->piecewise_size  = 0;
+  s->size_threshold  = 0;
   s->block_size      = MD5DEEP_IDEAL_BLOCK_SIZE;
 
   if (setup_hashing_algorithm(s))
