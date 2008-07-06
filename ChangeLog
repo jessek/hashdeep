@@ -1,5 +1,8 @@
 2008-07-04 Jesse Kornblum <md5deep@jessekornblum.com>
 
+	* Removed SF Community Choice Awards from web page. 
+	  The nominations are closed.
+
 	* Added size mode, -i, to only process files smaller than
 	  a given size threshold. Reused code from piecewise mode
 	  to parse user input. Added to md5deep and hashdeep.
