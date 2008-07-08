@@ -1,7 +1,7 @@
 
 #include "main.h"
 
-/* $Id$ */
+// $Id$
 
 static void display_banner(state *s)
 {
@@ -22,7 +22,7 @@ static void display_banner(state *s)
   display_filename(stdout,s->cwd);
   fprintf(stdout,"%s",NEWLINE);
   
-  /* Display the command prompt as the user saw it */
+  // Display the command prompt as the user saw it
   fprintf(stdout,"## ");
 #ifdef _WIN32
   _ftprintf(stdout,_TEXT("%c:\\>"), s->cwd[0]);
@@ -66,7 +66,7 @@ int display_hash_simple(state *s)
 }
 
 
-/* This function is called by hash.c when the hashing operation is complete. */
+// This function is called by hash.c when the hashing operation is complete.
 int display_hash(state *s)
 {
   if (NULL == s)

@@ -33,7 +33,7 @@ static void usage(state *s)
   print_status("-p - piecewise mode. Files are broken into blocks for hashing");
   print_status("-b - prints only the bare name of files; all path information is omitted");
   print_status("-l - print relative paths for filenames");
-  print_status("-i  - only process files smaller than the given threshold");
+  print_status("-i - only process files smaller than the given threshold");
   print_status("-v - verbose mode. Use again to be more verbose.");
   print_status("-V - display version number and exit");
 }

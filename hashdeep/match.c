@@ -1,5 +1,5 @@
 
-/* $Id$ */
+// $Id$
 
 #include "main.h"
 
@@ -27,8 +27,8 @@ static int parse_hashing_algorithms(state *s, char *fn, char *val)
   int done = FALSE;
   uint8_t i;
 
-  /* The first position is always the file size, so we start with an 
-     the first position of one. */
+  // The first position is always the file size, so we start with an 
+  // the first position of one.
   uint8_t order = 1;
   
   if (NULL == s || NULL == fn || NULL == val)
@@ -116,7 +116,7 @@ identify_file(state *s, char *fn, FILE *handle)
   if (NULL == buf)
     return file_unknown;
 
-  /* Find the header */
+  // Find the header 
   if ((fgets(buf,MAX_STRING_LENGTH,handle)) == NULL) 
     {
       free(buf);
@@ -131,7 +131,7 @@ identify_file(state *s, char *fn, FILE *handle)
       return file_unknown;
     }
 
-  /* Find which hashes are in this file */
+  // Find which hashes are in this file
   if ((fgets(buf,MAX_STRING_LENGTH,handle)) == NULL) 
     {
       free(buf);
@@ -140,17 +140,17 @@ identify_file(state *s, char *fn, FILE *handle)
 
   chop_line(buf);
 
-  /* We don't use STRINGS_EQUAL here because we only care about
-     the first ten characters for right now. */
+  // We don't use STRINGS_EQUAL here because we only care about
+  // the first ten characters for right now. 
   if (strncasecmp("%%%% size,",buf,10))
   {
     free(buf);
     return file_unknown;
   }
 
-  /* If this is the first file of hashes being loaded, clear out the 
-     list of known values. Otherwise, record the current values to
-     let the user know if they have changed when we load the new file. */
+  // If this is the first file of hashes being loaded, clear out the 
+  // list of known values. Otherwise, record the current values to
+  // let the user know if they have changed when we load the new file.
   if ( ! s->hashes_loaded )
   {
     clear_algorithms_inuse(s);
@@ -161,12 +161,12 @@ identify_file(state *s, char *fn, FILE *handle)
       current_order[i] = s->hash_order[i];
   }
 
-  /* We have to clear out the algorithm order to remove the values
-     from the previous file. This file may have different ones */
+  // We have to clear out the algorithm order to remove the values
+  // from the previous file. This file may have different ones 
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
     s->hash_order[i] = alg_unknown;
 
-  /* Skip the "%%%% size," when parsing the list of hashes */
+  // Skip the "%%%% size," when parsing the list of hashes 
   parse_hashing_algorithms(s,fn,buf + 10);
 
   if (s->hashes_loaded)
@@ -278,7 +278,7 @@ status_t read_file(state *s, char *fn, FILE *handle)
   uint8_t i;
   char * buf;
   file_data_t * t;
-  /* We have to account for the two lines of the header */
+  // We have to account for the two lines of the header 
   uint64_t line_number = 2;
   char **ap, *argv[MAX_KNOWN_COLUMNS];
 
@@ -294,7 +294,7 @@ status_t read_file(state *s, char *fn, FILE *handle)
     line_number++;
     chop_line(buf);
 
-    /* Ignore comments in the input file */
+    // Ignore comments in the input file 
     if ('#' == buf[0])
       continue;
 
@@ -315,7 +315,7 @@ status_t read_file(state *s, char *fn, FILE *handle)
 	if (++ap >= &argv[MAX_KNOWN_COLUMNS])
 	  break;
 
-    /* The first value is always the file size */
+    // The first value is always the file size 
     t->file_size = (uint64_t)strtoll(argv[0],NULL,10);
 
     i = 1;
@@ -334,9 +334,9 @@ status_t read_file(state *s, char *fn, FILE *handle)
       i++;
     }
 
-    /* If the current argv value is NULL, there weren't enough
-       columns in the line. We have to throw away this record,
-       but we should be able to continue. */
+    // If the current argv value is NULL, there weren't enough
+    // columns in the line. We have to throw away this record,
+    // but we should be able to continue. 
     if (NULL == argv[i])
     {
       print_error(s,"%s: %s: Bad record at line %"PRIu64, 
@@ -345,18 +345,18 @@ status_t read_file(state *s, char *fn, FILE *handle)
       continue;
     }
 
-    /* The last value is always the filename. */
+    // The last value is always the filename. 
 #ifdef _WIN32
     size_t len = strlen(argv[i]);
     t->file_name = (TCHAR *)malloc(sizeof(TCHAR) * (len+1));
     if (NULL == t->file_name)
       fatal_error(s,"%s: Out of memory", __progname);
 
-    /* On Windows we must convert the filename from ANSI to Unicode.
-       The -1 parameter for the input length asserts that the input
-       string, argv[i] is NULL terminated and that the function should
-       process the whole thing. The full definition of this function:
-       http://msdn2.microsoft.com/en-us/library/ms776413(VS.85).aspx */
+    // On Windows we must convert the filename from ANSI to Unicode.
+    // The -1 parameter for the input length asserts that the input
+    // string, argv[i] is NULL terminated and that the function should
+    // process the whole thing. The full definition of this function:
+    // http://msdn2.microsoft.com/en-us/library/ms776413(VS.85).aspx
     if ( ! MultiByteToWideChar(CP_ACP,
 			       MB_PRECOMPOSED,
 			       argv[i],
@@ -425,7 +425,8 @@ status_t load_match_file(state *s, char *fn)
 }
 
 
-/* We don't use this function anymore, but it's handy to have just in case
+// We don't use this function anymore, but it's handy to have just in case
+/*
 char * status_to_str(status_t s)
 {
   switch (s) {
@@ -471,8 +472,8 @@ status_t display_match_result(state *s)
       {
 	switch (tmp->status) {
 
-	  /* If only the name is different, it's still really a match
-	     as far as we're concerned. */
+	  // If only the name is different, it's still really a match
+	  //  as far as we're concerned. 
 	case status_file_name_mismatch:
 	case status_match:
 	  matched_filename = tmp->data->file_name;
@@ -482,7 +483,7 @@ status_t display_match_result(state *s)
 	case status_file_size_mismatch:
 	case status_partial_match:
 
-	  /* We only want to display a partial hash error once per input file */
+	  // We only want to display a partial hash error once per input file 
 	  if (tmp->data->used != s->hash_round)
 	  {
 	    tmp->data->used = s->hash_round;
@@ -491,8 +492,8 @@ status_t display_match_result(state *s)
 	    display_filename(stderr,tmp->data->file_name);
 	    fprintf(stderr,"%s", NEWLINE);
 
-	    /* Technically this wasn't a match, so we're still ok
-	       with the match result we already have */
+	    // Technically this wasn't a match, so we're still ok
+	    // with the match result we already have
 
 	  }
 	  break;

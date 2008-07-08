@@ -1,5 +1,5 @@
 
-/* $Id$ */
+// $Id$ 
 
 #include "main.h"
 
@@ -90,7 +90,7 @@ int audit_update(state *s)
   if (my_round > s->hash_round)
     fatal_error(s,"%s: Too many input files", __progname);
 
-  /* Although nobody uses match_total right now, we may in the future */
+  // Although nobody uses match_total right now, we may in the future 
   //  s->match_total++;
 
   for (i = 0 ; i < NUM_ALGORITHMS; ++i)
@@ -115,7 +115,7 @@ int audit_update(state *s)
 	    exact_match = TRUE;
 	    break;
     
-	    /* This shouldn't happen */
+	    // This shouldn't happen 
 	  case status_no_match:
 	    no_match = TRUE;
 	    print_error_unicode(s,s->current_file->file_name,
@@ -128,7 +128,7 @@ int audit_update(state *s)
 	    moved_file = tmp->data;
 	    break;
     
-	    /* Hash collision */
+	    // Hash collision 
 	  case status_partial_match:
 	  case status_file_size_mismatch:
 	    partial = TRUE;
@@ -150,10 +150,10 @@ int audit_update(state *s)
     }
   }
 
-  /* If there was an exact match, that overrides any other matching
-     'moved' file. Usually this happens when the same file exists
-     in two places. In this case we find an exact match and a case
-     where the filenames don't match. */
+  // If there was an exact match, that overrides any other matching
+  // 'moved' file. Usually this happens when the same file exists
+  // in two places. In this case we find an exact match and a case
+  // where the filenames don't match. 
 
   if (exact_match)
   {
@@ -188,16 +188,16 @@ int audit_update(state *s)
 
   }
   
-  /* A file can have a hash collision even if it matches an otherwise
-     known good. For example, an evil version of ntoskrnl.exe should
-     have an exact match to EVILEVIL.EXE but still have a collision 
-     with the real ntoskrnl.exe. When this happens we should report
-     both results. */
+  // A file can have a hash collision even if it matches an otherwise
+  // known good. For example, an evil version of ntoskrnl.exe should
+  // have an exact match to EVILEVIL.EXE but still have a collision 
+  // with the real ntoskrnl.exe. When this happens we should report
+  // both results. 
   if (partial)
   {
-    /* We only record the hash collision if it wasn't anything else.
-       At the same time, however, a collision is such a significant
-       event that we print it no matter what. */
+    // We only record the hash collision if it wasn't anything else.
+    // At the same time, however, a collision is such a significant
+    // event that we print it no matter what. 
     if (!exact_match && !moved && !no_match)
       s->match_partial++;
     display_filename(stdout,s->current_file->file_name);
