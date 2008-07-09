@@ -248,11 +248,13 @@ static int process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"i:c:MmXxablk:resp:wvVh")) != -1)
+  while ((i=getopt(argc,argv,"I:i:c:MmXxablk:resp:wvVh")) != -1)
   {
     switch (i)
     {
-	  
+    case 'I': 
+      s->mode |= mode_size_all;
+      // Note no break here;
     case 'i':
       s->mode |= mode_size;
       s->size_threshold = find_block_size(s,optarg);

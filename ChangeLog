@@ -1,5 +1,11 @@
 2008-07-04 Jesse Kornblum <md5deep@jessekornblum.com>
 
+	* Added -I mode to display filenames with asterisks for
+	  hashes when size is above threshold. Compliments -i mode.
+	
+
+2008-07-04 Jesse Kornblum <md5deep@jessekornblum.com>
+
 	* Removed SF Community Choice Awards from web page. 
 	  The nominations are closed.
 

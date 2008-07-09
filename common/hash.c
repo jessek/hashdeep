@@ -382,9 +382,30 @@ int hash_file(state *s, TCHAR *fn)
 
     if (s->mode & mode_size && s->total_bytes > s->size_threshold)
     {
+      if (s->mode & mode_size_all)
+      {
+	// Copy values needed to display hash correctly
+	s->bytes_read = s->total_bytes;
+
+	// Whereas md5deep has only one hash to wipe, hashdeep has several
+#ifdef __MD5DEEP_H
+	memset(s->hash_result, '*', HASH_STRING_LENGTH);
+#else
+	int i;
+	for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+	{
+	  if (s->hashes[i]->inuse)
+	    memset(s->current_file->hash[i], '*', s->hashes[i]->byte_length);
+	}
+#endif
+
+	display_hash(s);
+      }
+
       fclose(s->handle);
       return STATUS_OK;
     }
+
 
     if (s->mode & mode_estimate)
     {

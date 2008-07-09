@@ -1,8 +1,8 @@
-** Changes in version 3.x (RBF DATE)
+** Changes in version 3.1 (RBF DATE)
 
 * New Features
 
-	Added size threshold mode to only process files smaller
+	Added size threshold modes to only process files smaller
 	than a given size.
 
 * Bug Fixes

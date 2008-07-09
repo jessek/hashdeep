@@ -50,7 +50,7 @@ static void usage(void)
   print_status("-b  - prints only the bare name of files; all path information is omitted");
   print_status("-l  - print relative paths for filenames");
   print_status("-k  - print asterisk before filename");
-  print_status("-i  - only process files smaller than the given threshold");
+  print_status("-i/I- only process files smaller than the given threshold");
   print_status("-o  - only process certain types of files. See README/manpage");
   print_status("-v  - display version number and exit");
 }
@@ -129,9 +129,12 @@ void process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"i:M:X:x:m:o:A:a:nwzsSp:erhvV0lbkqU")) != -1) { 
+  while ((i=getopt(argc,argv,"I:i:M:X:x:m:o:A:a:nwzsSp:erhvV0lbkqU")) != -1) { 
     switch (i) {
 
+    case 'I':
+      s->mode |= mode_size_all;
+      // Note that there is no break here
     case 'i':
       s->mode |= mode_size;
       s->size_threshold = find_block_size(s,optarg);

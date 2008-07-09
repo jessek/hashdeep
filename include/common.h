@@ -214,6 +214,8 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 /* The default size for hashing */
 #define MD5DEEP_IDEAL_BLOCK_SIZE 8192
 
+#define HASH_STRING_LENGTH   (s->hash_length * 2)
+
 /* Return values for the program */
 /* RBF - Document these return values for hashdeep */
 #define STATUS_OK                      0
@@ -242,10 +244,11 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 #define mode_piecewise    1<<15
 #define mode_verbose      1<<16
 #define mode_more_verbose 1<<17
-#define mode_insanely_verbose 1 <<18
+#define mode_insanely_verbose  1<<18
 #define mode_size         1<<19
+#define mode_size_all     1<<20
 
-/* Modes 20-48 are reserved for future use.
+/* Modes 21-48 are reserved for future use.
 
    Note that the LL is required to avoid overflows of 32-bit words.
    LL must be used for any value equal to or above 1<<31. 
