@@ -14,6 +14,10 @@
 	* Removed 'Experimental cast' tags from SHA256 and Tiger
 	  hashing code. They appear to be working.
 
+	* In response to bug 2022302, updated time estimate display
+	  to handle large time values, including those more than
+	  one day.
+
 
 2008-07-04 Jesse Kornblum <md5deep@jessekornblum.com>
 

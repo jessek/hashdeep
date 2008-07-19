@@ -45,8 +45,7 @@
 
 static void update_display(state *s, time_t elapsed)
 {
-  uint8_t hour,min;
-  uint64_t seconds, mb_read;
+  uint64_t hour, min, seconds, mb_read;
 
   memset(s->msg,0,LINE_LENGTH);
 
@@ -57,7 +56,7 @@ static void update_display(state *s, time_t elapsed)
     mb_read = 1;
   else
     mb_read = s->bytes_read / ONE_MEGABYTE;
-
+  
   if (0 == s->total_megs)
   {
     _sntprintf(s->msg,
@@ -70,21 +69,21 @@ static void update_display(state *s, time_t elapsed)
   else 
   {
     // Our estimate of the number of seconds remaining
-    seconds = (off_t)floor(((double)s->total_megs/mb_read - 1) * elapsed);
-
-    /* We don't care if the remaining time is more than one day.
-       If you're hashing something that big, to quote the movie Jaws:
-       
-              "We're gonna need a bigger boat."                   */
+    seconds = (uint64_t)floor(((double)s->total_megs/mb_read - 1) * elapsed);
     
-    hour = floor((double)seconds/3600);
+    // We don't care if the remaining time is more than one day.
+    // If you're hashing something that big, to quote the movie Jaws:
+    //        
+    //            "We're gonna need a bigger boat."                  
+    
+    hour = seconds/3600;
     seconds -= (hour * 3600);
     
-    min = floor((double)seconds/60);
+    min = seconds/60;
     seconds -= min * 60;
 
     _sntprintf(s->msg,LINE_LENGTH-1,
-	      _TEXT("%s: %"PRIu64"MB of %"PRIu64"MB done, %02"PRIu8":%02"PRIu8":%02"PRIu64" left%s"),
+	       _TEXT("%s: %"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s"),
 	       s->short_name,
 	       mb_read,
 	       s->total_megs,
@@ -92,7 +91,7 @@ static void update_display(state *s, time_t elapsed)
 	       min,
 	       seconds,
 	       _TEXT(BLANK_LINE));
-  }    
+  }
 
   fprintf(stderr,"\r");
   display_filename(stderr,s->msg);
