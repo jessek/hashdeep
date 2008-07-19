@@ -283,8 +283,9 @@ static int process_command_line(state *s, int argc, char **argv)
       
     case 'a': s->primary_function = primary_audit;      break;
       
-      // RBF - Add -t mode to man page
-    case 't': s->mode |= mode_timestamp;    break;
+      // TODO: Add -t mode to hashdeep
+      //    case 't': s->mode |= mode_timestamp;    break;
+
     case 'b': s->mode |= mode_barename;     break;
     case 'l': s->mode |= mode_relative;     break;
     case 'e': s->mode |= mode_estimate;     break;

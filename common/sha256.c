@@ -26,7 +26,6 @@ int hash_init_sha256(void * ctx)
 
 int hash_update_sha256(void * ctx, unsigned char *buf, uint64_t len)
 {
-  /* RBF - Experimental cast */
   sha256_update(ctx,buf,(uint32_t) len);
   return FALSE;
 }

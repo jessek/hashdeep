@@ -11,6 +11,9 @@
 	  Request 2014686. This should be the creation time on 
 	  Win32, change time for all other operating systems.
 
+	* Removed 'Experimental cast' tags from SHA256 and Tiger
+	  hashing code. They appear to be working.
+
 
 2008-07-04 Jesse Kornblum <md5deep@jessekornblum.com>
 

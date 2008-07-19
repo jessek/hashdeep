@@ -64,7 +64,6 @@ int hash_init_tiger(void * ctx)
 
 int hash_update_tiger(void * ctx, unsigned char *buf, uint64_t len)
 {
-  /* RBF - Experimental cast */
   tiger_update(ctx,buf,(size_t)len);
   return FALSE;
 }
