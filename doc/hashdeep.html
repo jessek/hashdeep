@@ -15,7 +15,7 @@ hashdeep - Compute, compare, or audit multiple message digests
 <h2><a name='sect1' href='#toc1'>Synopsis</a></h2>
 <b>hashdeep
 </b> -V | -h <br>
-<b>hashdeep</b> [-c &lt;alg1&gt;[,&lt;alg2&gt;]] [-k &lt;file&gt;] [-amxwMXrespblvv] [<b>FILES</b>] 
+<b>hashdeep</b> [-c &lt;alg1&gt;[,&lt;alg2&gt;]] [-k &lt;file&gt;] [-i &lt;size&gt;] [-amxwMXrespblvv] [<b>FILES</b>] 
 <p> 
 <p> 
 <h2><a name='sect2' href='#toc2'>Description</a></h2>
@@ -117,7 +117,12 @@ will examine all files in <i>directories</i> that end in .txt.
 indicator and estimate of time remaining for each file being processed.
 Time estimates for files larger than 4GB are not available on Windows. This
 mode may not be used with th -p mode. 
-<p> 
+<p> </dd>
+
+<dt><b>-i &lt;size&gt; </b> </dt>
+<dd>Size threshold mode. Only hash
+files smaller than the given the  threshold. Sizes may be specified  using
+multiplers b,k,m,g,t,p, and e. 
 <p> </dd>
 
 <dt><b>-s</b> </dt>
