@@ -378,7 +378,10 @@ int hash_file(state *s, TCHAR *fn)
 
   if ((s->handle = _tfopen(fn,_TEXT("rb"))) != NULL)
   {
-    s->total_bytes = find_file_size(s->handle);
+    // We only call the fstat or the ioctl functions if we weren't able to 
+    // determine the file size from the stat function in dig.c:file_type().
+    if (0 == s->total_bytes)
+      s->total_bytes = find_file_size(s->handle);
 
     if (s->mode & mode_size && s->total_bytes > s->size_threshold)
     {

@@ -182,6 +182,7 @@ struct _state {
   FILE          * handle;
   unsigned char * buffer;
   uint64_t        total_megs;
+  time_t          timestamp;
 
   // We don't want to use s->total_bytes but it is
   // required for hash.c

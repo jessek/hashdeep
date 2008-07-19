@@ -50,6 +50,7 @@ static void usage(void)
   print_status("-b  - prints only the bare name of files; all path information is omitted");
   print_status("-l  - print relative paths for filenames");
   print_status("-k  - print asterisk before filename");
+  print_status("-t  - print GMT timestamp");
   print_status("-i/I- only process files smaller than the given threshold");
   print_status("-o  - only process certain types of files. See README/manpage");
   print_status("-v  - display version number and exit");
@@ -125,11 +126,13 @@ static void check_matching_modes(state *s)
 }
 
 
-void process_command_line(state *s, int argc, char **argv)
+static int process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"I:i:M:X:x:m:o:A:a:nwzsSp:erhvV0lbkqU")) != -1) { 
+  while ((i = getopt(argc,
+		     argv,
+		     "I:i:M:X:x:m:o:A:a:tnwzsSp:erhvV0lbkqU")) != -1) { 
     switch (i) {
 
     case 'I':
@@ -160,6 +163,11 @@ void process_command_line(state *s, int argc, char **argv)
 
     case 'q': 
       s->mode |= mode_quiet; 
+      break;
+      // RBF - Add to man page
+    case 't':
+      s->mode |= mode_timestamp;
+      MD5DEEP_ALLOC(char,s->time_str,MAX_TIME_STRING_LENGTH);
       break;
     case 'n': 
       s->mode |= mode_not_matched; 
@@ -261,7 +269,10 @@ void process_command_line(state *s, int argc, char **argv)
 
     }
   }
-    check_flags_okay(s);
+
+  check_flags_okay(s);
+
+  return STATUS_OK;
 }
 
 
@@ -336,7 +347,11 @@ int main(int argc, char **argv)
     return STATUS_INTERNAL_ERROR;
   }
 
-  process_command_line(s,argc,argv);
+  if (process_command_line(s,argc,argv))
+  {
+    print_status("%s: Unable to process command line arguments", __progname);
+    return STATUS_INTERNAL_ERROR;
+  }
 
 #ifdef _WIN32
   if (prepare_windows_command_line(s))

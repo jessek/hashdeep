@@ -5,6 +5,14 @@
 	Added size threshold modes to only process files smaller
 	than a given size.
 
+	Added a timestamp mode that records the creation time time
+	for each file on Win32, the change time on all other operating
+	systems.
+
+	Streamlined file size computation process, which should make
+	the programs faster.
+
+
 * Bug Fixes
 
 

@@ -59,6 +59,8 @@ typedef struct _state {
   uint64_t      total_megs;
   uint64_t      total_bytes;
   uint64_t      bytes_read;
+  time_t        timestamp;
+  char          * time_str;
   
   /* Lists of known hashes */
   int           hashes_loaded;

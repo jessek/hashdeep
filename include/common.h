@@ -122,6 +122,8 @@ NEWLINE, NEWLINE, NEWLINE
    The NSRL is already larger than 256 bytes. We go longer to be safer. */
 #define MAX_STRING_LENGTH    2048
 
+#define MAX_TIME_STRING_LENGTH  31
+
 /* LINE_LENGTH is different between UNIX and WIN32 and is defined below */
 #define MAX_FILENAME_LENGTH   LINE_LENGTH - 41
 
@@ -247,8 +249,9 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 #define mode_insanely_verbose  1<<18
 #define mode_size         1<<19
 #define mode_size_all     1<<20
+#define mode_timestamp    1<<21
 
-/* Modes 21-48 are reserved for future use.
+/* Modes 22-48 are reserved for future use.
 
    Note that the LL is required to avoid overflows of 32-bit words.
    LL must be used for any value equal to or above 1<<31. 

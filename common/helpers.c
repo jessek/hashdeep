@@ -318,7 +318,8 @@ off_t find_file_size(FILE *f)
 
 #elif defined (__APPLE__)
 
-off_t find_file_size(FILE *f) {
+off_t find_file_size(FILE *f) 
+{
   struct stat info;
   off_t total = 0;
   off_t original = ftello(f);

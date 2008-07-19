@@ -1,3 +1,17 @@
+2008-07-18 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Updated documentation to reflect Cygwin Ports support.
+
+	* Modified file_type function to record the file size of 
+	  each file processed. This should eliminate the need to
+	  call stat again or the ioctl functions in hash.c and
+	  hopefully speed up the program.
+
+	* Added timestamp to the output for size mode per Feature
+	  Request 2014686. This should be the creation time on 
+	  Win32, change time for all other operating systems.
+
+
 2008-07-04 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Added -I mode to display filenames with asterisks for

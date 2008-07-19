@@ -78,6 +78,21 @@ int display_hash(state *s)
     if ((s->mode & mode_piecewise) ||
 	!(s->is_stdin))
     {
+      if (s->mode & mode_timestamp)
+      {
+	struct tm * my_time = gmtime(&(s->timestamp));
+
+	// The format is four digit year, two digit month, 
+	// two digit hour, two digit minute, two digit second
+	strftime(s->time_str, 
+		 MAX_TIME_STRING_LENGTH, 
+		 "%Y:%m:%d:%H:%M:%S", 
+		 my_time);
+
+	printf (" %s", s->time_str);
+      }
+
+
       printf(" %c", display_asterisk(s));      
       display_filename(stdout,s->full_name);
     }

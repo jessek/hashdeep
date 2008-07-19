@@ -334,6 +334,8 @@ static int file_type_helper(_tstat_t sb)
 }
 
 
+// Use a stat function to look up while kind of file this is
+// and, if possible, it's size.
 static int file_type(state *s, TCHAR *fn)
 {
   _tstat_t sb;
@@ -343,6 +345,12 @@ static int file_type(state *s, TCHAR *fn)
     print_error_unicode(s,fn,"%s", strerror(errno));
     return stat_unknown;
   }
+
+  s->total_bytes = sb.st_size;
+
+  // On Win32 this should be the creation time, but on all other systems
+  // it will be the change time.
+  s->timestamp = sb.st_ctime; 
 
   return file_type_helper(sb);
 }
@@ -450,7 +458,14 @@ static int should_hash_symlink(state *s, TCHAR *fn, int *link_type)
 
 static int should_hash(state *s, TCHAR *fn)
 {
-  int type = file_type(s,fn);
+  int type;
+
+  // We must reset the number of bytes in each file processed
+  // so that we can tell if fstat reads the number successfully
+  s->total_bytes = 0;
+  s->timestamp = 0;
+
+  type = file_type(s,fn);
   
   if (s->mode & mode_expert)
     return (should_hash_expert(s,fn,type));

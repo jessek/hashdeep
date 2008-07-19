@@ -17,7 +17,7 @@ whirlpooldeep \- Compute and compare Whirlpool message digests
 .br
 .B md5deep
 [\-m|\-M|\-x|\-X <file>]  [-a|-A <hash>]
-[\-p <size>] [\-i <size>] [\-nwzresS0lbkq] [\-o <fbcplsd>] [\fBFILES\fR]
+[\-p <size>] [\-i <size>] [\-tnwzresS0lbkq] [\-o <fbcplsd>] [\fBFILES\fR]
 
 .SH DESCRIPTION
 .PP
@@ -111,6 +111,12 @@ This flag may not be used in conjunction with the \-m, \-M, or \-A flags.
 During any of the matching modes (\-m,\-M,\-x,or \-X), displays the filename
 of the known hash that matched the input file. 
 See the section "UNICODE SUPPORT" below.
+
+.TP
+\fB\-t\fR
+Display a timestamp in GMT with each result. On Windows this timestamp
+will be the file's creation time. On all other systems it should be
+the file's change time. 
 
 .TP
 \fB\-n\fR
