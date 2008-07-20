@@ -1,4 +1,4 @@
-.TH MD5DEEP "1" "v3.0 \- 10 May 2008" "AFOSI" "United States Air Force"
+.TH MD5DEEP "1" "v3.1 \- RBF DATE 2008" "AFOSI" "United States Air Force"
 
 .SH NAME
 md5deep \- Compute and compare MD5 message digests
@@ -17,7 +17,7 @@ whirlpooldeep \- Compute and compare Whirlpool message digests
 .br
 .B md5deep
 [\-m|\-M|\-x|\-X <file>]  [-a|-A <hash>]
-[\-p <size>] [\-i <size>] [\-nwzresS0lbkq] [\-o <fbcplsd>] [\fBFILES\fR]
+[\-p <size>] [\-i <size>] [\-tnwzresS0lbkq] [\-o <fbcplsd>] [\fBFILES\fR]
 
 .SH DESCRIPTION
 .PP
@@ -32,17 +32,21 @@ reads from standard input.
 
 .TP
 \fB\-p <size> \fR
-Piecewise mode. Breaks files into chunks before hashing. Chunks may
-be specified using multiplers b,k,m,g,t,p, and e. (Never let it be
-said that the author didn't plan ahead.) 
+Piecewise mode. Breaks files into chunks before hashing.
+Chunks may be specified 
+using multiplers b, k, m, g, t, p, or e.
+(Never let it be
+said that the author didn't plan ahead!) 
 This mode cannot be used with the \-z mode.
 
 .TP
 \fB\-i|\-I <size> \fR
 Size threshold mode. Only hash files smaller than the given the 
-threshold. When used with \-I, displays a set of asterisks
-for the hash size. Sizes may be specified 
-using multiplers b,k,m,g,t,p, and e.
+threshold. In \-i mode, simply omits those files larger than the
+threshold. In \-I mode, displays all files, but uses asterisks
+for the hashes of files larger than the threshold.
+Sizes may be specified 
+using multiplers b, k, m, g, t, p, or e.
 
 .TP
 \fB\-r\fR
@@ -111,6 +115,12 @@ This flag may not be used in conjunction with the \-m, \-M, or \-A flags.
 During any of the matching modes (\-m,\-M,\-x,or \-X), displays the filename
 of the known hash that matched the input file. 
 See the section "UNICODE SUPPORT" below.
+
+.TP
+\fB\-t\fR
+Display a timestamp in GMT with each result. On Windows this timestamp
+will be the file's creation time. On all other systems it should be
+the file's change time. 
 
 .TP
 \fB\-n\fR

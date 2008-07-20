@@ -218,8 +218,6 @@ int find_rigid_hash(state *s, char *buf, char *fn,
   if (find_comma_separated_string(buf,hash_location-1))
     return FALSE;
 
-  printf("Found: %s %s\n", fn, buf);
-
   return valid_hash(s,buf);
 }
 

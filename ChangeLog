@@ -1,3 +1,8 @@
+2008-07-20 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Removed debugging code accidently left in files.c:
+	  find_rigid_hash function.
+
 2008-07-18 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Updated documentation to reflect Cygwin Ports support.
