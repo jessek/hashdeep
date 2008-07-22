@@ -1,8 +1,32 @@
+** Changes in version 3.1 (23 Jul 2008)
+
+* New Features
+
+	Added size threshold modes to only process files smaller
+	than a given size.
+
+	Added a timestamp mode that records the creation time time
+	for each file on Win32, the change time on all other operating
+	systems.
+
+	Streamlined file size computation process, which makes
+	the programs about 15% faster.
+
+
+* Bug Fixes
+
+	Corrected time estimates for large files (e.g. files which 
+        require more than one day).
+
+
+
+
 ** Changes in version 3.0 (10 May 2008)
 
 * New Features
 
-	Added hashdeep program to support multihashing
+	Added hashdeep program to support multihashing and
+        hash file auditing
 
 	Added support for new iLook style hashes
 
