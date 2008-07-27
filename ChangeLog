@@ -1,3 +1,8 @@
+2008-07-27 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Reconfigured with latest tools
+
+	
 2008-07-20 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Removed debugging code accidently left in files.c:
