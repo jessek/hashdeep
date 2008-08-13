@@ -1,3 +1,11 @@
+2008-08-13 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Updated contact email address to research@jessekornblum.com.
+	  Reconfigured.
+
+	* Applied patch 2026326 to fix VPATH build for manpages.
+
+	
 2008-07-27 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Reconfigured with latest tools

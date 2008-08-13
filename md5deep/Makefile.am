@@ -32,10 +32,10 @@ install-man: update-manpages
 	$(MAKE) install-man1
 
 update-manpages: md5deep.1
-	cp md5deep.1 sha1deep.1
-	cp md5deep.1 sha256deep.1
-	cp md5deep.1 tigerdeep.1
-	cp md5deep.1 whirlpooldeep.1
+	cp $< sha1deep.1
+	cp $< sha256deep.1
+	cp $< tigerdeep.1
+	cp $< whirlpooldeep.1
 
 man_MANS=md5deep.1 sha1deep.1 sha256deep.1 tigerdeep.1 whirlpooldeep.1
 
