@@ -69,14 +69,17 @@ static void update_display(state *s, time_t elapsed)
   else 
   {
     // Our estimate of the number of seconds remaining
-    seconds = (uint64_t)floor(((double)s->total_megs/mb_read - 1) * elapsed);
-    
+    //    seconds = (uint64_t)floor(((double)s->total_megs/mb_read - 1) * elapsed);
+
+    // RBF - Begin experimental code
+    // New estimate of seconds remaining done with integer math
+    seconds = (s->total_bytes / (s->bytes_read / elapsed)) - elapsed;
+
     // We don't care if the remaining time is more than one day.
     // If you're hashing something that big, to quote the movie Jaws:
     //        
-    //            "We're gonna need a bigger boat."                  
-    
-    hour = seconds/3600;
+    //            "We're gonna need a bigger boat."            
+    hour = seconds / 3600LL;
     seconds -= (hour * 3600);
     
     min = seconds/60;
