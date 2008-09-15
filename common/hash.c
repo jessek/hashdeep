@@ -1,4 +1,3 @@
-
 /* MD5DEEP - hash.c
  *
  * By Jesse Kornblum
@@ -68,18 +67,22 @@ static void update_display(state *s, time_t elapsed)
   }
   else 
   {
-    // Our estimate of the number of seconds remaining
+    // Estimate the number of seconds using only integer math.
+    // The old method:
     //    seconds = (uint64_t)floor(((double)s->total_megs/mb_read - 1) * elapsed);
+    // sometimes produced wacky values, especially on Win32 systems.
+    // We now compute the number of bytes read per second and then
+    // use that to determine how long the whole file should take. 
+    // By subtracting the number of elapsed seconds from that, we should
+    // get a good estimate of how many seconds remain.
 
-    // RBF - Begin experimental code
-    // New estimate of seconds remaining done with integer math
     seconds = (s->total_bytes / (s->bytes_read / elapsed)) - elapsed;
 
     // We don't care if the remaining time is more than one day.
     // If you're hashing something that big, to quote the movie Jaws:
     //        
     //            "We're gonna need a bigger boat."            
-    hour = seconds / 3600LL;
+    hour = seconds / 3600;
     seconds -= (hour * 3600);
     
     min = seconds/60;
