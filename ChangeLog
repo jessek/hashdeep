@@ -1,3 +1,9 @@
+2008-09-23 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Changing stat functions on Windows to handle 64-bit
+	  file sizes (i.e. call _tstat64 instead of _tstat)
+
+	
 2008-09-14 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Experimenting with new time estimation calculation

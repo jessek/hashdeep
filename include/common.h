@@ -8,6 +8,12 @@
 # include "config.h"
 #endif
 
+#ifdef _WIN32
+// Required to enable 64-bit stat functions
+# define __MSVCRT_VERSION__ 0x0601
+#endif
+
+
 /* The version information, VERSION, is defined in config.h */
 
 #define AUTHOR      "Jesse Kornblum"

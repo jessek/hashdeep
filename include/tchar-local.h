@@ -24,9 +24,9 @@
 
 /* The Win32 API does have lstat, just stat. As such, we don't have to
    worry about the difference between the two. */
-#define _lstat         _tstat
-#define _sstat         _tstat
-#define _tstat_t       struct _stat
+#define _lstat         _tstat64
+#define _sstat         _tstat64
+#define _tstat_t       struct __stat64
 
 
 
