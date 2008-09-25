@@ -15,7 +15,7 @@ static void usage(state *s)
 
   print_status("");
 
-  print_status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-1");
+  print_status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
   fprintf(stdout,"     legal values are ");
   for (i = 0 ; i < NUM_ALGORITHMS ; i++)
     fprintf(stdout,"%s%s",s->hashes[i]->name,(i+1<NUM_ALGORITHMS)?",":NEWLINE);
