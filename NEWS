@@ -6,6 +6,9 @@
  
 	Fixed support for 64-bit files on Windows
 
+	Fixed hashdeep input file parsing to allow filenames with 
+	commas and properly handle other kinds of errors.
+
 
 ** Changes in version 3.1 (23 Jul 2008)
 
