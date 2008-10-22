@@ -7,9 +7,7 @@ static int valid_hash(state *s, hashname_t a, char *buf)
 {
   size_t pos = 0;
 
-  //  print_status("%d %d", strlen(buf), s->hashes[a]->byte_length);
-  
-  if (strlen(buf) < s->hashes[a]->byte_length)
+  if (strlen(buf) != s->hashes[a]->byte_length)
     return FALSE;
   
   for (pos = 0 ; pos < s->hashes[a]->byte_length ; pos++)
@@ -20,62 +18,63 @@ static int valid_hash(state *s, hashname_t a, char *buf)
   return TRUE;
 }
       
+#define TEST_ALGORITHM(CONDITION,ALG)	  \
+  if (CONDITION)			  \
+    {					  \
+      s->hashes[ALG]->inuse = TRUE;	  \
+      s->hash_order[order] = ALG;	  \
+      buf += strlen(buf) + 1;		  \
+      pos = 0;				  \
+      ++total_pos;			  \
+      ++order;				  \
+      continue;				  \
+    }
 
 static int parse_hashing_algorithms(state *s, char *fn, char *val)
 {
-  char **ap, *buf[MAX_KNOWN_COLUMNS];
+  char * buf = val;
+  size_t len = strlen(val);
   int done = FALSE;
-  uint8_t i;
 
   // The first position is always the file size, so we start with an 
   // the first position of one.
   uint8_t order = 1;
+
+  size_t pos = 0, total_pos = 0;
   
   if (NULL == s || NULL == fn || NULL == val)
     return TRUE;
 
-  for (ap = buf ; (*ap = strsep(&val,",")) != NULL ; )
-    if (*ap != '\0')
-      if (++ap >= &buf[MAX_KNOWN_COLUMNS])
-	break;
-
-  for (i = 0 ; i < MAX_KNOWN_COLUMNS && buf[i] != NULL ; i++)
+  while (!done)
   {
-    if (STRINGS_CASE_EQUAL(buf[i],"md5"))
+    if ( ! (',' == buf[pos] || 0 == buf[pos]))
     {
-      s->hashes[alg_md5]->inuse = TRUE;
-      s->hash_order[order] = alg_md5;
-    }
-    
-    else if (STRINGS_CASE_EQUAL(buf[i],"sha1") || 
-	     STRINGS_CASE_EQUAL(buf[i],"sha-1"))
-    {
-      s->hashes[alg_sha1]->inuse = TRUE;
-      s->hash_order[order] = alg_sha1;
-    }
-    
-    else if (STRINGS_CASE_EQUAL(buf[i],"sha256") || 
-	     STRINGS_CASE_EQUAL(buf[i],"sha-256"))
-    {
-      s->hashes[alg_sha256]->inuse = TRUE;
-      s->hash_order[order] = alg_sha256;
-    }
-      
-    else if (STRINGS_CASE_EQUAL(buf[i],"tiger"))
-    {
-      s->hashes[alg_tiger]->inuse = TRUE;
-      s->hash_order[order] = alg_tiger;
-    }
-      
-    else if (STRINGS_CASE_EQUAL(buf[i],"whirlpool"))
-    {
-      s->hashes[alg_whirlpool]->inuse = TRUE;
-      s->hash_order[order] = alg_whirlpool;
+      // If we don't find a comma or the end of the line, 
+      // we must continue to the next character
+      ++pos;
+      ++total_pos;
+      continue;
     }
 
-    else if (STRINGS_CASE_EQUAL(buf[i],"filename"))
+    /// Terminate the string so that we can do comparisons easily
+    buf[pos] = 0;
+
+    TEST_ALGORITHM(STRINGS_CASE_EQUAL(buf,"md5"),alg_md5);
+    
+    TEST_ALGORITHM(STRINGS_CASE_EQUAL(buf,"sha1") ||
+		   STRINGS_CASE_EQUAL(buf,"sha-1"), alg_sha1);
+
+    TEST_ALGORITHM(STRINGS_CASE_EQUAL(buf,"sha256") || 
+		   STRINGS_CASE_EQUAL(buf,"sha-256"), alg_sha256);
+
+    TEST_ALGORITHM(STRINGS_CASE_EQUAL(buf,"tiger"),alg_tiger);
+
+    TEST_ALGORITHM(STRINGS_CASE_EQUAL(buf,"whirlpool"),alg_whirlpool);
+      
+    if (STRINGS_CASE_EQUAL(buf,"filename"))
     {
-      if (buf[i+1] != NULL)
+      // The filename column should be the end of the line
+      if (total_pos != len)
       {
 	print_error(s,"%s: %s: Badly formatted file", __progname, fn);
 	try_msg();
@@ -86,14 +85,19 @@ static int parse_hashing_algorithms(state *s, char *fn, char *val)
       
     else
     {
-      print_error(s,"%s: %s: Unknown algorithm", __progname, buf);
+      // If we can't parse the algorithm name, there's something
+      // wrong with it. Don't tempt fate by trying to print it,
+      // it could contain non-ASCII characters or something malicious.
+      print_error(s,
+		  "%s: %s: Unknown algorithm in file header, line 2.", 
+		  __progname, fn);
+      
       try_msg();
       exit(EXIT_FAILURE);
     }
-    
-    ++order;
   }
 
+  s->expected_columns = order;
   s->hash_order[order] = alg_unknown;
 
   if (done)
@@ -274,114 +278,131 @@ static void display_all_known_files(state *s)
 status_t read_file(state *s, char *fn, FILE *handle)
 {
   status_t st = status_ok;
-  int contains_bad_lines = FALSE;
-  uint8_t i;
-  char * buf;
-  file_data_t * t;
-  // We have to account for the two lines of the header 
+  int contains_bad_lines = FALSE, record_valid;
+  char * line , * buf;
+
+  // We start our counter at line number two for the two lines
+  // of header we've already read
   uint64_t line_number = 2;
-  char **ap, *argv[MAX_KNOWN_COLUMNS];
 
   if (NULL == s || NULL == fn || NULL == handle)
     return status_unknown_error;
 
-  buf = (char *)malloc(sizeof(char) * MAX_STRING_LENGTH);
-  if (NULL == buf)
+  line = (char *)malloc(sizeof(char) * MAX_STRING_LENGTH);
+  if (NULL == line)
     fatal_error(s,"%s: Out of memory while trying to read %s", __progname,fn);
 
-  while (fgets(buf,MAX_STRING_LENGTH,handle))
+  while (fgets(line,MAX_STRING_LENGTH,handle))
   {
     line_number++;
+
+    // Lines starting with a pound sign are comments and can be ignored
+    if ('#' == line[0])
+      continue;
     chop_line(buf);
 
-    // Ignore comments in the input file 
-    if ('#' == buf[0])
-      continue;
+    // We're going to be advancing the string variable, so we
+    // make sure to use a temporary pointer. If not, we'll end up
+    // overwriting random data the next time we read.
+    buf = line;
+    record_valid = TRUE;
+    chop_line(buf);
 
-    t = (file_data_t *)malloc(sizeof(file_data_t));
+    file_data_t * t = (file_data_t *)malloc(sizeof(file_data_t));
     if (NULL == t)
       fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
 		  __progname, fn, line_number);
 
     initialize_file_data(t);
 
-    char * tmp = strdup(buf);
-    if (NULL == tmp)
-      fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
-		  __progname, fn, line_number);
+    int done = FALSE;
+    size_t pos = 0;
+    uint8_t column_number = 0;
 
-    for (ap = argv ; (*ap = strsep(&tmp,",")) != NULL ; )
-      if (**ap != '\0')
-	if (++ap >= &argv[MAX_KNOWN_COLUMNS])
-	  break;
-
-    // The first value is always the file size 
-    t->file_size = (uint64_t)strtoll(argv[0],NULL,10);
-
-    i = 1;
-    while (argv[i] != NULL && 
-	   s->hash_order[i] != alg_unknown && 
-	   i <= NUM_ALGORITHMS)
+    while (!done)
     {
-      if ( ! valid_hash(s,s->hash_order[i],argv[i]))
+      if ( ! (',' == buf[pos] || 0 == buf[pos]))
       {
+	++pos;
+	continue;
+      }
+
+      // Terminate the string so that we can do comparisons easily
+      buf[pos] = 0;
+
+      // The first column should always be the file size
+      if (0 == column_number)
+      {
+	t->file_size = (uint64_t)strtoll(buf,NULL,10);
+	buf += strlen(buf) + 1;
+	pos = 0;
+	column_number++;
+	continue;
+      }
+
+      // All other columns should contain a valid hash
+      if ( ! valid_hash(s,s->hash_order[column_number],buf))
+      {
+	print_error(s,
+		    "%s: %s: Invalid %s hash in line %"PRIu64,
+		    __progname, fn, 
+		        s->hashes[s->hash_order[column_number]]->name,
+		    line_number);
 	contains_bad_lines = TRUE;
-	argv[i] = NULL;
+	record_valid = FALSE;
+	// Break out (done = true) and then process the next line
 	break;
       }
 
-      t->hash[s->hash_order[i]] = strdup(argv[i]);
-      i++;
-    }
+      t->hash[s->hash_order[column_number]] = strdup(buf);
 
-    // If the current argv value is NULL, there weren't enough
-    // columns in the line. We have to throw away this record,
-    // but we should be able to continue. 
-    if (NULL == argv[i])
-    {
-      print_error(s,"%s: %s: Bad record at line %"PRIu64, 
-		  __progname, fn, line_number);
-      contains_bad_lines = TRUE;
-      continue;
-    }
+      ++column_number;
+      buf += strlen(buf) + 1;
+      pos = 0;
 
-    // The last value is always the filename. 
+      // The 'last' column (even if there are more commas in the line)
+      // is the filename. Note that valid filenames can contain commas! 
+      if (column_number == s->expected_columns)
+	{
 #ifdef _WIN32
-    size_t len = strlen(argv[i]);
-    t->file_name = (TCHAR *)malloc(sizeof(TCHAR) * (len+1));
-    if (NULL == t->file_name)
-      fatal_error(s,"%s: Out of memory", __progname);
-
-    // On Windows we must convert the filename from ANSI to Unicode.
-    // The -1 parameter for the input length asserts that the input
-    // string, argv[i] is NULL terminated and that the function should
-    // process the whole thing. The full definition of this function:
-    // http://msdn2.microsoft.com/en-us/library/ms776413(VS.85).aspx
-    if ( ! MultiByteToWideChar(CP_ACP,
-			       MB_PRECOMPOSED,
-			       argv[i],
-			       -1,   
-			       t->file_name,
-			       len+1))
-      fatal_error(s,"%s: MultiByteToWideChar failed (%d)", 
-		  __progname, 
-		  GetLastError()); 
+	  size_t len = strlen(buf);
+	  t->file_name = (TCHAR *)malloc(sizeof(TCHAR) * (len+1));
+	  if (NULL == t->file_name)
+	    fatal_error(s,"%s: Out of memory", __progname);
+	  
+	  // On Windows we must convert the filename from ANSI to Unicode.
+	  // The -1 parameter for the input length asserts that the input
+	  // string, argv[i] is NULL terminated and that the function should
+	  // process the whole thing. The full definition of this function:
+	  // http://msdn2.microsoft.com/en-us/library/ms776413(VS.85).aspx
+	  if ( ! MultiByteToWideChar(CP_ACP,
+				     MB_PRECOMPOSED,
+				     buf,
+				     -1,   
+				     t->file_name,
+				     len+1))
+	    fatal_error(s,"%s: MultiByteToWideChar failed (%d)", 
+			__progname, 
+			GetLastError()); 
 #else
-    t->file_name = strdup(argv[i]);
-    if (NULL == t->file_name)
-      fatal_error(s,"%s: Out of memory while allocating filename %s", 
-		  __progname, argv[i]);
+	  t->file_name = strdup(buf);
+	  if (NULL == t->file_name)
+	    fatal_error(s,"%s: Out of memory while allocating filename %s", 
+			__progname, buf);
 #endif
-    
-    
+	  done = TRUE;
+	}
+    }
+
+    if ( ! record_valid)
+      continue;
+
     st = add_file(s,t);
     if (st != status_ok)
       return st;
-    
-    free(tmp);
   }
 
-  free(buf);
+  free(line);
 
   if (contains_bad_lines)
     return status_contains_bad_hashes;

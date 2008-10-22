@@ -387,6 +387,7 @@ static int initialize_state(state *s)
   s->banner_displayed = FALSE;
   s->block_size       = MD5DEEP_IDEAL_BLOCK_SIZE;
   s->size_threshold   = 0;
+  s->expected_columns = 0;
 
   return FALSE;
 }

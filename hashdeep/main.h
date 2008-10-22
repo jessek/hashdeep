@@ -200,6 +200,7 @@ struct _state {
   /* The set of known hashes */
   int             hashes_loaded;
   algorithm_t   * hashes[NUM_ALGORITHMS];
+  uint8_t         expected_columns;
   file_data_t   * known, * last;
   uint64_t        hash_round;
   uint8_t         hash_order[NUM_ALGORITHMS];
