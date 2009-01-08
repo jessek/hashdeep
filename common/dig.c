@@ -177,13 +177,12 @@ static void clean_name_win32(TCHAR *fn)
 
 static int is_win32_device_file(TCHAR *fn)
 {
-  /* Specifications for device files came from
-     http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/base/createfile.asp
-
-     -- Physical devices (like hard drives) are 
-        \\.\PhysicalDriveX where X is a digit from 0 to 9
-     -- Tape devices is \\.\tapeX where X is a digit from 0 to 9
-     -- Logical volumes is \\.\X: where X is a letter */
+  // Specifications for device files came from
+  // http://msdn.microsoft.com/en-us/library/aa363858(VS.85).aspx
+  // Physical devices (like hard drives) are 
+  //   \\.\PhysicalDriveX where X is a digit from 0 to 9
+  // Tape devices are \\.\tapeX where X is a digit from 0 to 9
+  // Logical volumes are \\.\X: where X is a letter */
 
   if (!_tcsnicmp(fn, _TEXT("\\\\.\\physicaldrive"),17) &&
       (_tcslen(fn) == 18) && 
@@ -235,10 +234,34 @@ static void clean_name(state *s, TCHAR *fn)
 }
 
 
+static int is_junction_point(state *s, TCHAR *d)
+{
+#ifdef _WIN32
+  WIN32_FIND_DATAW FindFileData;
+  HANDLE hFind;
+
+  hFind = FindFirstFile(d, &FindFileData);
+  if (INVALID_HANDLE_VALUE != hFind)
+  {
+    if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+    {
+      if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0)
+      {
+	print_error_unicode(s,d,"Junction point, skipping");
+	return TRUE;
+      }
+    }
+  }
+
+#endif
+  return FALSE;
+}
+
 
 
 static int is_special_dir(TCHAR *d)
 {
+  // Check if this dir is '.' or '..'
   return ((!_tcsncmp(d,_TEXT("."),1) && (_tcslen(d) == 1)) ||
           (!_tcsncmp(d,_TEXT(".."),2) && (_tcslen(d) == 2)));
 }
@@ -280,6 +303,9 @@ static int process_dir(state *s, TCHAR *fn)
     
     _sntprintf(new_file,PATH_MAX,_TEXT("%s%c%s"),
 	       fn,DIR_SEPARATOR,entry->d_name);
+
+    if (is_junction_point(s,new_file))
+      continue;
 
     return_value = process_normal(s,new_file);
 
@@ -551,14 +577,11 @@ int process_win32(state *s, TCHAR *fn)
 	 We have to add it back in manually. Thankfully Windows doesn't
 	 allow wildcards in the early part of the path. For example,
 	 we will never see:  c:\bin\*\tools 
-
+	 
 	 Because the wildcard is always in the last part of the input
 	 (e.g. c:\bin\*.exe) we can use the original dirname, combined
 	 with the filename we've found, to make the new filename. */
-
-      //      print_status("Found file: %S", FindFileData.cFileName);
-
-
+      
       if (s->mode & mode_relative)
       {
 	_sntprintf(new_fn,PATH_MAX,
@@ -572,7 +595,8 @@ int process_win32(state *s, TCHAR *fn)
 	free(tmp);
       }
       
-      process_normal(s,new_fn); 
+      if (!(is_junction_point(s,new_fn)))
+	process_normal(s,new_fn); 
     }
     
     rc = FindNextFile(hFind, &FindFileData);

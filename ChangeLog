@@ -1,7 +1,14 @@
+2009-01-08 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Added detection and avoidance of NTFS Junction Points
+	  to avoid infinite loops on Windows systems. 
+	  See bug report 2492520 for more details.
+	
+
 2008-10-22 Jesse Kornblum <md5deep@jessekornblum.com>
 	
 	* Rewrote the parsing of known files in hashdeep in response 
-	  to buf 2184219
+	  to bug 2184219
 	  relating to filenames with commas in them. We now determine
 	  the expected number of columns from the header and use that
 	  to parse the remainder of the file.

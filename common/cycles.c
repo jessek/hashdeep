@@ -25,16 +25,19 @@ typedef struct dir_table {
 dir_table *my_table = NULL;
 
 
-/* This function was used in the dark ages for debugging
+// Debugging code
+/*
 static void dump_table(void)
 {
   struct dir_table *t = my_table;
+  printf ("\nTable contents:\n");
   while (t != NULL)
   {
-    print_status (_TEXT("* %s"), t->name);
+    display_filename(stdout,t->name);
+    printf ("\n");
     t = t->next;
   }
-  print_status ("-- end of table --");
+  print_status ("-- end of table --\n");
 }
 */
 
