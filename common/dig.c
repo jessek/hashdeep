@@ -244,6 +244,8 @@ static void clean_name(state *s, TCHAR *fn)
 // given filename is a junction point. Otherwise it returns FALSE.
 static int is_junction_point(state *s, TCHAR *fn)
 {
+  int status = FALSE;
+
   if (NULL == s || NULL == fn)
     return FALSE;
 
@@ -259,15 +261,15 @@ static int is_junction_point(state *s, TCHAR *fn)
       if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0)
       {
 	print_error_unicode(s,fn,"Junction point, skipping");
-	return TRUE;
+	status = TRUE;
       }
     }
 
     FindClose(hFind);
   }
-
 #endif
-  return FALSE;
+
+  return status;
 }
 
 
