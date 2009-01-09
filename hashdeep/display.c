@@ -6,6 +6,7 @@
 static void display_banner(state *s)
 {
   int argc;
+  size_t bytes_written, current_bytes;
   hashname_t i;
   
   print_status("%s", HASHDEEP_HEADER_10);
@@ -33,12 +34,28 @@ static void display_banner(state *s)
     fprintf(stdout,"$");
 #endif
 
+  // Accounts for '## ', command prompt, and space before first argument
+  bytes_written = 8;
+
   for (argc = 0 ; argc < s->argc ; ++argc)
   {
     fprintf(stdout," ");
+    bytes_written++;
+
+    current_bytes = _tcslen(s->argv[argc]);
+
+    // The extra 32 bytes is a fudge factor
+    if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH)
+    {
+      fprintf(stdout,"%s## ", NEWLINE);
+      bytes_written = 3;
+    }
+
     display_filename(stdout,s->argv[argc]);
+    bytes_written += current_bytes;
   }
-  fprintf(stdout,"%s",NEWLINE);
+
+  fprintf(stdout,"%s## %s",NEWLINE, NEWLINE);
 
   s->banner_displayed = TRUE;
 }

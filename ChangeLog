@@ -1,9 +1,20 @@
+2009-01-09 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Changed hashdeep to break long command lines into multiple
+	  lines in the headers of known files. Not doing so leads to
+	  problems with extremely long lines. Those lines end up as
+	  (harmless) warnings about bad hashes. See bug report 2496029
+	  for more details.
+	
+
 2009-01-08 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Added detection and avoidance of NTFS Junction Points
 	  to avoid infinite loops on Windows systems. 
 	  See bug report 2492520 for more details.
 	
+	* Updated email address in AUTHORS file.
+
 
 2008-10-22 Jesse Kornblum <md5deep@jessekornblum.com>
 	
@@ -18,6 +29,7 @@
 	* Fixed a minor hashdeep bug where hashes were considered
 	  invalid if they contained too few characters, but not too many.
 
+	
 2008-09-25 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Updated hashdeep usage message to reflect that MD5 and SHA-256

@@ -251,6 +251,9 @@ static int is_junction_point(state *s, TCHAR *d)
 	return TRUE;
       }
     }
+
+    // RBF - Should this close be outside of the if statement?
+    FindClose(hFind);
   }
 
 #endif
