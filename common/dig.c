@@ -215,14 +215,14 @@ static void clean_name(state *s, TCHAR *fn)
   clean_name_win32(fn);
 #else
 
-  /* We don't need to call these functions when running in Windows
-     as we've already called real_path() on them in main.c. These
-     functions are necessary in *nix so that we can clean up the 
-     path names without removing the names of symbolic links. They
-     are also called when the user has specified an absolute path
-     but has included extra double dots or such.
-
-     TODO: See if Windows Vista's symbolic links create problems */
+  // We don't need to call these functions when running in Windows
+  // as we've already called real_path() on them in main.c. These
+  // functions are necessary in *nix so that we can clean up the 
+  // path names without removing the names of symbolic links. They
+  // are also called when the user has specified an absolute path
+  // but has included extra double dots or such.
+  //
+  // TODO: See if Windows Vista's symbolic links create problems 
 
   if (!(s->mode & mode_relative))
   {
@@ -234,25 +234,35 @@ static void clean_name(state *s, TCHAR *fn)
 }
 
 
-static int is_junction_point(state *s, TCHAR *d)
+// An NTFS Junction Point is like a hard link on *nix but only works
+// on the same filesystem and only for directories. Unfortunately they
+// can also create infinite loops for programs that recurse filesystems.
+// See http://blogs.msdn.com/oldnewthing/archive/2004/12/27/332704.aspx 
+// for an example of such an infinite loop.
+//
+// This function detects junction points and returns TRUE if the
+// given filename is a junction point. Otherwise it returns FALSE.
+static int is_junction_point(state *s, TCHAR *fn)
 {
+  if (NULL == s || NULL == fn)
+    return FALSE;
+
 #ifdef _WIN32
   WIN32_FIND_DATAW FindFileData;
   HANDLE hFind;
 
-  hFind = FindFirstFile(d, &FindFileData);
+  hFind = FindFirstFile(fn, &FindFileData);
   if (INVALID_HANDLE_VALUE != hFind)
   {
     if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
     {
       if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0)
       {
-	print_error_unicode(s,d,"Junction point, skipping");
+	print_error_unicode(s,fn,"Junction point, skipping");
 	return TRUE;
       }
     }
 
-    // RBF - Should this close be outside of the if statement?
     FindClose(hFind);
   }
 
@@ -261,10 +271,9 @@ static int is_junction_point(state *s, TCHAR *d)
 }
 
 
-
+// Returns TRUE if the directory is '.' or '..', otherwise FALSE
 static int is_special_dir(TCHAR *d)
 {
-  // Check if this dir is '.' or '..'
   return ((!_tcsncmp(d,_TEXT("."),1) && (_tcslen(d) == 1)) ||
           (!_tcsncmp(d,_TEXT(".."),2) && (_tcslen(d) == 2)));
 }
