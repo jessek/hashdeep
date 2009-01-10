@@ -6,12 +6,13 @@
 
 
 * Bug Fixes
- 
+
 	Fixed support for 64-bit files on Windows
 
 	Fixed hashdeep input file parsing to allow filenames with 
-	commas and properly handle other kinds of errors.
-
+	commas and properly handle other kinds of errors. Also 
+	modified the invocation listing in output files such that
+        even long lines can be successfully parsed.
 
 
 ** Changes in version 3.1 (23 Jul 2008)

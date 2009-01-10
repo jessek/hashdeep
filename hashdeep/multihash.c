@@ -22,9 +22,9 @@ void multihash_update(state *s, unsigned char *buf, uint64_t len)
 {
   hashname_t i;
 
-  /* We have to copy the data being hashed from the buffer we were
-     passed into another structure because the SHA-1 update 
-     routine modifies it. */
+  // We have to copy the data being hashed from the buffer we were
+  // passed into another structure because the SHA-1 update 
+  // routine modifies it.
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {
     if (s->hashes[i]->inuse)
