@@ -1,3 +1,8 @@
+2009-01-13 Jesse Kornblum <md5deep@jessekornblum.com>
+
+	* Updated win.sh script to use new cross compiler.
+	
+
 2009-01-09 Jesse Kornblum <md5deep@jessekornblum.com>
 
 	* Changed hashdeep to break long command lines into multiple
