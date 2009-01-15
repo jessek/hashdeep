@@ -55,9 +55,12 @@ uint64_t find_block_size(state *s, char *input_str)
 
       
 
-/* Remove the newlines, if any. Works on both DOS and *nix newlines */
+// Remove the newlines, if any. Works on both DOS and *nix newlines
 void chop_line(char *s)
 {
+  if (NULL == s)
+    return;
+
   size_t pos = strlen(s);
 
   if (s[pos - 2] == '\r' && s[pos - 1] == '\n')

@@ -1,0 +1,63 @@
+
+HASHDEEP FILE FORMAT VERSION 1.0
+
+1. INTRODUCTION
+
+This file documents the hashdeep file format. These files are generated 
+by hashdeep and contain a list of names, hashes, and sizes of files. 
+This documentation pertains to version 1.0 of the file format and was 
+last updated on 14 Jan 2009.
+
+
+2. REVISION HISTORY
+
+14 Jan 2009 - Initial version (jk)
+
+
+
+
+3. FILE HEADER
+
+The first line of the file is a header, like this:
+
+%%%% HASHDEEP-1.0
+
+This line identifies the version of the file format being used, not 
+necessarily the version of the hashdeep program.
+
+The second line starts with four percent signs (%%%%) and then 
+identifies the columns in the remainder of the file. The first column 
+must be the file size and the last column must be the filename. Legal 
+values for the other columns are the names of the supported hash 
+algorithms. These names are: md5, sha1 or sha-1, sha256 or sha-256, 
+whirlpool, and tiger. No other column names are supported. There should 
+be a space between the percent signs and the first column name, but no 
+spaces between the column names themselves. Note also that filename is 
+one word.
+
+Here is a sample second line:
+
+%%%% size,md5,sha256,filename
+
+
+4. COMMENTS
+
+Any line after the header that begins with a pound sign (#) is 
+considered a comment and ignored. The hashdeep program normally inserts 
+several lines of comments noting from which directory the program was 
+invoked, the command line used to invoke it, and a blank comment line.
+
+
+5. KNOWN FILES
+
+After the comments are the known files. Each line should contain a 
+series of comma separated values corresponding to the columns listed in 
+the file header. Thus the first column must always be the file's size 
+and the last column must be filename. None of the values should be 
+quoted. If there are more commas than expected, the additional commas 
+are considered part of the filename. Using the file header from above, 
+here is a sample set of lines:
+
+3184,bf4956fabeea95b002c53fedbe10204d,49c3a0a53815d1d87bf9f481e96bee6b5e8494f7465653a4c3d45853cfcae7a7,/home/jessek/bar
+16382,1ba3d8b07d7a103a3bbc7227a0174f91,b48aa24698f3429467c8c0c1e83c9ef609636803918b661bd03fbede017849d1,/home/jessek/foo
+

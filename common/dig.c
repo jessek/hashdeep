@@ -258,7 +258,8 @@ static int is_junction_point(state *s, TCHAR *fn)
   {
     if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
     {
-      if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0)
+      if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0 ||
+	  IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0)
       {
 	print_error_unicode(s,fn,"Junction point, skipping");
 	status = TRUE;

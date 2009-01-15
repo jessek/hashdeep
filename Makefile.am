@@ -1,6 +1,6 @@
 SUBDIRS = md5deep hashdeep
 
-EXTRA_DIST = config.guess config.sub  \
+EXTRA_DIST = FILEFORMAT config.guess config.sub  \
    include/md5.h include/sha1.h include/sha256.h include/tiger.h \
    include/whirlpool.h include/common.h include/ui.h include/tchar-local.h
 
@@ -30,13 +30,16 @@ SUFFIXES = .TXT .1
 #	man $< | col -bx > $@
 
 
-WINDOWSDOCS = MD5DEEP.TXT HASHDEEP.TXT CHANGES.TXT COPYING.TXT
+WINDOWSDOCS = MD5DEEP.TXT HASHDEEP.TXT CHANGES.TXT COPYING.TXT FILEFORMAT.TXT
 
 COPYING.TXT: COPYING
 	cp COPYING COPYING.TXT
 
 CHANGES.TXT: NEWS
 	cp NEWS CHANGES.TXT
+
+FILEFORMAT.TXT: FILEFORMAT
+	cp FILEFORMAT FILEFORMAT.TXT
 
 MD5DEEP.1: 
 	cp md5deep/md5deep.1   MD5DEEP.1

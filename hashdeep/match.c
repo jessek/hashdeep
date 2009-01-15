@@ -299,7 +299,6 @@ status_t read_file(state *s, char *fn, FILE *handle)
     // Lines starting with a pound sign are comments and can be ignored
     if ('#' == line[0])
       continue;
-    chop_line(buf);
 
     // We're going to be advancing the string variable, so we
     // make sure to use a temporary pointer. If not, we'll end up

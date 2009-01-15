@@ -1,6 +1,9 @@
-2009-01-13 Jesse Kornblum <md5deep@jessekornblum.com>
+2009-01-14 Jesse Kornblum <md5deep@jessekornblum.com>
 
-	* Updated win.sh script to use new cross compiler.
+	* Fixed broken chop_line call in hashdeep/match.c. Added
+	  sanity checking to keep this from happening again.
+
+	* Added file format documentation for hashdeep.
 	
 
 2009-01-09 Jesse Kornblum <md5deep@jessekornblum.com>
