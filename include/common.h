@@ -191,7 +191,12 @@ char *__progname;
 
 #define CMD_PROMPT "C:\\>"
 #define DIR_SEPARATOR   '\\'
-/* RBF - Can NEWLINE be moved out of conditional defines? */
+
+// RBF - Resolve NEWLINE variable
+// Testing on Vista shows it needs to be \r\n, but on other
+// system \n seems to work ok. Which is it? 
+// If we end up using \n, we should move it out of the conditional defines
+
 #define NEWLINE "\n"
 #define LINE_LENGTH 72
 #define BLANK_LINE \

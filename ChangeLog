@@ -1,12 +1,24 @@
-2009-01-14 Jesse Kornblum <md5deep@jessekornblum.com>
+2009-01-15 Jesse Kornblum <research@jessekornblum.com>
 
-	* Fixed broken chop_line call in hashdeep/match.c. Added
-	  sanity checking to keep this from happening again.
+	* Removed vestigial code from include/md5.h and the other
+	  algorithms in that directory. This was code that had been
+	  commented out for a while now.
+
+	* Updated email address in this ChangeLog for all entries.
+
+	* Added include directory to the 'make preflight' directive
+	
+	
+2009-01-14 Jesse Kornblum <research@jessekornblum.com>
+
+	* Fixed chop_line call against uninitialized variable
+	  in hashdeep/match.c. Added sanity checking to chop_line
+	  to keep this from happening again.
 
 	* Added file format documentation for hashdeep.
-	
 
-2009-01-09 Jesse Kornblum <md5deep@jessekornblum.com>
+	
+2009-01-09 Jesse Kornblum <research@jessekornblum.com>
 
 	* Changed hashdeep to break long command lines into multiple
 	  lines in the headers of known files. Not doing so leads to
@@ -15,7 +27,7 @@
 	  for more details.
 	
 
-2009-01-08 Jesse Kornblum <md5deep@jessekornblum.com>
+2009-01-08 Jesse Kornblum <research@jessekornblum.com>
 
 	* Added detection and avoidance of NTFS Junction Points
 	  to avoid infinite loops on Windows systems. 
@@ -24,7 +36,7 @@
 	* Updated email address in AUTHORS file.
 
 
-2008-10-22 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-10-22 Jesse Kornblum <research@jessekornblum.com>
 	
 	* Rewrote the parsing of known files in hashdeep in response 
 	  to bug 2184219
@@ -38,24 +50,24 @@
 	  invalid if they contained too few characters, but not too many.
 
 	
-2008-09-25 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-09-25 Jesse Kornblum <research@jessekornblum.com>
 
 	* Updated hashdeep usage message to reflect that MD5 and SHA-256
 	  are the default algorithms used, not SHA-1.
 	
 
-2008-09-23 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-09-23 Jesse Kornblum <research@jessekornblum.com>
 
 	* Changing stat functions on Windows to handle 64-bit
 	  file sizes (i.e. call _tstat64 instead of _tstat)
 
 	
-2008-09-14 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-09-14 Jesse Kornblum <research@jessekornblum.com>
 
 	* Experimenting with new time estimation calculation
 	
 
-2008-08-13 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-08-13 Jesse Kornblum <research@jessekornblum.com>
 
 	* Updated contact email address to research@jessekornblum.com.
 	  Reconfigured.
@@ -63,17 +75,17 @@
 	* Applied patch 2026326 to fix VPATH build for manpages.
 
 	
-2008-07-27 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-07-27 Jesse Kornblum <research@jessekornblum.com>
 
 	* Reconfigured with latest tools
 
 	
-2008-07-20 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-07-20 Jesse Kornblum <research@jessekornblum.com>
 
 	* Removed debugging code accidently left in files.c:
 	  find_rigid_hash function.
 
-2008-07-18 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-07-18 Jesse Kornblum <research@jessekornblum.com>
 
 	* Updated documentation to reflect Cygwin Ports support.
 
@@ -94,13 +106,13 @@
 	  one day.
 
 
-2008-07-04 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-07-04 Jesse Kornblum <research@jessekornblum.com>
 
 	* Added -I mode to display filenames with asterisks for
 	  hashes when size is above threshold. Compliments -i mode.
 	
 
-2008-07-04 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-07-04 Jesse Kornblum <research@jessekornblum.com>
 
 	* Removed SF Community Choice Awards from web page. 
 	  The nominations are closed.
@@ -111,19 +123,19 @@
 	  Added to SF at Feature Request 2010771.
 
 	
-2008-05-17 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-05-17 Jesse Kornblum <research@jessekornblum.com>
 
 	* Applied patch 1961973 to fix man page installation.
 	
 
-2008-04-18 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-04-18 Jesse Kornblum <research@jessekornblum.com>
 
 	* Updated files.c et al to handle iLook version 4 hashes.
 	  These are similar enough that we can reuse most of the 
 	  iLook v3 routines.
 
 	
-2008-04-17 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-04-17 Jesse Kornblum <research@jessekornblum.com>
 
 	* Updated initial kludge to use iLook version 3 hashsets.
 
@@ -131,12 +143,12 @@
 	  in main.c. This is confusing as I wasn't working on this code.
 	
 
-2008-04-16 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-04-16 Jesse Kornblum <research@jessekornblum.com>
 
 	* Updated md5deep to use iLook version 3 hashes.
 	
 
-2008-03-29 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-29 Jesse Kornblum <research@jessekornblum.com>
 
 	* Changed WSTRINGS_EQUAL macro to make case sensitive comparisons
 	  Changed case insensitive char comparsion macro to 
@@ -147,38 +159,38 @@
 	* Fixed hashdeep known file import to only display errors once
 	
 
-2008-03-28 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-28 Jesse Kornblum <research@jessekornblum.com>
 
 	* Noted WSTRING_EQUAL macro is case insensitive in a spot
 	  where we need it to be case sensitive.
 	
 
-2008-03-20 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-20 Jesse Kornblum <research@jessekornblum.com>
 
 	* Added ability for hashdeep to detect and ignore badly
 	  formatted lines in files of known hashes.
 
 
-2008-03-19 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-19 Jesse Kornblum <research@jessekornblum.com>
 
 	* Added phrase "and compare" to manpage description of 
 	  the programs. This will hopefully reinforce the idea
 	  that md5deep cannot be replaced with one line of shell.
 	
 	
-2008-03-18 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-18 Jesse Kornblum <research@jessekornblum.com>
 
 	* Added doc directory to hold FAQ and other web pages
 
 
-2008-03-16 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-16 Jesse Kornblum <research@jessekornblum.com>
 
 	* Added missing space to hash collision message in audit.c
 
 	* Changed default behavior to always print hash collisions
 
 	
-2008-03-13 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-13 Jesse Kornblum <research@jessekornblum.com>
 
 	* Updated make world directive to make Windows package
 
@@ -203,7 +215,7 @@
 	  common code that it warrants the jump.
 	
 	
-2008-03-12 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-12 Jesse Kornblum <research@jessekornblum.com>
 	
 	* Added strsep (and appropriate autoconf/automake checks)
 	  in place to ugly homebrew code to separate out string 
@@ -232,7 +244,7 @@
 	* Made usage message dynamic to display available algorithms
 
 
-2008-03-11 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-11 Jesse Kornblum <research@jessekornblum.com>
 
 	* Separated the functions to display positive and negative
 	  match results. Cleaned up the function names for this too.
@@ -250,7 +262,7 @@
 	  EnCase hash files when loading a very small known file.
 	
 
-2008-03-07 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-07 Jesse Kornblum <research@jessekornblum.com>
 
 	* Updating audit mode to not use is_known_file
 	  function. This should help make the code cleaner.
@@ -262,7 +274,7 @@
 	* Added WSTRINGS_EQUAL(A,B) macro to compare two TCHARs.
 	
 
-2008-03-06 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-06 Jesse Kornblum <research@jessekornblum.com>
 
 	* Reworked hashtable code to return a linked list of 
 	  file_data_t values, complete with status values.
@@ -272,19 +284,19 @@
 	  concept, that's all.
 
 
-2008-03-04 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-04 Jesse Kornblum <research@jessekornblum.com>
 
 	* Working on hashdeep matching, auditing code
 
 	* Added a file_data_t, known, to the hashdeep state variable
 	
 
-2008-03-04 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-03-04 Jesse Kornblum <research@jessekornblum.com>
 
 	* Added spaces to recorded command line in output files.
 	
 
-2008-02-22 Jesse Kornblum <md5deep@jessekornblum.com>
+2008-02-22 Jesse Kornblum <research@jessekornblum.com>
 
 	* Moved source code from CVS to Subversion repository.
 	  This shouldn't create any changes in the code, but
@@ -293,19 +305,19 @@
 	* Version change to 2.1. No need for -001 anymore.
 	
 
-2007-12-27 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-12-27 Jesse Kornblum <research@jessekornblum.com>
 
 	* Fixed hashdeep current working directory and filesize display
 	  when hashing standard input.
 
 	
-2007-12-11 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-12-11 Jesse Kornblum <research@jessekornblum.com>
 
 	* Got multihashing working. It turns out that the SHA-1
 	  update code modifies the buffer that its passed.
 	
 
-2007-12-08 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-12-08 Jesse Kornblum <research@jessekornblum.com>
 
 	* Moved hash.c into the common code directory, adapting it
 	  to work with both md5deep and hashdeep code. Moved display
@@ -314,7 +326,7 @@
 	* First working version of hashdeep!
 	
 
-2007-12-08 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-12-08 Jesse Kornblum <research@jessekornblum.com>
 
 	* Updated hashing headers to only be included once.
 	  Included all hashing headers in common.h
@@ -326,7 +338,7 @@
 	* Moved md5deep man pages into the md5deep directory
 	
 
-2007-12-07 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-12-07 Jesse Kornblum <research@jessekornblum.com>
 
 	* Separated md5deep and hashdeep projects into separate 
 	  directories. Moved common code into include and common
@@ -334,7 +346,7 @@
 	  work just yet, but we're getting close.
 	
 
-2007-12-06 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-12-06 Jesse Kornblum <research@jessekornblum.com>
 
         * Added common.h and ui.h to Makefile.am so that they
 	  are included in a distribution.
@@ -346,7 +358,7 @@
 	* Version bump to 2.1-002
 
 	
-2007-12-05 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-12-05 Jesse Kornblum <research@jessekornblum.com>
 	
 	* Reverting back to main.c and main.h from version 2.0.1. 
 	  Starting over on code for hashdeep
@@ -360,27 +372,27 @@
 	  man page, not five. 
 
 	
-2007-10-31 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-10-31 Jesse Kornblum <research@jessekornblum.com>
 
 	* Added stub for hashdeep program
 
 	* Moved state type out of main.h and into deep.h
 
 	
-2007-10-28 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-10-28 Jesse Kornblum <research@jessekornblum.com>
 
 	* Added additional checks in find_file_size to account for
 	  older Linux systems that don't have all of the necessary
 	  ioctl calls.
 
-2007-10-16 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-10-16 Jesse Kornblum <research@jessekornblum.com>
 
 	* Incorporated patch from Yaakov Selkowitz to handle man page
 	  copying when build dir is not the same as source dir.
 	  (Sourceforge tracker #1814253)
 
 
-2007-09-26 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-09-26 Jesse Kornblum <research@jessekornblum.com>
 
 	* Added second ioctl call in Linux version of find_file_size
 	  to get the true sector size; don't just assume 512 byte
@@ -395,7 +407,7 @@
 	  for them.
 	
 
-2007-09-25 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-09-25 Jesse Kornblum <research@jessekornblum.com>
 
 	* Created new function print_error_unicode to 
 	  handle errors encountered while processing
@@ -409,14 +421,14 @@
 	* Fixed find_file_size for block devices on OS X.
 
 	
-2007-09-24 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-09-24 Jesse Kornblum <research@jessekornblum.com>
 
 	* Updated error display for Unicode filenames in dig.c
 	
 	* Fixed expert mode due to 64-bit values in int returns
 
 	
-2007-09-23 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-09-23 Jesse Kornblum <research@jessekornblum.com>
 
 	* Reverted back to old method of installing man pages.
 	  When make install is invoked, current md5deep.1 is
@@ -424,7 +436,7 @@
 	  installed normally.
 
 	
-2007-09-22 Jesse Kornblum <md5deep@jessekornblum.com>
+2007-09-22 Jesse Kornblum <research@jessekornblum.com>
 
 	* Switched to GNU autotools
 	

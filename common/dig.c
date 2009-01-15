@@ -234,6 +234,34 @@ static void clean_name(state *s, TCHAR *fn)
 }
 
 
+// RBF - Debugging function
+#ifdef _WIN32
+static void print_last_error(char * function_name)
+{
+  // Copied from http://msdn.microsoft.com/en-us/library/ms680582(VS.85).aspx
+  // Retrieve the system error message for the last-error code
+
+  LPTSTR pszMessage;
+  DWORD dwLastError = GetLastError(); 
+
+  FormatMessage((FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+		 FORMAT_MESSAGE_FROM_SYSTEM |
+		 FORMAT_MESSAGE_IGNORE_INSERTS),
+		NULL,
+		dwLastError,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR) &pszMessage,
+		0, NULL );
+  
+  // Display the error message and exit the process
+  fprintf(stdout,"%s failed with error %ld: ", function_name, dwLastError);
+  display_filename(stdout,pszMessage);
+  
+  LocalFree(pszMessage);
+}
+#endif
+
+
 // An NTFS Junction Point is like a hard link on *nix but only works
 // on the same filesystem and only for directories. Unfortunately they
 // can also create infinite loops for programs that recurse filesystems.
@@ -250,6 +278,7 @@ static int is_junction_point(state *s, TCHAR *fn)
     return FALSE;
 
 #ifdef _WIN32
+
   WIN32_FIND_DATAW FindFileData;
   HANDLE hFind;
 
@@ -258,13 +287,66 @@ static int is_junction_point(state *s, TCHAR *fn)
   {
     if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
     {
-      if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0 ||
-	  IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0)
+      if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0)
       {
 	print_error_unicode(s,fn,"Junction point, skipping");
 	status = TRUE;
       }
+      else if (IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0)
+      {
+	print_error_unicode(s,fn,"Symbolic link, skipping");
+	status = TRUE;
+      }	
     }
+
+    // RBF - Experimental code
+    /*
+    #include <ddk/ntifs.h>
+
+    if (status)
+    {
+      HANDLE hFile = CreateFile(fn,
+				0,   // desired access
+				FILE_SHARE_READ,
+				NULL,  
+				OPEN_EXISTING,
+				(FILE_FLAG_OPEN_REPARSE_POINT | 
+				 FILE_FLAG_BACKUP_SEMANTICS),
+				NULL);
+
+      if (INVALID_HANDLE_VALUE == hFile)
+      {
+	print_last_error(L"CreateFile");
+      }
+      else
+      {
+	print_status("Opened ok!");
+
+	REPARSE_DATA_BUFFER buf;
+	uint8_t bytesReturned;
+	LPOVERLAPPED ov;
+
+	int rc = DeviceIoControl(hFile,
+				 FSCTL_GET_REPARSE_POINT,
+				 NULL,
+				 0,
+				 &buf,
+				 MAXIMUM_REPARSE_DATA_BUFFER_SIZE,
+				 &bytesReturned,
+				 ov);
+	if (!rc)
+	{
+	  print_last_error(L"DeviceIoControl");
+	}
+
+	CloseHandle(hFile);
+      }
+
+
+    }
+      */
+
+
 
     FindClose(hFind);
   }
