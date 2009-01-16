@@ -1,17 +1,15 @@
 
-/* MD5DEEP
- *
- * By Jesse Kornblum
- *
- * This is a work of the US Government. In accordance with 17 USC 105,
- * copyright protection is not available for any work of the US Government.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- */
-
+// MD5DEEP
+//
+// By Jesse Kornblum
+//
+// This is a work of the US Government. In accordance with 17 USC 105,
+// copyright protection is not available for any work of the US Government.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
 // $Id$
 
 #include "main.h"
@@ -45,6 +43,9 @@ static void dump_table(void)
 
 int done_processing_dir(TCHAR *fn)
 {
+  if (NULL == fn)
+    return TRUE;
+
   dir_table *last, *temp;
   TCHAR *d_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
 
@@ -101,6 +102,9 @@ int done_processing_dir(TCHAR *fn)
 
 int processing_dir(TCHAR *fn)
 {
+  if (NULL == fn)
+    return TRUE;
+
   dir_table *new, *temp;
   TCHAR *d_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
 
@@ -124,7 +128,7 @@ int processing_dir(TCHAR *fn)
 
   while (temp->next != NULL)
   {
-    /* We should never be adding a directory that is already here */
+    // We should never be adding a directory that is already here 
     if (!_tcsncmp(temp->name,d_name,PATH_MAX))
     {
       internal_error("%s: Attempt to add existing %s in processing_dir",
@@ -148,6 +152,9 @@ int processing_dir(TCHAR *fn)
 
 int have_processed_dir(TCHAR *fn)
 {
+  if (NULL == fn)
+    return TRUE;
+
   dir_table *temp;
   TCHAR *d_name;
 

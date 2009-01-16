@@ -1,16 +1,14 @@
-/* MD5DEEP - hash.c
- *
- * By Jesse Kornblum
- *
- * This is a work of the US Government. In accordance with 17 USC 105,
- * copyright protection is not available for any work of the US Government.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- */
-
+// MD5DEEP - hash.c
+//
+// By Jesse Kornblum
+//
+// This is a work of the US Government. In accordance with 17 USC 105,
+// copyright protection is not available for any work of the US Government.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
 // $Id$
 
 
@@ -18,7 +16,7 @@
 
 #ifdef __MD5DEEP_H
 
-/* Code for md5deep */
+// Code for md5deep 
 
 #define HASH_INITIALIZE()      s->hash_init(s->hash_context)
 #define HASH_UPDATE(BUF,SIZE)  s->hash_update(s->hash_context,BUF,SIZE)
@@ -26,31 +24,34 @@
 
 #else
 		    
-/* Code for hashdeep */
+// Code for hashdeep 
 
 #define HASH_INITIALIZE()      multihash_initialize(s)
 #define HASH_UPDATE(BUF,SIZE)  multihash_update(s,BUF,SIZE)
 #define HASH_FINALIZE()        multihash_finalize(s);
 
-#endif /* ifdef __MD5DEEP_H */
+#endif // ifdef __MD5DEEP_H 
 		    
 
 
-/* At least one user has suggested changing update_display() to 
-   use human readable units (e.g. GB) when displaying the updates.
-   The problem is that once the display goes above 1024MB, there
-   won't be many updates. The counter doesn't change often enough
-   to indicate progress. Using MB is a reasonable compromise. */
+// At least one user has suggested changing update_display() to 
+// use human readable units (e.g. GB) when displaying the updates.
+// The problem is that once the display goes above 1024MB, there
+// won't be many updates. The counter doesn't change often enough
+// to indicate progress. Using MB is a reasonable compromise. 
 
 static void update_display(state *s, time_t elapsed)
 {
   uint64_t hour, min, seconds, mb_read;
 
+  if (NULL == s)
+    return;
+
   memset(s->msg,0,LINE_LENGTH);
 
-  /* If we've read less than one MB, then the computed value for mb_read 
-     will be zero. Later on we may need to divide the total file size, 
-     total_megs, by mb_read. Dividing by zero can create... problems */
+  // If we've read less than one MB, then the computed value for mb_read 
+  // will be zero. Later on we may need to divide the total file size, 
+  // total_megs, by mb_read. Dividing by zero can create... problems 
   if (s->bytes_read < ONE_MEGABYTE)
     mb_read = 1;
   else
@@ -109,6 +110,9 @@ static void shorten_filename(TCHAR *dest, TCHAR *src)
 {
   TCHAR *basen;
 
+  if (NULL == dest || NULL == src)
+    return;
+
   if (_tcslen(src) < MAX_FILENAME_LENGTH)
   {
     _tcsncpy(dest,src, MAX_FILENAME_LENGTH);
@@ -119,6 +123,7 @@ static void shorten_filename(TCHAR *dest, TCHAR *src)
   if (NULL == basen)
     return;
 
+  // RBF - Check the return value of my_basename
   my_basename(basen);  
 
   if (_tcslen(basen) < MAX_FILENAME_LENGTH)
@@ -133,8 +138,8 @@ static void shorten_filename(TCHAR *dest, TCHAR *src)
 }
 
 
-/* Returns TRUE if errno is currently set to a fatal error. That is,
-   an error that can't possibly be fixed while trying to read this file */
+// Returns TRUE if errno is currently set to a fatal error. That is,
+// an error that can't possibly be fixed while trying to read this file
 static int file_fatal_error(void)
 {
   switch(errno) 
@@ -145,8 +150,8 @@ static int file_fatal_error(void)
     case EBADF:    // Bad file descriptor
     case EFBIG:    // File too big
     case ETXTBSY:  // Text file busy
-      /* The file is being written to by another process.
-	 This happens with Windows system files */
+      // The file is being written to by another process.
+      // This happens with Windows system files 
 
       return TRUE;  
     }
@@ -161,10 +166,13 @@ static int compute_hash(state *s)
   uint64_t current_read, mysize, remaining;
   unsigned char buffer[MD5DEEP_IDEAL_BLOCK_SIZE];
 
-  /* Although we need to read MD5DEEP_BLOCK_SIZE bytes before
-     we exit this function, we may not be able to do that in 
-     one read operation. Instead we read in blocks of 8192 bytes 
-     (or as needed) to get the number of bytes we need. */
+  if (NULL == s)
+    return TRUE;
+
+  // Although we need to read MD5DEEP_BLOCK_SIZE bytes before
+  // we exit this function, we may not be able to do that in 
+  // one read operation. Instead we read in blocks of 8192 bytes 
+  // (or as needed) to get the number of bytes we need. 
 
   if (s->block_size < MD5DEEP_IDEAL_BLOCK_SIZE)
     mysize = s->block_size;
@@ -175,12 +183,12 @@ static int compute_hash(state *s)
 
   while (TRUE) 
   {    
-    /* clear the buffer in case we hit an error and need to pad the hash */
+    // Clear the buffer in case we hit an error and need to pad the hash 
     memset(buffer,0,mysize);
 
     current_read = fread(buffer, 1, mysize, s->handle);
 
-    /* If an error occured, display a message but still add this block */
+    // If an error occured, display a message but still add this block 
     if (ferror(s->handle))
     {
       if ( ! (s->mode & mode_silent))
@@ -191,33 +199,31 @@ static int compute_hash(state *s)
 			    strerror(errno));
 	   
       if (file_fatal_error())
-	return FALSE;
-      
-      //s->hash_update(s->hash_context,buffer,mysize);
+	return FALSE; 
+
       HASH_UPDATE(buffer,mysize);
 
       s->bytes_read += mysize;
       
       clearerr(s->handle);
       
-      /* The file pointer's position is now undefined. We have to manually
-	 advance it to the start of the next buffer to read. */
+      // The file pointer's position is now undefined. We have to manually
+      // advance it to the start of the next buffer to read. 
       fseeko(s->handle,SEEK_SET,s->bytes_read);
     } 
     else
     {
-      /* If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE
-	 bytes and must reflect that in how we update the hash. */
-      //      s->hash_update(s->hash_context,buffer,current_read);
+      // If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE
+      // bytes and must reflect that in how we update the hash.
       HASH_UPDATE(buffer,current_read);
 
       s->bytes_read += current_read;
     }
     
-    /* Check if we've hit the end of the file */
+    // Check if we've hit the end of the file 
     if (feof(s->handle))
     {	
-      /* If we've been printing, we now need to clear the line. */
+      // If we've been printing time estimates, we now need to clear the line.
       if (s->mode & mode_estimate)
 	fprintf(stderr,"\r%s\r",BLANK_LINE);
 
@@ -239,7 +245,7 @@ static int compute_hash(state *s)
     {
       time(&current_time);
       
-      /* We only update the display only if a full second has elapsed */
+      // We only update the display only if a full second has elapsed 
       if (s->last_time != current_time) 
       {
 	s->last_time = current_time;
@@ -259,6 +265,9 @@ static int hash(state *s)
   int done = FALSE, status = FALSE;
   TCHAR *tmp_name = NULL;
   
+  if (NULL == s)
+    return TRUE;
+
   s->bytes_read = 0;
   if (s->mode & mode_estimate)
   {
@@ -285,13 +294,12 @@ static int hash(state *s)
 #ifdef __MD5DEEPH_H
     memset(s->hash_result,0,(2 * s->hash_length) + 1);
 #endif
-    //    s->hash_init(s->hash_context);
     HASH_INITIALIZE();
     
     if (s->mode & mode_piecewise)
     {
-      /* This logic keeps the offset values correct when s->block_size
-	 is larger than the whole file. */
+      // This logic keeps the offset values correct when s->block_size
+      // is larger than the whole file. 
       if (s->bytes_read + s->block_size >  s->total_bytes)
 	_sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
 		  tmp_name, s->bytes_read, s->total_bytes);
@@ -307,7 +315,6 @@ static int hash(state *s)
       return TRUE;
     }
       
-    //    s->hash_finalize(s->hash_context,s->hash_sum);    
     HASH_FINALIZE();
 
 #ifdef __MD5DEEP_H
@@ -320,9 +327,9 @@ static int hash(state *s)
       s->hash_result[2 * i + 1] = hex[s->hash_sum[i] & 0xf];
     }
 
-    /* Under not matched mode, we only display those known hashes that
-       didn't match any input files. Thus, we don't display anything now.
-       The lookup is to mark those known hashes that we do encounter */
+    // Under not matched mode, we only display those known hashes that
+    // didn't match any input files. Thus, we don't display anything now.
+    // The lookup is to mark those known hashes that we do encounter
     if (s->mode & mode_not_matched)
       is_known_hash(s->hash_result,NULL);
     else
@@ -349,6 +356,9 @@ static int hash(state *s)
 
 static int setup_barename(state *s, TCHAR *fn)
 {
+  if (NULL == s || NULL == fn)
+    return TRUE;
+
   TCHAR *basen = _tcsdup(fn);
   if (basen == NULL)
   {
@@ -371,6 +381,10 @@ static int setup_barename(state *s, TCHAR *fn)
 int hash_file(state *s, TCHAR *fn)
 {
   int status = STATUS_OK;
+
+  if (NULL == s || NULL == fn)
+    return TRUE;
+
   s->is_stdin = FALSE;
 
   if (s->mode & mode_barename)
@@ -438,6 +452,9 @@ int hash_file(state *s, TCHAR *fn)
 
 int hash_stdin(state *s)
 {
+  if (NULL == s)
+    return TRUE;
+
   _tcsncpy(s->full_name,_TEXT("stdin"),PATH_MAX);
   s->is_stdin  = TRUE;
   s->handle    = stdin;

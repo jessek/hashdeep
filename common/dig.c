@@ -1,16 +1,16 @@
 
-/* MD5DEEP - dig.c
- *
- * By Jesse Kornblum
- *
- * This is a work of the US Government. In accordance with 17 USC 105,
- * copyright protection is not available for any work of the US Government.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- */
+// MD5DEEP - dig.c
+//
+// By Jesse Kornblum
+//
+// This is a work of the US Government. In accordance with 17 USC 105,
+//  copyright protection is not available for any work of the US Government.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//
 
 // $Id$
 
@@ -28,8 +28,8 @@ static void remove_double_slash(TCHAR *fn)
   while (NULL != new)
   {
 #ifdef _WIN32
-    /* On Windows, we have to allow the first two characters to be slashes
-       to account for UNC paths. e.g. \\SERVER\dir\path  */
+    // On Windows, we have to allow the first two characters to be slashes
+    // to account for UNC paths. e.g. \\SERVER\dir\path  
     if (tmp == fn)
     {  
       ++tmp;
@@ -57,7 +57,7 @@ static void remove_single_dirs(TCHAR *fn)
 
   for (pos = 0 ; pos < sz ; pos++)
   {
-    /* Catch strings that end with /. (e.g. /foo/.)  */
+    // Catch strings that end with /. (e.g. /foo/.)  
     if (pos > 0 && 
 	fn[pos-1] == _TEXT(DIR_SEPARATOR) && 
 	fn[pos]   == _TEXT('.') &&
@@ -70,7 +70,7 @@ static void remove_single_dirs(TCHAR *fn)
       {
 	_tmemmove(fn+(pos*tsize),(fn+((pos+2)*tsize)),(sz-pos) * tsize);
 	
-	/* In case we have ././ we shift back one! */
+	// In case we have ././ we shift back one! 
 	--pos;
 
       }
@@ -80,7 +80,7 @@ static void remove_single_dirs(TCHAR *fn)
   }
 }
 
-/* Removes all "../" references from the absolute path fn */
+// Removes all "../" references from the absolute path fn 
 void remove_double_dirs(TCHAR *fn)
 {
   size_t pos, next_dir, sz = _tcslen(fn), tsize = sizeof(TCHAR);
@@ -92,18 +92,18 @@ void remove_double_dirs(TCHAR *fn)
       if (pos > 0)
       {
 
-	/* We have to keep this next if statement and the one above separate.
-	   If not, we can't tell later on if the pos <= 0 or
-	   that the previous character was a DIR_SEPARATOR.
-	   This matters when we're looking at ..foo/ as an input */
+	// We have to keep this next if statement and the one above separate.
+	// If not, we can't tell later on if the pos <= 0 or
+	// that the previous character was a DIR_SEPARATOR.
+	// This matters when we're looking at ..foo/ as an input */
 	
 	if (fn[pos-1] == _TEXT(DIR_SEPARATOR))
 	{
 	  
 	  next_dir = pos + 2;
 	  
-	  /* Back up to just before the previous DIR_SEPARATOR
-	     unless we're already at the start of the string */
+	  // Back up to just before the previous DIR_SEPARATOR
+	  // unless we're already at the start of the string */
 	  if (pos > 1)
 	    pos -= 2;
 	  else
@@ -119,21 +119,21 @@ void remove_double_dirs(TCHAR *fn)
 	    break;
 	    
 	  case 0:
-	    /* If we have /.. ending the filename */
+	    // If we have /.. ending the filename 
 	    fn[pos+1] = 0;
 	    break;
 	    
-	    /* If we have ..foo, we should do nothing, but skip 
-	       over these double dots */
+	    // If we have ..foo, we should do nothing, but skip 
+	    // over these double dots 
 	  default:
 	    pos = next_dir;
 	  }
 	}
       }
       
-      /* If we have two dots starting off the string, we should prepend
-	 a DIR_SEPARATOR and ignore the two dots. That is:
-	 from the root directory the path ../foo is really just /foo */
+      // If we have two dots starting off the string, we should prepend
+      // a DIR_SEPARATOR and ignore the two dots. That is:
+      // from the root directory the path ../foo is really just /foo 
     
       else 
       {
@@ -148,11 +148,11 @@ void remove_double_dirs(TCHAR *fn)
 #endif  // ifndef _WIN32
 
 
-/* On Win32 systems directories are handled... differently
-   Attempting to process d: causes an error, but d:\ does not.
-   Conversely, if you have a directory "foo",
-   attempting to process d:\foo\ causes an error, but d:\foo does not.
-   The following turns d: into d:\ and d:\foo\ into d:\foo */
+// On Win32 systems directories are handled... differently
+// Attempting to process d: causes an error, but d:\ does not.
+// Conversely, if you have a directory "foo",
+// attempting to process d:\foo\ causes an error, but d:\foo does not.
+// The following turns d: into d:\ and d:\foo\ into d:\foo 
 
 #ifdef _WIN32
 static void clean_name_win32(TCHAR *fn)
@@ -203,7 +203,7 @@ static int is_win32_device_file(TCHAR *fn)
   return FALSE;
 }
 
-#endif  /* ifdef _WIN32 */
+#endif  // ifdef _WIN32 
 
 
 static void clean_name(state *s, TCHAR *fn)
@@ -434,7 +434,7 @@ static int file_type_helper(_tstat_t sb)
   if (S_ISFIFO(sb.st_mode))
     return stat_pipe;
 
-  /* These file types do not exist in Win32 */
+  // These file types do not exist in Win32 
 #ifndef _WIN32
   
   if (S_ISSOCK(sb.st_mode))
@@ -442,10 +442,10 @@ static int file_type_helper(_tstat_t sb)
   
   if (S_ISLNK(sb.st_mode))
     return stat_symlink;  
-#endif   /* ifndef _WIN32 */
+#endif   // ifndef _WIN32 
 
 
-  /* Used to detect Solaris doors */
+  // Used to detect Solaris doors 
 #ifdef S_IFDOOR
 #ifdef S_ISDOOR
   if (S_ISDOOR(sb.st_mode))
@@ -487,8 +487,8 @@ if (s->mode & A) \
 break;
 
 
-/* Type should be the result of calling lstat on the file. We want to
-   know what this file is, not what it points to */
+// Type should be the result of calling lstat on the file. We want to
+// know what this file is, not what it points to
 static int should_hash_expert(state *s, TCHAR *fn, int type)
 {
   int link_type;
@@ -505,9 +505,9 @@ static int should_hash_expert(state *s, TCHAR *fn, int type)
     }
     return FALSE;
 
-    /* We can't just return s->mode & mode_X because mode_X is
-       a 64-bit value. When that value gets converted back to int,
-       the high part of it is lost. */
+    // We can't just return s->mode & mode_X because mode_X is
+    // a 64-bit value. When that value gets converted back to int,
+    // the high part of it is lost. 
 
   case stat_regular:   RETURN_IF_MODE(mode_regular);
 
@@ -523,12 +523,12 @@ static int should_hash_expert(state *s, TCHAR *fn, int type)
 
   case stat_symlink: 
 
-    /* Although it might appear that we need nothing more than
-          return (s->mode & mode_symlink);
-       that doesn't work. That logic gets into trouble when we're
-       running in recursive mode on a symlink to a directory.
-       The program attempts to open the directory entry itself
-       and gets into an infinite loop. */
+    //  Although it might appear that we need nothing more than
+    //     return (s->mode & mode_symlink);
+    // that doesn't work. That logic gets into trouble when we're
+    // running in recursive mode on a symlink to a directory.
+    // The program attempts to open the directory entry itself
+    // and gets into an infinite loop.
 
     if (!(s->mode & mode_symlink))
       return FALSE;
@@ -548,9 +548,9 @@ static int should_hash_symlink(state *s, TCHAR *fn, int *link_type)
   int type;
   _tstat_t sb;
 
-   /* We must look at what this symlink points to before we process it.
-      The normal file_type function uses lstat to examine the file,
-      we use stat to examine what this symlink points to. */
+  // We must look at what this symlink points to before we process it.
+  // The normal file_type function uses lstat to examine the file,
+  // we use stat to examine what this symlink points to. 
   if (_sstat(fn,&sb))
   {
     print_error_unicode(s,fn,"%s",strerror(errno));
@@ -612,7 +612,7 @@ static int should_hash(state *s, TCHAR *fn)
   if (type == stat_unknown)
     return FALSE;
 
-  /* By default we hash anything we can't identify as a "bad thing" */
+  // By default we hash anything we can't identify as a "bad thing"
   return TRUE;
 }
 
@@ -624,6 +624,11 @@ int process_normal(state *s, TCHAR *fn)
   if (should_hash(s,fn))
     return (hash_file(s,fn));
   
+  // RBF - Standardize return values for this function and audit functions
+  // This function returns FALSE. hash_file, called above, returns STATUS_OK
+  // process_win32 also returns STATUS_OK. 
+  // display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.
+  // Pick one and stay with it!
   return FALSE;
 }
 
@@ -641,8 +646,8 @@ int process_win32(state *s, TCHAR *fn)
   if (is_win32_device_file(fn))
     return (hash_file(s,fn));
 
-  /* Filenames without wildcards can be processed by the
-     normal recursion code. */
+  // Filenames without wildcards can be processed by the
+  // normal recursion code.
   asterisk = _tcschr(fn,L'*');
   question = _tcschr(fn,L'?');
   if (NULL == asterisk && NULL == question)
@@ -670,14 +675,14 @@ int process_win32(state *s, TCHAR *fn)
   {
     if (!(is_special_dir(FindFileData.cFileName)))
     {
-      /* The filename we've found doesn't include any path information.
-	 We have to add it back in manually. Thankfully Windows doesn't
-	 allow wildcards in the early part of the path. For example,
-	 we will never see:  c:\bin\*\tools 
-	 
-	 Because the wildcard is always in the last part of the input
-	 (e.g. c:\bin\*.exe) we can use the original dirname, combined
-	 with the filename we've found, to make the new filename. */
+      // The filename we've found doesn't include any path information.
+      // We have to add it back in manually. Thankfully Windows doesn't
+      // allow wildcards in the early part of the path. For example,
+      // we will never see:  c:\bin\*\tools 
+      //
+      // Because the wildcard is always in the last part of the input
+      // (e.g. c:\bin\*.exe) we can use the original dirname, combined
+      // with the filename we've found, to make the new filename. 
       
       if (s->mode & mode_relative)
       {
@@ -700,10 +705,10 @@ int process_win32(state *s, TCHAR *fn)
     if (0 == rc)
       if (ERROR_NO_MORE_FILES != GetLastError())
       {
-	/* The Windows API for getting an intelligible error message
-	   is beserk. Rather than play their silly games, we 
-	   acknowledge that an unknown error occured and hope we
-	   can continue. */
+	// The Windows API for getting an intelligible error message
+	// is beserk. Rather than play their silly games, we 
+	// acknowledge that an unknown error occured and hope we
+	// can continue.
 	print_error_unicode(s,fn,"Unknown error while expanding wildcard");
 	free(dirname);
 	free(new_fn);

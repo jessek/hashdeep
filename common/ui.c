@@ -1,18 +1,15 @@
-
-/* MD5DEEP - ui.c
- *
- * By Jesse Kornblum
- *
- * This is a work of the US Government. In accordance with 17 USC 105,
- * copyright protection is not available for any work of the US Government.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- */
-
-/* $Id$ */
+// MD5DEEP - ui.c
+//
+// By Jesse Kornblum
+//
+// This is a work of the US Government. In accordance with 17 USC 105,
+// copyright protection is not available for any work of the US Government.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+// $Id$ 
 
 #include "main.h"
 #include <stdarg.h>
@@ -76,9 +73,9 @@ void fatal_error(state *s, char *fmt, ...)
 }
 
 
-/* Internal errors are so serious that we ignore the user's wishes 
-   about silent mode. Our need to debug the program outweighs their
-   preferences. Besides, the program is probably crashing anyway... */
+// Internal errors are so serious that we ignore the user's wishes 
+// about silent mode. Our need to debug the program outweighs their
+// preferences. Besides, the program is probably crashing anyway...
 void internal_error(char *fmt, ... )
 {
   MD5DEEP_PRINT_MSG(stderr,fmt);  

@@ -1,3 +1,12 @@
+2009-01-16 Jesse Kornblum <research@jessekornblum.com>
+
+	* Switching from /* comments to // comments in code to allow
+	  for commenting out whole functions when necessary.
+
+	* Added sanity checking to helper functions, changed some variable
+	  names from single character values to more descriptive names.
+	
+
 2009-01-15 Jesse Kornblum <research@jessekornblum.com>
 
 	* Removed vestigial code from include/md5.h and the other

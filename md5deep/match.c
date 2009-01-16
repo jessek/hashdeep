@@ -1,18 +1,16 @@
-
-/* MD5DEEP - match.c
- *
- * By Jesse Kornblum
- *
- * This is a work of the US Government. In accordance with 17 USC 105,
- * copyright protection is not available for any work of the US Government.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- */
-
-/* $Id$ */
+// MD5DEEP - match.c
+//
+// By Jesse Kornblum
+//
+// This is a work of the US Government. In accordance with 17 USC 105,
+// copyright protection is not available for any work of the US Government.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//
+// $Id$ 
 
 #include "main.h"
 #include "hashTable.h"
@@ -47,9 +45,12 @@ static int parse_encase_file(state *s, char *fn, FILE *handle)
   char *result;
   uint32_t count = 0;
   
-  /* Each hash entry is 18 bytes. 16 bytes for the hash and 
-     two \0 characters at the end. We reserve 19 characters 
-     as fread will append an extra \0 to the string */  
+  if (NULL == s || NULL == fn || NULL == handle)
+    return STATUS_INTERNAL_ERROR;
+  
+  // Each hash entry is 18 bytes. 16 bytes for the hash and 
+  // two \0 characters at the end. We reserve 19 characters 
+  // as fread will append an extra \0 to the string 
   MD5DEEP_ALLOC(unsigned char,buffer,19);
   MD5DEEP_ALLOC(char,result,(s->hash_length * 2) + 1);
 
@@ -127,8 +128,11 @@ int load_match_file(state *s, char *fn)
   int file_type, status;
   FILE *f;
 
-  /* We only need to initialize the table the first time through here.
-     Otherwise, we'd erase all of the previous entries! */
+  if (NULL == s || NULL == fn)
+    return TRUE;
+
+  // We only need to initialize the table the first time through here.
+  // Otherwise, we'd erase all of the previous entries!
   init_table();
 
   if ((f = fopen(fn,"rb")) == NULL) 
@@ -147,8 +151,8 @@ int load_match_file(state *s, char *fn)
 
   if (TYPE_ENCASE == file_type)
   {
-    /* We can't use the normal file reading code which is based on
-       a one-line-at-a-time approach. Encase files are binary records */
+    // We can't use the normal file reading code which is based on
+    // a one-line-at-a-time approach. Encase files are binary records 
     status = parse_encase_file(s,fn,f);
     fclose(f);
     
@@ -161,8 +165,8 @@ int load_match_file(state *s, char *fn)
     }
   }
 
-  /* We skip the first line in every file type except plain files. 
-     All other file types have a header line that we need to ignore. */
+  // We skip the first line in every file type except plain files. 
+  // All other file types have a header line that we need to ignore.
   if (file_type_without_header(file_type))
     rewind(f);
   else 
@@ -215,6 +219,10 @@ int load_match_file(state *s, char *fn)
 
 void add_hash(state *s, char *h, char *fn)
 {
+  // RBF - Display error and crash?
+  if (NULL == s || NULL == h || NULL == fn)
+    return;
+
   init_table();
   switch (hashTableAdd(s,&knownHashes,h,fn))
   {
@@ -230,6 +238,11 @@ void add_hash(state *s, char *h, char *fn)
 int is_known_hash(char *h, char *known_fn) 
 {
   int status;
+
+  if (NULL == h || NULL == known_fn)
+    internal_error("%s: Null values passed into is_known_hash",
+		   __progname);
+
   if (!table_initialized)
     internal_error("%s: Attempt to check hash before table was initialized",
 		   __progname);
@@ -242,9 +255,9 @@ int is_known_hash(char *h, char *known_fn)
 }
 
 
-/* Examines the hash table and determines if any known hashes have not
-   been used or if any input files did not match the known hashes. If
-   requested, displays any unused known hashes. Returns a status variable */   
+// Examines the hash table and determines if any known hashes have not
+// been used or if any input files did not match the known hashes. If
+// requested, displays any unused known hashes. Returns a status variable
 int finalize_matching(state *s)
 {
   int status = STATUS_OK;

@@ -1,18 +1,16 @@
 
-/* MD5DEEP - helpers.c
- *
- * By Jesse Kornblum
- *
- * This is a work of the US Government. In accordance with 17 USC 105,
- * copyright protection is not available for any work of the US Government.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- */
-
-/* $Id$ */
+// MD5DEEP - helpers.c
+//
+// By Jesse Kornblum
+//
+// This is a work of the US Government. In accordance with 17 USC 105,
+// copyright protection is not available for any work of the US Government.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+// $Id$ 
 
 #include "main.h"
 
@@ -20,6 +18,9 @@ uint64_t find_block_size(state *s, char *input_str)
 {
   unsigned char c;
   uint64_t multiplier = 1;
+
+  if (NULL == s || NULL == input_str)
+    return 0;
 
   if (isalpha(input_str[strlen(input_str) - 1]))
     {
@@ -106,16 +107,16 @@ void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input)
     _tcsncpy(fn,input,PATH_MAX);
   else
   {
-    /* Windows systems don't have symbolic links, so we don't
-       have to worry about carefully preserving the paths
-       they follow. Just use the system command to resolve the paths */   
+    // Windows systems don't have symbolic links, so we don't
+    // have to worry about carefully preserving the paths
+    // they follow. Just use the system command to resolve the paths
 #ifdef _WIN32
     _wfullpath(fn,input,PATH_MAX);
 #else	  
     if (NULL == cwd)
-      /* If we can't get the current working directory, we're not
-	 going to be able to build the relative path to this file anyway.
-         So we just call realpath and make the best of things */
+      // If we can't get the current working directory, we're not
+      // going to be able to build the relative path to this file anyway.
+      // So we just call realpath and make the best of things 
       realpath(input,fn);
     else
       snprintf(fn,PATH_MAX,"%s%c%s",cwd,DIR_SEPARATOR,input);
@@ -124,23 +125,23 @@ void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input)
 }
 
 
-/* The basename function kept misbehaving on OS X, so I rewrote it.
-   This function isn't perfect, nor is it designed to be. Because
-   we're guarenteed to be working with a file here, there's no way
-   that s will end with a DIR_SEPARATOR (e.g. /foo/bar/). This function
-   will not work properly for a string that ends in a DIR_SEPARATOR */
-int my_basename(TCHAR *s)
+// The basename function kept misbehaving on OS X, so I rewrote it.
+// This function isn't perfect, nor is it designed to be. Because
+// we're guarenteed to be working with a file here, there's no way
+// that str will end with a DIR_SEPARATOR (e.g. /foo/bar/). This function
+// will not work properly for a string that ends in a DIR_SEPARATOR 
+int my_basename(TCHAR *str)
 {
   size_t len;
-  TCHAR *tmp = _tcsrchr(s,DIR_SEPARATOR);
+  TCHAR *tmp = _tcsrchr(str,DIR_SEPARATOR);
 
-  if (NULL == tmp)
-    return FALSE;
+  if (NULL == tmp || NULL == str)
+    return TRUE;
 
   len = _tcslen(tmp);
 
   // We advance tmp one character to move us past the DIR_SEPARATOR
-  _tmemmove(s,tmp+1,len);
+  _tmemmove(str,tmp+1,len);
 
   return FALSE;
 }
@@ -153,8 +154,8 @@ int my_dirname(TCHAR *c)
   if (NULL == c)
     return TRUE;
 
-  /* If there are no DIR_SEPARATORs in the directory name, then the 
-     directory name should be the empty string */
+  // If there are no DIR_SEPARATORs in the directory name, then the 
+  // directory name should be the empty string
   tmp = _tcsrchr(c,DIR_SEPARATOR);
   if (NULL != tmp)
     tmp[1] = 0;
@@ -167,18 +168,26 @@ int my_dirname(TCHAR *c)
 
 void make_newline(state *s)
 {
-  if (s->mode & mode_zero)
-    printf("%c", 0);
-  else
+  if (NULL == s)  
     printf("%s", NEWLINE);
+  else
+  {
+    if (s->mode & mode_zero)
+      printf("%c", 0);
+    else
+      printf("%s", NEWLINE);
+  }
   fflush(stdout);
 }
 
 
-/* Shift the contents of a string so that the values after 'new_start'
-   will now begin at location 'start' */
+// Shift the contents of a string so that the values after 'new_start'
+// will now begin at location 'start' 
 void shift_string(char *fn, size_t start, size_t new_start)
 {
+  if (NULL == fn)
+    return;
+
   // TODO: Can shift_string be replaced with memmove? 
   if (start > strlen(fn) || new_start < start)
     return;
@@ -194,17 +203,20 @@ void shift_string(char *fn, size_t start, size_t new_start)
 }
 
 
-/* Find the index of the next comma in the string s starting at index start.
-   If there is no next comma, returns -1. */
-int find_next_comma(char *s, unsigned int start)
+// Find the index of the next comma in the string str starting at index start.
+// If there is no next comma, returns -1. 
+int find_next_comma(char *str, unsigned int start)
 {
-  size_t size=strlen(s);
+  if (NULL == str)
+    return -1;
+
+  size_t size = strlen(str);
   unsigned int pos = start; 
   int in_quote = FALSE;
   
   while (pos < size)
   {
-    switch (s[pos]) {
+    switch (str[pos]) {
     case '"':
       in_quote = !in_quote;
       break;
@@ -212,11 +224,11 @@ int find_next_comma(char *s, unsigned int start)
       if (in_quote)
 	break;
 
-      /* Although it's potentially unwise to cast an unsigned int back
-	 to an int, problems will only occur when the value is beyond 
-	 the range of int. Because we're working with the index of a 
-	 string that is probably less than 32,000 characters, we should
-	 be okay. */
+      // Although it's potentially unwise to cast an unsigned int back
+      // to an int, problems will only occur when the value is beyond 
+      // the range of int. Because we're working with the index of a 
+      // string that is probably less than 32,000 characters, we should
+      // be okay. 
       return (int)pos;
     }
     ++pos;
@@ -225,37 +237,40 @@ int find_next_comma(char *s, unsigned int start)
 }
 
  
-/* Returns the string after the nth comma in the string s. If that
-   string is quoted, the quotes are removed. If there is no valid 
-   string to be found, returns TRUE. Otherwise, returns FALSE */
-int find_comma_separated_string(char *s, unsigned int n)
+// Returns the string after the nth comma in the string str. If that
+// string is quoted, the quotes are removed. If there is no valid 
+// string to be found, returns TRUE. Otherwise, returns FALSE 
+int find_comma_separated_string(char *str, unsigned int n)
 {
+  if (NULL == str)
+    return TRUE;
+
   int start = 0, end;
   unsigned int count = 0; 
   while (count < n)
   {
-    if ((start = find_next_comma(s,start)) == -1)
+    if ((start = find_next_comma(str,start)) == -1)
       return TRUE;
     ++count;
     // Advance the pointer past the current comma
     ++start;
   }
 
-  /* It's okay if there is no next comma, it just means that this is
-     the last comma separated value in the string */
-  if ((end = find_next_comma(s,start)) == -1)
-    end = strlen(s);
+  // It's okay if there is no next comma, it just means that this is
+  // the last comma separated value in the string 
+  if ((end = find_next_comma(str,start)) == -1)
+    end = strlen(str);
 
-  /* Strip off the quotation marks, if necessary. We don't have to worry
-     about uneven quotation marks (i.e quotes at the start but not the end
-     as they are handled by the the find_next_comma function. */
-  if (s[start] == '"')
+  // Strip off the quotation marks, if necessary. We don't have to worry
+  // about uneven quotation marks (i.e quotes at the start but not the end
+  // as they are handled by the the find_next_comma function.
+  if (str[start] == '"')
     ++start;
-  if (s[end - 1] == '"')
+  if (str[end - 1] == '"')
     end--;
 
-  s[end] = 0;
-  shift_string(s,0,start);
+  str[end] = 0;
+  shift_string(str,0,start);
   
   return FALSE;
 }
@@ -265,12 +280,15 @@ int find_comma_separated_string(char *s, unsigned int n)
 
 #ifndef _WIN32
 
-/* Return the size, in bytes of an open file stream. On error, return 0 */
+// Return the size, in bytes of an open file stream. On error, return 0 
 #if defined (__LINUX__)
 
 
 off_t find_file_size(FILE *f) 
 {
+  if (NULL == f)
+    return 0;
+
   off_t num_sectors = 0, sector_size = 0;
   int fd = fileno(f);
   struct stat sb;
@@ -323,6 +341,9 @@ off_t find_file_size(FILE *f)
 
 off_t find_file_size(FILE *f) 
 {
+  if (NULL == f)
+    return 0;
+
   struct stat info;
   off_t total = 0;
   off_t original = ftello(f);
@@ -330,9 +351,9 @@ off_t find_file_size(FILE *f)
   uint32_t blocksize = 0;
   uint64_t blockcount = 0;
 
-  /* I'd prefer not to use fstat as it will follow symbolic links. We don't
-     follow symbolic links. That being said, all symbolic links *should*
-     have been caught before we got here. */
+  // I'd prefer not to use fstat as it will follow symbolic links. We don't
+  // follow symbolic links. That being said, all symbolic links *should*
+  // have been caught before we got here. 
 
   if (fstat(fd, &info))
   {
@@ -341,15 +362,15 @@ off_t find_file_size(FILE *f)
   }
 
 #ifdef HAVE_SYS_IOCTL_H
-  /* Block devices, like /dev/hda, don't return a normal filesize.
-     If we are working with a block device, we have to ask the operating
-     system to tell us the true size of the device. 
-     
-     This isn't the recommended way to do check for block devices, 
-     but using S_ISBLK(info.stmode) wasn't working. */
+  // Block devices, like /dev/hda, don't return a normal filesize.
+  // If we are working with a block device, we have to ask the operating
+  // system to tell us the true size of the device. 
+  //
+  // This isn't the recommended way to do check for block devices, 
+  // but using S_ISBLK(info.stmode) wasn't working. 
   if (info.st_mode & S_IFBLK)
   {    
-    /* Get the block size */
+    // Get the block size 
     if (ioctl(fd, DKIOCGETBLOCKSIZE,&blocksize) < 0) 
     {
       print_debug("%s: ioctl DKIOCGETBLOCKSIZE failed: %s", 
@@ -357,7 +378,7 @@ off_t find_file_size(FILE *f)
       return 0;
     } 
     
-    /* Get the number of blocks */
+    // Get the number of blocks 
     if (ioctl(fd, DKIOCGETBLOCKCOUNT, &blockcount) < 0) 
     {
       print_debug("%s: ioctl DKIOCGETBLOCKCOUNT failed: %s", 
@@ -383,8 +404,8 @@ off_t find_file_size(FILE *f)
 
 #else   // ifdef __APPLE__
 
-/* This is code for general UNIX systems 
-   (e.g. NetBSD, FreeBSD, OpenBSD, etc) */
+//  This is code for general UNIX systems 
+// (e.g. NetBSD, FreeBSD, OpenBSD, etc) 
 
 static off_t
 midpoint (off_t a, off_t b, long blksize)
@@ -403,10 +424,10 @@ midpoint (off_t a, off_t b, long blksize)
 
 off_t find_dev_size(int fd, int blk_size)
 {
-
   off_t curr = 0, amount = 0;
   void *buf;
-  
+ 
+  // RBF - How do we validate the file descriptor here?
   if (blk_size == 0)
     return 0;
   
@@ -430,7 +451,7 @@ off_t find_dev_size(int fd, int blk_size)
 	  curr = midpoint(amount, curr, blk_size);
 	}
       else 
-	{ /* 0 < nread < blk_size */
+	{ // 0 < nread < blk_size 
 	  free(buf);
 	  lseek(fd, 0, SEEK_SET);
 	  return amount + nread;
@@ -451,6 +472,9 @@ off_t find_dev_size(int fd, int blk_size)
 
 off_t find_file_size(FILE *f) 
 {
+  if (NULL == f)
+    return 0;
+
   int fd = fileno(f);
   struct stat sb;
   
@@ -471,13 +495,16 @@ off_t find_file_size(FILE *f)
 #if defined(_WIN32)
 off_t find_file_size(FILE *f) 
 {
+  if (NULL == f)
+    return 0;
+
   off_t total = 0, original = ftello(f);
   
-  /* Windows does not support running fstat on block devices,
-     so there's no point in mucking about with them.
-
-     TODO: Find a way to estimate device sizes on Windows
-     Perhaps an IOTCL_DISK_GET_DRIVE_GEOMETRY_EX would work? */
+  // Windows does not support running fstat on block devices,
+  // so there's no point in mucking about with them.
+  // 
+  // TODO: Find a way to estimate device sizes on Windows
+  // Perhaps an IOTCL_DISK_GET_DRIVE_GEOMETRY_EX would work? 
 
   if ((fseeko(f,0,SEEK_END)))
     return 0;
@@ -488,4 +515,4 @@ off_t find_file_size(FILE *f)
   
   return total;
 }
-#endif /* ifdef _WIN32 */
+#endif // ifdef _WIN32 

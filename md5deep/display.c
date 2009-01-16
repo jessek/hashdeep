@@ -1,10 +1,12 @@
-
 #include "main.h"
 
-/* $Id$ */
+// $Id$ 
 
 static void display_size(state *s)
 {
+  if (NULL == s)
+    return;
+
   if (s->mode & mode_display_size)
   {
     // We reserve ten characters for digits followed by two spaces
@@ -18,6 +20,9 @@ static void display_size(state *s)
 
 static char display_asterisk(state *s)
 {
+  if (NULL == s)
+    return ' ';
+
   if (s->mode & mode_asterisk)
     return '*';
   return ' ';
@@ -27,6 +32,9 @@ static char display_asterisk(state *s)
 static int display_match_result(state *s)
 {  
   int known_hash;
+
+  if (NULL == s)
+    return TRUE;
 
   known_hash = is_known_hash(s->hash_result,s->known_fn);
   if ((known_hash && (s->mode & mode_match)) ||
@@ -62,9 +70,12 @@ static int display_match_result(state *s)
 
 int display_hash(state *s)
 {
-  /* We can't call display_size here because we don't know if we're
-     going to display *anything* yet. If we're in matching mode, we
-     have to evaluate if there was a match first. */
+  if (NULL == s)
+    return TRUE;
+
+  // We can't call display_size here because we don't know if we're
+  // going to display *anything* yet. If we're in matching mode, we
+  // have to evaluate if there was a match first. 
   if ((s->mode & mode_match) || (s->mode & mode_match_neg))
     return display_match_result(s);
 
