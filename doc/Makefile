@@ -5,8 +5,8 @@
 # $Id$
 #
 
-USERNAME =jessekornblum
-DESTDIR  =shell.sourceforge.net:/home/groups/m/md/md5deep/htdocs
+USERNAME = jessekornblum,md5deep
+DESTDIR  = web.sourceforge.net
 
 RMAN = /sw/bin/rman
 
@@ -21,7 +21,9 @@ changes:
 	cp ../NEWS changes.txt
 
 publish:
-	scp index.html style.css $(USERNAME)@$(DESTDIR)
+	sftp $(USERNAME)@$(DESTDIR)
+#	put index.html
+#	bye
 
 all: clean manpages changes
 	scp *.html changes.txt style.css $(USERNAME)@$(DESTDIR)
