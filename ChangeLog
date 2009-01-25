@@ -2,6 +2,9 @@
 
 	* Cleaned up code for version 3.2 release. Commented out NTFS
 	  junction point detection for now. 
+
+	* Applied patch 2535551 to Makefile.am to use LDADD variable
+	  instead of AM_LDFLAGS.
 	
 
 2009-01-25 Jesse Kornblum <research@jessekornblum.com>

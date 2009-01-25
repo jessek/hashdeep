@@ -1,5 +1,6 @@
 
-AM_LDFLAGS = -lm
+# The math library is required for floor()
+LDADD = -lm
 INCLUDES   = -I@top_srcdir@/include
 COMMON_DIR = @top_srcdir@/common
 

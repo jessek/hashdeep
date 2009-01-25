@@ -1,5 +1,3 @@
-# The math library is required for floor()
-AM_LDFLAGS = -lm
 INCLUDES   = -I@top_srcdir@/include
 COMMON_DIR = @top_srcdir@/common
 
@@ -22,11 +20,12 @@ hashdeep_SOURCES = \
 
 man_MANS = hashdeep.1
 
+# The math library is required for floor(), hence -lm
 # We use strsep do our string processing, but some operating systems
 # don't have it yet (e.g. OpenSolaris). We if don't have strsep
-# we compile it ourselves using a local copy.
+# we compile it ourselves using a local copy via EXTRA_HASHDEEP
 EXTRA_hashdeep_SOURCES = lib-strsep.c
-hashdeep_LDADD = ${EXTRA_HASHDEEP}
+hashdeep_LDADD = ${EXTRA_HASHDEEP} -lm
 hashdeep_DEPENDENCIES = ${EXTRA_HASHDEEP}
 
 EXTRA_DIST = main.h strsep.h ${man_MANS}

@@ -53,22 +53,27 @@ am__objects_2 = main.$(OBJEXT) files.$(OBJEXT) $(am__objects_1) \
 am_md5deep_OBJECTS = $(am__objects_2) md5.$(OBJEXT) md5deep.$(OBJEXT)
 md5deep_OBJECTS = $(am_md5deep_OBJECTS)
 md5deep_LDADD = $(LDADD)
+md5deep_DEPENDENCIES =
 am_sha1deep_OBJECTS = $(am__objects_2) sha1.$(OBJEXT) \
 	sha1deep.$(OBJEXT)
 sha1deep_OBJECTS = $(am_sha1deep_OBJECTS)
 sha1deep_LDADD = $(LDADD)
+sha1deep_DEPENDENCIES =
 am_sha256deep_OBJECTS = $(am__objects_2) sha256.$(OBJEXT) \
 	sha256deep.$(OBJEXT)
 sha256deep_OBJECTS = $(am_sha256deep_OBJECTS)
 sha256deep_LDADD = $(LDADD)
+sha256deep_DEPENDENCIES =
 am_tigerdeep_OBJECTS = $(am__objects_2) tiger.$(OBJEXT) \
 	tigerdeep.$(OBJEXT)
 tigerdeep_OBJECTS = $(am_tigerdeep_OBJECTS)
 tigerdeep_LDADD = $(LDADD)
+tigerdeep_DEPENDENCIES =
 am_whirlpooldeep_OBJECTS = $(am__objects_2) whirlpool.$(OBJEXT) \
 	whirlpooldeep.$(OBJEXT)
 whirlpooldeep_OBJECTS = $(am_whirlpooldeep_OBJECTS)
 whirlpooldeep_LDADD = $(LDADD)
+whirlpooldeep_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -181,7 +186,9 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_LDFLAGS = -lm
+
+# The math library is required for floor()
+LDADD = -lm
 INCLUDES = -I@top_srcdir@/include
 COMMON_DIR = @top_srcdir@/common
 COMMON_SRC = \
