@@ -1,4 +1,10 @@
-2009-01-16 Jesse Kornblum <research@jessekornblum.com>
+2009-01-26 Jesse Kornblum <research@jessekornblum.com>
+
+	* Cleaned up code for version 3.2 release. Commented out NTFS
+	  junction point detection for now. 
+	
+
+2009-01-25 Jesse Kornblum <research@jessekornblum.com>
 
 	* Added experimental CSV mode, -c
 	

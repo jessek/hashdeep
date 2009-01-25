@@ -1,16 +1,14 @@
-/* MD5DEEP - main.c
- *
- * By Jesse Kornblum
- *
- * This is a work of the US Government. In accordance with 17 USC 105,
- * copyright protection is not available for any work of the US Government.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- */
-
+// MD5DEEP - main.c
+//
+// By Jesse Kornblum
+//
+// This is a work of the US Government. In accordance with 17 USC 105,
+// copyright protection is not available for any work of the US Government.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
 // $Id$
 
 #include "main.h"
@@ -18,16 +16,16 @@
 
 #ifdef _WIN32 
 // This can't go in main.h or we get multiple definitions of it
-/* Allows us to open standard input in binary mode by default 
-   See http://gnuwin32.sourceforge.net/compile.html for more */
+// Allows us to open standard input in binary mode by default 
+// See http://gnuwin32.sourceforge.net/compile.html for more 
 int _CRT_fmode = _O_BINARY;
 #endif
 
 
 
 
-/* So that the usage message fits in a standard DOS window, this
-   function should produce no more than 22 lines of text. */
+// So that the usage message fits in a standard DOS window, this
+// function should produce no more than 22 lines of text. 
 static void usage(void) 
 {
   print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
@@ -220,8 +218,6 @@ static int process_command_line(state *s, int argc, char **argv)
 	s->hashes_loaded = TRUE;
       break;
 
-      // RBF - Experiment CSV mode
-      // RBF - Document CSV mode
     case 'c':
       s->mode |= mode_csv;
       break;

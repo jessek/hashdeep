@@ -219,7 +219,7 @@ int load_match_file(state *s, char *fn)
 
 void add_hash(state *s, char *h, char *fn)
 {
-  // RBF - Display error and crash?
+  // RBF - Display error and crash on NULL state or filename?
   if (NULL == s || NULL == h || NULL == fn)
     return;
 

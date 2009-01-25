@@ -1,5 +1,5 @@
 
-/* $Id$ */
+// $Id$ 
 
 #ifndef __COMMON_H
 #define __COMMON_H
@@ -14,7 +14,7 @@
 #endif
 
 
-/* The version information, VERSION, is defined in config.h */
+// The version information, VERSION, is defined in config.h 
 
 #define AUTHOR      "Jesse Kornblum"
 #define COPYRIGHT   "This program is a work of the US Government. "\
@@ -88,8 +88,8 @@ NEWLINE, NEWLINE, NEWLINE
 # include <libgen.h>
 #endif
 
-/* This allows us to open standard input in binary mode by default 
-   See http://gnuwin32.sourceforge.net/compile.html for more */
+// This allows us to open standard input in binary mode by default 
+// See http://gnuwin32.sourceforge.net/compile.html for more 
 #ifdef HAVE_FCNTL_H
 # include <fcntl.h>
 #endif
@@ -101,11 +101,11 @@ NEWLINE, NEWLINE, NEWLINE
 # error Unable to work without inttypes.h!
 #endif
 
-/* A few operating systems (e.g. versions of OpenBSD) don't meet the 
-   C99 standard and don't define the PRI??? macros we use to display 
-   large numbers. We have to do something to help those systems, so 
-   we guess. This snippet was copied from the FreeBSD source tree, 
-   so hopefully it should work on the other BSDs too. */
+// A few operating systems (e.g. versions of OpenBSD) don't meet the 
+// C99 standard and don't define the PRI??? macros we use to display 
+// large numbers. We have to do something to help those systems, so 
+// we guess. This snippet was copied from the FreeBSD source tree, 
+// so hopefully it should work on the other BSDs too. 
 #ifndef PRIu64 
 #define PRIu64 "llu"
 #endif
@@ -124,16 +124,16 @@ NEWLINE, NEWLINE, NEWLINE
 
 #define ONE_MEGABYTE  1048576
 
-/* Strings have to be long enough to handle inputs from matched hashing files.
-   The NSRL is already larger than 256 bytes. We go longer to be safer. */
+// Strings have to be long enough to handle inputs from matched hashing files.
+// The NSRL is already larger than 256 bytes. We go longer to be safer. 
 #define MAX_STRING_LENGTH    2048
 
 #define MAX_TIME_STRING_LENGTH  31
 
-/* LINE_LENGTH is different between UNIX and WIN32 and is defined below */
+// LINE_LENGTH is different between UNIX and WIN32 and is defined below 
 #define MAX_FILENAME_LENGTH   LINE_LENGTH - 41
 
-/* Note that STRINGS_EQUAL does not check if either A or B is NULL */
+// Note that STRINGS_EQUAL does not check if either A or B is NULL 
 #define _MAX(A,B)             (A>B)?A:B
 #define STRINGS_CASE_EQUAL(A,B)   (!strncasecmp(A,B,_MAX(strlen(A),strlen(B))))
 #define STRINGS_EQUAL(A,B)        (!strncmp(A,B,_MAX(strlen(A),strlen(B))))
@@ -142,15 +142,15 @@ NEWLINE, NEWLINE, NEWLINE
 
 
 
-/* On non-glibc systems we have to manually set the __progname variable */
+// On non-glibc systems we have to manually set the __progname variable 
 #ifdef __GLIBC__
 extern char *__progname;
 #else
 char *__progname;
-#endif /* ifdef __GLIBC__ */
+#endif // ifdef __GLIBC__ 
 
-/* Set up the environment for the *nix operating systems (Mac, Linux, 
-   BSD, Solaris, and really everybody except Microsoft Windows) */
+// Set up the environment for the *nix operating systems (Mac, Linux, 
+// BSD, Solaris, and really everybody except Microsoft Windows) 
 #ifndef _WIN32
 #define CMD_PROMPT "$"
 #define DIR_SEPARATOR   '/'
@@ -168,10 +168,10 @@ char *__progname;
 #else   // ifndef _WIN32
 
 
-/* The current cross compiler for OS X->Windows does not support a few
-   critical error codes normally defined in errno.h. Because we need 
-   these to detect fatal errors while reading files, we have them here. 
-   These will hopefully get wrapped into the Windows API sometime soon. */
+// The current cross compiler for OS X->Windows does not support a few
+// critical error codes normally defined in errno.h. Because we need 
+// these to detect fatal errors while reading files, we have them here. 
+// These will hopefully get wrapped into the Windows API sometime soon. 
 #ifndef ENOTBLK
 #define ENOTBLK   15   // Not a block device
 #endif
@@ -205,9 +205,9 @@ char *__progname;
 #define ftello   ftell
 #define fseeko   fseek
 
-/* We create macros for the Windows equivalent UNIX functions.
-   No worries about lstat to stat; Windows doesn't have symbolic links 
-   This function has been replaced with _lstat in the code. See tchar-local.h */
+//  We create macros for the Windows equivalent UNIX functions.
+// No worries about lstat to stat; Windows doesn't have symbolic links 
+// This function has been replaced with _lstat in the code. See tchar-local.h 
 //#define lstat(A,B)      stat(A,B)
 #define realpath(A,B)   _fullpath(B,A,PATH_MAX) 
 
@@ -224,13 +224,13 @@ if (NULL == VAR)  \
    return STATUS_INTERNAL_ERROR; \
 memset(VAR,0,SIZE * sizeof(TYPE));
 
-/* The default size for hashing */
+// The default size for hashing 
 #define MD5DEEP_IDEAL_BLOCK_SIZE 8192
 
 #define HASH_STRING_LENGTH   (s->hash_length * 2)
 
-/* Return values for the program */
-/* RBF - Document these return values for hashdeep */
+// Return values for the program 
+// RBF - Document these return values for hashdeep 
 #define STATUS_OK                      0
 #define STATUS_UNUSED_HASHES           1
 #define STATUS_INPUT_DID_NOT_MATCH     2
@@ -238,44 +238,42 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 #define STATUS_INTERNAL_ERROR        128 
 
 
-#define mode_none             0
-#define mode_recursive     1<<0
-#define mode_estimate      1<<1
-#define mode_silent        1<<2
-#define mode_warn_only     1<<3
-#define mode_match         1<<4
-#define mode_match_neg     1<<5
-#define mode_display_hash  1<<6
-#define mode_display_size  1<<7
-#define mode_zero          1<<8
-#define mode_relative      1<<9
-#define mode_which        1<<10
-#define mode_barename     1<<11
-#define mode_asterisk     1<<12
-#define mode_not_matched  1<<13
-#define mode_quiet        1<<14
-#define mode_piecewise    1<<15
-#define mode_verbose      1<<16
-#define mode_more_verbose 1<<17
+#define mode_none              0
+#define mode_recursive         1<<0
+#define mode_estimate          1<<1
+#define mode_silent            1<<2
+#define mode_warn_only         1<<3
+#define mode_match             1<<4
+#define mode_match_neg         1<<5
+#define mode_display_hash      1<<6
+#define mode_display_size      1<<7
+#define mode_zero              1<<8
+#define mode_relative          1<<9
+#define mode_which             1<<10
+#define mode_barename          1<<11
+#define mode_asterisk          1<<12
+#define mode_not_matched       1<<13
+#define mode_quiet             1<<14
+#define mode_piecewise         1<<15
+#define mode_verbose           1<<16
+#define mode_more_verbose      1<<17
 #define mode_insanely_verbose  1<<18
-#define mode_size         1<<19
-#define mode_size_all     1<<20
-#define mode_timestamp    1<<21
-
-// RBF - Experimental CSV mode
-#define mode_csv          1<<22
+#define mode_size              1<<19
+#define mode_size_all          1<<20
+#define mode_timestamp         1<<21
+#define mode_csv               1<<22
 
 
-/* Modes 23-48 are reserved for future use.
-
-   Note that the LL is required to avoid overflows of 32-bit words.
-   LL must be used for any value equal to or above 1<<31. 
-   Also note that these values can't be returned as an int type. 
-   For example, any function that returns an int can't use
-
-   return (s->mode & mode_regular);   
-
-   That value is 64-bits wide and may not be returned correctly. */
+// Modes 23-48 are reserved for future use.
+//
+// Note that the LL is required to avoid overflows of 32-bit words.
+// LL must be used for any value equal to or above 1<<31. 
+// Also note that these values can't be returned as an int type. 
+// For example, any function that returns an int can't use
+//
+// return (s->mode & mode_regular);   
+// 
+// That value is 64-bits wide and may not be returned correctly. 
 
 #define mode_expert        (1LL)<<49
 #define mode_regular       (1LL)<<50
@@ -290,7 +288,7 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 // Modes 58-62 are reserved for future use in expert mode
 
 
-/* These are the types of files we can encounter while hashing */
+// These are the types of files we can encounter while hashing 
 
 #define stat_regular    0
 #define stat_directory  1
@@ -302,7 +300,7 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 #define stat_symlink    7
 #define stat_unknown  254
 
-/* Types of files that contain known hashes */
+// Types of files that contain known hashes 
 typedef enum 
   {
     file_plain,
@@ -314,8 +312,8 @@ typedef enum
     file_encase4,
     file_ilook,
 
-    /* Files generated by md5deep with the ten digit filesize at the start 
-       of each line */
+    // Files generated by md5deep with the ten digit filesize at the start 
+    // of each line
     file_md5deep_size,
 
     file_hashdeep_10,
@@ -329,16 +327,16 @@ typedef enum
 
 typedef struct _state state;
 
-/* ----------------------------------------------------------------
-   CYCLE CHECKING
-   ---------------------------------------------------------------- */
+// ----------------------------------------------------------------
+// CYCLE CHECKING
+// ----------------------------------------------------------------
 int have_processed_dir(TCHAR *fn);
 int processing_dir(TCHAR *fn);
 int done_processing_dir(TCHAR *fn);
 
-/* ------------------------------------------------------------------
-   HELPER FUNCTIONS
-   ------------------------------------------------------------------ */
+// ------------------------------------------------------------------
+// HELPER FUNCTIONS
+// ------------------------------------------------------------------ 
 void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
 
 uint64_t find_block_size(state *s, char *input_str);
@@ -355,13 +353,13 @@ int my_basename(TCHAR *s);
 int find_comma_separated_string(char *s, unsigned int n);
 int find_quoted_string(char *buf, unsigned int n);
 
-/* Return the size, in bytes of an open file stream. On error, return -1 */
+// Return the size, in bytes of an open file stream. On error, return -1 
 off_t find_file_size(FILE *f);
 
 
-/* ------------------------------------------------------------------
-   MAIN PROCESSING
-   ------------------------------------------------------------------ */
+// ------------------------------------------------------------------
+// MAIN PROCESSING
+// ------------------------------------------------------------------ 
 int process_win32(state *s, TCHAR *fn);
 int process_normal(state *s, TCHAR *fn);
 

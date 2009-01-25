@@ -234,7 +234,8 @@ static void clean_name(state *s, TCHAR *fn)
 }
 
 
-// RBF - Debugging function
+//  Debugging function
+/*
 #ifdef _WIN32
 static void print_last_error(char * function_name)
 {
@@ -260,7 +261,7 @@ static void print_last_error(char * function_name)
   LocalFree(pszMessage);
 }
 #endif
-
+*/
 
 // An NTFS Junction Point is like a hard link on *nix but only works
 // on the same filesystem and only for directories. Unfortunately they
@@ -277,6 +278,8 @@ static int is_junction_point(state *s, TCHAR *fn)
   if (NULL == s || NULL == fn)
     return FALSE;
 
+  // RBF - Fix junction point detection and handling
+  /*
 #ifdef _WIN32
 
   WIN32_FIND_DATAW FindFileData;
@@ -299,7 +302,7 @@ static int is_junction_point(state *s, TCHAR *fn)
       }	
     }
 
-    // RBF - Experimental code
+    // This is experimental code
     /*
     #include <ddk/ntifs.h>
 
@@ -344,13 +347,15 @@ static int is_junction_point(state *s, TCHAR *fn)
 
 
     }
-      */
+ 
+
 
 
 
     FindClose(hFind);
   }
 #endif
+  */
 
   return status;
 }

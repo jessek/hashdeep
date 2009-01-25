@@ -1,8 +1,6 @@
-** Changes in version 3.2 (RBF DATE)
+** Changes in version 3.2 (25 Jan 2009)
 
 * New Features
-
-	Detects and avoids NTFS junction points on Windows systems
 
 	Added Comma Separated Value (CSV) mode.
 
@@ -15,6 +13,8 @@
 	commas and properly handle other kinds of errors. Also 
 	modified the invocation listing in output files such that
         even long lines can be successfully parsed.
+
+
 
 
 ** Changes in version 3.1 (23 Jul 2008)
