@@ -172,6 +172,12 @@ space between the filename and the hash, just like md5sum in
 its binary (\-b) mode.
 
 .TP
+\fB\-c\fR
+Enables comma separated values output, or CSV mode. This mode has the
+side effect of removing the 10 digit size limitation from \-z mode.
+Also note that asterisks from \-k mode are not displayed when in CSV mode.
+
+.TP
 \fB\-o\fR <bcpflsd>
 Enables expert mode. Allows the user specify which (and only which) types of
 files are processed. Directory processing is still controlled with the
