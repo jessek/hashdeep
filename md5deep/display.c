@@ -9,8 +9,13 @@ static void display_size(state *s)
 
   if (s->mode & mode_display_size)
   {
+    // When in CSV mode we always display the full size
+    if (s->mode & mode_csv)
+    {
+      printf ("%"PRIu64",", s->bytes_read);
+    }
     // We reserve ten characters for digits followed by two spaces
-    if (s->bytes_read > 9999999999LL)
+    else if (s->bytes_read > 9999999999LL)
       printf ("9999999999  ");
     else
       printf ("%10"PRIu64"  ", s->bytes_read);      
@@ -43,7 +48,13 @@ static int display_match_result(state *s)
     display_size(s);
 
     if (s->mode & mode_display_hash)
-      printf ("%s %c",s->hash_result,display_asterisk(s));
+    {
+      printf ("%s", s->hash_result);
+      if (s->mode & mode_csv)
+	printf (",");
+      else
+	printf (" %c", display_asterisk(s));
+    }
 
     if (s->mode & mode_which)
     {
@@ -100,11 +111,15 @@ int display_hash(state *s)
 		 "%Y:%m:%d:%H:%M:%S", 
 		 my_time);
 
-	printf (" %s", s->time_str);
+	printf ("%c%s", (s->mode & mode_csv?',':' '), s->time_str);
       }
 
+      
+      if (s->mode & mode_csv)
+	printf(",");
+      else
+	printf(" %c", display_asterisk(s));      
 
-      printf(" %c", display_asterisk(s));      
       display_filename(stdout,s->full_name);
     }
   }

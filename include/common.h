@@ -262,7 +262,11 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 #define mode_size_all     1<<20
 #define mode_timestamp    1<<21
 
-/* Modes 22-48 are reserved for future use.
+// RBF - Experimental CSV mode
+#define mode_csv          1<<22
+
+
+/* Modes 23-48 are reserved for future use.
 
    Note that the LL is required to avoid overflows of 32-bit words.
    LL must be used for any value equal to or above 1<<31. 

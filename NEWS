@@ -4,6 +4,8 @@
 
 	Detects and avoids NTFS junction points on Windows systems
 
+	Added Comma Separated Value (CSV) mode.
+
 
 * Bug Fixes
 

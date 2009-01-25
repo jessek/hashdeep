@@ -1,5 +1,10 @@
 2009-01-16 Jesse Kornblum <research@jessekornblum.com>
 
+	* Added experimental CSV mode, -c
+	
+
+2009-01-16 Jesse Kornblum <research@jessekornblum.com>
+
 	* Switching from /* comments to // comments in code to allow
 	  for commenting out whole functions when necessary.
 

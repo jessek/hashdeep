@@ -132,7 +132,7 @@ static int process_command_line(state *s, int argc, char **argv)
   
   while ((i = getopt(argc,
 		     argv,
-		     "I:i:M:X:x:m:o:A:a:tnwzsSp:erhvV0lbkqU")) != -1) { 
+		     "I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqU")) != -1) { 
     switch (i) {
 
     case 'I':
@@ -218,6 +218,12 @@ static int process_command_line(state *s, int argc, char **argv)
       check_matching_modes(s);
       if (load_match_file(s,optarg))
 	s->hashes_loaded = TRUE;
+      break;
+
+      // RBF - Experiment CSV mode
+      // RBF - Document CSV mode
+    case 'c':
+      s->mode |= mode_csv;
       break;
 
     case 'z': 
