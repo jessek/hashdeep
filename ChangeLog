@@ -1,4 +1,13 @@
-2009-02-08 Jesse Kornblum 
+2009-03-01 Jesse Kornblum 
+
+	* Experimenting by skipping *all* junction points on
+	  Windows. We'll display a message with 'unknown' status
+	  values.
+
+	* Version bump to 3.3-002.
+	
+
+2009-02-08 Jesse Kornblum 	
 
 	* Removed email address from all files. Too many spammers, sorry.
 
