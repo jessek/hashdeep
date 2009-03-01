@@ -279,9 +279,7 @@ static int is_junction_point(state *s, TCHAR *fn)
     return FALSE;
 
   // RBF - Fix junction point detection and handling
-  /*
 #ifdef _WIN32
-
   WIN32_FIND_DATAW FindFileData;
   HANDLE hFind;
 
@@ -290,22 +288,38 @@ static int is_junction_point(state *s, TCHAR *fn)
   {
     if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
     {
+      // We're going to skip this reparse point no matter what,
+      // but we may want to display a message just in case.
+      // TODO: Maybe have the option to follow symbolic links?
+      status = TRUE;
+
       if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0)
       {
 	print_error_unicode(s,fn,"Junction point, skipping");
-	status = TRUE;
       }
       else if (IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0)
       {
 	print_error_unicode(s,fn,"Symbolic link, skipping");
-	status = TRUE;
       }	
+      else 
+      {
+	print_error_unicode(s,fn,"Unknown reparse point 0x%"PRIx32", skipping",
+			    FindFileData.dwReserved0);
+      }
     }
+  }
+#endif
 
-    // This is experimental code
-    /*
-    #include <ddk/ntifs.h>
+  return status;
+}
 
+// RBF - Remove experimental code?
+// This is experimental code for reparse point process
+// We don't use it yet, but I don't want to delete it
+// until I know what I'm doing. (jk 1 Mar 2009)
+/*
+  #include <ddk/ntifs.h>
+  
     if (status)
     {
       HANDLE hFile = CreateFile(fn,
@@ -344,21 +358,12 @@ static int is_junction_point(state *s, TCHAR *fn)
 
 	CloseHandle(hFile);
       }
-
-
     }
- 
-
-
-
 
     FindClose(hFind);
-  }
-#endif
-  */
+    */
 
-  return status;
-}
+
 
 
 // Returns TRUE if the directory is '.' or '..', otherwise FALSE
