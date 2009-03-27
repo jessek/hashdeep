@@ -1,3 +1,8 @@
+2009-03-26 Jesse Kornblum 
+
+	* Updated timestamp code to support 64-bit functions on Windows.
+	
+
 2009-03-01 Jesse Kornblum 
 
 	* Experimenting by skipping *all* junction points on
