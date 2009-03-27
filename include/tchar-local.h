@@ -67,6 +67,8 @@
 #define  _tcsdup    strdup
 #define  _tcsstr    strstr
 
+#define _gmtime64   gmtime
+
 #endif
 
 

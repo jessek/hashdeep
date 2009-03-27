@@ -102,7 +102,7 @@ int display_hash(state *s)
     {
       if (s->mode & mode_timestamp)
       {
-	struct tm * my_time = gmtime(&(s->timestamp));
+	struct tm * my_time = _gmtime64(&(s->timestamp));
 
 	// The format is four digit year, two digit month, 
 	// two digit hour, two digit minute, two digit second
