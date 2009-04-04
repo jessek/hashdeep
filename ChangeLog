@@ -1,3 +1,8 @@
+2009-04-04 Jesse Kornblum 
+
+	* Version bump to 3.3 and released.
+	
+
 2009-03-26 Jesse Kornblum 
 
 	* Updated timestamp code to support 64-bit functions on Windows.

@@ -278,7 +278,7 @@ static int is_junction_point(state *s, TCHAR *fn)
   if (NULL == s || NULL == fn)
     return FALSE;
 
-  // RBF - Fix junction point detection and handling
+
 #ifdef _WIN32
   WIN32_FIND_DATAW FindFileData;
   HANDLE hFind;
