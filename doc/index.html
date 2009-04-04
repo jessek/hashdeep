@@ -28,7 +28,7 @@
 <body>
 
 <h1>
-md5deep - Latest version 3.2
+md5deep - Latest version 3.3
 </h1>
 
 <hr>
@@ -133,19 +133,19 @@ Download md5deep
 
 <p>
 The latest stable version of md5deep is 
-version 3.2
+version 3.3
 and was released on
-25 Jan 2009. You can take a look at the 
+4 Apr 2009. You can take a look at the 
 <a href="changes.txt">complete changelog</a>, but here are the 
 changes in the latest version:
 
 <h4> New Features </h4>
 <ul>
 
+<!--
 <li> 
-Added Comma Separated Value (CSV) mode to md5deep. Note that using CSV
-mode also removes the digit size limit when displaying file sizes.
 </li>
+-->
 
 </ul>
 
@@ -155,14 +155,12 @@ mode also removes the digit size limit when displaying file sizes.
 <ul>
 
 <li> 
-Fixed support for 64-bit files on Windows 
+Skip all reparse points (symbolic links and junction points)
+on Windows. Required for sane parsing of Windows Vista or 7 systems.
 </li>
 
 <li>
-Fixed hashdeep input file parsing to allow filenames with 
-commas and properly handle other kinds of errors. Also 
-modified the invocation listing in output files such that
-even long lines can be successfully parsed.
+Fixed handling of 64-bit timestamps on Windows.
 </li>
 
 </ul>
@@ -176,26 +174,26 @@ even long lines can be successfully parsed.
   <tbody>
 
      <td rowspan="2">
-Version 3.2
+Version 3.3
      </td>
 
 <td rowspan="2">
-25 Jan 2009
+4 Apr 2009
 </td>
 
 
-<td><a href="http://downloads.sourceforge.net/md5deep/md5deep-3.2.zip">
+<td><a href="http://downloads.sourceforge.net/md5deep/md5deep-3.3.zip">
        Windows binary</a></td>
-<td class="hash"> SHA256 9ce08f700b63d0d3067f430b4b1af8f3c3fbf1dfce38653fde135701f8f50ad2
+<td class="hash"> SHA256 478f176c31a052635ca8b867c574af87c1f9283439ff251a0cb8d260397f30ff
 	</td>
      </tr>
 
 
 
      <tr>
- <td><a href="http://downloads.sourceforge.net/md5deep/md5deep-3.2.tar.gz">
+ <td><a href="http://downloads.sourceforge.net/md5deep/md5deep-3.3.tar.gz">
  source code</a></td>
- <td class="hash"> SHA256 c2025a3edac4fd7f5f23d084da064324c6f3dcb465a34554786e31730c658334
+ <td class="hash"> SHA256 0ecfd1c067a4c73a2de19eb57eef12f882f18a845f2a564392868ed47ee5b343
 	 </td>
      </tr>
 
@@ -252,6 +250,10 @@ attempting to check a very small file for EnCase hashes
   <tbody>
 
 
+
+
+
+
      <td rowspan="2">
 Version 3.0-alpha1
      </td>
@@ -306,6 +308,33 @@ document.write(old_link_text);
   </thead>
 
   <tbody>
+
+
+     <td rowspan="2">
+3.2
+     </td>
+
+<td rowspan="2">
+25 Jan 2009
+</td>
+
+
+<td><a href="http://downloads.sourceforge.net/md5deep/md5deep-3.2.zip">
+       Windows binary</a></td>
+<td class="hash"> SHA256 9ce08f700b63d0d3067f430b4b1af8f3c3fbf1dfce38653fde135701f8f50ad2
+	</td>
+     </tr>
+
+
+
+     <tr>
+ <td><a href="http://downloads.sourceforge.net/md5deep/md5deep-3.2.tar.gz">
+ source code</a></td>
+ <td class="hash"> SHA256 c2025a3edac4fd7f5f23d084da064324c6f3dcb465a34554786e31730c658334
+	 </td>
+     </tr>
+
+
 
 
      <td rowspan="2">
