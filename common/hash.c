@@ -144,6 +144,7 @@ static int file_fatal_error(void)
 {
   switch(errno) 
     {
+    case EINVAL:   // Invalid argument (happens on Windows)
     case EACCES:   // Permission denied
     case ENODEV:   // Operation not supported (e.g. trying to read 
                    //   a write only device such as a printer)

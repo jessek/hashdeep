@@ -1,3 +1,9 @@
+2009-04-10 Jesse Kornblum 
+
+	* Experimenting with stopping file read on "Invalid argument" errors
+	  to avoid crashes on Win32.
+	
+
 2009-04-04 Jesse Kornblum 
 
 	* Version bump to 3.3 and released.

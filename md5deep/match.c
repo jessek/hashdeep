@@ -239,7 +239,9 @@ int is_known_hash(char *h, char *known_fn)
 {
   int status;
 
-  if (NULL == h || NULL == known_fn)
+  // We don't check if the known_fn parameter is NULL because
+  // that's a legitimate call in hash.c under mode_not_matched
+  if (NULL == h)
     internal_error("%s: Null values passed into is_known_hash",
 		   __progname);
 
