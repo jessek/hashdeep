@@ -307,6 +307,10 @@ static int is_junction_point(state *s, TCHAR *fn)
 			    FindFileData.dwReserved0);
       }
     }
+
+    // We don't error check this call as there's nothing to do differently
+    // if it fails.
+    FindClose(hFind);
   }
 #endif
 
@@ -712,18 +716,20 @@ int process_win32(state *s, TCHAR *fn)
     }
     
     rc = FindNextFile(hFind, &FindFileData);
-    if (0 == rc)
-      if (ERROR_NO_MORE_FILES != GetLastError())
-      {
-	// The Windows API for getting an intelligible error message
-	// is beserk. Rather than play their silly games, we 
-	// acknowledge that an unknown error occured and hope we
-	// can continue.
-	print_error_unicode(s,fn,"Unknown error while expanding wildcard");
-	free(dirname);
-	free(new_fn);
-	return STATUS_OK;
-      }
+  }
+  
+  // rc now equals zero, we can't find the next file
+
+  if (ERROR_NO_MORE_FILES != GetLastError())
+  {
+    // The Windows API for getting an intelligible error message
+    // is beserk. Rather than play their silly games, we 
+    // acknowledge that an unknown error occured and hope we
+    // can continue.
+    print_error_unicode(s,fn,"Unknown error while expanding wildcard");
+    free(dirname);
+    free(new_fn);
+    return STATUS_OK;
   }
   
   rc = FindClose(hFind);

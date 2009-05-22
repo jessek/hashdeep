@@ -1,3 +1,12 @@
+2009-05-22 Jesse Kornblum 
+
+	* Closed search handle in is_junction_point in response
+	  to bug 2795587.
+
+	* Attempting to fix -n mode by removing check in is_known_hash
+	  for NULL parameters.
+
+	
 2009-04-10 Jesse Kornblum 
 
 	* Experimenting with stopping file read on "Invalid argument" errors

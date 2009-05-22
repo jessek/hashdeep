@@ -1,3 +1,15 @@
+** Changes in version 3.4 (RBF DATE 2009)
+
+* New Features
+
+* Bug Fixes
+
+      Fixed directory handle leak during recursive parsing on Windows
+
+      Fixed -n mode (display unused hashes)
+
+
+
 ** Changes in version 3.3 (4 Apr 2009)
 
 * New Features
