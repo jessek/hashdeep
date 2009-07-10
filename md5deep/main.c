@@ -130,8 +130,13 @@ static int process_command_line(state *s, int argc, char **argv)
   
   while ((i = getopt(argc,
 		     argv,
-		     "I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqU")) != -1) { 
+		     "f:I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqU")) != -1) { 
     switch (i) {
+
+    case 'f':
+      s->input_list = strdup(optarg);
+      s->mode |= mode_read_from_file;
+      break;
 
     case 'I':
       s->mode |= mode_size_all;
@@ -319,15 +324,73 @@ static int prepare_windows_command_line(state *s)
 #endif
 
 
+int process_input_list(state *s)
+{
+  int done = FALSE;
+  FILE * handle = fopen(s->input_list,"rb");
+  char * fn;
+
+  if (NULL == handle)
+  {
+    perror(s->input_list);
+    return TRUE;
+  }
+
+  fn = (char *)malloc(MAX_STRING_LENGTH * sizeof(char));
+  if (NULL == fn)
+  {
+    fclose(handle);
+    return TRUE;
+  }
+
+  while (!done)
+  {
+    if (NULL == fgets(fn, MAX_STRING_LENGTH, handle))
+    {
+      done = TRUE;
+    }
+    else
+    {
+      chop_line(fn);
+
+#ifdef _WIN32
+      // We have to convert value from the file, a char value, into a 
+      // Unicode TCHAR value. We assume that we can only handle parameters
+      // as long as PATH_MAX, regardless of what the user gave us.
+      TCHAR * t_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
+      if (NULL == t_name)
+	return TRUE;
+
+      int t_size = MultiByteToWideChar(CP_ACP,0,fn,lstrlenA(fn),t_name,PATH_MAX);
+      if (0 == t_size)
+	return TRUE;
+
+      t_name[t_size] = 0;
+
+      process_win32(s,t_name);
+
+      free(t_name);
+#else
+      process_normal(s,fn);
+#endif
+    }
+  }
+
+  free(fn);
+  fclose(handle);
+  return FALSE;
+}
+
+
 int main(int argc, char **argv) 
 {
   TCHAR *fn, *cwd;
   state *s;
   int count, status = STATUS_OK;
 
-  /* Because the main() function can handle wchar_t arguments on Win32,
-     we need a way to reference those values. Thus we make a duplciate
-     of the argc and argv values. */ 
+  // Because the main() function can handle wchar_t arguments on Win32,
+  // we need a way to reference those values. Thus we make a duplciate
+  // of the argc and argv values.
 
 #ifndef __GLIBC__
   __progname  = basename(argv[0]);
@@ -362,10 +425,11 @@ int main(int argc, char **argv)
   s->argv = argv;
 #endif
 
-  /* Anything left on the command line at this point is a file
-     or directory we're supposed to process. If there's nothing
-     specified, we should tackle standard input */
-  if (optind == argc)
+  // Anything left on the command line at this point is a file
+  // or directory we're supposed to process. If there's nothing
+  // specified, we should tackle standard input UNLESS the user
+  // has specified a list of input files
+  if (optind == argc && (!(s->mode & mode_read_from_file)))
     hash_stdin(s);
   else
   {
@@ -388,11 +452,14 @@ int main(int argc, char **argv)
       status = process_normal(s,fn);
 #endif
 
-      //      if (status != STATUS_OK)
-      //	return status;
-
       ++count;
     }
+
+    if (s->mode & mode_read_from_file)
+    {
+      process_input_list(s);
+    }
+
 
     free(fn);
     free(cwd);

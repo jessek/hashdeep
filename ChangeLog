@@ -1,3 +1,9 @@
+2009-06-14 Jesse Kornblum 
+
+	* Experimenting with reading list of files to hash from another
+	  file in md5deep.
+	
+
 2009-05-22 Jesse Kornblum 
 
 	* Closed search handle in is_junction_point in response

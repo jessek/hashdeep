@@ -51,6 +51,7 @@ typedef struct _state {
   /* Command line arguments */
   TCHAR        **argv;
   int            argc;
+  char          *input_list;
 
   /* The input file */
   int           is_stdin;
