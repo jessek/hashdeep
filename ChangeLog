@@ -1,3 +1,8 @@
+2009-07-10 Jesse Kornblum
+
+	* Fixed method to read list of files to hash from a file.
+	
+
 2009-06-14 Jesse Kornblum 
 
 	* Experimenting with reading list of files to hash from another
