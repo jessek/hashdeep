@@ -262,6 +262,7 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 #define mode_size_all          1<<20
 #define mode_timestamp         1<<21
 #define mode_csv               1<<22
+
 #define mode_read_from_file    1<<25
 
 // Modes 26-48 are reserved for future use.
