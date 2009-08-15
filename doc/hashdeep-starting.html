@@ -2,7 +2,7 @@
 <html>
 <head>
   <!-- $Id$ -->
-  <title>Getting Started with md5deep</title></head>
+  <title>Getting Started with hashdeep</title></head>
   
   <link rel="stylesheet" type="text/css" href="style.css">
   
@@ -15,11 +15,11 @@
 <body>
 
 <h1>
-Getting Started with md5deep
+Getting Started with hashdeep
 </h1>
 
 This document provides an introduction to using 
-<a href="/">md5deep</a> and was last updated on
+<a href="http://md5deep.sf.net/">hashdeep</a> and was last updated on
   <script type="text/javascript">
   <!--
     function mon_to_name(mon)
@@ -53,124 +53,44 @@ The current version of this document can be found on the
 md5deep web site at
 <a href="http://md5deep.sourceforge.net/">
 http://md5deep.sourceforge.net/</a>. 
-sha1deep, sha256deep, tigerdeep, and whirlpooldeep 
-work just like md5deep; all of the command line
-options are the same.
 
 <ul>
-<li> <a href="#install">Installing md5deep</a></li>
+<li> <a href="#intro">Introduction</a></li>
+<li> <a href="#install">Installing hashdeep</a></li>
 <li> <a href="#basic">Basic Operation</a></li>
 <li> <a href="#error">Error Messages</a></li>
 <li> <a href="#recursive">Recursive Mode</a></li>
 <br>
-<li> <a href="#time">Time Estimation Mode</a></li>
-<li> <a href="#size">File Size Mode</a></li>
-<li> <a href="#match">Matching Mode</a></li>
-<li> <a href="#advmatch">Advanced Matching Mode</a></li>
-<li> <a href="#expert">Expert Mode</a></li>
+
 </ul>
 
 <hr>
 
-
-<h2 id="install">Installing md5deep </h2>
-
-<h3 id="windowsinstall"> Microsoft Windows </h3>
+<h2 id="intro">Introduction</h2>
 
 <p>
-Users running Microsoft Windows are strongly encouraged to download the precompiled binaries
-from <a href="http://md5deep.sourceforge.net/">http://md5deep.sourceforge.net/</a>. 
-
-Please note that these binaries are created using a Mingw cross compiler.
-Compiling the programs directly from Windows <em>is not supported</em>.
-
+Hashdeep is a program for recursively computing hashes with multiple 
+algorithms simultaneously. It can also perform matching operations like
+the md5deep family of programs, but in a more powerful way. Hashdeep can
+perform an <em>audit</em> of hashes against a set of knows. With traditional
+matching, programs report if an input file matched one in a set of knows
+or if the input file did not match. It's hard to get a complete sense of
+the state of the input files compared to the set of knowns. It's possible
+to have matched files, missing files, files that have moved in the set,
+and to find new files not in the set. Hashdeep can report all of these
+conditions. It can even spot hash collisions, when an input file matches a
+known file in one hash algorithm but not in others.
 </p>
 
 
-<h3 id="autoinstall"> Automatic Installation </h3>
 
-Before you try to install md5deep manually, see if your operating system supports
-the programs via an automatic installation method. Some operating systems that
-provide this feature for md5deep are:
-
-</p>
-<p>
-
-<strong> Cygwin: </strong>
-<a href="http://cygwinports.dotsrc.org/">Cygwin Ports</a> 
-(<a href="ftp://sunsite.dk/projects/cygwinports/release/md5deep/">direct link</a>)
-
-<br>
-
-<strong>Mac OS X: </strong>
-<a href="http://md5deep.darwinports.com/">DarwinPorts</a>, 
-<a href="http://pdb.finkproject.org/pdb/package.php/md5deep">Fink</a>
-
-<br>
-
-<strong> Linux: </strong>
-<a href="http://packages.ubuntu.com/karmic/md5deep">Ubuntu</a>,
-<a href="https://admin.fedoraproject.org/pkgdb/packages/name/md5deep">Fedora</a>,
-<a href="http://gentoo-portage.com/app-crypt/md5deep">Gentoo</a>,
-<a href="http://slackbuilds.org/repository/12.2/system/md5deep/">Slackware</a>
-
-<br>
-
-<strong> BSD: </strong>
-<a href="http://www.freebsd.org/cgi/cvsweb.cgi/ports/security/md5deep/">FreeBSD</a>
-
-</p>
-
-
-<h3 id="manualinstall"> Manual installation </h3>
+<h2 id="install">Installing hashdeep </h2>
 
 <p>
-If your operating system does not support the automatic installation
-methods described above, you will have to download the source code
-and compile the programs yourself.
-First download the latest tarball of the program from 
-<a href="http://md5deep.sourceforge.net/">http://md5deep.sourceforge.net/</a>. This file
-should be named something like <tt>md5deep-3.5.tar.gz</tt>. Uncompress the file with the
-following command:
-
-<pre>    $ tar zxvf md5deep-3.5.tar.gz </pre>
-
+Please follow the 
+<a href="getting-started.html#install">
+instructions for installing md5deep</a>.
 </p>
-<p>
-
-Change into the decompressed directory
-
-<pre>    $ cd md5deep-3.5 </pre>
-
-and configure the program.
-
-<pre>    $ ./configure </pre>
-
-The configure script can accept lots of options. Run <tt>./configure --help</tt> for the
-complete list. The most common option used is the <tt>prefix</tt> option which installs
-the program in a location other than the default, <tt>/usr/local/bin</tt>. If you wanted
-to install the program elsewhere, for example, <tt>/tmp/md5deep</tt>, you would
-run <tt> ./configure --prefix=/tmp/md5deep</tt> instead.
-
-</p>
-<p>
-
-You can now compile the program using the make command:
-
-<pre>    $ make </pre>
-
-and install it:
-
-<pre>    $ make install </pre>
-
-Note that you must be root on most operating systems to install the program to its
-default location, <tt>/usr/local/bin</tt>. The tool <tt>sudo</tt> may help:
-
-<pre>    $ sudo make install </pre>
-
-<br>
-</p>
-
 
 
 <h2 id="basic"> Basic Operation </h2>
@@ -182,11 +102,11 @@ md5deep is a command line program. You cannot run the program by
 double clicking on it! On Microsoft Windows, click on the Start button
 and choose "Run..." from the menu. In this dialog box, type <tt>cmd.exe</tt>
 and hit enter. A command prompt should appear. In this window, type
-the full path to md5deep.exe. For example:
+the full path to hashdeep.exe. For example:
 
-<pre> c:\Documents and Settings\jessek\Desktop\md5deep.exe</pre>
+<pre> c:\Documents and Settings\jessek\Desktop\hashdeep.exe</pre>
 
-Note that you <em>can</em> drag the md5deep icon into this window and
+Note that you <em>can</em> drag the hashdeep icon into this window and
 the operating system will fill in the path information for you. 
 You can also install the programs in a directory that is included in
 your <tt>PATH</tt> environment variable.
@@ -196,37 +116,59 @@ your <tt>PATH</tt> environment variable.
 
 <h3> Computing hashes </h3>
 
-By default, md5deep generates MD5 hashes for each input file, 
-displaying the full path information for each file:
+By default, hashdeep produces a file containing, for each input file,
+the file's size, it's MD5 hash, it's SHA-256 hash, and the complete filename.
 
-<pre>$ md5deep config.h INSTALL README
-b08b18e0a3d2440feb0b321ea8080b36  /home/jessek/coreutils-5.2.0/config.h
-9f3e20fdff9c78aa8e3f9b42be166769  /home/jessek/coreutils-5.2.0/INSTALL
-4aa18483f73fc56c907f0ae9025e2582  /home/jessek/coreutils-5.2.0/README</pre>
+<pre>$ hashdeep config.h INSTALL README
+%%%% HASHDEEP-1.0
+%%%% size,md5,sha256,filename
+## Invoked from: /home/jessek/dir
+## $ hashdeep config.h INSTALL README
+## 
+5584,db19f900dde2507e7138718b987eda57,28a9b958c3be22ef6bd569bb2f4ea451e6bdcd3b0565c676fbd3645850b4e670,/home/jessek/dir/config.h
+9236,d7adbcf07c5c813693ddf958be9c40e3,e77137d635c4e9598d64bc2f3f564f36d895d9cfc5050ea6ca75beafb6e31ec2,/home/jessek/dir/INSTALL
+1609,c15a66414a4196f8bf86f7202199a0cc,343f3e1466662a92fa1804e2fc787e89474295f0ab086059e27ff86535dd1065,/home/jessek/dir/README
+</pre>
 
 If no input files are specified, standard input is hashed. You can either
-pipe the output of other programs into md5deep or type manually at the 
+pipe the output of other programs into hashdeep or type manually at the 
 command line. To end input from the command line, most shells use 
 Control-D, except for Microsoft Windows, which uses Control-Z.
 
-<pre>$ uname -a | md5deep
-f54c5e12c13791b67d299221424a5d80
+<pre>$ uname -a | hashdeep
+$ uname -a | ./hashdeep/hashdeep 
+%%%% HASHDEEP-1.0
+%%%% size,md5,sha256,filename
+## Invoked from: /home/jessek/dir
+## $ hashdeep
+## 
+160,839893df352ecb723ab5012cbaf3b8e4,c219ba85ba9ddbac3e45977aca1d40b51dc3a63f14d9486f96b2a6d66f1cfd96,stdin
 
-$ md5deep
+$ hashdeep
 This is a test  [Control-D hit]
-ff22941336956098ae9a564289d1bf1b</pre>
+%%%% HASHDEEP-1.0
+%%%% size,md5,sha256,filename
+## Invoked from: /home/jessek/dir
+## $ hashdeep
+## 
+14,ce114e4501d2f4e2dcea3e17b546f339,c7be1ed902fb8dd4d48997c6452f5d7e509fbcdbe2808b16bcf4edce4c07d14e,stdin
+</pre>
 
-You can also have md5deep print relative filenames instead of absolute
+You can also have hashdeep print relative filenames instead of absolute
 ones. That is, omit all of the path information except that specified 
 on the command line. To enable relative paths, use the <tt>-l</tt> flag. 
 Repeating our first example with the <tt>-l</tt> flag:
 
-<pre>$ md5deep -l ../*
+<pre>$ hashdeep -l ../*
+
+
+
+
 b08b18e0a3d2440feb0b321ea8080b36  ../config.h
 9f3e20fdff9c78aa8e3f9b42be166769  ../INSTALL
 4aa18483f73fc56c907f0ae9025e2582  ../README</pre>
 
-You can have md5deep only print out the basename of each 
+You can have hashdeep only print out the basename of each 
 file it processes. That is, all directory information will be stripped
 off. To enable basename mode, use the <tt>-b</tt> flag:
 
