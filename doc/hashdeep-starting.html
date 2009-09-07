@@ -2,7 +2,7 @@
 <html>
 <head>
   <!-- $Id$ -->
-  <title>Getting Started with hashdeep</title></head>
+  <title>Getting Started with Hashdeep</title></head>
   
   <link rel="stylesheet" type="text/css" href="style.css">
   
@@ -19,7 +19,7 @@ Getting Started with hashdeep
 </h1>
 
 This document provides an introduction to using 
-<a href="http://md5deep.sf.net/">hashdeep</a> and was last updated on
+<a href="http://md5deep.sf.net/">Hashdeep</a> and was last updated on
   <script type="text/javascript">
   <!--
     function mon_to_name(mon)
@@ -82,6 +82,11 @@ conditions. It can even spot hash collisions, when an input file matches a
 known file in one hash algorithm but not in others.
 </p>
 
+<p>
+A full description of an audit and its benefits can be found in the
+paper <a href="http://jessekornblum.com/publications/dfp08.html">
+Auditing Hash Sets: Lessons Learned from Jurassic Park</a>.
+</p>
 
 
 <h2 id="install">Installing hashdeep </h2>
@@ -116,8 +121,13 @@ your <tt>PATH</tt> environment variable.
 
 <h3> Computing hashes </h3>
 
-By default, hashdeep produces a file containing, for each input file,
-the file's size, it's MD5 hash, it's SHA-256 hash, and the complete filename.
+By default, hashdeep produces output with a header, and then, 
+for each input file,
+the file's size, the computed hashes, and the complete filename.
+The header contains the hashdeep file format version, currently 1.0,
+which hashes are contained in the file, and the command line used to 
+invoke the program. We'll see below how to change which hashes are computed.
+The default hashes are MD5 and SHA-256.
 
 <pre>$ hashdeep config.h INSTALL README
 %%%% HASHDEEP-1.0
@@ -136,7 +146,6 @@ command line. To end input from the command line, most shells use
 Control-D, except for Microsoft Windows, which uses Control-Z.
 
 <pre>$ uname -a | hashdeep
-$ uname -a | ./hashdeep/hashdeep 
 %%%% HASHDEEP-1.0
 %%%% size,md5,sha256,filename
 ## Invoked from: /home/jessek/dir
@@ -160,31 +169,29 @@ on the command line. To enable relative paths, use the <tt>-l</tt> flag.
 Repeating our first example with the <tt>-l</tt> flag:
 
 <pre>$ hashdeep -l ../*
-
-
-
-
-b08b18e0a3d2440feb0b321ea8080b36  ../config.h
-9f3e20fdff9c78aa8e3f9b42be166769  ../INSTALL
-4aa18483f73fc56c907f0ae9025e2582  ../README</pre>
+%%%% HASHDEEP-1.0
+%%%% size,md5,sha256,filename
+## Invoked from: /home/jessek/dir
+## $ hashdeep config.h INSTALL README
+## 
+5584,db19f900dde2507e7138718b987eda57,28a9b958c3be22ef6bd569bb2f4ea451e6bdcd3b0565c676fbd3645850b4e670,../config.h
+9236,d7adbcf07c5c813693ddf958be9c40e3,e77137d635c4e9598d64bc2f3f564f36d895d9cfc5050ea6ca75beafb6e31ec2,../INSTALL
+1609,c15a66414a4196f8bf86f7202199a0cc,343f3e1466662a92fa1804e2fc787e89474295f0ab086059e27ff86535dd1065,../README</pre>
 
 You can have hashdeep only print out the basename of each 
 file it processes. That is, all directory information will be stripped
 off. To enable basename mode, use the <tt>-b</tt> flag:
 
-<pre>$ md5deep -b config.h INSTALL README
-b08b18e0a3d2440feb0b321ea8080b36  config.h
-9f3e20fdff9c78aa8e3f9b42be166769  INSTALL
-4aa18483f73fc56c907f0ae9025e2582  README</pre>
+<pre>$ hashdeep -b ../*
+%%%% HASHDEEP-1.0
+%%%% size,md5,sha256,filename
+## Invoked from: /home/jessek/dir
+## $ hashdeep config.h INSTALL README
+## 
+5584,db19f900dde2507e7138718b987eda57,28a9b958c3be22ef6bd569bb2f4ea451e6bdcd3b0565c676fbd3645850b4e670,config.h
+9236,d7adbcf07c5c813693ddf958be9c40e3,e77137d635c4e9598d64bc2f3f564f36d895d9cfc5050ea6ca75beafb6e31ec2,INSTALL
+1609,c15a66414a4196f8bf86f7202199a0cc,343f3e1466662a92fa1804e2fc787e89474295f0ab086059e27ff86535dd1065,README</pre>
 
-Finally, if you need md5deep to insert an asterisk before the filename,
-similar to how md5sum does when you use the -b flag with that program,
-you can use the -k flag on md5deep. 
-
-<pre>$ md5deep -k config.h INSTALL README
-b08b18e0a3d2440feb0b321ea8080b36 */home/jessek/coreutils-5.2.0/config.h
-9f3e20fdff9c78aa8e3f9b42be166769 */home/jessek/coreutils-5.2.0/INSTALL
-4aa18483f73fc56c907f0ae9025e2582 */home/jessek/coreutils-5.2.0/README</pre>
 
 <br>
 <h2 id="error"> Error messages </h2>
@@ -193,10 +200,10 @@ If an input file can't be found, an error message is normally printed.
 These, and all other error messages, can be surpressed by using the 
 <tt>-s</tt> flag.
 
-<pre>$ md5deep doesnotexist.txt
-md5deep: /home/jessek/doesnotexist.txt: No such file or directory
+<pre>$ hashdeep doesnotexist.txt
+/home/jessek/foo.txt: No such file or directory
 
-$ md5deep -s doesnotexist.txt
+$ hashdeep -s doesnotexist.txt
 $</pre>
 
 
@@ -204,62 +211,45 @@ $</pre>
 <h2 id="recursive">Recursive Mode</h2>
 
 Normally, attempting to process a directory will generate an error message.
-Under recursive mode, md5deep will hash files in the current directory
+Under recursive mode, hashdeep will hash files in the specified directory
 <em>and</em> file in subdirectories. 
 Recursive mode is activated by using 
 the <tt>-r</tt> flag.
 
-<pre>$ md5deep *
-md5deep: /home/jessek/archives: Is a directory
-md5deep: /home/jessek/bin: Is a directory
+<pre>$ hashdeep *
+hashdeep: /home/jessek/archives: Is a directory
+hashdeep: /home/jessek/bin: Is a directory
 
-$ md5deep -r *
-ea024eaf04ee7a2a4270655d584445d2  /home/jessek/archives/coreutils-5.2.0.tar.bz2
-a07715c3344524da1270e9eb39f9b9e1  /home/jessek/archives/md5deep-0.16.tar.gz
-ef62d2a26c266df6151ae35447bfd2ad  /home/jessek/archives/dcfldd-1.0.tar.gz
-fb3dab239dd0baa0f4a1ccb10c3a5b0a  /home/jessek/bin/hex2dec</pre>
+$ hashdeep -r *
+%%%% HASHDEEP-1.0
+%%%% size,md5,sha256,filename
+## Invoked from: /home/jessek
+## $ hashdeep -r archives bin lib doc
+21508,6178d221a1714b7e2089565e997d6ad1,92caa3f5754b22ca792e4f8626362d2ef39596b080abfcfed951a86bee82bec3,/home/jessek/archives/foo-1.2.1.tar.gz
+12292,116e77a5dc6af0996597f7bc1b9252a2,c2afc6aa8d5c094a7226db1695d99a37fa858548f5d09aad9e41badfc62b1d27,/home/jessek/archives/bar-0.9.tar.bz2
+145684,4409c1e0b5995c290c2fc3d1d6d74bac,f56881fb277358c95ed3ddf64f28c4ff3f3937e636e17d6a26d42822b16fd4ed,/home/jessek/bin/ls</pre>
 
 
 <br>
 <h2 id="time"> Time Estimation Mode </h2>
 
 When processing large files, it is sometimes helpful to have an estimate
-of the time remaining in the operation. md5deep can generate an estimate
+of the time remaining in the operation. Hashdeep can generate an estimate
 of how long it will take to finish processing the <em>current file</em>.
 The <tt>-e</tt> flag prints this estimate to standard error, like this:
 
-<pre>$ md5deep -e /dev/hda1
-hda1: 1MB of 47MB done, 00:00:46 left
+<pre>$ hashdeep -e /dev/hda1
+/dev/hda1: 1MB of 47MB done, 00:00:46 left
 </pre>
 
 When the file is completed, the last time estimate is removed and the
 hash is displayed:
 
-<pre>$ md5deep -e /dev/hda1
-ca1b8297dbceaa14682d889483320a1a  /dev/hda1
+<pre>$ hashedeep -e /dev/hda1
+49545216,fb9be2d90235ca2c8740d86c93aa8cba,9420b32a4831d8bc5377357dd9bcb173b9df96fb4070fa3e6d8b115aec6ae528,/dev/hda1
+
 </pre>
 
-
-<h2 id="size"> File Size Mode </h2>
-
-md5deep can optionally display a ten digit representation of each
-file's size along with the hash. The file size comes before the hash
-on the line. This mode is activated with the <em>-z</em> flag, like this:
-
-<pre>$ md5deep -z *.h
-      1666  3a5353527e28b1cb5b844d602094c25a  /home/jessek/md5deep/src/algorithms.h
-      1232  a27d2799c36c7c64e370bf480dd463c0  /home/jessek/md5deep/src/hashTable.h
-      1880  d8defb61898fe255c6d66c4d880a8536  /home/jessek/md5deep/src/md5.h</pre>
-
-Note that ten spaces are used, even if the file size doesn't require that
-much space. This is done to make sorting easier.
-
-<p>
-
-If the file size is larger than 9,999,999,999 bytes (about 9.3 GB), the
-program will display the size as 9999999999. 
-</p>
-<br>
 
 <h2 id="match"> Matching mode </h2>
 
