@@ -2,7 +2,17 @@
 
 * New Features
 
+      Added Hashdeep Getting Started Guide
+
+      Added mode to exclude directories (-d mode)
+
+      Added mode to limit processing to a single filesystem (-F mode)
+
+      Added mode to load list of files to process from a file (-f mode)
+
 * Bug Fixes
+
+      Fixed file size computation for piecewise hashing of standard input.
 
 
 

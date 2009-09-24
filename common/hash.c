@@ -265,6 +265,7 @@ static int hash(state *s)
 {
   int done = FALSE, status = FALSE;
   TCHAR *tmp_name = NULL;
+  uint64_t start_offset;
   
   if (NULL == s)
     return TRUE;
@@ -297,47 +298,49 @@ static int hash(state *s)
 #endif
     HASH_INITIALIZE();
     
-    if (s->mode & mode_piecewise)
-    {
-      // This logic keeps the offset values correct when s->block_size
-      // is larger than the whole file. 
-      if (s->bytes_read + s->block_size >  s->total_bytes)
-	_sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
-		  tmp_name, s->bytes_read, s->total_bytes);
-      else
-	_sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
-		  tmp_name, s->bytes_read, s->bytes_read + s->block_size);
-    }
-    
+    start_offset = s->bytes_read;
+
     if (!compute_hash(s))
     {
       if (s->mode & mode_piecewise)
 	free(s->full_name);
       return TRUE;
     }
+
+    // We should only display a hash if we've processed some
+    // data during this read.
+    if (start_offset != s->bytes_read)
+    {
+
+      if (s->mode & mode_piecewise)      
+      {
+	_sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
+		   tmp_name, start_offset, s->bytes_read - 1);
+      }
       
-    HASH_FINALIZE();
+      HASH_FINALIZE();
 
 #ifdef __MD5DEEP_H
-    static char hex[] = "0123456789abcdef";
-    size_t i;
-
-    for (i = 0; i < s->hash_length ; ++i) 
-    {
-      s->hash_result[2 * i] = hex[(s->hash_sum[i] >> 4) & 0xf];
-      s->hash_result[2 * i + 1] = hex[s->hash_sum[i] & 0xf];
-    }
-
-    // Under not matched mode, we only display those known hashes that
-    // didn't match any input files. Thus, we don't display anything now.
-    // The lookup is to mark those known hashes that we do encounter
-    if (s->mode & mode_not_matched)
-      is_known_hash(s->hash_result,NULL);
-    else
-      status = display_hash(s);
+      static char hex[] = "0123456789abcdef";
+      size_t i;
+      
+      for (i = 0; i < s->hash_length ; ++i) 
+      {
+	s->hash_result[2 * i] = hex[(s->hash_sum[i] >> 4) & 0xf];
+	s->hash_result[2 * i + 1] = hex[s->hash_sum[i] & 0xf];
+      }
+      
+      // Under not matched mode, we only display those known hashes that
+      // didn't match any input files. Thus, we don't display anything now.
+      // The lookup is to mark those known hashes that we do encounter
+      if (s->mode & mode_not_matched)
+	is_known_hash(s->hash_result,NULL);
+      else
+	status = display_hash(s);
 #else
-    display_hash(s);
+      display_hash(s);
 #endif    
+    }
 
     if (s->mode & mode_piecewise)
       done = feof(s->handle);

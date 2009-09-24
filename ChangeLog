@@ -1,6 +1,24 @@
+2009-09-24 Jesse Kornblum
+
+	* Again revised patch 2855502 to handle the last read of
+	  files/stdin when no data is read. This happens when the
+	  file size is an exact multiple of the piecewise size.
+	
+
 2009-09-16 Jesse Kornblum
 
 	* Updated broken link on web page for Whirlpool.
+	
+
+2009-09-09 Jesse Kornblum
+
+	* Applied a modified version of patch 2855502 to fix file size 
+	  computation for piecewise hashing of stdin.
+	
+
+2009-07-11 Jesse Kornblum
+
+	* Added draft of Hashdeep Getting Started guide
 	
 
 2009-07-10 Jesse Kornblum
