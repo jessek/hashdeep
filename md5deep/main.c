@@ -326,9 +326,14 @@ static int prepare_windows_command_line(state *s)
 
 int process_input_list(state *s)
 {
+  TCHAR * t_name;
   int done = FALSE;
   FILE * handle = fopen(s->input_list,"rb");
   char * fn;
+
+  t_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
+  if (NULL == t_name)
+    return TRUE;
 
   if (NULL == handle)
   {
@@ -357,25 +362,25 @@ int process_input_list(state *s)
       // We have to convert value from the file, a char value, into a 
       // Unicode TCHAR value. We assume that we can only handle parameters
       // as long as PATH_MAX, regardless of what the user gave us.
-      TCHAR * t_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
-      if (NULL == t_name)
-	return TRUE;
-
-      int t_size = MultiByteToWideChar(CP_ACP,0,fn,lstrlenA(fn),t_name,PATH_MAX);
+      int t_size = MultiByteToWideChar(CP_ACP,
+				       0,
+				       fn,
+				       lstrlenA(fn),
+				       t_name,
+				       PATH_MAX);
       if (0 == t_size)
 	return TRUE;
 
       t_name[t_size] = 0;
 
       process_win32(s,t_name);
-
-      free(t_name);
 #else
       process_normal(s,fn);
 #endif
     }
   }
 
+  free(t_name);
   free(fn);
   fclose(handle);
   return FALSE;

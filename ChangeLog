@@ -2,7 +2,11 @@
 
 	* Attempting to fix bug 2919014 regarding hashdeep and its
 	  failure to detect when files go missing during an audit
-	  if there is another, identical file in a different location.
+	  if there is another, identical file in a different location
+
+	* Cleanup on md5deep code for -f mode
+
+	* Revised list of new features for release 3.5
 
 
 2009-09-24 Jesse Kornblum
