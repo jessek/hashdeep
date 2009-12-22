@@ -133,6 +133,7 @@ static int process_command_line(state *s, int argc, char **argv)
 		     "f:I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqU")) != -1) { 
     switch (i) {
 
+      // RBF - Document -f mode
     case 'f':
       s->input_list = strdup(optarg);
       s->mode |= mode_read_from_file;

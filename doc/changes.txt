@@ -1,3 +1,18 @@
+** Changes in version 3.5 (22 Dec 2009)
+
+* New Features
+
+      Added mode to load list of files to process from a file (-f mode)
+
+* Bug Fixes
+
+      Fixed file size computation for piecewise hashing of standard input.
+
+      Fixed error when auditing a directory to check for identical copies
+      of a file if one copy is removed.
+
+
+
 ** Changes in version 3.4 (11 Jun 2009)
 
 * Bug Fixes
