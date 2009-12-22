@@ -109,9 +109,10 @@ int audit_update(state *s)
 
 	if (tmp->data->used != s->hash_round)
 	{
-	  tmp->data->used = s->hash_round;
+
 	  switch (tmp->status) {
 	  case status_match:
+	    tmp->data->used = s->hash_round;
 	    exact_match = TRUE;
 	    break;
     

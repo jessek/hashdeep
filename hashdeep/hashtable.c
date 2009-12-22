@@ -202,7 +202,7 @@ hashtable_contains(state *s, hashname_t alg)
   //  print_status("First entry %d", status);
   if (status != status_no_match)
     {
-      //  print_status("hit on first entry %d", status);
+      //      print_status("hit on first entry %d", status);
       ret = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
       ret->next = NULL;
       ret->status = status;

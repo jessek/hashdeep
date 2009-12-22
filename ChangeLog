@@ -1,3 +1,10 @@
+2009-12-21 Jesse Kornblum
+
+	* Attempting to fix bug 2919014 regarding hashdeep and its
+	  failure to detect when files go missing during an audit
+	  if there is another, identical file in a different location.
+
+
 2009-09-24 Jesse Kornblum
 
 	* Again revised patch 2855502 to handle the last read of
