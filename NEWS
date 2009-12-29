@@ -1,3 +1,12 @@
+** Changes in version 3.5.1 (30 Dec 2009)
+
+* Bug Fixes
+
+      Fixed processing of zero byte files.
+
+
+
+
 ** Changes in version 3.5 (22 Dec 2009)
 
 * New Features
