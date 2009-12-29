@@ -1,3 +1,10 @@
+2009-12-29 Jesse Kornblum
+
+	* Version bump to 3.5.1
+
+	* Attempting to fix bug 2922415 involving zero byte files
+
+
 2009-12-21 Jesse Kornblum
 
 	* Attempting to fix bug 2919014 regarding hashdeep and its

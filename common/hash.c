@@ -308,14 +308,18 @@ static int hash(state *s)
     }
 
     // We should only display a hash if we've processed some
-    // data during this read.
-    if (start_offset != s->bytes_read)
+    // data during this read OR if the whole file is zero bytes long.
+    // If the file is zero bytes, we won't have read anything, but
+    // still need to display a hash.
+    if (start_offset != s->bytes_read || 0 == s->total_bytes)
     {
-
-      if (s->mode & mode_piecewise)      
+      if (s->mode & mode_piecewise)
       {
-	_sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
-		   tmp_name, start_offset, s->bytes_read - 1);
+	if (0 == s->total_bytes)
+	  _sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset 0"),tmp_name);
+	else
+	  _sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
+		     tmp_name, start_offset, s->bytes_read - 1);
       }
       
       HASH_FINALIZE();
