@@ -10,6 +10,9 @@ DESTDIR  = web.sourceforge.net
 
 RMAN = /sw/bin/rman
 
+preflight:
+	grep RBF *.html *.txt
+
 clean:
 	rm -f *~
 
@@ -21,9 +24,8 @@ changes:
 	cp ../NEWS changes.txt
 
 publish:
+	@echo " "
+	@echo "** Change to the htdocs directory before uploading files **"
 	sftp $(USERNAME)@$(DESTDIR)
-#	put index.html
-#	bye
 
-all: clean manpages changes
-	scp *.html changes.txt style.css $(USERNAME)@$(DESTDIR)
+all: clean manpages changes publish

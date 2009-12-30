@@ -2,7 +2,7 @@
 <html>
 <head>
   <!-- $Id$ -->
-  <title>md5deep</title>
+  <title>md5deep and hashdeep</title>
   <link rel="stylesheet" type="text/css" href="style.css">
   <script type="text/javascript">
 
@@ -28,7 +28,7 @@
 <body>
 
 <h1>
-md5deep - Latest version 3.5.1
+md5deep and hashdeep - Latest version 3.5.1
 </h1>
 
 <hr>
@@ -36,16 +36,16 @@ md5deep - Latest version 3.5.1
 <h2> Quick Links </h2>
 <ul>
 
-<li> <a href="#download">Download md5deep</a></li>
+<li> <a href="#download">Download md5deep and hashdeep</a></li>
+<li> Manual pages for 
+  <a href="md5deep.html">md5deep</a>, <a href="hashdeep.html">hashdeep</a>
+</li>
 
-<li> <a href="md5deep.html">The md5deep manual page</a></li>
-<li> <a href="hashdeep.html">The hashdeep manual page</a></li>
+<li> Getting started guides for
+  <a href="start-md5deep.html">md5deep</a>, <!a href="start-hashdeep.html">hashdeep</a>
+</li>
 
-<li> <a href="getting-started.html">Getting Started with md5deep</a></li>
-
-<li> <a href="https://sourceforge.net/donate/index.php?group_id=67079">Donate to md5deep</a>
-
-<li> <a href="changes.txt">Changelog</a></li>
+<li> <a href="https://sourceforge.net/donate/index.php?group_id=67079">Donate to the project</a>
 
 <li> <a href="http://sourceforge.net/projects/md5deep/">Sourceforge project
 page</a> - Home to development and feature requests
@@ -59,15 +59,16 @@ page</a> - Home to development and feature requests
 Introduction
 </h2>
 
-md5deep is a cross-platform set of programs to compute 
+<p>
+
+<b>md5deep</b> is a set of programs to compute 
 <a href="#md5">MD5</a>,
 <a href="#sha1">SHA-1</a>,
 <a href="#sha256">SHA-256</a>,
 <a href="#tiger">Tiger</a>, or
 <a href="#whirlpool">Whirlpool</a>  message digests on an 
 arbitrary number of files. 
-md5deep is 
-similar to the md5sum program found in the 
+md5deep is similar to the md5sum program found in the 
 <a href="http://www.gnu.org/software/coreutils/">GNU Coreutils</a>
 package, but has the following additional features:
 
@@ -100,26 +101,37 @@ type, such as regular files, block devices, etc.
 
 </li></ul>
 
+</p>
+<p>
+
+<b>hashdeep</b> is... RBF
+
+</p>
+
 <br>
 
 <h2> Supported Platforms </h2>
 
-The following platforms are currently supported. Although every effort
-is made to allow the program run to on other platforms, but that cannot be
-guarenteed. 
+<p>
 
-<ul>
-<li> Microsoft Windows (7, Vista, XP, 2003, 2000, NT)</li>
-<li> Cygwin (via <a href="http://cygwinports.dotsrc.org/">Cygwin Ports</a>)</li>
-<li> Linux </li>
-<li> FreeBSD, OpenBSD, and NetBSD </li>
-<li> Mac OS X </li>
-<li> OpenSolaris </li>
-<li> HP/UX </li>
-</ul>
+The programs are distributed as binaries for Microsoft Windows 
+(7, Vista, XP, 2003, 2000, and NT are supported) and as source code.
+The source code should compile nicely on just about any platform,
+including Cygwin, Linux, FreeBSD, OpenBSD, Mac OS X, OpenSolaris,
+HP/UX, etc. 
+
+</p>
+<p>
+
+Note that several operating systems support an automatic installation
+of md5deep through packaging or ports. See the 
+<a href="start-md5deep.html#install">Automatic Installation</a> section
+of the getting started guide for details.
+
+</p>
 
 <p>
-Please note that Windows 9x is no longer supported. The last version
+Microsoft Windows 9x is no longer supported. The last version
 that works on Windowx 9x was version 1.13. Windows 3.x was never supported.
 </p>
 
@@ -217,7 +229,7 @@ Version 3.5.1
 <p> 
 There is no beta version of md5deep right now. If you have any
 problems or would like to see something added to md5deep, please
-send mail to the developer at md5deep (at) jessekornblum (dot) com or
+send mail to the developer at research !at jessekornblum !dot com or
 visit the 
 <a href="http://sourceforge.net/projects/md5deep/">Sourceforge project
 page </a>.
@@ -225,10 +237,10 @@ page </a>.
 
 <!--
 <p>
-An <em>alpha</em> version of md5deep 3.0 is now available. 
+An <em>alpha</em> version of md5deep 4.0 is now available. 
 
 If there are no problems found with this version, it will become the official 
-version on 1 May 2008.
+version on 1 Jan 2018.
 
 This version is for your
 <em>testing</em> purposes only and should <em>NOT BE USED</em> for any
@@ -236,41 +248,34 @@ serious/official/meaningful work. Changes in this new version:
 
 <h4> New Features </h4>
 <ul>
-<li> Addition of hashdeep. This new program can compute multiple hashes
-simultaneously. It also has a new audit mode, -a. 
+<li> Wicked cool stuff!
 </li>
 </ul>
 
 <h4> Bug Fixes </h4>
 <ul>
-<li> Fixed obscure bug that caused a crash (double free) when
-attempting to check a very small file for EnCase hashes
+<li> Fixed a bug.
 </li>
 </ul>
 
 <table style="text-align: center;" border="1" width="100%">
   <tbody>
 
-
-
-
-
-
      <td rowspan="2">
-Version 3.0-alpha1
+Version 4.0-alpha1
      </td>
 
      <td rowspan="2">
-  13 Mar 2008
+  1 Jan 2017
      </td>
 
-<td><a href="md5deep-3.0-alpha1.zip">
+<td><a href="md5deep-4.0-alpha1.zip">
        Windows binary</a></td>
 <td class="hash"> SHA256 
 </td>
      </tr>
      <tr>
- <td><a href="md5deep-3.0-alpha1.tar.gz">
+ <td><a href="md5deep-4.0-alpha1.tar.gz">
  source code</a></td>
  <td class="hash"> SHA256 
 </td>
