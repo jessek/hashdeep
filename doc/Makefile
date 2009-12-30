@@ -5,16 +5,20 @@
 # $Id$
 #
 
+ALL_FILES = index.html style.css \
+	    changes.txt \
+	    md5deep.html start-md5deep.html \
+	    hashdeep.html start-hashdeep.html
+
+
 USERNAME = jessekornblum,md5deep
-DESTDIR  = web.sourceforge.net
+DESTDIR  = web.sourceforge.net:htdocs/
 
 RMAN = /sw/bin/rman
 
 preflight:
-	grep RBF *.html *.txt
-
-clean:
 	rm -f *~
+	grep RBF *.html *.txt
 
 manpages:
 	$(RMAN) -f HTML -S -l "md5deep man page" ../md5deep/md5deep.1 > md5deep.html
@@ -24,8 +28,6 @@ changes:
 	cp ../NEWS changes.txt
 
 publish:
-	@echo " "
-	@echo "** Change to the htdocs directory before uploading files **"
-	sftp $(USERNAME)@$(DESTDIR)
+	rsync -avP -e ssh $(ALL_FILES) $(USERNAME)@$(DESTDIR)
 
-all: clean manpages changes publish
+all: manpages changes publish

@@ -1,3 +1,8 @@
+2009-12-30 Jesse Kornblum
+
+	* Converting documentation update to use rsync+ssh to upload content
+	
+
 2009-12-29 Jesse Kornblum
 
 	* Version bump to 3.5.1
