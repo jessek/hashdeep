@@ -1,14 +1,13 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <html>
-
 <head>
 
   <!-- $Id$ -->
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 
   <title>md5deep and hashdeep</title>
-  <link rel="stylesheet" type="text/css" href="style.css">
 
+  <link rel="stylesheet" type="text/css" href="style.css">
   <script type="text/javascript">
   <!--
      var versions_text; 
@@ -39,6 +38,7 @@ md5deep and hashdeep - Latest version 3.5.1
 <hr>
 
 <h2> Quick Links </h2>
+
 <ul>
 
 <li> <a href="#download">Download md5deep and hashdeep</a></li>
@@ -191,6 +191,9 @@ Fixed bug regarding the processing of zero byte files.
 
 <table style="text-align: center;" border="1" width="100%">
   <tbody>
+
+<!-- Start cut here when releasing a new version -->
+
     <tr>
      <td rowspan="2">
        Version 3.5.1
@@ -200,31 +203,27 @@ Fixed bug regarding the processing of zero byte files.
        30 Dec 2009
      </td>
 
-<!-- RBF - Update links to older versions using the new format -->
-
      <td>
-<a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.5.1/md5deep-3.5.1.zip/download">
+        <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.5.1/md5deep-3.5.1.zip/download">
        Windows binary</a>
      </td>
-<td class="hash"> SHA256 8be48ae77fde088747f97e626bd81918cde9f7e5af3b8247a30e8c7def11b153
-	</td>
-     </tr>
-
+     <td class="hash"> 
+        SHA256 8be48ae77fde088747f97e626bd81918cde9f7e5af3b8247a30e8c7def11b153
+     </td>
+    </tr>
 
 
      <tr>
-  <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.5.1/md5deep-3.5.1.tar.gz/download">
- source code</a></td>
- <td class="hash"> SHA256 a6a29f9892fa3a4a48bee0da341fd5dad5cdcdc2aecc521b28cf0b652bb3c415
-	 </td>
-     </tr>
+      <td>
+       <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.5.1/md5deep-3.5.1.tar.gz/download">
+        source code</a>
+     </td>
+     <td class="hash"> 
+        SHA256 a6a29f9892fa3a4a48bee0da341fd5dad5cdcdc2aecc521b28cf0b652bb3c415
+     </td>
+    </tr>
 
-     
-
-
-
-
-
+<!-- Stop cut here when releasing a new version -->
 
   </tbody>
 </table>
@@ -322,6 +321,8 @@ document.write(old_link_text);
     </tr>
   </thead>
 
+
+
   <tbody>
    <tr>
      <td rowspan="2">
@@ -333,7 +334,7 @@ document.write(old_link_text);
 </td>
 
 
-<td><a href="http://downloads.sourceforge.net/md5deep/md5deep/md5deep-3.5.zip">
+<td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.5/md5deep-3.5.zip/download">
        Windows binary</a></td>
 <td class="hash"> SHA256 6bf03580a7e274101299c116092ef6d1565d66042dc1b89e3e09a6cc5b45f4d3
 	</td>
@@ -342,11 +343,14 @@ document.write(old_link_text);
 
 
      <tr>
- <td><a href="http://downloads.sourceforge.net/md5deep/md5deep/md5deep-3.5.tar.gz">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.5/md5deep-3.5.tar.gz/download">
  source code</a></td>
  <td class="hash"> SHA256 917672403a2ea6841be0cfe0da42f9651a9bcb10fdf808cbd83478b02673502a
 	 </td>
      </tr>
+
+
+<!-- RBF - Update links to older versions using the new format -->
 
    <tr>
      <td rowspan="2">
@@ -358,7 +362,7 @@ document.write(old_link_text);
 </td>
 
 
-<td><a href="http://downloads.sourceforge.net/md5deep/md5deep/md5deep-3.4.zip">
+<td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.4/md5deep-3.4.zip/download">
        Windows binary</a></td>
 <td class="hash"> SHA256 128e150ac07e9236490a225fa61d39c5c4ad4adadeb17e269da0bb0351813e42
 	</td>
@@ -367,7 +371,7 @@ document.write(old_link_text);
 
 
      <tr>
- <td><a href="http://downloads.sourceforge.net/md5deep/md5deep/md5deep-3.4.tar.gz">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.4/md5deep-3.4.tar.gz/download">
  source code</a></td>
  <td class="hash"> SHA256 913b2cbfa57e46392b0a3ed392a07889d283a7ef897a6340b25aea2831a173db
 	 </td>
@@ -940,10 +944,11 @@ document.write(old_link_text);
 </div>
 
 <script type="text/javascript">
-
+<!--
 versions_text = document.getElementById("oldversions").innerHTML + 
      new_link_text;
 document.getElementById("oldversions").innerHTML = "";
+-->
 </script>
 <br>
 
@@ -973,6 +978,7 @@ longer be accurate. Please check
 <a href="http://en.wikipedia.org/wiki/Md5">the current status of MD5</a> 
 for more information.
 
+</p>
 <p>
 
 The algorithm was originally developed by Professor 
@@ -1149,6 +1155,7 @@ the Computer Science Department at the University of Iowa.
 </span>
 
 <script type="text/javascript">
+<!--
   function mon_to_name(mon)
   {
     switch(mon)
@@ -1174,6 +1181,7 @@ the Computer Science Department at the University of Iowa.
        now.getDate() + " " + mon_to_name(now.getMonth()) + 
        " " + now.getFullYear() + ".";
   document.getElementById("lastupdated").innerHTML = update_text;
+-->
 </script>
 
 <br>
