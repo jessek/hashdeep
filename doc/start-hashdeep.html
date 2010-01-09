@@ -343,26 +343,6 @@ negative matching does normally:
 /Users/jessek/tmp/known-hashes.txt</pre>
 </p>
 
-<h3> Unused Hashes </h3>
-
-<p>
-The second advanced matching mode, -n, indicates which known hashes were
-not matched by any of the input files. Using our example from above,
-let's say our file of known hashes, <tt>known.txt</tt> looked like this:
-
-<pre>
-3668422d5b728776cb8720de8496abc9  san-dimas-high-school.jpg
-b85444c8b82f208ad24e41f20c2b1831  EVILEVIL.EXE
-6e43e96bde5c9f8abdbc47661cf4975b  never-seen-again.dat</pre>
-
-If we run md5deep with the -n flag, we will get a listing of any hashes
-that were not matched to an input file. 
-
-<pre>$ md5deep -nm known.txt *
-never-seen-again.dat</pre>
-
-</p>
-
 
 <br>
 <h2 id="audit">Audit Mode</h2>
