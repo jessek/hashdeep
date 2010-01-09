@@ -48,9 +48,7 @@ md5deep and hashdeep - Latest version 3.5.1
 
 <li> Getting started guides for
   <a href="start-md5deep.html">md5deep</a>, 
-  <!--<a href="start-hashdeep.html">-->
-  hashdeep
-  <!--</a>-->
+  <a href="start-hashdeep.html">hashdeep</a>
 </li>
 
 <li> <a href="https://sourceforge.net/donate/index.php?group_id=67079">Donate to the project</a>
@@ -60,6 +58,7 @@ page</a> - Home to development and feature requests
 </li>
 
 </ul>
+
 
 <br>
 
@@ -111,11 +110,35 @@ type, such as regular files, block devices, etc.
 
 <p>
 
-<b>hashdeep</b> is... RBF
+<b>hashdeep</b> is a program to compute, match, and <em>audit</em>
+hashsets. With traditional
+matching, programs report if an input file matched one in a set of knows
+or if the input file did not match. It's hard to get a complete sense of
+the state of the input files compared to the set of knowns. It's possible
+to have matched files, missing files, files that have moved in the set,
+and to find new files not in the set. Hashdeep can report all of these
+conditions. It can even spot hash collisions, when an input file matches a
+known file in one hash algorithm but not in others.
+The results are displayed in an audit report.
+</p>
+
+<p>
+
+The hash set audit process was described in the paper 
+<a href="http://jessekornblum.com/publications/dfp08.html">
+Auditing Hash Sets: Lessons Learned from Jurassic Park</a> published
+in the journal <em><a href="http://dx.doi.org/10.1080/15567280802385477">
+Digital Investigation</a></em>. 
 
 </p>
 
+<p>
+For more details and some examples of using hashdeep, check out 
+the <a href="start-hashdeep.html">hashdeep getting started guide</a>.
+
 <br>
+</p>
+
 
 <h2> Supported Platforms </h2>
 
@@ -553,8 +576,6 @@ document.write(old_link_text);
      </tr>
 
 
-<!-- RBF - Update links to download old versions. START HERE -->
-
 
    <tr>
      <td rowspan="3">
@@ -564,15 +585,16 @@ document.write(old_link_text);
      <td rowspan="3">
  15 Oct 2007
      </td>
-
-<td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-2.0.zip?download">
-       Windows binary</a></td>
+    <td>
+     <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-2.0/md5deep-2.0.zip/download">
+       Windows binary
+     </a></td>
 <td class="hash"> SHA256 f680f3de0f592950efaf131821b2d0d77e4882252f015eb2acd6bbc8f846ca8b
 	</td>
      </tr>
 
      <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-2.0-cygwin.zip?download">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-2.0/md5deep-2.0-cygwin.zip/download">
  Cygwin binary </a></td>
  <td class="hash"> SHA256 e6d200ceb7ed0e326226e16a2d7c8bc4c2b074acf64400e070739411528ce284
  </td>
@@ -580,7 +602,7 @@ document.write(old_link_text);
 
 
      <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-2.0.tar.gz?download">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-2.0/md5deep-2.0.tar.gz/download">
  source code</a></td>
  <td class="hash"> SHA256 5b53fbd11fe598e540980e747e6d7508e4ff14f9310c1949c7e7044afac4df32
 	 </td>
@@ -595,8 +617,10 @@ document.write(old_link_text);
  6 Aug 2007
      </td>
 
-<td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.13.zip?download">
-       Windows binary</a></td>
+   <td>
+     <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.13/md5deep-1.13.zip/download">
+       Windows binary
+     </a></td>
 <td class="hash"> SHA256 0acf6d2d51d56fa413374d765585a58ab1abbab9c167f1fc6426af7ea986318a</td>
      </tr>
 
@@ -607,9 +631,10 @@ document.write(old_link_text);
      </tr>
 
 
-     <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.13.tar.gz?download">
- source code</a></td>
+   <td>
+     <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.13/md5deep-1.13.tar.gz/download">
+       Source code
+     </a></td>
  <td class="hash"> SHA256 38a267a5a35444ae584a53afe5db9a643668cc60d94d7f3dcee34778b24127c2 </td>
      </tr>
      
@@ -623,20 +648,20 @@ document.write(old_link_text);
  3 Apr 2006
      </td>
 
-<td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.12.zip?download">
+<td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.12/md5deep-1.12.zip/download">
        Windows binary</a></td>
 <td class="hash"> SHA256 d8bc1d242686d4ea59eff38484e50a5789e1288e25b915c3f1f86c09b6e90d82 </td>
      </tr>
 
      <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.12-cygwin.zip?download">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.12/md5deep-1.12-cygwin.zip/download">
  Cygwin binary </a></td>
  <td class="hash"> SHA256 c7ce267c69906e1c4c5c2e120126764b201d5dd8b0c93da424485301782d86c5 </td>
      </tr>
 
 
      <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.12.tar.gz?download">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.12/md5deep-1.12.tar.gz/download">
  source code</a></td>
  <td class="hash"> SHA256 7329647f159735d3014166201057f15e5af551e1daeabc103ec08e6f8c902112 </td>
      </tr>
@@ -650,7 +675,7 @@ document.write(old_link_text);
  31 Mar 2006
      </td>
 
-<td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.11.zip?download">
+<td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.11/md5deep-1.11.zip/download">
        Windows binary</a></td>
 <td class="hash"> SHA256 169a4fe60ddd5331dfffc7ba7b00f7cde632c1eff922807c7c2570cb784b2bfd</td>
      </tr>
@@ -663,7 +688,7 @@ document.write(old_link_text);
 
 
      <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.11.tar.gz?download">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.11/md5deep-1.11.tar.gz/download">
  source code</a></td>
  <td class="hash"> SHA256 ad865f2d5866074083c78254ce6e73314b238c52e47264a07129eeaa44e109da </td>
      </tr>
@@ -677,20 +702,20 @@ document.write(old_link_text);
  2 Feb 2006
      </td>
 
-<td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.10.zip?download">
+<td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.10/md5deep-1.10.zip/download">
        Windows binary</a></td>
 <td class="hash"> SHA256 d7cad9c8abf3ccd18ccf64e10c7bd8197da7acb17b25380a3d3f6aee7ca5153c </td>
      </tr>
 
      <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.10-cygwin.zip?download">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.10/md5deep-1.10-cygwin.zip/download">
  Cygwin binary</a></td>
  <td class="hash"> SHA256 0e531d971ef955cfa881814b27c13780e1a67acb57cc8e0a7ee607abff1f5f47 </td>
      </tr>
 
 
      <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.10.tar.gz?download">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.10/md5deep-1.10.tar.gz/download">
  source code</a></td>
  <td class="hash"> SHA256 2658956a7e7890d4ebcc1ff152dab9f64e00f71468bc31d120d255476cc7cd8c </td>
      </tr>
@@ -704,20 +729,20 @@ document.write(old_link_text);
  5 Jan 2006
      </td>
 
-<td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.9.3.zip?download">
+<td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.9.3/md5deep-1.9.3.zip/download">
        Windows binary</a></td>
 <td class="hash"> SHA256 f12fd601e90b2c1c02b7ac52084970bf4bb34db3321b5c405e04d4c6e43989b9 </td>
      </tr>
 
      <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.9.3-cygwin.zip?download">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.9.3/md5deep-1.9.3-cygwin.zip/download">
  Cygwin binary</a></td>
  <td class="hash"> SHA256 9ff54d5c263da09fd0c755e308497602add6a75a6e040fab0e0f6de3b2a2bce3 </td>
      </tr>
 
 
      <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.9.3.tar.gz?download">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.9.3/md5deep-1.9.3.tar.gz/download">
  source code</a></td>
  <td class="hash"> SHA256 59b66fd801beb87481c178dc9f3485feecdbae55c68c22410b9ce7f20ae7afd1 </td>
      </tr>
@@ -730,7 +755,7 @@ document.write(old_link_text);
      <td rowspan="2">
  14 Nov 2005
      </td>
-<td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.9.2.zip?download">
+<td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.9.2/md5deep-1.9.2.zip/download">
        Windows binary</a></td>
 <td class="hash"> SHA256 0c1aec402920325f068ef81122bf33faabd9ea14a06fc620729b63f51d905fd7</td>
      </tr>
@@ -738,7 +763,7 @@ document.write(old_link_text);
 
 
      <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.9.2.tar.gz?download">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.9.2/md5deep-1.9.2.tar.gz/download">
  source code</a></td>
  <td class="hash"> SHA256 efe4168b445d98f7a8b32565c7c068fc3721f60e10af741600c7f44ec00baeec </td>
      </tr>
@@ -754,12 +779,12 @@ document.write(old_link_text);
  8 Nov 2005
      </td>
 
-<td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.9.1.zip?download">
+<td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.9.1/md5deep-1.9.1.zip/download">
        Windows binary</a></td>
 <td class="hash"> SHA256 8e4c46758b47c93d3af0dbdd0d61fdaa75d6fa85e284c6f04529d627d0efdd98</td>
      </tr>
      <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.9.1.tar.gz?download">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.9.1/md5deep-1.9.1.tar.gz/download">
  source code</a></td>
  <td class="hash"> SHA256 d72afa7f5ca93e18c92de75a419cd63d551422576a3c5b3cdd04eb0d36e93b97 </td>
      </tr>
@@ -774,12 +799,12 @@ document.write(old_link_text);
 7 Nov 2005
      </td>
 
-<td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.9.zip?download">
+<td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.9/md5deep-1.9.zip/download">
        Windows binary</a></td>
 <td class="hash"> SHA256 e2fb74df42cdbdd7d908f9eb35fab122f59a097a3dc418f3f035abc3adbf087a </td>
      </tr>
      <tr>
- <td><a href="http://prdownloads.sourceforge.net/md5deep/md5deep/md5deep-1.9.tar.gz?download">
+ <td><a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-1.9/md5deep-1.9.tar.gz/download">
  source code</a></td>
  <td class="hash"> SHA256 8e06f5dd4fc6ff7e93f7807633a2c3319a326a39cef98e40d076cab09369c99b </td>
      </tr>
