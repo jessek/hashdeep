@@ -458,7 +458,6 @@ static int file_type_helper(_tstat_t sb)
     return stat_symlink;  
 #endif   // ifndef _WIN32 
 
-
   // Used to detect Solaris doors 
 #ifdef S_IFDOOR
 #ifdef S_ISDOOR

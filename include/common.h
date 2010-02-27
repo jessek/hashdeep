@@ -13,7 +13,6 @@
 # define __MSVCRT_VERSION__ 0x0601
 #endif
 
-
 // The version information, VERSION, is defined in config.h 
 
 #define AUTHOR      "Jesse Kornblum"
@@ -338,6 +337,8 @@ int done_processing_dir(TCHAR *fn);
 // ------------------------------------------------------------------
 // HELPER FUNCTIONS
 // ------------------------------------------------------------------ 
+void setup_expert_mode(state *s, char *arg);
+
 void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
 
 uint64_t find_block_size(state *s, char *input_str);

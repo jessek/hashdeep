@@ -14,6 +14,34 @@
 
 #include "main.h"
 
+void setup_expert_mode(state *s, char *arg)
+{
+  unsigned int i = 0;
+
+  while (i < strlen(arg)) {
+    switch (*(arg+i)) {
+    case 'b': // Block Device
+      s->mode |= mode_block;     break;
+    case 'c': // Character Device
+      s->mode |= mode_character; break;
+    case 'p': // Named Pipe
+      s->mode |= mode_pipe;      break;
+    case 'f': // Regular File
+      s->mode |= mode_regular;   break;
+    case 'l': // Symbolic Link
+      s->mode |= mode_symlink;   break;
+    case 's': // Socket
+      s->mode |= mode_socket;    break;
+    case 'd': // Door (Solaris)
+      s->mode |= mode_door;      break;
+    default:
+      print_error(s,"%s: Unrecognized file type: %c",__progname,*(arg+i));
+    }
+    ++i;
+  }
+}
+
+
 uint64_t find_block_size(state *s, char *input_str)
 {
   unsigned char c;

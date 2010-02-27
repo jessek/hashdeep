@@ -1,17 +1,18 @@
-
-/* $Id$ */
+// HASHDEEP
+// $Id$
 
 #include "main.h"
 
 
-/* So that the usage message fits in a standard DOS window, this
-   function should produce no more than 22 lines of text. */
+// So that the usage message fits in a standard DOS window, this
+// function should produce no more than 22 lines of text.
+// RBF - Document -o mode in man page
 static void usage(state *s)
 {
   hashname_t i;
 
   print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
-  print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-V|-h] [FILES]",CMD_PROMPT,__progname);
+  print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-V|-h] [-o <mode>] [FILES]",CMD_PROMPT,__progname);
 
   print_status("");
 
@@ -34,6 +35,7 @@ static void usage(state *s)
   print_status("-b - prints only the bare name of files; all path information is omitted");
   print_status("-l - print relative paths for filenames");
   print_status("-i - only process files smaller than the given threshold");
+  print_status("-o  - only process certain types of files. See README/manpage");
   print_status("-v - verbose mode. Use again to be more verbose.");
   print_status("-V - display version number and exit");
 }
@@ -248,10 +250,15 @@ static int process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"I:i:c:MmXxtablk:resp:wvVh")) != -1)
+  while ((i=getopt(argc,argv,"o:I:i:c:MmXxtablk:resp:wvVh")) != -1)
   {
     switch (i)
     {
+    case 'o':
+      s->mode |= mode_expert; 
+      setup_expert_mode(s,optarg);
+      break;
+
     case 'I': 
       s->mode |= mode_size_all;
       // Note no break here;
