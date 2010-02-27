@@ -1,16 +1,6 @@
-*** Update trove descriptions and other sf.net text to include hashdeep
+Because I kept ignoring this list of TODO items, I have 
+moved them all to the SourceForge Feature Request Tracker.
+See https://sourceforge.net/tracker/?group_id=67079&atid=516781
+for all current TODO items.
 
-*** Edit md5deep web page
-    - Describe hashdeep in the introduction
-
-*** Create unit test directive/code
-
-*** Write hashdeep quickstart guide
-
-*** Create FAQ
-  - Why nothing happens when I double click it
-  - Why is this better than one line of shell
-
-*** Add support for hashdeep to use NSRL files and other types?
-
-*** Add timestamp mode (-t) to hashdeep
+$Id$
