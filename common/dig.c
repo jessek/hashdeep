@@ -598,8 +598,8 @@ static int should_hash(state *s, TCHAR *fn)
 
   // We must reset the number of bytes in each file processed
   // so that we can tell if fstat reads the number successfully
-  s->total_bytes = 0;
-  s->timestamp = 0;
+  s->total_bytes = UNKNOWN_FILE_SIZE;
+  s->timestamp   = 0;
 
   type = file_type(s,fn);
   

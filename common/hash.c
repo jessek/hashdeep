@@ -405,12 +405,14 @@ int hash_file(state *s, TCHAR *fn)
 
   if ((s->handle = _tfopen(fn,_TEXT("rb"))) != NULL)
   {
-    // We only call the fstat or the ioctl functions if we weren't able to 
-    // determine the file size from the stat function in dig.c:file_type().
-    if (0 == s->total_bytes)
+    // We should have the file size already from the stat functions
+    // called during digging. If for some reason that failed, we'll
+    // try some ioctl calls now to get the full size.
+    if (UNKNOWN_FILE_SIZE == s->total_bytes)
       s->total_bytes = find_file_size(s->handle);
 
-    if (s->mode & mode_size && s->total_bytes > s->size_threshold)
+    // If this file is above the size threshold set by the user, skip it
+    if ((s->mode & mode_size) && (s->total_bytes > s->size_threshold))
     {
       if (s->mode & mode_size_all)
       {
@@ -439,7 +441,6 @@ int hash_file(state *s, TCHAR *fn)
 
     if (s->mode & mode_estimate)
     {
-      // The find file size returns a value of type off_t, so we must cast it
       s->total_megs = s->total_bytes / ONE_MEGABYTE;
       shorten_filename(s->short_name,s->full_name);    
     }    

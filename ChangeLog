@@ -1,3 +1,13 @@
+2010-03-06 Jesse Kornblum
+
+	* Cleaned up md5deep/main.h comment styles. Also added a field
+	  to the state variable to keep track of the file's type. This
+	  is was handy for...
+
+	* Updating file size computation to use results of stat 
+	  operation normally done anyway during dig phase.
+	
+
 2010-02-26 Jesse Kornblum
 
 	* Adding 'expert' mode from md5deep to hashdeep.

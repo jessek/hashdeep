@@ -534,6 +534,10 @@ off_t find_file_size(FILE *f)
   // TODO: Find a way to estimate device sizes on Windows
   // Perhaps an IOTCL_DISK_GET_DRIVE_GEOMETRY_EX would work? 
 
+  // RBF - We don't really have the fseeko and ftello functions
+  // on windows. They are functions like _ftelli64 or some such
+  // RBF - Fix find_file_size for large files on Win32
+
   if ((fseeko(f,0,SEEK_END)))
     return 0;
 
