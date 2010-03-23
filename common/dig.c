@@ -317,7 +317,6 @@ static int is_junction_point(state *s, TCHAR *fn)
   return status;
 }
 
-// RBF - Remove experimental code?
 // This is experimental code for reparse point process
 // We don't use it yet, but I don't want to delete it
 // until I know what I'm doing. (jk 1 Mar 2009)

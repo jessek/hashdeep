@@ -63,7 +63,9 @@ http://md5deep.sourceforge.net/</a>.
 <li> <a href="#basic">Basic Operation</a></li>
 <li> <a href="#error">Error Messages</a></li>
 <li> <a href="#recursive">Recursive Mode</a></li>
+<br>
 <li> <a href="#time">Time Estimation Mode</a></li>
+<li> <a href="#expert">Expert Mode</a></li>
 <li> <a href="#match">Matching Mode</a></li>
 <li> <a href="#audit">Audit Mode</a> - Where the magic happens!</li>
 <br>
@@ -258,6 +260,116 @@ hash is displayed:
 </pre>
 
 
+<br>
+<h2 id="expert"> Expert mode </h2>
+
+Hashdeep's expert mode allows you to specify which and only which types of
+files are processed. The available file types are:
+
+<ul>
+<li> Regular files, such as text, graphics, and executables.
+
+<li> Block files, such as devices, hard drives, tape drives, CDROMs, etc. 
+
+<li> Character devices, such as /dev/tty. 
+
+<li> Named Pipes
+
+<li> Symbolic Links - Soft links. Note that this option tells the program 
+to follow a symbolic link <em>provided</em> that you have also specified
+the parameter for whatever the link is pointing to. That is, if the 
+symlink points to a directory, you must have also specified -r. If the 
+symbolic links points to a regular file, you must have also specified
+the -o f mode.
+
+<li> Socket - Network connections
+
+<li> Solaris Door - Available only on Solaris
+
+</ul>
+
+To use expert mode, use the <tt>-o</tt> flag followed by the letter or
+letters corresponding to the types of files you want to process.
+
+<br>
+<br>
+
+<table border="1" align="center">
+
+<tr>
+  <td><b>File type</b></td>
+  <td><b>Letter</b></td>
+</tr>
+
+<tr>
+  <td>Regular</td>
+  <td>f</td>
+</tr>
+
+<tr>
+  <td>Block</td>
+  <td>b</td>
+</tr>
+
+<tr>
+  <td>Character</td>
+  <td>c</td>
+</tr>
+
+<tr>
+  <td>Named Pipe</td>
+  <td>p</td>
+</tr>
+
+<tr>
+  <td>Symbolic Link</td>
+  <td>l</td>
+</tr>
+
+<tr>
+  <td>Socket</td>
+  <td>s</td>
+</tr>
+
+<tr>
+  <td>Solaris Door</td>
+  <td>d</td>
+</tr>
+
+</table>
+<br>
+
+Let's say that in the current directory there are files hda (a block device),
+my-link, a symbolic link to a block device, and data.txt, a regular file.
+
+<pre>$ hashdeep -o f *
+%%%% HASHDEEP-1.0
+%%%% size,md5,sha256,filename
+## Invoked from: /Users/jessek/tmp
+## $ ./hashdeep -o f hda my-link data.txt
+## 
+108544,c314958f0c770a5f2d36cfd086098316,66e427342032c7a8f04319f774be3729f45d7961e4cb01c604ab529eb0f7aea1,/Users/jessek/tmp/data.txt
+$</pre>
+
+Note that only the regular files are hashed. Conversely:
+
+<pre>$ md5deep -o lb *
+%%%% HASHDEEP-1.0
+%%%% size,md5,sha256,filename
+## Invoked from: /Users/jessek/tmp
+## $ ./hashdeep -o f hda my-link data.txt
+## 
+51344,7d79604c3baf94f9455a759b8187e9d5,fa202940e0d836103bb7d0395c8f6da5eeaacfafa66be21ff4ac205feaf4f96f,/Users/jessek/tmp/my-link
+55480,df3cd5fe1b727f722a09d94aa43f1dd5,4cabb46e691739a876b61f7d45d56d771ee8c5903c283c4b36630c7ae78c5ad9,/Users/jessek/tmp/hda
+$</pre>
+
+Note that the <a href="#recursive">recursive mode</a> can be used
+in conjunction with the expert mode. Directories are ignored without
+the recursive flag.
+
+
+
+<br>
 <h2 id="match"> Matching mode </h2>
 
 <p>
@@ -347,7 +459,43 @@ negative matching does normally:
 <br>
 <h2 id="audit">Audit Mode</h2>
 
-<!-- RBF - Write Audit mode description -->
+
+
+<p>
+The real power of hashdeep is the Audit mode. During an audit, the 
+program will not only verify hashes of files, but it will also alert the
+user to any files that have moved, changed, or been inserted into the 
+set of known files. 
+</p>
+
+<p>
+To conduct an audit, the user first computes a set of hashes for known
+files:
+
+<pre>
+C:\> hashdeep -r myfiles > known.txt
+</pre>
+</p>
+
+<p>
+When the user wants to audit this hash set, they use a slightly different
+command line:
+
+<pre>
+C:\> hashdeep -r -a -k known.txt myfiles
+hashdeep: Audit passed
+</pre>
+</p>
+
+The program will report that the audit either passed or failed. If the
+audit passed, this means all of the known files were found unchanged
+in the directory and no new files were added. If this is not the case,
+the audit will fail. More information about why the audit failed
+can be displayed with the -v flag. The -v flag can be repeated multiple
+times, up to three times, to get more information on the status of
+each file.
+
+<!-- RBF - Flesh out audit mode description -->
 
 <hr>
 <a href="http://sourceforge.net"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=67079&type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>

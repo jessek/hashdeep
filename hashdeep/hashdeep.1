@@ -1,4 +1,4 @@
-.TH HASHDEEP "1" "v3.5.2 \- RBF DATE 2010" "AFOSI" "United States Air Force"
+.TH HASHDEEP "1" "v3.6 \- 23 Mar 2010" "AFOSI" "United States Air Force"
 
 .SH NAME
 hashdeep \- Compute, compare, or audit multiple message digests
@@ -8,7 +8,7 @@ hashdeep \- Compute, compare, or audit multiple message digests
 -V | -h
 .br
 .B hashdeep
-[-c <alg1>[,<alg2>]] [-k <file>] [-i <size>] [-amxwMXrespblvv] [\fBFILES\fR]
+[-c <alg1>[,<alg2>]] [-k <file>] [-i <size>] [\-o <fbcplsd>] [-amxwMXrespblvv] [\fBFILES\fR]
 
 
 .SH DESCRIPTION
@@ -123,11 +123,34 @@ remaining for each file being processed. Time estimates for files
 larger than 4GB are not available on Windows. This mode may not be
 used with th \-p mode.
 
+
 .TP
 \fB\-i <size> \fR
 Size threshold mode. Only hash files smaller than the given the 
 threshold. Sizes may be specified 
 using multiplers b,k,m,g,t,p, and e.
+
+
+.TP
+\fB\-o\fR <bcpflsd>
+Enables expert mode. Allows the user specify which (and only which) types of
+files are processed. Directory processing is still controlled with the
+\-r flag. The expert mode options allowed are:
+.br
+f \- Regular files
+.br
+b \- Block Devices
+.br
+c \- Character Devices
+.br
+p \- Named Pipes
+.br
+l \- Symbolic Links
+.br
+s \- Sockets
+.br
+d \- Solaris Doors
+
 
 .TP
 \fB\-s\fR

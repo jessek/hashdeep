@@ -1,8 +1,12 @@
-** Changes in version RBF (RBF DATE)
+** Changes in version 3.6 (23 Mar 2010)
 
 * New Features
 
       Added expert mode found in md5deep to hashdeep.
+
+* Bug Fixes
+
+      Fixed error checking in helper routines.
 
 
 

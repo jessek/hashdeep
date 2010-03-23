@@ -123,8 +123,8 @@ static void shorten_filename(TCHAR *dest, TCHAR *src)
   if (NULL == basen)
     return;
 
-  // RBF - Check the return value of my_basename
-  my_basename(basen);  
+  if (my_basename(basen))
+    return;
 
   if (_tcslen(basen) < MAX_FILENAME_LENGTH)
   {

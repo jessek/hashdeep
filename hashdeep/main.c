@@ -6,7 +6,6 @@
 
 // So that the usage message fits in a standard DOS window, this
 // function should produce no more than 22 lines of text.
-// RBF - Document -o mode in man page
 static void usage(state *s)
 {
   hashname_t i;
@@ -35,7 +34,7 @@ static void usage(state *s)
   print_status("-b - prints only the bare name of files; all path information is omitted");
   print_status("-l - print relative paths for filenames");
   print_status("-i - only process files smaller than the given threshold");
-  print_status("-o  - only process certain types of files. See README/manpage");
+  print_status("-o - only process certain types of files. See README/manpage");
   print_status("-v - verbose mode. Use again to be more verbose.");
   print_status("-V - display version number and exit");
 }

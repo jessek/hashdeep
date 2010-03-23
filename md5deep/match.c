@@ -219,9 +219,8 @@ int load_match_file(state *s, char *fn)
 
 void add_hash(state *s, char *h, char *fn)
 {
-  // RBF - Display error and crash on NULL state or filename?
   if (NULL == s || NULL == h || NULL == fn)
-    return;
+    internal_error("%s: Null values passed into add_hash", __progname);
 
   init_table();
   switch (hashTableAdd(s,&knownHashes,h,fn))
@@ -242,8 +241,7 @@ int is_known_hash(char *h, char *known_fn)
   // We don't check if the known_fn parameter is NULL because
   // that's a legitimate call in hash.c under mode_not_matched
   if (NULL == h)
-    internal_error("%s: Null values passed into is_known_hash",
-		   __progname);
+    internal_error("%s: Null values passed into is_known_hash",__progname);
 
   if (!table_initialized)
     internal_error("%s: Attempt to check hash before table was initialized",
