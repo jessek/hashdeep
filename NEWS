@@ -1,3 +1,14 @@
+** Changes in version 3.7 (RBF DATE)
+
+* New Features
+
+* Bug Fixes
+
+      Addressed display problem for time estimates of files with 
+      long filenames in the current directory.
+
+
+
 ** Changes in version 3.6 (23 Mar 2010)
 
 * New Features

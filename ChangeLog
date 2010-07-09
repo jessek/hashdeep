@@ -1,3 +1,11 @@
+2010-06-24 Jesse Kornblum
+
+	* Fixed return value in my_basename to reflect no error when
+	  the input does not need any modifications. Addresses bug 3014396.
+
+	* Version bump to 3.7-001
+
+	
 2010-03-23 Jesse Kornblum
 
 	* Version bump to 3.6 and release

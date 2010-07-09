@@ -166,9 +166,11 @@ int my_basename(TCHAR *str)
   if (NULL == str)
     return TRUE;
 
+  // We search for the last slash in the input, if any. If there aren't
+  // any slashes in the string, we can stop now. There's nothing to do.
   tmp  = _tcsrchr(str,DIR_SEPARATOR);
   if (NULL == tmp)
-    return TRUE;
+    return FALSE;
 
   len = _tcslen(tmp);
 
