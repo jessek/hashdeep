@@ -3,4 +3,4 @@
 make distclean
 ./configure --host=i386-mingw32 CFLAGS="-Wall -W -O2"
 make
-mingw32-strip {hashdeep,md5deep}/*.exe
+i386-mingw32-strip {hashdeep,md5deep}/*.exe

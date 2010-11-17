@@ -55,7 +55,7 @@ win-prep:
 
 win-package: win-prep win-docs
 	rm -rf $(distdir).zip $(distdir)
-	$(STRIP) md5deep/*.exe hashdeep/hashdeep.exe
+	i386-mingw32-strip md5deep/*.exe hashdeep/hashdeep.exe
 	mkdir $(distdir)
 	cp $(WINDOWSDOCS) md5deep/*.exe hashdeep/hashdeep.exe $(distdir)
 	zip -r9 $(distdir).zip $(distdir)
