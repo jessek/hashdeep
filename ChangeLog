@@ -2,6 +2,8 @@
 
 	* Added -Z flag for AccessData Triage mode
 
+	* Added some more error checking in md5deep/main.c functions
+
 	* Version bump to 3.7-002
 
 

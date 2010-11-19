@@ -57,6 +57,9 @@ static void usage(void)
 
 static void check_flags_okay(state *s)
 {
+  if (NULL == s)
+    exit (STATUS_USER_ERROR);
+
   sanity_check(s,
 	       ((s->mode & mode_match) || (s->mode & mode_match_neg)) &&
 	       !s->hashes_loaded,
@@ -90,6 +93,9 @@ static void check_flags_okay(state *s)
 
 static void check_matching_modes(state *s)
 {
+  if (NULL == s)
+    exit (STATUS_USER_ERROR);
+
   sanity_check(s,
 	       (s->mode & mode_match) && (s->mode & mode_match_neg),
 	       "Regular and negative matching are mutually exclusive.");
@@ -99,6 +105,9 @@ static void check_matching_modes(state *s)
 static int process_command_line(state *s, int argc, char **argv)
 {
   int i;
+
+  if (NULL == s)
+    return TRUE;
   
   while ((i = getopt(argc,
 		     argv,
@@ -136,9 +145,6 @@ static int process_command_line(state *s, int argc, char **argv)
 
       break;
 
-    case 'q': 
-      s->mode |= mode_quiet; 
-      break;
 
     case 'Z':
       s->mode |= mode_ad_triage;
@@ -168,14 +174,11 @@ static int process_command_line(state *s, int argc, char **argv)
       add_hash(s,optarg,optarg);
       s->hashes_loaded = TRUE;
       break;
-      
-    case 'l': 
-      s->mode |= mode_relative; 
-      break;
 
-    case 'b': 
-      s->mode |= mode_barename; 
-      break;
+
+
+
+
 
     case 'o': 
       s->mode |= mode_expert; 
@@ -231,6 +234,18 @@ static int process_command_line(state *s, int argc, char **argv)
 
     case 'k':
       s->mode |= mode_asterisk;
+      break;
+
+    case 'b': 
+      s->mode |= mode_barename; 
+      break;
+      
+    case 'l': 
+      s->mode |= mode_relative; 
+      break;
+
+    case 'q': 
+      s->mode |= mode_quiet; 
       break;
 
     case 'h':
@@ -291,6 +306,9 @@ static int prepare_windows_command_line(state *s)
   int argc;
   TCHAR **argv;
 
+  if (NULL == s)
+    return TRUE;
+
   argv = CommandLineToArgvW(GetCommandLineW(),&argc);
   
   s->argc = argc;
@@ -307,6 +325,9 @@ int process_input_list(state *s)
   int done = FALSE;
   FILE * handle = fopen(s->input_list,"rb");
   char * fn;
+
+  if (NULL == s)
+    return TRUE;
 
   t_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
   if (NULL == t_name)
@@ -447,11 +468,11 @@ int main(int argc, char **argv)
     free(cwd);
   }
 
-  /* We only have to worry about checking for unused hashes if one 
-     of the matching modes was enabled. We let the display_not_matched
-     function determine if it needs to display anything. The function
-     also sets our return values in terms of inputs not being matched
-     or known hashes not being used */
+  // We only have to worry about checking for unused hashes if one 
+  // of the matching modes was enabled. We let the display_not_matched
+  // function determine if it needs to display anything. The function
+  // also sets our return values in terms of inputs not being matched
+  // or known hashes not being used
   if ((s->mode & mode_match) || (s->mode & mode_match_neg))
     s->return_value = finalize_matching(s);
 
