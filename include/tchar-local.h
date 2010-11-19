@@ -11,6 +11,9 @@
 // This says that we require Windows NT 4.0 to run
 #define _WIN32_WINNT 0x0400
 
+#define UNICODE
+#define _UNICODE
+
 # include <windows.h>
 # include <wchar.h>
 # include <tchar.h>

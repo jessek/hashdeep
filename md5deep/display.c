@@ -86,7 +86,8 @@ int display_hash(state *s)
   
   if (s->mode & mode_ad_triage)
   {
-    _tprintf (_TEXT("\t%s\t%s"), s->hash_result, s->full_name);
+    _tprintf (_TEXT("\t%s\t"), s->hash_result);
+    display_filename(stdout,s->full_name);
     make_newline(s);
     return FALSE;
   }    

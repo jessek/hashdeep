@@ -280,7 +280,7 @@ static int is_junction_point(state *s, TCHAR *fn)
 
 
 #ifdef _WIN32
-  WIN32_FIND_DATAW FindFileData;
+  WIN32_FIND_DATA FindFileData;
   HANDLE hFind;
 
   hFind = FindFirstFile(fn, &FindFileData);
@@ -650,7 +650,7 @@ int process_win32(state *s, TCHAR *fn)
 {
   int rc, status = STATUS_OK;
   TCHAR *asterisk, *question, *tmp, *dirname, *new_fn;
-  WIN32_FIND_DATAW FindFileData;
+  WIN32_FIND_DATA FindFileData;
   HANDLE hFind;
 
   //  print_status("Called process_win32(%S)", fn);

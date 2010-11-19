@@ -290,7 +290,8 @@ static int hash_triage(state *s)
     s->hash_result[2 * i + 1] = hex[s->hash_sum[i] & 0xf];
   }
 
-  _tprintf(_TEXT("%"PRIu64"\t%s"), s->total_bytes, s->hash_result);
+  printf ("%"PRIu64, s->total_bytes);
+  _tprintf(_TEXT("\t%s"), s->hash_result);
   
   return FALSE;
 }
