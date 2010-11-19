@@ -83,6 +83,13 @@ int display_hash(state *s)
 {
   if (NULL == s)
     return TRUE;
+  
+  if (s->mode & mode_ad_triage)
+  {
+    _tprintf (_TEXT("\t%s\t%s"), s->hash_result, s->full_name);
+    make_newline(s);
+    return FALSE;
+  }    
 
   // We can't call display_size here because we don't know if we're
   // going to display *anything* yet. If we're in matching mode, we

@@ -1,3 +1,10 @@
+2010-11-19 Jesse Kornblum
+
+	* Added -Z flag for AccessData Triage mode
+
+	* Version bump to 3.7-002
+
+
 2010-06-24 Jesse Kornblum
 
 	* Fixed return value in my_basename to reflect no error when
@@ -5,7 +12,7 @@
 
 	* Version bump to 3.7-001
 
-	
+
 2010-03-23 Jesse Kornblum
 
 	* Version bump to 3.6 and release
@@ -14,7 +21,7 @@
 	  guide. Also made a few tweaks to the md5deep documentation.
 
 	* Added some error checking routines to helpers
-	
+
 
 2010-03-06 Jesse Kornblum
 

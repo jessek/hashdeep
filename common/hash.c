@@ -256,9 +256,45 @@ static int compute_hash(state *s)
   }      
 }
 
+#ifdef __MD5DEEP_H
+static int hash_triage(state *s)
+{
+  if (NULL == s)
+    return TRUE;
 
+  memset(s->hash_result,0,(2 * s->hash_length) + 1);
 
+  s->block_size = 512;
+  s->mode |= mode_piecewise;
 
+  HASH_INITIALIZE();
+    
+  if (!compute_hash(s))
+  {
+    if (s->mode & mode_piecewise)
+      free(s->full_name);
+    return TRUE;
+  }
+
+  s->mode -= mode_piecewise;
+  
+  HASH_FINALIZE();
+
+  // RBF - This is repeated code
+  static char hex[] = "0123456789abcdef";
+  size_t i;
+  
+  for (i = 0; i < s->hash_length ; ++i) 
+  {
+    s->hash_result[2 * i] = hex[(s->hash_sum[i] >> 4) & 0xf];
+    s->hash_result[2 * i + 1] = hex[s->hash_sum[i] & 0xf];
+  }
+
+  _tprintf(_TEXT("%"PRIu64"\t%s"), s->total_bytes, s->hash_result);
+  
+  return FALSE;
+}
+#endif
 
 
 static int hash(state *s)
@@ -276,6 +312,15 @@ static int hash(state *s)
     time(&(s->start_time));
     s->last_time = s->start_time;
   }
+
+#ifdef __MD5DEEP_H
+  if (s->mode & mode_ad_triage)
+  {
+    hash_triage(s);
+    s->bytes_read = 0;
+    fseeko(s->handle, 0, SEEK_SET);
+  }
+#endif
   
   if ( s->mode & mode_piecewise )
   {
@@ -289,11 +334,11 @@ static int hash(state *s)
       return TRUE;
     }
   }
-
-
+  
   while (!done)
   {
-#ifdef __MD5DEEPH_H
+    // RBF - This was messed up. does it work now?
+#ifdef __MD5DEEP_H
     memset(s->hash_result,0,(2 * s->hash_length) + 1);
 #endif
     HASH_INITIALIZE();
@@ -351,6 +396,8 @@ static int hash(state *s)
     else
       done = TRUE;
   }
+
+
   
   if (s->mode & mode_piecewise)
   {

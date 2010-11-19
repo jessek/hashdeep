@@ -102,7 +102,7 @@ static int process_command_line(state *s, int argc, char **argv)
   
   while ((i = getopt(argc,
 		     argv,
-		     "f:I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqU")) != -1) { 
+		     "f:I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZ")) != -1) { 
     switch (i) {
 
     case 'f':
@@ -139,6 +139,11 @@ static int process_command_line(state *s, int argc, char **argv)
     case 'q': 
       s->mode |= mode_quiet; 
       break;
+
+    case 'Z':
+      s->mode |= mode_ad_triage;
+      break;
+
     case 't':
       s->mode |= mode_timestamp;
       MD5DEEP_ALLOC(char,s->time_str,MAX_TIME_STRING_LENGTH);
