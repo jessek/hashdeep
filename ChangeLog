@@ -1,3 +1,9 @@
+2010-11-22 Jesse Kornblum
+
+	* Added Input/Output error to list of fatal errors when
+	  reading files.
+	
+
 2010-11-19 Jesse Kornblum
 
 	* Added -Z flag for AccessData Triage mode

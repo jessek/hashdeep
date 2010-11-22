@@ -153,6 +153,7 @@ static int file_fatal_error(void)
     case ETXTBSY:  // Text file busy
       // The file is being written to by another process.
       // This happens with Windows system files 
+    case EIO:      // Input/Output error
 
       return TRUE;  
     }
