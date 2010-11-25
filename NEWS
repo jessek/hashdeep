@@ -2,6 +2,9 @@
 
 * New Features
 
+      Added triage mode, -Z flag, to compute file size and partial
+      hashes in addition to full file hash.
+
 * Bug Fixes
 
       Addressed display problem for time estimates of files with 

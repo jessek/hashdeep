@@ -257,6 +257,18 @@ static int compute_hash(state *s)
   }      
 }
 
+
+// Macro to convert raw hex bytes to ASCII output
+static char hex[] = "0123456789abcdef";	
+#define HASH_TO_STR(SRC,DEST,LEN)				\
+  size_t __i;							\
+  for (__i = 0; __i < LEN ; ++__i)				\
+    {								\
+      DEST[2 * __i    ] = hex[(SRC[__i] >> 4) & 0xf];		\
+      DEST[2 * __i + 1] = hex[ SRC[__i]       & 0xf];		\
+    }
+
+
 #ifdef __MD5DEEP_H
 static int hash_triage(state *s)
 {
@@ -265,6 +277,9 @@ static int hash_triage(state *s)
 
   memset(s->hash_result,0,(2 * s->hash_length) + 1);
 
+  // We use the piecewise mode to get a partial hash of the first 
+  // 512 bytes of the file. But we'll have to remove piecewise mode
+  // before returning to the main hashing code
   s->block_size = 512;
   s->mode |= mode_piecewise;
 
@@ -280,19 +295,9 @@ static int hash_triage(state *s)
   s->mode -= mode_piecewise;
   
   HASH_FINALIZE();
+  HASH_TO_STR(s->hash_sum, s->hash_result, s->hash_length);
 
-  // RBF - This is repeated code
-  static char hex[] = "0123456789abcdef";
-  size_t i;
-  
-  for (i = 0; i < s->hash_length ; ++i) 
-  {
-    s->hash_result[2 * i] = hex[(s->hash_sum[i] >> 4) & 0xf];
-    s->hash_result[2 * i + 1] = hex[s->hash_sum[i] & 0xf];
-  }
-
-  printf ("%"PRIu64, s->total_bytes);
-  _tprintf(_TEXT("\t%s"), s->hash_result);
+  printf ("%"PRIu64"\t%s", s->total_bytes, s->hash_result);
   
   return FALSE;
 }
@@ -316,9 +321,13 @@ static int hash(state *s)
   }
 
 #ifdef __MD5DEEP_H
-  if (s->mode & mode_ad_triage)
+  if (s->mode & mode_triage)
   {
+    // Hash and display the first 512 bytes of this file
     hash_triage(s);
+
+    // Rather than muck about with updating the state of the input
+    // file, just reset everything and process it normally.
     s->bytes_read = 0;
     fseeko(s->handle, 0, SEEK_SET);
   }
@@ -339,7 +348,6 @@ static int hash(state *s)
   
   while (!done)
   {
-    // RBF - This was messed up. does it work now?
 #ifdef __MD5DEEP_H
     memset(s->hash_result,0,(2 * s->hash_length) + 1);
 #endif
@@ -372,14 +380,7 @@ static int hash(state *s)
       HASH_FINALIZE();
 
 #ifdef __MD5DEEP_H
-      static char hex[] = "0123456789abcdef";
-      size_t i;
-      
-      for (i = 0; i < s->hash_length ; ++i) 
-      {
-	s->hash_result[2 * i] = hex[(s->hash_sum[i] >> 4) & 0xf];
-	s->hash_result[2 * i + 1] = hex[s->hash_sum[i] & 0xf];
-      }
+      HASH_TO_STR(s->hash_sum, s->hash_result, s->hash_length);
       
       // Under not matched mode, we only display those known hashes that
       // didn't match any input files. Thus, we don't display anything now.

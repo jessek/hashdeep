@@ -265,7 +265,7 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 #define mode_timestamp         1<<21
 #define mode_csv               1<<22
 #define mode_read_from_file    1<<25
-#define mode_ad_triage         1<<26
+#define mode_triage            1<<26
 
 // Modes 27-48 are reserved for future use.
 //

@@ -147,7 +147,7 @@ static int process_command_line(state *s, int argc, char **argv)
 
 
     case 'Z':
-      s->mode |= mode_ad_triage;
+      s->mode |= mode_triage;
       break;
 
     case 't':

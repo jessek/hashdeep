@@ -1,12 +1,24 @@
+2010-11-24 Jesse Kornblum
+
+	* Renamed triage mode to more generic version
+
+	* Modified triage mode to use ASCII, not Unicode tabs
+
+	* Changed 'make world' directive to be based on Linux
+	  Mingw32 compiler, i586-mingw32msvc
+
+	* Added conditional Unicode defines to tchar-local.h
+
+
 2010-11-22 Jesse Kornblum
 
 	* Added Input/Output error to list of fatal errors when
 	  reading files.
-	
+
 
 2010-11-19 Jesse Kornblum
 
-	* Added -Z flag for AccessData Triage mode
+	* Added -Z flag for Triage mode
 
 	* Added some more error checking in md5deep/main.c functions
 

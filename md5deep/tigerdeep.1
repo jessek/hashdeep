@@ -157,9 +157,15 @@ Quiet mode. File names are omitted from the output.
 
 .TP
 \fB\-Z\fR
-Produces output in Access Data's Triage format. Each line contans
+Produces output in Triage format. Each line contans
 the file's size, a tab, a hash of the first 512 bytes, a tab,
 the hash of the complete file, a tab, and the file name.
+These values are intended in increasing order of specificity. That
+is, two files with different sizes cannot possibly match. This is
+a fast comparison and should be done first. Next, two files 
+with different partial hashes cannot possibly match. This is often 
+faster than hashing the whole file. Finally, if those two pieces
+align, then it's worth reading and hashing the entire file.
 
 .TP
 \fB\-0\fR

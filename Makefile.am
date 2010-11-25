@@ -21,6 +21,9 @@ todo:
 # The flip command can be found at:
 # http://ccrma-www.stanford.edu/~craig/utility/flip/#
 
+FLIP = todos
+CROSS_PREFIX = i586-mingw32msvc
+
 SUFFIXES = .TXT .1
 
 .1.TXT:
@@ -46,24 +49,26 @@ MD5DEEP.1:
 HASHDEEP.1:
 	cp hashdeep/hashdeep.1 HASHDEEP.1
 
-win-docs:  $(WINDOWSDOCS)
-	flip -d $(WINDOWSDOCS)
+win-docs: $(WINDOWSDOCS)
+	$(FLIP) $(WINDOWSDOCS)
+#	flip -d $(WINDOWSDOCS)
 #	unix2dos $(WINDOWSDOCS)
+#	todos $(WINDOWSDOCS)
 
 win-prep: 
 	rm -f $(WINDOWSDOCS)
 
 win-package: win-prep win-docs
 	rm -rf $(distdir).zip $(distdir)
-	i386-mingw32-strip md5deep/*.exe hashdeep/hashdeep.exe
+	$(CROSS_PREFIX)-strip md5deep/*.exe hashdeep/hashdeep.exe
 	mkdir $(distdir)
 	cp $(WINDOWSDOCS) md5deep/*.exe hashdeep/hashdeep.exe $(distdir)
 	zip -r9 $(distdir).zip $(distdir)
 	rm -rf $(distdir) $(WINDOWSDOCS) MD5DEEP.1 HASHDEEP.1
 
-world: distclean
-	./configure --host=i386-mingw32
+
+world: distclean $(WINDOWSDOCS)
+	./configure --host=$(CROSS_PREFIX)
 	make
 	make win-package
 	make dist
-

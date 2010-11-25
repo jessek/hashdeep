@@ -1,18 +1,23 @@
-
-/* $Id$ */
-
 #ifndef __TCHAR_LOCAL_H
 #define __TCHAR_LOCAL_H
 
+// $Id$
 
-/* Unicode support */
+// Unicode support 
 #ifdef _WIN32
 
 // This says that we require Windows NT 4.0 to run
 #define _WIN32_WINNT 0x0400
 
-#define UNICODE
-#define _UNICODE
+// These defines are required to enable Unicode support.
+// Some of the build scripts define them for us, some don't.
+// We use conditional defines to avoid redefining them.
+#ifndef UNICODE
+# define UNICODE
+#endif
+#ifndef _UNICODE
+# define _UNICODE
+#endif
 
 # include <windows.h>
 # include <wchar.h>
