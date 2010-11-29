@@ -1,4 +1,9 @@
-2010-11-24 Jesse Kornblum
+2010-11-29 Jesse Kornblum
+	
+	* Fixed typo in hashdeep audit message
+
+
+2010-11-23 Jesse Kornblum
 
 	* Renamed triage mode to more generic version
 

@@ -63,7 +63,7 @@ int display_audit_results(state *s)
       print_status(" ");
       */
       print_status("          Files matched: %"PRIu64, s->match_exact);
-      print_status("Files paritally matched: %"PRIu64, s->match_partial);
+      print_status("Files partially matched: %"PRIu64, s->match_partial);
       print_status("            Files moved: %"PRIu64, s->match_moved);
       print_status("        New files found: %"PRIu64, s->match_unknown);
       print_status("  Known files not found: %"PRIu64, s->match_unused);
