@@ -154,6 +154,7 @@ static int file_fatal_error(void)
       // The file is being written to by another process.
       // This happens with Windows system files 
     case EIO:      // Input/Output error
+      // Added 22 Nov 2010 in response to user email
 
       return TRUE;  
     }
