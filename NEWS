@@ -6,6 +6,10 @@
       hashes in addition to full file hash.
 
 * Bug Fixes
+ 
+      Fixed hashdeep piecewise mode to include the correct size
+      of each piece being hashed. This enables audit mode to 
+      work correctly.
 
       Addressed display problem for time estimates of files with 
       long filenames in the current directory.
