@@ -130,7 +130,7 @@ NEWLINE, NEWLINE, NEWLINE
 #define MAX_TIME_STRING_LENGTH  31
 
 // This denotes when we don't know the file size.
-#define UNKNOWN_FILE_SIZE  0xfffffffffffffffe
+#define UNKNOWN_FILE_SIZE  0xfffffffffffffffeLL
 
 // LINE_LENGTH is different between UNIX and WIN32 and is defined below 
 #define MAX_FILENAME_LENGTH   LINE_LENGTH - 41
