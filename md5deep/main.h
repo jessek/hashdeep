@@ -57,12 +57,26 @@ typedef struct _state {
   // The type of file, as report by stat
   uint8_t       input_type;
 
+  // RBF - Remove vestigial code
   // Size of the input file, in bytes
-  uint64_t      total_bytes;
+  //  uint64_t      total_bytes;
   // and megabytes
-  uint64_t      total_megs;
+  //uint64_t      total_megs;
 
+  // How many bytes (and megs) we think are in the file, via stat(2)
+  // and how many bytes we've actually read in the file
+  uint64_t        stat_bytes;
+  uint64_t        stat_megs;
+  uint64_t        actual_bytes;
+
+
+  // Where the last read operation started and ended
+  // bytes_read is a shorthand for read_end - read_start
+  uint64_t      read_start;
+  uint64_t      read_end;
   uint64_t      bytes_read;
+
+
 #ifdef _WIN32
   __time64_t    timestamp;
 #else

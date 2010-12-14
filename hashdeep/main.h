@@ -181,15 +181,24 @@ struct _state {
   int             is_stdin;
   FILE          * handle;
   unsigned char * buffer;
-  uint64_t        total_megs;
   time_t          timestamp;
 
-  // We don't want to use s->total_bytes but it is
-  // required for hash.c
-  uint64_t        total_bytes;
-
+  // When only hashing files larger/smaller than a given threshold
   uint64_t        size_threshold;
+
+  // How many bytes (and megs) we think are in the file, via stat(2)
+  // and how many bytes we've actually read in the file
+  uint64_t        stat_bytes;
+  uint64_t        stat_megs;
+  uint64_t        actual_bytes;
+
+  // Where the last read operation started and ended
+  // bytes_read is a shorthand for read_end - read_start
+  uint64_t        read_start;
+  uint64_t        read_end;
   uint64_t        bytes_read;
+
+  
 
   /* We don't want to use s->full_name, but it's required for hash.c */
   TCHAR         * full_name;

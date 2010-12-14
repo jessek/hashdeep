@@ -68,7 +68,14 @@ int display_hash_simple(state *s)
   if ( ! (s->banner_displayed))
     display_banner(s);
 
-  printf ("%"PRIu64",", s->bytes_read);
+  // In piecewise mode the size of each 'file' is the size
+  // of the block it came from. This is important when doing an
+  // audit in piecewise mode.
+  // RBF - Except for the last block, of course
+  //  if (s->mode & mode_piecewise)
+  //    printf ("%"PRIu64",", s->block_size);
+  //  else
+    printf ("%"PRIu64",", s->bytes_read);
 
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {

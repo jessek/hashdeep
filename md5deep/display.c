@@ -12,13 +12,13 @@ static void display_size(state *s)
     // When in CSV mode we always display the full size
     if (s->mode & mode_csv)
     {
-      printf ("%"PRIu64",", s->bytes_read);
+      printf ("%"PRIu64",", s->actual_bytes);
     }
     // We reserve ten characters for digits followed by two spaces
     else if (s->bytes_read > 9999999999LL)
       printf ("9999999999  ");
     else
-      printf ("%10"PRIu64"  ", s->bytes_read);      
+      printf ("%10"PRIu64"  ", s->actual_bytes);      
   }	
 }
 

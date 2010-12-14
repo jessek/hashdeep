@@ -57,7 +57,7 @@ static void update_display(state *s, time_t elapsed)
   else
     mb_read = s->bytes_read / ONE_MEGABYTE;
   
-  if (0 == s->total_megs)
+  if (0 == s->stat_megs)
   {
     _sntprintf(s->msg,
 	       LINE_LENGTH-1,
@@ -77,7 +77,7 @@ static void update_display(state *s, time_t elapsed)
     // By subtracting the number of elapsed seconds from that, we should
     // get a good estimate of how many seconds remain.
 
-    seconds = (s->total_bytes / (s->bytes_read / elapsed)) - elapsed;
+    seconds = (s->stat_bytes / (s->bytes_read / elapsed)) - elapsed;
 
     // We don't care if the remaining time is more than one day.
     // If you're hashing something that big, to quote the movie Jaws:
@@ -93,7 +93,7 @@ static void update_display(state *s, time_t elapsed)
 	       _TEXT("%s: %"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s"),
 	       s->short_name,
 	       mb_read,
-	       s->total_megs,
+	       s->stat_megs,
 	       hour,
 	       min,
 	       seconds,
@@ -189,8 +189,14 @@ static int compute_hash(state *s)
     // Clear the buffer in case we hit an error and need to pad the hash 
     memset(buffer,0,mysize);
 
-    current_read = fread(buffer, 1, mysize, s->handle);
+    s->read_start = ftello(s->handle);
 
+    current_read = fread(buffer, 1, mysize, s->handle);
+    
+    s->actual_bytes += current_read;
+    s->read_end = ftello(s->handle);
+    s->bytes_read = current_read;
+      
     // If an error occured, display a message but still add this block 
     if (ferror(s->handle))
     {
@@ -203,10 +209,9 @@ static int compute_hash(state *s)
 	   
       if (file_fatal_error())
 	return FALSE; 
-
+      
+      // RBF - Why does this use mysize and not current_read? 
       HASH_UPDATE(buffer,mysize);
-
-      s->bytes_read += mysize;
       
       clearerr(s->handle);
       
@@ -219,8 +224,6 @@ static int compute_hash(state *s)
       // If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE
       // bytes and must reflect that in how we update the hash.
       HASH_UPDATE(buffer,current_read);
-
-      s->bytes_read += current_read;
     }
     
     // Check if we've hit the end of the file 
@@ -231,11 +234,12 @@ static int compute_hash(state *s)
 	fprintf(stderr,"\r%s\r",BLANK_LINE);
 
       return TRUE;
-    }
+   } 
 
-    // In piecewise mode we only hash one block at a time
+    // TRUE piecewise mode we only hash one block at a time
     if (s->mode & mode_piecewise)
     {
+      // RBF - Why does this use mysize and not current_read? 
       remaining -= mysize;
       if (remaining == 0)
 	return TRUE;
@@ -260,6 +264,7 @@ static int compute_hash(state *s)
 
 
 // Macro to convert raw hex bytes to ASCII output
+#ifdef __MD5DEEP_H
 static char hex[] = "0123456789abcdef";	
 #define HASH_TO_STR(SRC,DEST,LEN)				\
   size_t __i;							\
@@ -269,8 +274,6 @@ static char hex[] = "0123456789abcdef";
       DEST[2 * __i + 1] = hex[ SRC[__i]       & 0xf];		\
     }
 
-
-#ifdef __MD5DEEP_H
 static int hash_triage(state *s)
 {
   if (NULL == s)
@@ -298,7 +301,7 @@ static int hash_triage(state *s)
   HASH_FINALIZE();
   HASH_TO_STR(s->hash_sum, s->hash_result, s->hash_length);
 
-  printf ("%"PRIu64"\t%s", s->total_bytes, s->hash_result);
+  printf ("%"PRIu64"\t%s", s->stat_bytes, s->hash_result);
   
   return FALSE;
 }
@@ -309,12 +312,16 @@ static int hash(state *s)
 {
   int done = FALSE, status = FALSE;
   TCHAR *tmp_name = NULL;
-  uint64_t start_offset;
+  //  uint64_t start_offset;
   
   if (NULL == s)
     return TRUE;
 
   s->bytes_read = 0;
+  s->read_start = 0;
+  s->read_end = 0;
+  s->actual_bytes = 0;
+
   if (s->mode & mode_estimate)
   {
     time(&(s->start_time));
@@ -329,7 +336,7 @@ static int hash(state *s)
 
     // Rather than muck about with updating the state of the input
     // file, just reset everything and process it normally.
-    s->bytes_read = 0;
+    s->actual_bytes = 0;
     fseeko(s->handle, 0, SEEK_SET);
   }
 #endif
@@ -354,7 +361,7 @@ static int hash(state *s)
 #endif
     HASH_INITIALIZE();
     
-    start_offset = s->bytes_read;
+    s->read_start = s->actual_bytes;
 
     if (!compute_hash(s))
     {
@@ -367,15 +374,15 @@ static int hash(state *s)
     // data during this read OR if the whole file is zero bytes long.
     // If the file is zero bytes, we won't have read anything, but
     // still need to display a hash.
-    if (start_offset != s->bytes_read || 0 == s->total_bytes)
+    if (s->bytes_read != 0 || 0 == s->stat_bytes)
     {
       if (s->mode & mode_piecewise)
       {
-	if (0 == s->total_bytes)
+	if (0 == s->stat_bytes)
 	  _sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset 0"),tmp_name);
 	else
 	  _sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
-		     tmp_name, start_offset, s->bytes_read - 1);
+		     tmp_name, s->read_start, s->read_end - 1);
       }
       
       HASH_FINALIZE();
@@ -459,16 +466,17 @@ int hash_file(state *s, TCHAR *fn)
     // We should have the file size already from the stat functions
     // called during digging. If for some reason that failed, we'll
     // try some ioctl calls now to get the full size.
-    if (UNKNOWN_FILE_SIZE == s->total_bytes)
-      s->total_bytes = find_file_size(s->handle);
+    if (UNKNOWN_FILE_SIZE == s->stat_bytes)
+      s->stat_bytes = find_file_size(s->handle);
 
     // If this file is above the size threshold set by the user, skip it
-    if ((s->mode & mode_size) && (s->total_bytes > s->size_threshold))
+    if ((s->mode & mode_size) && (s->stat_bytes > s->size_threshold))
     {
       if (s->mode & mode_size_all)
       {
+	// RBF - Remove vestigital code
 	// Copy values needed to display hash correctly
-	s->bytes_read = s->total_bytes;
+	//	s->actual_bytes = s->total_bytes;
 
 	// Whereas md5deep has only one hash to wipe, hashdeep has several
 #ifdef __MD5DEEP_H
@@ -492,7 +500,7 @@ int hash_file(state *s, TCHAR *fn)
 
     if (s->mode & mode_estimate)
     {
-      s->total_megs = s->total_bytes / ONE_MEGABYTE;
+      s->stat_megs = s->stat_bytes / ONE_MEGABYTE;
       shorten_filename(s->short_name,s->full_name);    
     }    
 
@@ -522,7 +530,7 @@ int hash_stdin(state *s)
   if (s->mode & mode_estimate)
   {
     s->short_name = s->full_name;
-    s->total_megs = 0LL;
+    s->stat_megs = 0LL;
   }
 
   return (hash(s));

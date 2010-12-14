@@ -53,7 +53,7 @@ void multihash_finalize(state *s)
 	  
 	  len = s->hashes[i]->byte_length / 2;       
 	  
-	  /* Shorthand to make the code easier to read */
+	  // Shorthand to make the code easier to read
 	  result = s->current_file->hash[i];
 
 	  for (j = 0; j < len ; ++j) 
@@ -67,7 +67,11 @@ void multihash_finalize(state *s)
     }
 
   s->current_file->file_name = s->full_name;
-  s->current_file->file_size = s->total_bytes;
+
+  if (s->mode & mode_piecewise)
+    s->current_file->file_size = s->bytes_read;
+  else
+    s->current_file->file_size = s->actual_bytes;
 }
 
 
