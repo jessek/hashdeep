@@ -70,12 +70,12 @@ int display_hash_simple(state *s)
 
   // In piecewise mode the size of each 'file' is the size
   // of the block it came from. This is important when doing an
-  // audit in piecewise mode.
-  // RBF - Except for the last block, of course
-  //  if (s->mode & mode_piecewise)
-  //    printf ("%"PRIu64",", s->block_size);
-  //  else
+  // audit in piecewise mode. In all other cases we use the 
+  // total number of bytes from the file we *actually* read
+  if (s->mode & mode_piecewise)
     printf ("%"PRIu64",", s->bytes_read);
+  else
+    printf ("%"PRIu64",", s->actual_bytes);
 
   for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {

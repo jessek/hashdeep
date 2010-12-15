@@ -55,7 +55,7 @@ static void update_display(state *s, time_t elapsed)
   if (s->bytes_read < ONE_MEGABYTE)
     mb_read = 1;
   else
-    mb_read = s->bytes_read / ONE_MEGABYTE;
+    mb_read = s->actual_bytes / ONE_MEGABYTE;
   
   if (0 == s->stat_megs)
   {
@@ -77,7 +77,7 @@ static void update_display(state *s, time_t elapsed)
     // By subtracting the number of elapsed seconds from that, we should
     // get a good estimate of how many seconds remain.
 
-    seconds = (s->stat_bytes / (s->bytes_read / elapsed)) - elapsed;
+    seconds = (s->stat_bytes / (s->actual_bytes / elapsed)) - elapsed;
 
     // We don't care if the remaining time is more than one day.
     // If you're hashing something that big, to quote the movie Jaws:
@@ -166,7 +166,7 @@ static int file_fatal_error(void)
 static int compute_hash(state *s)
 {
   time_t current_time;
-  uint64_t current_read, mysize, remaining;
+  uint64_t current_read, mysize, remaining, this_start;
   unsigned char buffer[MD5DEEP_IDEAL_BLOCK_SIZE];
 
   if (NULL == s)
@@ -184,18 +184,22 @@ static int compute_hash(state *s)
 
   remaining = s->block_size;
 
+  s->read_start = ftello(s->handle);
+  s->read_end   = s->read_start;
+  s->bytes_read = 0;
+
   while (TRUE) 
   {    
     // Clear the buffer in case we hit an error and need to pad the hash 
     memset(buffer,0,mysize);
 
-    s->read_start = ftello(s->handle);
+    this_start = s->read_end;
 
     current_read = fread(buffer, 1, mysize, s->handle);
     
     s->actual_bytes += current_read;
-    s->read_end = ftello(s->handle);
-    s->bytes_read = current_read;
+    s->read_end     += current_read;
+    s->bytes_read   += current_read;
       
     // If an error occured, display a message but still add this block 
     if (ferror(s->handle))
@@ -204,20 +208,19 @@ static int compute_hash(state *s)
 	print_error_unicode(s,
 			    s->full_name,
 			    "error at offset %"PRIu64": %s",
-			    s->bytes_read,
+			    ftello(s->handle),
 			    strerror(errno));
 	   
       if (file_fatal_error())
 	return FALSE; 
       
-      // RBF - Why does this use mysize and not current_read? 
-      HASH_UPDATE(buffer,mysize);
+      HASH_UPDATE(buffer,current_read);
       
       clearerr(s->handle);
       
       // The file pointer's position is now undefined. We have to manually
       // advance it to the start of the next buffer to read. 
-      fseeko(s->handle,SEEK_SET,s->bytes_read);
+      fseeko(s->handle,SEEK_SET,this_start + mysize);
     } 
     else
     {
@@ -236,11 +239,10 @@ static int compute_hash(state *s)
       return TRUE;
    } 
 
-    // TRUE piecewise mode we only hash one block at a time
+    // In piecewise mode we only hash one block at a time
     if (s->mode & mode_piecewise)
     {
-      // RBF - Why does this use mysize and not current_read? 
-      remaining -= mysize;
+      remaining -= current_read;
       if (remaining == 0)
 	return TRUE;
 
@@ -317,9 +319,6 @@ static int hash(state *s)
   if (NULL == s)
     return TRUE;
 
-  s->bytes_read = 0;
-  s->read_start = 0;
-  s->read_end = 0;
   s->actual_bytes = 0;
 
   if (s->mode & mode_estimate)
@@ -474,10 +473,6 @@ int hash_file(state *s, TCHAR *fn)
     {
       if (s->mode & mode_size_all)
       {
-	// RBF - Remove vestigital code
-	// Copy values needed to display hash correctly
-	//	s->actual_bytes = s->total_bytes;
-
 	// Whereas md5deep has only one hash to wipe, hashdeep has several
 #ifdef __MD5DEEP_H
 	memset(s->hash_result, '*', HASH_STRING_LENGTH);
