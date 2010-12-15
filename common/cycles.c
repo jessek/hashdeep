@@ -52,7 +52,8 @@ int done_processing_dir(TCHAR *fn)
 #ifdef _WIN32
   _wfullpath(d_name,fn,PATH_MAX);
 #else
-  realpath(fn,d_name);
+  if (NULL == realpath(fn,d_name))
+    return TRUE;
 #endif
 
   if (my_table == NULL)
@@ -111,7 +112,8 @@ int processing_dir(TCHAR *fn)
 #ifdef _WIN32
   _wfullpath(d_name,fn,PATH_MAX);
 #else
-  realpath(fn,d_name);
+  if (NULL == realpath(fn,d_name))
+    return TRUE;
 #endif
 
   if (my_table == NULL)
@@ -165,7 +167,8 @@ int have_processed_dir(TCHAR *fn)
 #ifdef _WIN32
   _wfullpath(d_name,fn,PATH_MAX);
 #else
-  realpath(fn,d_name);
+  if (NULL == realpath(fn,d_name))
+    return TRUE;
 #endif
 
   temp = my_table;

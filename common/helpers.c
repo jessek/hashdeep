@@ -142,10 +142,13 @@ void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input)
     _wfullpath(fn,input,PATH_MAX);
 #else	  
     if (NULL == cwd)
+    {
       // If we can't get the current working directory, we're not
       // going to be able to build the relative path to this file anyway.
       // So we just call realpath and make the best of things 
-      realpath(input,fn);
+      if (NULL == realpath(input,fn))
+	internal_error("Error calling realpath in generate_filename");
+    }
     else
       snprintf(fn,PATH_MAX,"%s%c%s",cwd,DIR_SEPARATOR,input);
 #endif

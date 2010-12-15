@@ -1,5 +1,20 @@
+2010-12-15 Jesse Kornblum
+
+	* Re-engineered how file sizes and reads are computed.
+	  The inital guess of a file's size, via stat(2), is
+	  now stat_bytes (and stat_megs). For each call of hash(),
+	  we record the offset where we started, read_start, and
+	  the offset where we ended, read_end. These mostly are for
+	  piecewise mode. We also record actual_bytes, the total
+	  number of bytes we read and hashes from the disk from the
+	  whole file.
+
+	* Added some error checking to realpath() calls in
+	  common/{cycles,helpers}.c
+
+
 2010-11-29 Jesse Kornblum
-	
+
 	* Fixed typo in hashdeep audit message
 
 
