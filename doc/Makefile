@@ -14,15 +14,13 @@ ALL_FILES = index.html style.css \
 USERNAME = jessekornblum,md5deep
 DESTDIR  = web.sourceforge.net:htdocs/
 
-RMAN = /sw/bin/rman
-
 preflight:
 	rm -f *~
 	grep RBF *.html *.txt
 
 manpages:
-	$(RMAN) -f HTML -S -l "md5deep man page" ../md5deep/md5deep.1 > md5deep.html
-	$(RMAN) -f HTML -S -l "hashdeep man page" ../hashdeep/hashdeep.1 > hashdeep.html
+	rman -f HTML -S -l "md5deep man page" ../md5deep/md5deep.1 > md5deep.html
+	rman -f HTML -S -l "hashdeep man page" ../hashdeep/hashdeep.1 > hashdeep.html
 
 changes:
 	cp ../NEWS changes.txt

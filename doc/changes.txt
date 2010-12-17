@@ -1,3 +1,28 @@
+** Changes in version 3.7 (18 Dec 2010)
+
+* New Features
+
+      Added triage mode, -Z flag, to compute file size and partial
+      hashes in addition to full file hash.
+
+      Updated Windows cross-compiler to MinGW-4.2.1
+
+
+* Bug Fixes
+ 
+      Fixed hashdeep piecewise mode to include the correct size
+      of each piece being hashed. This enables audit mode to 
+      work correctly.
+
+      Addressed display problem for time estimates of files with 
+      long filenames in the current directory.
+
+      Added "Input/Output error" to the list of fatal errors when
+      processing files
+
+
+
+
 ** Changes in version 3.6 (23 Mar 2010)
 
 * New Features

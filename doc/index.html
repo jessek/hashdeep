@@ -175,9 +175,9 @@ Download md5deep and hashdeep
 
 <p>
 The latest stable versions of md5deep and hashdeep are 
-version 3.6
+version 3.7
 and was released on
-23 Mar 2010. You can take a look at the 
+18 Dec 2010. You can take a look at the 
 <a href="changes.txt">complete changelog</a>, but here are the 
 changes in the latest version:
 
@@ -185,7 +185,12 @@ changes in the latest version:
 <ul>
 
 <li> 
-Added the expert mode found in md5deep to hashdeep
+Added triage mode, -Z flag, to compute file size and partial
+hashes in addition to full file hash.
+</li>
+
+<li>
+Updated Windows cross-compiler to MinGW-4.2.1
 </li>
 
 </ul>
@@ -195,7 +200,19 @@ Added the expert mode found in md5deep to hashdeep
 
 <ul>
 <li>
-Fixed error checking in helper routines.
+Fixed hashdeep piecewise mode to include the correct size
+of each piece being hashed. This enables audit mode to 
+work correctly.
+</li>
+
+<li>
+Addressed display problem for time estimates of files with 
+long filenames in the current directory.
+</li>
+
+<li>
+Added "Input/Output error" to the list of fatal errors when
+processing files
 </li>
 
 </ul>
@@ -210,30 +227,30 @@ Fixed error checking in helper routines.
 
     <tr>
      <td rowspan="2">
-       Version 3.6
+       Version 3.7
      </td>
 
      <td rowspan="2">
-       23 Mar 2010
+       18 Dec 2010
      </td>
 
      <td>
-        <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.6/md5deep-3.6.zip/download">
+        <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.7/md5deep-3.7.zip/download">
        Windows binary</a>
      </td>
      <td class="hash"> 
-        SHA256 b7d3dbaada5c60395be44114607f641cf4f4dd1f9b415e1219a743dddfd3d187
+        SHA256 14e0b1b190125e5a95493c65920c750124b6b050b73fcf132b7d0bb464c70580
      </td>
     </tr>
 
 
      <tr>
       <td>
-       <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.6/md5deep-3.6.tar.gz/download">
+       <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.7/md5deep-3.7.tar.gz/download">
         source code</a>
      </td>
      <td class="hash"> 
-        SHA256 1286ce7aa097120f3f763cfb809785973c0661c63bda1128a1ef57fb7352cb6b
+        SHA256 23e70b51dd118639d04ad6ed61579e0667a8df78e742f73eaaa6b820a4714b25
      </td>
     </tr>
 
@@ -339,6 +356,38 @@ document.write(old_link_text);
 
 
   <tbody>
+
+
+    <tr>
+     <td rowspan="2">
+       3.6
+     </td>
+
+     <td rowspan="2">
+       23 Mar 2010
+     </td>
+
+     <td>
+        <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.6/md5deep-3.6.zip/download">
+       Windows binary</a>
+     </td>
+     <td class="hash"> 
+        SHA256 b7d3dbaada5c60395be44114607f641cf4f4dd1f9b415e1219a743dddfd3d187
+     </td>
+    </tr>
+
+
+     <tr>
+      <td>
+       <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-3.6/md5deep-3.6.tar.gz/download">
+        source code</a>
+     </td>
+     <td class="hash"> 
+        SHA256 1286ce7aa097120f3f763cfb809785973c0661c63bda1128a1ef57fb7352cb6b
+     </td>
+    </tr>
+
+
     <tr>
      <td rowspan="2">
        3.5.1
