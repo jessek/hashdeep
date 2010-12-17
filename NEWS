@@ -1,9 +1,12 @@
-** Changes in version 3.7 (RBF DATE)
+** Changes in version 3.7 (18 Dec 2010)
 
 * New Features
 
       Added triage mode, -Z flag, to compute file size and partial
       hashes in addition to full file hash.
+
+      Updated Windows cross-compiler to MinGW-4.2.1
+
 
 * Bug Fixes
  
