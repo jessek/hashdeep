@@ -32,7 +32,7 @@ static void usage(void)
   print_status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,__progname);
 
   print_status("See the man page or README.txt file for the full list of options");
-  print_status("-p  - piecewise mode. Files are broken into blocks for hashing");
+  print_status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
   print_status("-r  - recursive mode. All subdirectories are traversed");
   print_status("-e  - compute estimated time remaining for each file");
   print_status("-s  - silent mode. Suppress all error messages");
@@ -138,8 +138,7 @@ static int process_command_line(state *s, int argc, char **argv)
       s->piecewise_size = find_block_size(s, optarg);
       if (0 == s->piecewise_size)
       {
-	print_error(s,"%s: Piecewise blocks of zero bytes are impossible", 
-		    __progname);
+	print_error(s,"%s: Illegal size value for piecewise mode.", __progname);
 	exit(STATUS_USER_ERROR);
       }
 
