@@ -1,3 +1,10 @@
+2011-03-22 Jesse Kornblum
+
+	* Version bump to 3.8-001
+
+	* Fixed cosmetic bug for -p mode, SF bug 3234714.
+
+	
 2010-12-15 Jesse Kornblum
 
 	* Re-engineered how file sizes and reads are computed.
