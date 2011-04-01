@@ -7,7 +7,8 @@
 #ifdef _WIN32
 
 // This says that we require Windows NT 4.0 to run
-#define _WIN32_WINNT 0x0400
+// RBF - Commented out _WIN32_WINNT for x64 compilation
+//#define _WIN32_WINNT 0x0400
 
 // These defines are required to enable Unicode support.
 // Some of the build scripts define them for us, some don't.

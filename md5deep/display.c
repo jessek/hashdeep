@@ -99,10 +99,11 @@ int display_hash(state *s)
     return display_match_result(s);
 
   display_size(s);
-  _tprintf (_TEXT("%s"), s->hash_result);
+
+  printf ("%s", s->hash_result);
 
   if (s->mode & mode_quiet)
-    _tprintf (_TEXT("  "));
+    printf ("  ");
   else
   {
     if ((s->mode & mode_piecewise) ||
