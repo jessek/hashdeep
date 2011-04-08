@@ -207,6 +207,7 @@ EXTRA_DIST = FILEFORMAT config.guess config.sub  \
 # http://ccrma-www.stanford.edu/~craig/utility/flip/#
 FLIP = todos
 CROSS_PREFIX = i586-mingw32msvc
+CROSS64_PREFIX = x86_64-w64-mingw32
 SUFFIXES = .TXT .1
 
 #.1.TXT: 
@@ -727,28 +728,46 @@ MD5DEEP.1:
 HASHDEEP.1:
 	cp hashdeep/hashdeep.1 HASHDEEP.1
 
+win64: distclean
+	./configure --host=$(CROSS64_PREFIX)
+	make
+	$(CROSS64_PREFIX)-strip md5deep/*exe hashdeep/*.exe
+	mv md5deep/md5deep.exe       md5deep/md5deep64.exe
+	mv md5deep/sha1deep.exe      md5deep/sha1deep64.exe
+	mv md5deep/sha256deep.exe    md5deep/sha256deep64.exe
+	mv md5deep/tigerdeep.exe     md5deep/tigerdeep64.exe
+	mv md5deep/whirlpooldeep.exe md5deep/whirlpooldeep64.exe
+	mv hashdeep/hashdeep.exe     hashdeep/hashdeep64.exe
+	cp md5deep/*.exe hashdeep/*.exe $(distdir)
+
+win32: distclean
+	./configure --host=$(CROSS_PREFIX)
+	make
+	$(CROSS_PREFIX)-strip md5deep/*.exe hashdeep/*.exe
+	cp md5deep/*.exe hashdeep/*.exe $(distdir)
+
 win-docs: $(WINDOWSDOCS)
 	$(FLIP) $(WINDOWSDOCS)
 #	flip -d $(WINDOWSDOCS)
 #	unix2dos $(WINDOWSDOCS)
 #	todos $(WINDOWSDOCS)
 
-win-prep: 
+win-prep:
 	rm -f $(WINDOWSDOCS)
 
 win-package: win-prep win-docs
-	rm -rf $(distdir).zip $(distdir)
-	$(CROSS_PREFIX)-strip md5deep/*.exe hashdeep/hashdeep.exe
+	cp *.TXT $(distdir)
+
+world: dist
+	rm -rf $(distdir).zip $(distdir) md5deep/*.exe hashdeep/*.exe
 	mkdir $(distdir)
-	cp $(WINDOWSDOCS) md5deep/*.exe hashdeep/hashdeep.exe $(distdir)
+
+	make win32
+	make win64
+	make win-package
+
 	zip -r9 $(distdir).zip $(distdir)
 	rm -rf $(distdir) $(WINDOWSDOCS) MD5DEEP.1 HASHDEEP.1
-
-world: distclean $(WINDOWSDOCS)
-	./configure --host=$(CROSS_PREFIX)
-	make
-	make win-package
-	make dist
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
