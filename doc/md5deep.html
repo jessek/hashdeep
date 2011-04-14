@@ -111,7 +111,9 @@ in conjunction with the -m, -M, or -A flags.
 <dd>Takes a list of files
 to be hashed from the specified file. Each line is assumed to be a filename.
 This flag can only be used once per invocation. If it&rsquo;s used a second time,
-the second instance will clobber the first. 
+the second instance will clobber the first.  <br>
+Note that you can still use other flags, such as the -m or -x modes, and
+submit additional FILES on the command line. 
 <p> </dd>
 
 <dt><b>-w</b> </dt>
@@ -257,42 +259,42 @@ See the section "Reporting Bugs" below.
 
 <h2><a name='sect5' href='#toc5'>Author</a></h2>
 md5deep was written by Jesse
-Kornblum, research [at] jessekornblum [dot] com. 
+Kornblum, research@jessekornblum.com. 
 <p> 
 <h2><a name='sect6' href='#toc6'>Known Issues</a></h2>
-Using the
--r flag cannot be used to recursively process all files  of a given extension
-in a directory. This is a feature, not a bug.  If you need to do this, use
-the <a href='find.1'><b>find</b>(1)</a>
- command. 
+Using the -r flag cannot
+be used to recursively process all files  of a given extension in a directory.
+This is a feature, not a bug.  If you need to do this, use the <a href='find.1'><b>find</b>(1)</a>
+ command.
+
 <p> 
 <h2><a name='sect7' href='#toc7'>Reporting Bugs</a></h2>
-We take all bug reports <i>very</i> seriously.
-Any bug that jeopardizes the forensic integrity of this program could have
-serious consequenses on  people&rsquo;s lives. When submitting a bug report, please
-include a description of the problem, how you found it, and your contact
-information. <p>
-Send bug reports to the author at the address above. 
+We take all bug reports <i>very</i> seriously. Any bug that jeopardizes
+the forensic integrity of this program could have serious consequenses
+on  people&rsquo;s lives. When submitting a bug report, please include a description
+of the problem, how you found it, and your contact information. <p>
+Send bug
+reports to the author at the address above. 
 <p> <p>
 
 <h2><a name='sect8' href='#toc8'>Copyright</a></h2>
-This
-program is a work of the US Government. In accordance with 17 USC 105, copyright
-protection is not available for any work of the US Government. This program
-is PUBLIC DOMAIN. Portions of this program contain code that is licensed
-under the terms of the General Public License (GPL). Those portions retain
-their original copyright and license. See the file COPYING for more details.
-<p>
-There is NO warranty for this program;  not even for MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE. 
+This program is a
+work of the US Government. In accordance with 17 USC 105, copyright protection
+is not available for any work of the US Government. This program is PUBLIC
+DOMAIN. Portions of this program contain code that is licensed under the
+terms of the General Public License (GPL). Those portions retain their original
+copyright and license. See the file COPYING for more details. <p>
+There is NO
+warranty for this program;  not even for MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE. 
 <p> 
 <h2><a name='sect9' href='#toc9'>See Also</a></h2>
-More information and installation
-instructions can be found in the README  file. Current versions of both
-documents can be found on the project homepage:  <a href='http://md5deep.sourceforge.net/'>http://md5deep.sourceforge.net/</a>
-
-<p>
-The MD5 specification, RFC 1321, is available at <br>
+More information and installation instructions
+can be found in the README  file. Current versions of both documents can
+be found on the project homepage:  <a href='http://md5deep.sourceforge.net/'>http://md5deep.sourceforge.net/</a>
+ <p>
+The MD5
+specification, RFC 1321, is available at <br>
 <a href='http://www.ietf.org/rfc/rfc1321.txt'>http://www.ietf.org/rfc/rfc1321.txt</a>
  <p>
 The SHA-1 specification, RFC 3174, is available

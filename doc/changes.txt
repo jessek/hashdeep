@@ -1,3 +1,21 @@
+** Changes in version 3.8 (15 Apr 2011)
+
+* New Features
+
+      Added -f mode to get the list of input files from
+      a file on the disk.
+
+      Added 64-bit executables for Windows.
+
+
+* Bug Fixes
+
+      Fixed a cosmetic bug regarding the error messages for 
+      piecewise mode.
+
+
+
+
 ** Changes in version 3.7 (18 Dec 2010)
 
 * New Features
