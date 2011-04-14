@@ -41,3 +41,5 @@ update-manpages: md5deep.1
 man_MANS=md5deep.1 sha1deep.1 sha256deep.1 tigerdeep.1 whirlpooldeep.1
 
 EXTRA_DIST=${man_MANS} 
+
+CLEANFILES=md5deep64.exe sha1deep64.exe sha256deep64.exe tigerdeep64.exe whirlpooldeep64.exe

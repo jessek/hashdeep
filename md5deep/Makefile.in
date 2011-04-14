@@ -235,6 +235,7 @@ whirlpooldeep_SOURCES = ${base_src} ${COMMON_DIR}/whirlpool.c whirlpooldeep.c
 ALL_GOALS = {md5,sha1,sha256,tiger,whirlpool}
 man_MANS = md5deep.1 sha1deep.1 sha256deep.1 tigerdeep.1 whirlpooldeep.1
 EXTRA_DIST = ${man_MANS} 
+CLEANFILES = md5deep64.exe sha1deep64.exe sha256deep64.exe tigerdeep64.exe whirlpooldeep64.exe
 all: all-am
 
 .SUFFIXES:
@@ -660,6 +661,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)

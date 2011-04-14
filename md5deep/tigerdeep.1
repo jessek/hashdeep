@@ -115,7 +115,10 @@ This flag may not be used in conjunction with the \-m, \-M, or \-A flags.
 Takes a list of files to be hashed from the specified file. Each
 line is assumed to be a filename. This flag can only be used once
 per invocation. If it's used a second time, the second instance will
-clobber the first.
+clobber the first. 
+.br
+Note that you can still use other flags, such as the \-m or \-x modes,
+and submit additional FILES on the command line.
 
 .TP
 \fB\-w\fR
@@ -267,7 +270,7 @@ be reported to the developer! See the section "Reporting Bugs" below.
 
 
 .SH AUTHOR
-md5deep was written by Jesse Kornblum, research [at] jessekornblum [dot] com.
+md5deep was written by Jesse Kornblum, research@jessekornblum.com.
 
 .SH KNOWN ISSUES
 Using the \-r flag cannot be used to recursively process all files 
