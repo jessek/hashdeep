@@ -1,3 +1,12 @@
+2011-04-20 Jesse Kornblum
+
+	* Version bump to 3.9-001
+
+	* Added int _CRT_fmode = _O_BINARY; to hashdeep/main.c
+	  to address bug 3290190, regarding processing stdin
+	  in hashdeep.
+
+
 2011-04-01 Jesse Kornblum
 
 	* Version bump to 3.8-002

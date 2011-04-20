@@ -3,6 +3,13 @@
 
 #include "main.h"
 
+#ifdef _WIN32 
+// This can't go in main.h or we get multiple definitions of it
+// Allows us to open standard input in binary mode by default 
+// See http://gnuwin32.sourceforge.net/compile.html for more 
+int _CRT_fmode = _O_BINARY;
+#endif
+
 
 // So that the usage message fits in a standard DOS window, this
 // function should produce no more than 22 lines of text.
