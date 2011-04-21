@@ -2,6 +2,8 @@
 
 	* Released version 3.9 with critical bug fix, 3290190.
 
+	* Added hashdeep64.exe to the CLEANFILES
+
 
 2011-04-20 Jesse Kornblum
 

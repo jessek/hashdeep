@@ -30,4 +30,4 @@ hashdeep_DEPENDENCIES = ${EXTRA_HASHDEEP}
 
 EXTRA_DIST = main.h strsep.h ${man_MANS}
 
-
+CLEANFILES=hashdeep64.exe

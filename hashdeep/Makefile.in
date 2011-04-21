@@ -214,6 +214,7 @@ EXTRA_hashdeep_SOURCES = lib-strsep.c
 hashdeep_LDADD = ${EXTRA_HASHDEEP} -lm
 hashdeep_DEPENDENCIES = ${EXTRA_HASHDEEP}
 EXTRA_DIST = main.h strsep.h ${man_MANS}
+CLEANFILES = hashdeep64.exe
 all: all-am
 
 .SUFFIXES:
@@ -624,6 +625,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
