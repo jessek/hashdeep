@@ -184,7 +184,9 @@ static int compute_hash(state *s)
 
   remaining = s->block_size;
 
-  s->read_start = ftello(s->handle);
+  // We get weird results calling ftell on stdin!
+  if (!(s->is_stdin))
+    s->read_start = ftello(s->handle);
   s->read_end   = s->read_start;
   s->bytes_read = 0;
 
@@ -319,7 +321,7 @@ static int hash(state *s)
   if (NULL == s)
     return TRUE;
 
-  s->actual_bytes = 0;
+  s->actual_bytes = 0LL;
 
   if (s->mode & mode_estimate)
   {

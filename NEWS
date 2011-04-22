@@ -1,6 +1,14 @@
-** Changes in version 3.9 (21 Apr 2011)
+** Changes in version 3.9.1 (RBF DATE)
 
 * New Features
+
+* Bug Fixes
+
+      Fixed a cosmetic bug regarding processing standard input
+      in piecewise mode.
+
+
+** Changes in version 3.9 (21 Apr 2011)
 
 * Bug Fixes
 
