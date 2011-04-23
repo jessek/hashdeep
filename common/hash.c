@@ -379,8 +379,11 @@ static int hash(state *s)
     {
       if (s->mode & mode_piecewise)
       {
+	uint64_t tmp_end = 0;
+	if (s->read_end != 0)
+	  tmp_end = s->read_end - 1;
 	_sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
-		   tmp_name, s->read_start, s->read_end - 1);
+		   tmp_name, s->read_start, tmp_end);
       }
       
       HASH_FINALIZE();

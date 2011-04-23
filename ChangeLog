@@ -1,3 +1,10 @@
+2011-04-23 Jesse Kornblum
+
+	* More cosmetic changes, this time to print correct offsets
+	  for a zero-byte file being processed from stdin in piecewise
+	  mode.
+
+	
 2011-04-22 Jesse Kornblum
 
 	* Cosmetic bug fix in hash.c to avoid calling ftell
