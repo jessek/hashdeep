@@ -1,11 +1,17 @@
-** Changes in version 3.9.1 (RBF DATE)
-
-* New Features
+** Changes in version 3.9.1 (31 May 2011)
 
 * Bug Fixes
 
-      Fixed a cosmetic bug regarding processing standard input
+      Fixed a cosmetic bugs regarding processing standard input
       in piecewise mode.
+
+      Fixed a bug regarding processing known hash files which have
+      parenthesis in the filename.
+
+      Clarified documentation regarding multipliers in piecewise
+      mode. They are IEC multipliers, or blocks of 1,024. Side note:
+      also spelled 'multipliers' correctly.
+
 
 
 ** Changes in version 3.9 (21 Apr 2011)
