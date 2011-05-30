@@ -1,15 +1,26 @@
+2011-05-23 Jesse Kornblum
+
+	* Resolved bug 3307444 regarding the prefix type for multipliers.
+	  We're using IEC multipliers. Also, spelled multipliers
+	  correctly.
+
+	* Fixed a bug in find_bsd_hash, bug 3309339, to address when
+	  a file of known hashes has a set of parenthesis. The
+	  find_bsd_hash function was munging the line.
+
+
 2011-04-23 Jesse Kornblum
 
 	* More cosmetic changes, this time to print correct offsets
 	  for a zero-byte file being processed from stdin in piecewise
 	  mode.
 
-	
+
 2011-04-22 Jesse Kornblum
 
 	* Cosmetic bug fix in hash.c to avoid calling ftell
 	  when processing standard input.
-	
+
 
 2011-04-21 Jesse Kornblum
 

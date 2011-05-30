@@ -150,15 +150,15 @@ int find_bsd_hash(state *s, char *buf, char *fn)
 
   while (pos < buf_len && buf[pos] != '(')
     ++pos;
-  /* The hash always comes after the file name, so there has to be 
-     enough room for the filename and *then* the hash. */
+  // The hash always comes after the file name, so there has to be 
+  // enough room for the filename and *then* the hash.
   if (pos + hash_len + 1 > buf_len)
     return FALSE;
   first_paren = pos;
 
-  /* We only need to check back as far as the opening parenethsis,
-     not the start of the string. If the closing paren comes before
-     the opening paren (e.g. )( ) then the line is not valid */
+  // We only need to check back as far as the opening parenethsis,
+  // not the start of the string. If the closing paren comes before
+  // the opening paren (e.g. )( ) then the line is not valid
   pos = buf_len - hash_len;
   while (pos > first_paren && buf[pos] != ')')
     --pos;
@@ -176,14 +176,23 @@ int find_bsd_hash(state *s, char *buf, char *fn)
     free(temp);
   }
 
-  /* We chop instead of setting buf[HASH_STRING_LENGTH] = 0 just in
-     case there is extra data. We don't want to chop up longer 
-     (possibly invalid) data and take part of it as a valid hash! */
-  chop_line(buf);
+  // We chop instead of setting buf[HASH_STRING_LENGTH] = 0 just in
+  // case there is extra data. We don't want to chop up longer 
+  // (possibly invalid) data and take part of it as a valid hash!
+  
+  // We duplicate the buffer here as we're going to modify it.
+  // We work on a copy so that we don't muck up the buffer for
+  // any other functions who want to use it.
+  temp = strdup(buf);
+  chop_line(temp);
 
   // The hash always begins four characters after the second paren
-  shift_string(buf,0,second_paren+4);
-  return (valid_hash(s,buf));
+  shift_string(temp,0,second_paren+4);
+
+  int status = valid_hash(s,temp);
+  free(temp);
+
+  return status;
 }
   
 
