@@ -1,7 +1,7 @@
 
 /* $Id$ */
 
-#include "main.h"
+#include "md5deep.h"
 #include "sha1.h"
 
 int setup_hashing_algorithm(state *s)

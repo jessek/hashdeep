@@ -14,7 +14,7 @@
 
 // $Id$
 
-#include "main.h"
+#include "md5deep.h"
 #include "hashTable.h"
 
 

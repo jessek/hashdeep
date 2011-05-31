@@ -1,15 +1,45 @@
+2011-05-31  Simson Garfinkel  <simsong@it151655.ern.nps.edu>
+
+	* md5deep/display.c: changed #include "main.h" to #include "md5deep.h"
+
+	* hashdeep/main.c: now includes md5deep.h if compiled for MD5DEEP, and main.h if compiled for hashdeep
+
+	* md5deep/md5deep.h: to avoid the name conflict, md5deep/main.h was renamed md5deep/md5deep.h
+
+	* hashdeep/hash.c: changed to use #ifdef MD5DEEP, which is now -D defined by md5deep/Makefile.am
+
+	* hashdeep/Makefile.am (COMMON_SRC): updated to indicate that hash.c, dig.c, cycles.c, ui.c, helpers.c, md5.c, sha1.c, sha256.c, tiger.c, whirlpool.c now reside in this directory
+
+	* md5deep/Makefile.am (whirlpooldeep_SOURCES): moved hash.c, dig.c, cycles.c, ui.c, helpers.c, md5.c, sha1.c, sha256.c, tiger.c, whirlpool.c from common/ to hashdeep/. Updated Makefile.am
+
+	* configure.ac: added initial comments as part of makefile
+	changing. The idea is to move C programs from common/ to hashdeep/
+	in preparation for removing 'common' and 'md5deep' entirely and
+	folding all of the functionality into the hashdeep program.
+
+2011-05-23 Jesse Kornblum
+
+	* Resolved bug 3307444 regarding the prefix type for multipliers.
+	  We're using IEC multipliers. Also, spelled multipliers
+	  correctly.
+
+	* Fixed a bug in find_bsd_hash, bug 3309339, to address when
+	  a file of known hashes has a set of parenthesis. The
+	  find_bsd_hash function was munging the line.
+
+
 2011-04-23 Jesse Kornblum
 
 	* More cosmetic changes, this time to print correct offsets
 	  for a zero-byte file being processed from stdin in piecewise
 	  mode.
 
-	
+
 2011-04-22 Jesse Kornblum
 
 	* Cosmetic bug fix in hash.c to avoid calling ftell
 	  when processing standard input.
-	
+
 
 2011-04-21 Jesse Kornblum
 

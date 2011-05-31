@@ -213,25 +213,27 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
 # The math library is required for floor()
+AM_CPPFLAGS = -DMD5DEEP
 LDADD = -lm
 INCLUDES = -I@top_srcdir@/include
 COMMON_DIR = @top_srcdir@/common
+HASHDEEP_DIR = @top_srcdir@/hashdeep
 COMMON_SRC = \
-${COMMON_DIR}/hash.c     \
-${COMMON_DIR}/dig.c      \
-${COMMON_DIR}/cycles.c   \
-${COMMON_DIR}/ui.c       \
-${COMMON_DIR}/helpers.c  
+${HASHDEEP_DIR}/hash.c     \
+${HASHDEEP_DIR}/dig.c      \
+${HASHDEEP_DIR}/cycles.c   \
+${HASHDEEP_DIR}/ui.c       \
+${HASHDEEP_DIR}/helpers.c  
 
 base_src = main.c files.c ${COMMON_SRC} \
                 match.c hashTable.c display.c \
 		main.h hashTable.h 
 
-md5deep_SOURCES = ${base_src} ${COMMON_DIR}/md5.c md5deep.c   
-sha1deep_SOURCES = ${base_src} ${COMMON_DIR}/sha1.c sha1deep.c
-sha256deep_SOURCES = ${base_src} ${COMMON_DIR}/sha256.c sha256deep.c
-tigerdeep_SOURCES = ${base_src} ${COMMON_DIR}/tiger.c tigerdeep.c
-whirlpooldeep_SOURCES = ${base_src} ${COMMON_DIR}/whirlpool.c whirlpooldeep.c
+md5deep_SOURCES = ${base_src} ${HASHDEEP_DIR}/md5.c md5deep.c   
+sha1deep_SOURCES = ${base_src} ${HASHDEEP_DIR}/sha1.c sha1deep.c
+sha256deep_SOURCES = ${base_src} ${HASHDEEP_DIR}/sha256.c sha256deep.c
+tigerdeep_SOURCES = ${base_src} ${HASHDEEP_DIR}/tiger.c tigerdeep.c
+whirlpooldeep_SOURCES = ${base_src} ${HASHDEEP_DIR}/whirlpool.c whirlpooldeep.c
 ALL_GOALS = {md5,sha1,sha256,tiger,whirlpool}
 man_MANS = md5deep.1 sha1deep.1 sha256deep.1 tigerdeep.1 whirlpooldeep.1
 EXTRA_DIST = ${man_MANS} 
@@ -364,145 +366,145 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
-hash.o: ${COMMON_DIR}/hash.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT hash.o -MD -MP -MF $(DEPDIR)/hash.Tpo -c -o hash.o `test -f '${COMMON_DIR}/hash.c' || echo '$(srcdir)/'`${COMMON_DIR}/hash.c
+hash.o: ${HASHDEEP_DIR}/hash.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT hash.o -MD -MP -MF $(DEPDIR)/hash.Tpo -c -o hash.o `test -f '${HASHDEEP_DIR}/hash.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/hash.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/hash.Tpo $(DEPDIR)/hash.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/hash.c' object='hash.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/hash.c' object='hash.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o hash.o `test -f '${COMMON_DIR}/hash.c' || echo '$(srcdir)/'`${COMMON_DIR}/hash.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o hash.o `test -f '${HASHDEEP_DIR}/hash.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/hash.c
 
-hash.obj: ${COMMON_DIR}/hash.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT hash.obj -MD -MP -MF $(DEPDIR)/hash.Tpo -c -o hash.obj `if test -f '${COMMON_DIR}/hash.c'; then $(CYGPATH_W) '${COMMON_DIR}/hash.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/hash.c'; fi`
+hash.obj: ${HASHDEEP_DIR}/hash.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT hash.obj -MD -MP -MF $(DEPDIR)/hash.Tpo -c -o hash.obj `if test -f '${HASHDEEP_DIR}/hash.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/hash.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/hash.c'; fi`
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/hash.Tpo $(DEPDIR)/hash.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/hash.c' object='hash.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/hash.c' object='hash.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o hash.obj `if test -f '${COMMON_DIR}/hash.c'; then $(CYGPATH_W) '${COMMON_DIR}/hash.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/hash.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o hash.obj `if test -f '${HASHDEEP_DIR}/hash.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/hash.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/hash.c'; fi`
 
-dig.o: ${COMMON_DIR}/dig.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dig.o -MD -MP -MF $(DEPDIR)/dig.Tpo -c -o dig.o `test -f '${COMMON_DIR}/dig.c' || echo '$(srcdir)/'`${COMMON_DIR}/dig.c
+dig.o: ${HASHDEEP_DIR}/dig.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dig.o -MD -MP -MF $(DEPDIR)/dig.Tpo -c -o dig.o `test -f '${HASHDEEP_DIR}/dig.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/dig.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/dig.Tpo $(DEPDIR)/dig.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/dig.c' object='dig.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/dig.c' object='dig.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dig.o `test -f '${COMMON_DIR}/dig.c' || echo '$(srcdir)/'`${COMMON_DIR}/dig.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dig.o `test -f '${HASHDEEP_DIR}/dig.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/dig.c
 
-dig.obj: ${COMMON_DIR}/dig.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dig.obj -MD -MP -MF $(DEPDIR)/dig.Tpo -c -o dig.obj `if test -f '${COMMON_DIR}/dig.c'; then $(CYGPATH_W) '${COMMON_DIR}/dig.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/dig.c'; fi`
+dig.obj: ${HASHDEEP_DIR}/dig.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dig.obj -MD -MP -MF $(DEPDIR)/dig.Tpo -c -o dig.obj `if test -f '${HASHDEEP_DIR}/dig.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/dig.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/dig.c'; fi`
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/dig.Tpo $(DEPDIR)/dig.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/dig.c' object='dig.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/dig.c' object='dig.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dig.obj `if test -f '${COMMON_DIR}/dig.c'; then $(CYGPATH_W) '${COMMON_DIR}/dig.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/dig.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dig.obj `if test -f '${HASHDEEP_DIR}/dig.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/dig.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/dig.c'; fi`
 
-cycles.o: ${COMMON_DIR}/cycles.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT cycles.o -MD -MP -MF $(DEPDIR)/cycles.Tpo -c -o cycles.o `test -f '${COMMON_DIR}/cycles.c' || echo '$(srcdir)/'`${COMMON_DIR}/cycles.c
+cycles.o: ${HASHDEEP_DIR}/cycles.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT cycles.o -MD -MP -MF $(DEPDIR)/cycles.Tpo -c -o cycles.o `test -f '${HASHDEEP_DIR}/cycles.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/cycles.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/cycles.Tpo $(DEPDIR)/cycles.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/cycles.c' object='cycles.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/cycles.c' object='cycles.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cycles.o `test -f '${COMMON_DIR}/cycles.c' || echo '$(srcdir)/'`${COMMON_DIR}/cycles.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cycles.o `test -f '${HASHDEEP_DIR}/cycles.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/cycles.c
 
-cycles.obj: ${COMMON_DIR}/cycles.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT cycles.obj -MD -MP -MF $(DEPDIR)/cycles.Tpo -c -o cycles.obj `if test -f '${COMMON_DIR}/cycles.c'; then $(CYGPATH_W) '${COMMON_DIR}/cycles.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/cycles.c'; fi`
+cycles.obj: ${HASHDEEP_DIR}/cycles.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT cycles.obj -MD -MP -MF $(DEPDIR)/cycles.Tpo -c -o cycles.obj `if test -f '${HASHDEEP_DIR}/cycles.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/cycles.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/cycles.c'; fi`
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/cycles.Tpo $(DEPDIR)/cycles.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/cycles.c' object='cycles.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/cycles.c' object='cycles.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cycles.obj `if test -f '${COMMON_DIR}/cycles.c'; then $(CYGPATH_W) '${COMMON_DIR}/cycles.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/cycles.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cycles.obj `if test -f '${HASHDEEP_DIR}/cycles.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/cycles.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/cycles.c'; fi`
 
-ui.o: ${COMMON_DIR}/ui.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ui.o -MD -MP -MF $(DEPDIR)/ui.Tpo -c -o ui.o `test -f '${COMMON_DIR}/ui.c' || echo '$(srcdir)/'`${COMMON_DIR}/ui.c
+ui.o: ${HASHDEEP_DIR}/ui.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ui.o -MD -MP -MF $(DEPDIR)/ui.Tpo -c -o ui.o `test -f '${HASHDEEP_DIR}/ui.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/ui.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/ui.Tpo $(DEPDIR)/ui.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/ui.c' object='ui.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/ui.c' object='ui.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ui.o `test -f '${COMMON_DIR}/ui.c' || echo '$(srcdir)/'`${COMMON_DIR}/ui.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ui.o `test -f '${HASHDEEP_DIR}/ui.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/ui.c
 
-ui.obj: ${COMMON_DIR}/ui.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ui.obj -MD -MP -MF $(DEPDIR)/ui.Tpo -c -o ui.obj `if test -f '${COMMON_DIR}/ui.c'; then $(CYGPATH_W) '${COMMON_DIR}/ui.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/ui.c'; fi`
+ui.obj: ${HASHDEEP_DIR}/ui.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ui.obj -MD -MP -MF $(DEPDIR)/ui.Tpo -c -o ui.obj `if test -f '${HASHDEEP_DIR}/ui.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/ui.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/ui.c'; fi`
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/ui.Tpo $(DEPDIR)/ui.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/ui.c' object='ui.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/ui.c' object='ui.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ui.obj `if test -f '${COMMON_DIR}/ui.c'; then $(CYGPATH_W) '${COMMON_DIR}/ui.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/ui.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ui.obj `if test -f '${HASHDEEP_DIR}/ui.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/ui.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/ui.c'; fi`
 
-helpers.o: ${COMMON_DIR}/helpers.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT helpers.o -MD -MP -MF $(DEPDIR)/helpers.Tpo -c -o helpers.o `test -f '${COMMON_DIR}/helpers.c' || echo '$(srcdir)/'`${COMMON_DIR}/helpers.c
+helpers.o: ${HASHDEEP_DIR}/helpers.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT helpers.o -MD -MP -MF $(DEPDIR)/helpers.Tpo -c -o helpers.o `test -f '${HASHDEEP_DIR}/helpers.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/helpers.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/helpers.Tpo $(DEPDIR)/helpers.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/helpers.c' object='helpers.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/helpers.c' object='helpers.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o helpers.o `test -f '${COMMON_DIR}/helpers.c' || echo '$(srcdir)/'`${COMMON_DIR}/helpers.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o helpers.o `test -f '${HASHDEEP_DIR}/helpers.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/helpers.c
 
-helpers.obj: ${COMMON_DIR}/helpers.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT helpers.obj -MD -MP -MF $(DEPDIR)/helpers.Tpo -c -o helpers.obj `if test -f '${COMMON_DIR}/helpers.c'; then $(CYGPATH_W) '${COMMON_DIR}/helpers.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/helpers.c'; fi`
+helpers.obj: ${HASHDEEP_DIR}/helpers.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT helpers.obj -MD -MP -MF $(DEPDIR)/helpers.Tpo -c -o helpers.obj `if test -f '${HASHDEEP_DIR}/helpers.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/helpers.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/helpers.c'; fi`
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/helpers.Tpo $(DEPDIR)/helpers.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/helpers.c' object='helpers.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/helpers.c' object='helpers.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o helpers.obj `if test -f '${COMMON_DIR}/helpers.c'; then $(CYGPATH_W) '${COMMON_DIR}/helpers.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/helpers.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o helpers.obj `if test -f '${HASHDEEP_DIR}/helpers.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/helpers.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/helpers.c'; fi`
 
-md5.o: ${COMMON_DIR}/md5.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT md5.o -MD -MP -MF $(DEPDIR)/md5.Tpo -c -o md5.o `test -f '${COMMON_DIR}/md5.c' || echo '$(srcdir)/'`${COMMON_DIR}/md5.c
+md5.o: ${HASHDEEP_DIR}/md5.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT md5.o -MD -MP -MF $(DEPDIR)/md5.Tpo -c -o md5.o `test -f '${HASHDEEP_DIR}/md5.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/md5.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/md5.Tpo $(DEPDIR)/md5.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/md5.c' object='md5.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/md5.c' object='md5.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o md5.o `test -f '${COMMON_DIR}/md5.c' || echo '$(srcdir)/'`${COMMON_DIR}/md5.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o md5.o `test -f '${HASHDEEP_DIR}/md5.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/md5.c
 
-md5.obj: ${COMMON_DIR}/md5.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT md5.obj -MD -MP -MF $(DEPDIR)/md5.Tpo -c -o md5.obj `if test -f '${COMMON_DIR}/md5.c'; then $(CYGPATH_W) '${COMMON_DIR}/md5.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/md5.c'; fi`
+md5.obj: ${HASHDEEP_DIR}/md5.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT md5.obj -MD -MP -MF $(DEPDIR)/md5.Tpo -c -o md5.obj `if test -f '${HASHDEEP_DIR}/md5.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/md5.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/md5.c'; fi`
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/md5.Tpo $(DEPDIR)/md5.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/md5.c' object='md5.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/md5.c' object='md5.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o md5.obj `if test -f '${COMMON_DIR}/md5.c'; then $(CYGPATH_W) '${COMMON_DIR}/md5.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/md5.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o md5.obj `if test -f '${HASHDEEP_DIR}/md5.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/md5.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/md5.c'; fi`
 
-sha1.o: ${COMMON_DIR}/sha1.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sha1.o -MD -MP -MF $(DEPDIR)/sha1.Tpo -c -o sha1.o `test -f '${COMMON_DIR}/sha1.c' || echo '$(srcdir)/'`${COMMON_DIR}/sha1.c
+sha1.o: ${HASHDEEP_DIR}/sha1.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sha1.o -MD -MP -MF $(DEPDIR)/sha1.Tpo -c -o sha1.o `test -f '${HASHDEEP_DIR}/sha1.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/sha1.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/sha1.Tpo $(DEPDIR)/sha1.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/sha1.c' object='sha1.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/sha1.c' object='sha1.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sha1.o `test -f '${COMMON_DIR}/sha1.c' || echo '$(srcdir)/'`${COMMON_DIR}/sha1.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sha1.o `test -f '${HASHDEEP_DIR}/sha1.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/sha1.c
 
-sha1.obj: ${COMMON_DIR}/sha1.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sha1.obj -MD -MP -MF $(DEPDIR)/sha1.Tpo -c -o sha1.obj `if test -f '${COMMON_DIR}/sha1.c'; then $(CYGPATH_W) '${COMMON_DIR}/sha1.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/sha1.c'; fi`
+sha1.obj: ${HASHDEEP_DIR}/sha1.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sha1.obj -MD -MP -MF $(DEPDIR)/sha1.Tpo -c -o sha1.obj `if test -f '${HASHDEEP_DIR}/sha1.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/sha1.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/sha1.c'; fi`
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/sha1.Tpo $(DEPDIR)/sha1.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/sha1.c' object='sha1.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/sha1.c' object='sha1.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sha1.obj `if test -f '${COMMON_DIR}/sha1.c'; then $(CYGPATH_W) '${COMMON_DIR}/sha1.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/sha1.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sha1.obj `if test -f '${HASHDEEP_DIR}/sha1.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/sha1.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/sha1.c'; fi`
 
-sha256.o: ${COMMON_DIR}/sha256.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sha256.o -MD -MP -MF $(DEPDIR)/sha256.Tpo -c -o sha256.o `test -f '${COMMON_DIR}/sha256.c' || echo '$(srcdir)/'`${COMMON_DIR}/sha256.c
+sha256.o: ${HASHDEEP_DIR}/sha256.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sha256.o -MD -MP -MF $(DEPDIR)/sha256.Tpo -c -o sha256.o `test -f '${HASHDEEP_DIR}/sha256.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/sha256.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/sha256.Tpo $(DEPDIR)/sha256.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/sha256.c' object='sha256.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/sha256.c' object='sha256.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sha256.o `test -f '${COMMON_DIR}/sha256.c' || echo '$(srcdir)/'`${COMMON_DIR}/sha256.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sha256.o `test -f '${HASHDEEP_DIR}/sha256.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/sha256.c
 
-sha256.obj: ${COMMON_DIR}/sha256.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sha256.obj -MD -MP -MF $(DEPDIR)/sha256.Tpo -c -o sha256.obj `if test -f '${COMMON_DIR}/sha256.c'; then $(CYGPATH_W) '${COMMON_DIR}/sha256.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/sha256.c'; fi`
+sha256.obj: ${HASHDEEP_DIR}/sha256.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sha256.obj -MD -MP -MF $(DEPDIR)/sha256.Tpo -c -o sha256.obj `if test -f '${HASHDEEP_DIR}/sha256.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/sha256.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/sha256.c'; fi`
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/sha256.Tpo $(DEPDIR)/sha256.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/sha256.c' object='sha256.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/sha256.c' object='sha256.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sha256.obj `if test -f '${COMMON_DIR}/sha256.c'; then $(CYGPATH_W) '${COMMON_DIR}/sha256.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/sha256.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sha256.obj `if test -f '${HASHDEEP_DIR}/sha256.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/sha256.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/sha256.c'; fi`
 
-tiger.o: ${COMMON_DIR}/tiger.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tiger.o -MD -MP -MF $(DEPDIR)/tiger.Tpo -c -o tiger.o `test -f '${COMMON_DIR}/tiger.c' || echo '$(srcdir)/'`${COMMON_DIR}/tiger.c
+tiger.o: ${HASHDEEP_DIR}/tiger.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tiger.o -MD -MP -MF $(DEPDIR)/tiger.Tpo -c -o tiger.o `test -f '${HASHDEEP_DIR}/tiger.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/tiger.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tiger.Tpo $(DEPDIR)/tiger.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/tiger.c' object='tiger.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/tiger.c' object='tiger.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tiger.o `test -f '${COMMON_DIR}/tiger.c' || echo '$(srcdir)/'`${COMMON_DIR}/tiger.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tiger.o `test -f '${HASHDEEP_DIR}/tiger.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/tiger.c
 
-tiger.obj: ${COMMON_DIR}/tiger.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tiger.obj -MD -MP -MF $(DEPDIR)/tiger.Tpo -c -o tiger.obj `if test -f '${COMMON_DIR}/tiger.c'; then $(CYGPATH_W) '${COMMON_DIR}/tiger.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/tiger.c'; fi`
+tiger.obj: ${HASHDEEP_DIR}/tiger.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tiger.obj -MD -MP -MF $(DEPDIR)/tiger.Tpo -c -o tiger.obj `if test -f '${HASHDEEP_DIR}/tiger.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/tiger.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/tiger.c'; fi`
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tiger.Tpo $(DEPDIR)/tiger.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/tiger.c' object='tiger.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/tiger.c' object='tiger.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tiger.obj `if test -f '${COMMON_DIR}/tiger.c'; then $(CYGPATH_W) '${COMMON_DIR}/tiger.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/tiger.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tiger.obj `if test -f '${HASHDEEP_DIR}/tiger.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/tiger.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/tiger.c'; fi`
 
-whirlpool.o: ${COMMON_DIR}/whirlpool.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT whirlpool.o -MD -MP -MF $(DEPDIR)/whirlpool.Tpo -c -o whirlpool.o `test -f '${COMMON_DIR}/whirlpool.c' || echo '$(srcdir)/'`${COMMON_DIR}/whirlpool.c
+whirlpool.o: ${HASHDEEP_DIR}/whirlpool.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT whirlpool.o -MD -MP -MF $(DEPDIR)/whirlpool.Tpo -c -o whirlpool.o `test -f '${HASHDEEP_DIR}/whirlpool.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/whirlpool.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/whirlpool.Tpo $(DEPDIR)/whirlpool.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/whirlpool.c' object='whirlpool.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/whirlpool.c' object='whirlpool.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o whirlpool.o `test -f '${COMMON_DIR}/whirlpool.c' || echo '$(srcdir)/'`${COMMON_DIR}/whirlpool.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o whirlpool.o `test -f '${HASHDEEP_DIR}/whirlpool.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/whirlpool.c
 
-whirlpool.obj: ${COMMON_DIR}/whirlpool.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT whirlpool.obj -MD -MP -MF $(DEPDIR)/whirlpool.Tpo -c -o whirlpool.obj `if test -f '${COMMON_DIR}/whirlpool.c'; then $(CYGPATH_W) '${COMMON_DIR}/whirlpool.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/whirlpool.c'; fi`
+whirlpool.obj: ${HASHDEEP_DIR}/whirlpool.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT whirlpool.obj -MD -MP -MF $(DEPDIR)/whirlpool.Tpo -c -o whirlpool.obj `if test -f '${HASHDEEP_DIR}/whirlpool.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/whirlpool.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/whirlpool.c'; fi`
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/whirlpool.Tpo $(DEPDIR)/whirlpool.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${COMMON_DIR}/whirlpool.c' object='whirlpool.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/whirlpool.c' object='whirlpool.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o whirlpool.obj `if test -f '${COMMON_DIR}/whirlpool.c'; then $(CYGPATH_W) '${COMMON_DIR}/whirlpool.c'; else $(CYGPATH_W) '$(srcdir)/${COMMON_DIR}/whirlpool.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o whirlpool.obj `if test -f '${HASHDEEP_DIR}/whirlpool.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/whirlpool.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/whirlpool.c'; fi`
 install-man1: $(man_MANS)
 	@$(NORMAL_INSTALL)
 	test -z "$(man1dir)" || $(MKDIR_P) "$(DESTDIR)$(man1dir)"

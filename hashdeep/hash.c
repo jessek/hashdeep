@@ -12,25 +12,24 @@
 // $Id$
 
 
-#include "main.h"
 
-#ifdef __MD5DEEP_H
+#ifdef MD5DEEP
 
 // Code for md5deep 
-
+#include "md5deep.h"
 #define HASH_INITIALIZE()      s->hash_init(s->hash_context)
 #define HASH_UPDATE(BUF,SIZE)  s->hash_update(s->hash_context,BUF,SIZE)
 #define HASH_FINALIZE()        s->hash_finalize(s->hash_context,s->hash_sum)
 
 #else
-		    
-// Code for hashdeep 
 
+// Code for hashdeep 
+#include "main.h"
 #define HASH_INITIALIZE()      multihash_initialize(s)
 #define HASH_UPDATE(BUF,SIZE)  multihash_update(s,BUF,SIZE)
 #define HASH_FINALIZE()        multihash_finalize(s);
 
-#endif // ifdef __MD5DEEP_H 
+#endif // ifdef MD5DEEP
 		    
 
 
@@ -268,7 +267,7 @@ static int compute_hash(state *s)
 
 
 // Macro to convert raw hex bytes to ASCII output
-#ifdef __MD5DEEP_H
+#ifdef MD5DEEP
 static char hex[] = "0123456789abcdef";	
 #define HASH_TO_STR(SRC,DEST,LEN)				\
   size_t __i;							\
@@ -329,7 +328,7 @@ static int hash(state *s)
     s->last_time = s->start_time;
   }
 
-#ifdef __MD5DEEP_H
+#ifdef MD5DEEP
   if (s->mode & mode_triage)
   {
     // Hash and display the first 512 bytes of this file
@@ -357,7 +356,7 @@ static int hash(state *s)
   
   while (!done)
   {
-#ifdef __MD5DEEP_H
+#ifdef MD5DEEP
     memset(s->hash_result,0,(2 * s->hash_length) + 1);
 #endif
     HASH_INITIALIZE();
@@ -388,7 +387,7 @@ static int hash(state *s)
       
       HASH_FINALIZE();
 
-#ifdef __MD5DEEP_H
+#ifdef MD5DEEP
       HASH_TO_STR(s->hash_sum, s->hash_result, s->hash_length);
       
       // Under not matched mode, we only display those known hashes that
@@ -476,7 +475,7 @@ int hash_file(state *s, TCHAR *fn)
       if (s->mode & mode_size_all)
       {
 	// Whereas md5deep has only one hash to wipe, hashdeep has several
-#ifdef __MD5DEEP_H
+#ifdef MD5DEEP
 	memset(s->hash_result, '*', HASH_STRING_LENGTH);
 #else
 	int i;

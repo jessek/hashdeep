@@ -1,27 +1,29 @@
 
 # The math library is required for floor()
+AM_CPPFLAGS = -DMD5DEEP
 LDADD = -lm
 INCLUDES   = -I@top_srcdir@/include
-COMMON_DIR = @top_srcdir@/common
+COMMON_DIR   = @top_srcdir@/common
+HASHDEEP_DIR = @top_srcdir@/hashdeep
 
 bin_PROGRAMS=md5deep sha1deep sha256deep tigerdeep whirlpooldeep
 
 COMMON_SRC = \
-${COMMON_DIR}/hash.c     \
-${COMMON_DIR}/dig.c      \
-${COMMON_DIR}/cycles.c   \
-${COMMON_DIR}/ui.c       \
-${COMMON_DIR}/helpers.c  
+${HASHDEEP_DIR}/hash.c     \
+${HASHDEEP_DIR}/dig.c      \
+${HASHDEEP_DIR}/cycles.c   \
+${HASHDEEP_DIR}/ui.c       \
+${HASHDEEP_DIR}/helpers.c  
 
 base_src=main.c files.c ${COMMON_SRC} \
                 match.c hashTable.c display.c \
 		main.h hashTable.h 
 
-md5deep_SOURCES      =${base_src} ${COMMON_DIR}/md5.c md5deep.c   
-sha1deep_SOURCES     =${base_src} ${COMMON_DIR}/sha1.c sha1deep.c
-sha256deep_SOURCES   =${base_src} ${COMMON_DIR}/sha256.c sha256deep.c
-tigerdeep_SOURCES    =${base_src} ${COMMON_DIR}/tiger.c tigerdeep.c
-whirlpooldeep_SOURCES=${base_src} ${COMMON_DIR}/whirlpool.c whirlpooldeep.c
+md5deep_SOURCES      =${base_src} ${HASHDEEP_DIR}/md5.c md5deep.c   
+sha1deep_SOURCES     =${base_src} ${HASHDEEP_DIR}/sha1.c sha1deep.c
+sha256deep_SOURCES   =${base_src} ${HASHDEEP_DIR}/sha256.c sha256deep.c
+tigerdeep_SOURCES    =${base_src} ${HASHDEEP_DIR}/tiger.c tigerdeep.c
+whirlpooldeep_SOURCES=${base_src} ${HASHDEEP_DIR}/whirlpool.c whirlpooldeep.c
 
 
 ALL_GOALS={md5,sha1,sha256,tiger,whirlpool}

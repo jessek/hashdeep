@@ -1,7 +1,11 @@
 // HASHDEEP
 // $Id$
 
+#ifdef MD5DEEP
+#include "md5deep.h"
+#else
 #include "main.h"
+#endif
 
 #ifdef _WIN32 
 // This can't go in main.h or we get multiple definitions of it

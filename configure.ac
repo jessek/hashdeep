@@ -1,6 +1,10 @@
+#
+# configure.ac script for md5deep/hashdeep family of programs.
+#
+
 AC_PREREQ(2.57)
 
-AC_INIT([MD5DEEP],[3.9.1-002],[research@jessekornblum.com])
+AC_INIT([MD5DEEP],[3.9.1],[research@jessekornblum.com])
 AM_INIT_AUTOMAKE
 
 AC_GNU_SOURCE

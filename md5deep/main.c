@@ -11,7 +11,8 @@
 //
 // $Id$
 
-#include "main.h"
+#include "md5deep.h"
+
 
 
 #ifdef _WIN32 

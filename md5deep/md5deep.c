@@ -4,7 +4,7 @@
 //#include "main.h"
 //#include "md5.h"
 
-#include "main.h"
+#include "md5deep.h"
 
 int setup_hashing_algorithm(state *s)
 {
