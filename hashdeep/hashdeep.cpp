@@ -1,11 +1,15 @@
 // HASHDEEP
 // $Id$
 
+extern "C" {
+
 #ifdef MD5DEEP
 #include "md5deep.h"
 #else
 #include "main.h"
 #endif
+
+};
 
 #ifdef _WIN32 
 // This can't go in main.h or we get multiple definitions of it
@@ -19,8 +23,6 @@ int _CRT_fmode = _O_BINARY;
 // function should produce no more than 22 lines of text.
 static void usage(state *s)
 {
-  hashname_t i;
-
   print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
   print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-V|-h] [-o <mode>] [FILES]",CMD_PROMPT,__progname);
 
@@ -28,16 +30,16 @@ static void usage(state *s)
 
   print_status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
   fprintf(stdout,"     legal values are ");
-  for (i = 0 ; i < NUM_ALGORITHMS ; i++)
+  for (int i = 0 ; i < NUM_ALGORITHMS ; i++)
     fprintf(stdout,"%s%s",s->hashes[i]->name,(i+1<NUM_ALGORITHMS)?",":NEWLINE);
 
   print_status("-a - audit mode. Validates FILES against known hashes. Requires -k");
+  print_status("-d - output in DFXML (Digital Forensics XML)");
   print_status("-m - matching mode. Requires -k");
   print_status("-x - negative matching mode. Requires -k");
   print_status("-w - in -m mode, displays which known file was matched");
   print_status("-M and -X act like -m and -x, but display hashes of matching files");
   print_status("-k - add a file of known hashes");
-
   print_status("-r - recursive mode. All subdirectories are traversed");
   print_status("-e - compute estimated time remaining for each file");
   print_status("-s - silent mode. Suppress all error messages");
@@ -72,7 +74,7 @@ static void check_flags_okay(state *s)
 static int 
 add_algorithm(state *s, 
 	      hashname_t pos,
-	      char *name, 
+	      const char *name, 
 	      uint16_t len, 
 	      int ( *func_init)(void *),
 	      int ( *func_update)(void *, unsigned char *, uint64_t ),
@@ -173,12 +175,12 @@ int setup_hashing_algorithms(state *s)
 
 void clear_algorithms_inuse(state *s)
 {
-  hashname_t i;
+    //hashname_t i;
 
   if (NULL == s)
     return;
 
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
   { 
     if (s->hashes[i] != NULL)
       s->hashes[i]->inuse = FALSE;
@@ -188,9 +190,9 @@ void clear_algorithms_inuse(state *s)
 
 static int initialize_hashing_algorithms(state *s)
 {
-  hashname_t i;
+    //hashname_t i;
   
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {
     if (NULL == s->current_file->hash[i])
     {
@@ -238,8 +240,8 @@ static int parse_hashing_algorithms(state *s, char *val)
     
     else if (STRINGS_CASE_EQUAL(buf[i],"all"))
     {
-      hashname_t count;
-      for (count = 0 ; count < NUM_ALGORITHMS ; ++count)
+	//hashname_t count;
+      for (int count = 0 ; count < NUM_ALGORITHMS ; ++count)
 	s->hashes[count]->inuse = TRUE;
       return FALSE;
     }
@@ -260,7 +262,7 @@ static int process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"o:I:i:c:MmXxtablk:resp:wvVh")) != -1)
+  while ((i=getopt(argc,argv,"d:o:I:i:c:MmXxtablk:resp:wvVh")) != -1)
   {
     switch (i)
     {
@@ -292,6 +294,7 @@ static int process_command_line(state *s, int argc, char **argv)
 	fatal_error(s,"%s: Unable to parse hashing algorithms",__progname);
       break;
       
+    case 'd': s->dfxml = 1; break;
     case 'M': s->mode |= mode_display_hash;	  
     case 'm': s->primary_function = primary_match;      break;
       

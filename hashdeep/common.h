@@ -15,7 +15,7 @@
 
 // The version information, VERSION, is defined in config.h 
 
-#define AUTHOR      "Jesse Kornblum"
+#define AUTHOR      "Jesse Kornblum and Simson Garfinkel"
 #define COPYRIGHT   "This program is a work of the US Government. "\
 "In accordance with 17 USC 105,%s"\
 "copyright protection is not available for any work of the US Government.%s"\
@@ -144,12 +144,7 @@ NEWLINE, NEWLINE, NEWLINE
 
 
 
-// On non-glibc systems we have to manually set the __progname variable 
-#ifdef __GLIBC__
 extern char *__progname;
-#else
-char *__progname;
-#endif // ifdef __GLIBC__ 
 
 // Set up the environment for the *nix operating systems (Mac, Linux, 
 // BSD, Solaris, and really everybody except Microsoft Windows) 

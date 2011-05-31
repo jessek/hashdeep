@@ -4,7 +4,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT([MD5DEEP],[3.9.1],[research@jessekornblum.com])
+AC_INIT([MD5DEEP],[4.0.0_alpha_000],[research@jessekornblum.com])
 AM_INIT_AUTOMAKE
 
 AC_GNU_SOURCE
@@ -17,6 +17,7 @@ case $host in
 esac
 
 AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_INSTALL
 
 AC_CONFIG_FILES([Makefile hashdeep/Makefile md5deep/Makefile])

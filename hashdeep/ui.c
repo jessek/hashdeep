@@ -25,7 +25,7 @@ if (vfprintf(HANDLE,MSG,ap) < 0)  \
 va_end(ap); fprintf (HANDLE,"%s", NEWLINE);
 
 
-void print_debug(char *fmt, ... )
+void print_debug(const char *fmt, ... )
 {
   if (NULL == fmt)
     return;
@@ -36,12 +36,12 @@ void print_debug(char *fmt, ... )
 #endif
 }
 
-void print_status(char *fmt, ...)
+void print_status(const char *fmt, ...)
 {
   MD5DEEP_PRINT_MSG(stdout,fmt)
 }
 
-void print_error(state *s, char *fmt, ...)
+void print_error(const state *s, const char *fmt, ...)
 {
   if (!(s->mode & mode_silent))
   {
@@ -50,7 +50,7 @@ void print_error(state *s, char *fmt, ...)
 }
 
 
-void print_error_unicode(state *s, TCHAR *fn, char *fmt, ...)
+void print_error_unicode(const state *s, const TCHAR *fn, const char *fmt, ...)
 {
   if (!(s->mode & mode_silent))
   {
@@ -62,7 +62,7 @@ void print_error_unicode(state *s, TCHAR *fn, char *fmt, ...)
 
 
 
-void fatal_error(state *s, char *fmt, ...)
+void fatal_error(const state *s, const char *fmt, ...)
 {
   if (!(s->mode & mode_silent))
   {
@@ -76,7 +76,7 @@ void fatal_error(state *s, char *fmt, ...)
 // Internal errors are so serious that we ignore the user's wishes 
 // about silent mode. Our need to debug the program outweighs their
 // preferences. Besides, the program is probably crashing anyway...
-void internal_error(char *fmt, ... )
+void internal_error(const char *fmt, ... )
 {
   MD5DEEP_PRINT_MSG(stderr,fmt);  
   print_status ("%s: Internal error. Contact developer!", __progname);  
@@ -85,7 +85,7 @@ void internal_error(char *fmt, ... )
 
 
 #ifdef _WIN32
-void display_filename(FILE *out, TCHAR *fn)
+void display_filename(const FILE *out, const TCHAR *fn)
 {
   size_t pos,len;
 
@@ -104,7 +104,7 @@ void display_filename(FILE *out, TCHAR *fn)
   }
 }
 #else
-void display_filename(FILE *out, TCHAR *fn)
+void display_filename(FILE *out, const TCHAR *fn)
 {
   fprintf (out,"%s", fn);
 }

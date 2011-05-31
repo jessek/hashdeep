@@ -275,6 +275,10 @@ static void display_all_known_files(state *s)
 #endif
 
 
+/*
+** read a hash set file.
+*/
+
 status_t read_file(state *s, char *fn, FILE *handle)
 {
   status_t st = status_ok;

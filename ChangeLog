@@ -1,3 +1,18 @@
+2011-05-31  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* configure.ac: changed version number to 4.0.0_alpha_000
+
+	* hashdeep/Makefile.am (hashdeep_SOURCES): simplified list of files
+
+	* hashdeep/common.h: __progname is now always extern; on systems that are not GLIBC we include progname.c
+
+	* configure.ac: moved all includes from include/* to hashdeep; there is no reason to have an include/ directory since we are not building a library.
+	
+	* configure.ac: added AC_PROG_CXX
+	
+
+	* hashdeep/Makefile.am (hashdeep_SOURCES): renamed main.c to hashdeep.cpp. Yes, we are now a C++ program!
+
 2011-05-31  Simson Garfinkel  <simsong@it151655.ern.nps.edu>
 
 	* md5deep/display.c: changed #include "main.h" to #include "md5deep.h"

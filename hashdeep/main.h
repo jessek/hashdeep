@@ -225,6 +225,10 @@ struct _state {
   /* For audit mode, the number of each type of file */
   uint64_t        match_exact, match_expect,
     match_partial, match_moved, match_unused, match_unknown, match_total;
+
+  /* output in DFXML */
+  int          dfxml;
+
 };
 
 #include "ui.h"
@@ -271,6 +275,6 @@ int hash_stdin(state *s);
 
 /* HELPER FUNCTIONS */
 void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
-void sanity_check(state *s, int condition, char *msg);
+void sanity_check(state *s, int condition, const char *msg);
 
 #endif /* ifndef __HASHDEEP_H */

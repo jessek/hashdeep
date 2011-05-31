@@ -99,7 +99,7 @@ void chop_line(char *s)
 }
 
 
-void sanity_check(state *s, int condition, char *msg)
+void sanity_check(state *s, int condition, const char *msg)
 {
   if (condition)
   {
@@ -203,7 +203,7 @@ int my_dirname(TCHAR *c)
 }
 
 
-void make_newline(state *s)
+void make_newline(const state *s)
 {
   if (NULL == s)  
     printf("%s", NEWLINE);

@@ -1,6 +1,8 @@
 /*
  * Simson's XML output class.
  * Ideally include this AFTER your config file with the HAVE statements.
+ *
+ * Pubic Domain.
  */
 
 #ifndef _XML_H_
@@ -9,7 +11,6 @@
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif
-
 
 #include <string.h>
 #include <stdio.h>
