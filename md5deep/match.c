@@ -13,7 +13,7 @@
 // $Id$ 
 
 #include "md5deep.h"
-#include "hashTable.h"
+#include "md5deep_hashtable.h"
 
 hashTable knownHashes;
 int table_initialized = FALSE;
@@ -118,9 +118,7 @@ static int parse_encase_file(state *s, char *fn, FILE *handle)
   return STATUS_OK;
 }
 
-
-
-int load_match_file(state *s, char *fn) 
+int md5deep_load_match_file(state *s, char *fn) 
 {
   uint64_t line_number = 0;
   char buf[MAX_STRING_LENGTH + 1];
@@ -217,7 +215,7 @@ int load_match_file(state *s, char *fn)
 
 
 
-void add_hash(state *s, char *h, char *fn)
+void md5deep_add_hash(state *s, char *h, char *fn)
 {
   if (NULL == s || NULL == h || NULL == fn)
     internal_error("%s: Null values passed into add_hash", __progname);
@@ -234,7 +232,7 @@ void add_hash(state *s, char *h, char *fn)
 }
 
 
-int is_known_hash(char *h, char *known_fn) 
+int md5deep_is_known_hash(char *h, char *known_fn) 
 {
   int status;
 
@@ -258,7 +256,7 @@ int is_known_hash(char *h, char *known_fn)
 // Examines the hash table and determines if any known hashes have not
 // been used or if any input files did not match the known hashes. If
 // requested, displays any unused known hashes. Returns a status variable
-int finalize_matching(state *s)
+int md5deep_finalize_matching(state *s)
 {
   int status = STATUS_OK;
 

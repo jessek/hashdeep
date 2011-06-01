@@ -2286,7 +2286,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-ac_config_files="$ac_config_files Makefile hashdeep/Makefile md5deep/Makefile tests/Makefile"
+ac_config_files="$ac_config_files Makefile hashdeep/Makefile man/Makefile tests/Makefile"
 
 am__api_version='1.11'
 
@@ -7474,7 +7474,7 @@ do
   case $ac_config_target in
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "hashdeep/Makefile") CONFIG_FILES="$CONFIG_FILES hashdeep/Makefile" ;;
-    "md5deep/Makefile") CONFIG_FILES="$CONFIG_FILES md5deep/Makefile" ;;
+    "man/Makefile") CONFIG_FILES="$CONFIG_FILES man/Makefile" ;;
     "tests/Makefile") CONFIG_FILES="$CONFIG_FILES tests/Makefile" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;

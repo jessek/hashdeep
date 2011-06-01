@@ -14,8 +14,9 @@
 
 // $Id$
 
+#include "main.h"
 #include "md5deep.h"
-#include "hashTable.h"
+#include "md5deep_hashtable.h"
 
 
 /* These two functions are the "hash" functions for the hash table. 

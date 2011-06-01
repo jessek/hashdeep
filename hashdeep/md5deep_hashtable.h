@@ -1,4 +1,3 @@
-
 /* MD5DEEP - hashTable.h
  *
  * By Jesse Kornblum
@@ -10,16 +9,17 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
+ * This code from the md5deep/ source tree.
+ *
+ * $Id: hashTable.h,v 1.1 2007/12/07 04:20:00 jessekornblum Exp $ 
  */
-
-/* $Id: hashTable.h,v 1.1 2007/12/07 04:20:00 jessekornblum Exp $ */
 
 /* We keep all of the hash table manipulation functions here as an 
    abstraction barrier. They're not in main.h so that the main 
    program can't call them. */
 
-#ifndef __HASHTABLE
-#define __HASHTABLE
+#ifndef __MD5DEEP_HASHTABLE_H
+#define __MD5DEEP_HASHTABLE_H
 
 
 /* The HASH_TABLE_SIZE must be more than 16 to the power of HASH_SIG_FIGS */

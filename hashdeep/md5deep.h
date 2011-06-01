@@ -17,30 +17,18 @@
 #define __MD5DEEP_H
 
 #include "common.h"
-#include "hashTable.h"
+#include "md5deep_hashtable.h"
 
 
 
 
-// These are the types of files that we can match against 
-#define TYPE_PLAIN        0
-#define TYPE_BSD          1
-#define TYPE_HASHKEEPER   2
-#define TYPE_NSRL_15      3
-#define TYPE_NSRL_20      4
-#define TYPE_ILOOK        5
-#define TYPE_ILOOK3       6
-#define TYPE_ILOOK4       7
-#define TYPE_MD5DEEP_SIZE 8
-#define TYPE_ENCASE       9
-#define TYPE_UNKNOWN    254
 
-
-
-
+/* We no longer use this */
+#if 0
 typedef struct _state {
 
   // Basic program state 
+  primary_t     primary_function;
   uint64_t      mode;
   int           return_value;
   time_t        start_time, last_time;
@@ -97,7 +85,6 @@ typedef struct _state {
   TCHAR         * msg;
 
   // Hashing algorithms 
-
   // We don't define hash_string_length, it's just twice this length. 
   // We use a signed value as this gets compared with the output of strlen() */
   size_t       hash_length;
@@ -120,11 +107,11 @@ typedef struct _state {
   char          * known_fn;
 
 } _state;
+#endif
 
 
 
-
-void sanity_check(state *s, int condition, char *msg);
+void sanity_check(state *s, int condition, const char *msg);
 
 // ----------------------------------------------------------------
 // PROGRAM ENGINE
@@ -144,15 +131,14 @@ int setup_hashing_algorithm(state *s);
 // FILE MATCHING
 // ---------------------------------------------------------------- 
 
-// Load a file of known hashes from the disk 
-int load_match_file(state *s, char *fn);
-
-int is_known_hash(char *h, char *known_fn);
-int was_input_not_matched(void);
-int finalize_matching(state *s);
+// md5deep_match.c
+int md5deep_load_match_file(state *s, char *fn);
+int md5deep_is_known_hash(char *h, char *known_fn);
+//int was_input_not_matched(void);
+int md5deep_finalize_matching(state *s);
 
 // Add a single hash to the matching set
-void add_hash(state *s, char *h, char *fn);
+void md5deep_add_hash(state *s, char *h, char *fn);
 
 // Functions for file evaluation (files.c) 
 int valid_hash(state *s, char *buf);

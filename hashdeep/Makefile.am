@@ -4,9 +4,7 @@ bin_PROGRAMS = hashdeep
 
 hashdeep_SOURCES = hashdeep.cpp audit.c match.c multihash.c display.c hashtable.c \
 	hash.c dig.c cycles.c ui.c helpers.c progname.c \
-	md5.c sha1.c sha256.c tiger.c whirlpool.c 
-
-man_MANS = hashdeep.1
+	md5.c sha1.c sha256.c tiger.c whirlpool.c md5deep_hashtable.c files.c
 
 # The math library is required for floor(), hence -lm
 # We use strsep do our string processing, but some operating systems

@@ -3,7 +3,7 @@
 
 #include "main.h"
 
-static int valid_hash(state *s, hashname_t a, char *buf)
+static int match_valid_hash(state *s, hashname_t a, char *buf)
 {
   size_t pos = 0;
 
@@ -344,7 +344,7 @@ status_t read_file(state *s, char *fn, FILE *handle)
       }
 
       // All other columns should contain a valid hash
-      if ( ! valid_hash(s,s->hash_order[column_number],buf))
+      if ( ! match_valid_hash(s,s->hash_order[column_number],buf))
       {
 	print_error(s,
 		    "%s: %s: Invalid %s hash in line %"PRIu64,

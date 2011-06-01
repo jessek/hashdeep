@@ -5,6 +5,13 @@
 #define __HASHDEEP_H
 
 #include "common.h"
+#include "md5deep_hashtable.h"
+
+#ifdef __cplusplus
+#include "dfxml.h"
+#else
+#define DFXML void
+#endif
 
 #ifndef HAVE_STRSEP
 # include "strsep.h"
@@ -163,25 +170,56 @@ typedef enum
 } primary_t; 
 
 
+// These are the types of files that we can match against 
+#define TYPE_PLAIN        0
+#define TYPE_BSD          1
+#define TYPE_HASHKEEPER   2
+#define TYPE_NSRL_15      3
+#define TYPE_NSRL_20      4
+#define TYPE_ILOOK        5
+#define TYPE_ILOOK3       6
+#define TYPE_ILOOK4       7
+#define TYPE_MD5DEEP_SIZE 8
+#define TYPE_ENCASE       9
+#define TYPE_UNKNOWN    254
+
+
+
+
 struct _state {
 
   /* Basic Program State */
   primary_t       primary_function;
   uint64_t        mode;
+  int             return_value;
+  time_t          start_time, last_time;
 
   /* Command line arguments */
   TCHAR        ** argv;
   int             argc;
+  char          * input_list;
   TCHAR         * cwd;
-
-  time_t          start_time, last_time;
 
   /* The file currently being hashed */
   file_data_t   * current_file;
   int             is_stdin;
   FILE          * handle;
   unsigned char * buffer;
-  time_t          timestamp;
+
+#ifdef _WIN32
+  __time64_t    timestamp;
+#else
+  time_t        timestamp;
+#endif
+  char          * time_str;
+
+  // Lists of known hashes 
+  hashTable     known_hashes;
+  uint32_t      expected_hashes;
+
+  // The type of file, as report by stat
+  uint8_t       input_type;
+
 
   // When only hashing files larger/smaller than a given threshold
   uint64_t        size_threshold;
@@ -202,17 +240,25 @@ struct _state {
 
   /* We don't want to use s->full_name, but it's required for hash.c */
   TCHAR         * full_name;
-  
   TCHAR         * short_name;
   TCHAR         * msg;
 
-  /* The set of known hashes */
+  /* The set of known values */
   int             hashes_loaded;
   algorithm_t   * hashes[NUM_ALGORITHMS];
   uint8_t         expected_columns;
   file_data_t   * known, * last;
   uint64_t        hash_round;
   uint8_t         hash_order[NUM_ALGORITHMS];
+
+  // Hashing algorithms 
+  // We don't define hash_string_length, it's just twice this length. 
+  // We use a signed value as this gets compared with the output of strlen() */
+  size_t          hash_length;
+
+  // Which filetypes this algorithm supports and their position in the file
+  uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
+  uint8_t      h_ilook, h_ilook3, h_ilook4, h_nsrl15, h_nsrl20, h_encase;
 
   int             banner_displayed;
 
@@ -227,7 +273,7 @@ struct _state {
     match_partial, match_moved, match_unused, match_unknown, match_total;
 
   /* output in DFXML */
-  int          dfxml;
+    DFXML       *dfxml;
 };
 
 #include "ui.h"

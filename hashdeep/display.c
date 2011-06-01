@@ -3,6 +3,10 @@
 
 // $Id$
 
+/****************************************************************
+ ** These are from the original hashdeep/display.c
+ ****************************************************************/
+
 static void display_banner(state *s)
 {
   int argc;

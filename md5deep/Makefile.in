@@ -49,9 +49,10 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__objects_1 = hash.$(OBJEXT) dig.$(OBJEXT) cycles.$(OBJEXT) \
-	ui.$(OBJEXT) helpers.$(OBJEXT) progname.$(OBJEXT)
-am__objects_2 = main.$(OBJEXT) files.$(OBJEXT) $(am__objects_1) \
-	match.$(OBJEXT) hashTable.$(OBJEXT) display.$(OBJEXT)
+	ui.$(OBJEXT) helpers.$(OBJEXT) progname.$(OBJEXT) \
+	files.$(OBJEXT) md5deep_hashtable.$(OBJEXT)
+am__objects_2 = main.$(OBJEXT) $(am__objects_1) match.$(OBJEXT) \
+	display.$(OBJEXT)
 am_md5deep_OBJECTS = $(am__objects_2) md5.$(OBJEXT) md5deep.$(OBJEXT)
 md5deep_OBJECTS = $(am_md5deep_OBJECTS)
 md5deep_LDADD = $(LDADD)
@@ -219,7 +220,6 @@ top_srcdir = @top_srcdir@
 # The math library is required for floor()
 AM_CPPFLAGS = -DMD5DEEP
 LDADD = -lm
-#INCLUDES   = -I@top_srcdir@/include
 INCLUDES = -I@top_srcdir@/hashdeep
 COMMON_DIR = @top_srcdir@/common
 HASHDEEP_DIR = @top_srcdir@/hashdeep
@@ -229,10 +229,12 @@ ${HASHDEEP_DIR}/dig.c      \
 ${HASHDEEP_DIR}/cycles.c   \
 ${HASHDEEP_DIR}/ui.c       \
 ${HASHDEEP_DIR}/helpers.c  \
-${HASHDEEP_DIR}/progname.c
+${HASHDEEP_DIR}/progname.c \
+${HASHDEEP_DIR}/files.c    \
+${HASHDEEP_DIR}/md5deep_hashtable.c    
 
-base_src = main.c files.c ${COMMON_SRC} \
-                match.c hashTable.c display.c \
+base_src = main.c ${COMMON_SRC} \
+                match.c display.c \
 		main.h hashTable.h 
 
 md5deep_SOURCES = ${base_src} ${HASHDEEP_DIR}/md5.c md5deep.c   
@@ -342,12 +344,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/display.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/files.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hashTable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5deep.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5deep_hashtable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/progname.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1deep.Po@am__quote@
@@ -456,6 +458,34 @@ progname.obj: ${HASHDEEP_DIR}/progname.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/progname.c' object='progname.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o progname.obj `if test -f '${HASHDEEP_DIR}/progname.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/progname.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/progname.c'; fi`
+
+files.o: ${HASHDEEP_DIR}/files.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT files.o -MD -MP -MF $(DEPDIR)/files.Tpo -c -o files.o `test -f '${HASHDEEP_DIR}/files.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/files.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/files.Tpo $(DEPDIR)/files.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/files.c' object='files.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o files.o `test -f '${HASHDEEP_DIR}/files.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/files.c
+
+files.obj: ${HASHDEEP_DIR}/files.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT files.obj -MD -MP -MF $(DEPDIR)/files.Tpo -c -o files.obj `if test -f '${HASHDEEP_DIR}/files.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/files.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/files.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/files.Tpo $(DEPDIR)/files.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/files.c' object='files.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o files.obj `if test -f '${HASHDEEP_DIR}/files.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/files.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/files.c'; fi`
+
+md5deep_hashtable.o: ${HASHDEEP_DIR}/md5deep_hashtable.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT md5deep_hashtable.o -MD -MP -MF $(DEPDIR)/md5deep_hashtable.Tpo -c -o md5deep_hashtable.o `test -f '${HASHDEEP_DIR}/md5deep_hashtable.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/md5deep_hashtable.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/md5deep_hashtable.Tpo $(DEPDIR)/md5deep_hashtable.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/md5deep_hashtable.c' object='md5deep_hashtable.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o md5deep_hashtable.o `test -f '${HASHDEEP_DIR}/md5deep_hashtable.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/md5deep_hashtable.c
+
+md5deep_hashtable.obj: ${HASHDEEP_DIR}/md5deep_hashtable.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT md5deep_hashtable.obj -MD -MP -MF $(DEPDIR)/md5deep_hashtable.Tpo -c -o md5deep_hashtable.obj `if test -f '${HASHDEEP_DIR}/md5deep_hashtable.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/md5deep_hashtable.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/md5deep_hashtable.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/md5deep_hashtable.Tpo $(DEPDIR)/md5deep_hashtable.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${HASHDEEP_DIR}/md5deep_hashtable.c' object='md5deep_hashtable.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o md5deep_hashtable.obj `if test -f '${HASHDEEP_DIR}/md5deep_hashtable.c'; then $(CYGPATH_W) '${HASHDEEP_DIR}/md5deep_hashtable.c'; else $(CYGPATH_W) '$(srcdir)/${HASHDEEP_DIR}/md5deep_hashtable.c'; fi`
 
 md5.o: ${HASHDEEP_DIR}/md5.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT md5.o -MD -MP -MF $(DEPDIR)/md5.Tpo -c -o md5.o `test -f '${HASHDEEP_DIR}/md5.c' || echo '$(srcdir)/'`${HASHDEEP_DIR}/md5.c

@@ -1,4 +1,4 @@
-SUBDIRS = md5deep hashdeep tests
+SUBDIRS = hashdeep tests man
 
 EXTRA_DIST = FILEFORMAT config.guess config.sub  \
    include/md5.h include/sha1.h include/sha256.h include/tiger.h \

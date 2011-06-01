@@ -1,9 +1,7 @@
-
 # The math library is required for floor()
 AM_CPPFLAGS = -DMD5DEEP
 LDADD = -lm
-#INCLUDES   = -I@top_srcdir@/include
-INCLUDES   = -I@top_srcdir@/hashdeep
+INCLUDES     = -I@top_srcdir@/hashdeep
 COMMON_DIR   = @top_srcdir@/common
 HASHDEEP_DIR = @top_srcdir@/hashdeep
 
@@ -15,10 +13,13 @@ ${HASHDEEP_DIR}/dig.c      \
 ${HASHDEEP_DIR}/cycles.c   \
 ${HASHDEEP_DIR}/ui.c       \
 ${HASHDEEP_DIR}/helpers.c  \
-${HASHDEEP_DIR}/progname.c
+${HASHDEEP_DIR}/progname.c \
+${HASHDEEP_DIR}/files.c    \
+${HASHDEEP_DIR}/md5deep_hashtable.c    
 
-base_src=main.c files.c ${COMMON_SRC} \
-                match.c hashTable.c display.c \
+
+base_src=main.c ${COMMON_SRC} \
+                match.c display.c \
 		main.h hashTable.h 
 
 md5deep_SOURCES      =${base_src} ${HASHDEEP_DIR}/md5.c md5deep.c   
