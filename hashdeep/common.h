@@ -1,5 +1,8 @@
-
-// $Id$ 
+/**
+ * $Id$
+ * 
+ * This file provides common include files but no specifics for the hashdeep/md5deep system.
+ */
 
 #ifndef __COMMON_H
 #define __COMMON_H
@@ -336,16 +339,11 @@ int done_processing_dir(TCHAR *fn);
 // ------------------------------------------------------------------
 // HELPER FUNCTIONS
 // ------------------------------------------------------------------ 
-void setup_expert_mode(state *s, char *arg);
-
-void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
-
+void     setup_expert_mode(state *s, char *arg);
+void     generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
 uint64_t find_block_size(state *s, char *input_str);
-
-void chop_line(char *s);
-
-
-void shift_string(char *fn, size_t start, size_t new_start);
+void     chop_line(char *s);
+void     shift_string(char *fn, size_t start, size_t new_start);
 
 // Works like dirname(3), but accepts a TCHAR* instead of char*
 int my_dirname(TCHAR *c);
@@ -357,16 +355,9 @@ int find_quoted_string(char *buf, unsigned int n);
 // Return the size, in bytes of an open file stream. On error, return -1 
 off_t find_file_size(FILE *f);
 
-
 // ------------------------------------------------------------------
 // MAIN PROCESSING
 // ------------------------------------------------------------------ 
 int process_win32(state *s, TCHAR *fn);
 int process_normal(state *s, TCHAR *fn);
-
-
-
-
-
-
 #endif /* ifndef __COMMON_H */

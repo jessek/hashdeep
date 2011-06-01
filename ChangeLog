@@ -1,3 +1,7 @@
+2011-06-01  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* hashdeep/sha1.c: made sha1.c include sha1.h but not main.h
+
 2011-05-31  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* configure.ac: changed version number to 4.0.0_alpha_000

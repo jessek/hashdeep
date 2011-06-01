@@ -262,7 +262,7 @@ static int process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"d:o:I:i:c:MmXxtablk:resp:wvVh")) != -1)
+  while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVh")) != -1)
   {
     switch (i)
     {

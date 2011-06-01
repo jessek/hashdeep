@@ -18,7 +18,6 @@
 /* $Id$ */
 
 #include "common.h"
-//#include "main.h"
 
 
 #ifndef WORDS_BIGENDIAN

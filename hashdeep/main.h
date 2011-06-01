@@ -228,7 +228,6 @@ struct _state {
 
   /* output in DFXML */
   int          dfxml;
-
 };
 
 #include "ui.h"

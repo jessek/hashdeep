@@ -5,6 +5,7 @@
 AC_PREREQ(2.57)
 
 AC_INIT([MD5DEEP],[4.0.0_alpha_000],[research@jessekornblum.com])
+AC_CONFIG_FILES([Makefile hashdeep/Makefile md5deep/Makefile tests/Makefile])
 AM_INIT_AUTOMAKE
 
 AC_GNU_SOURCE
@@ -20,7 +21,6 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
 
-AC_CONFIG_FILES([Makefile hashdeep/Makefile md5deep/Makefile])
 AM_CONFIG_HEADER([config.h])
 
 # Bring additional directories where things might be found into our

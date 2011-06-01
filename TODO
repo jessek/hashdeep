@@ -7,13 +7,13 @@ $Id$
 == 
 
 Below is what we've done:
-1 - Start with a new copy of the source
-2 -  fix the autoconf files.
+1  - Start with a new copy of the source
+2  - fix the autoconf files.
+6  - migrate to C++ (hashdeep is now hashdeep.cpp)
 
 Below is the retrench plan:
 
 3 - add DFXML to the multihash program.
 4 - add an output mode to the multihash program that exactly matches the output mode of the single hash md5deep, sha1deep, etc.
 5 - add a mode to the multihash program that exactly matches the command-line options, and have that mode be the default when the command name changes. 
-6 - migrate to C++
 7 - remove your hashtable object for the STL red-black table.
