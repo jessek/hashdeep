@@ -7,16 +7,40 @@
  ** These are from the original hashdeep/display.c
  ****************************************************************/
 
+static void display_size(state *s)
+{
+  if (NULL == s) return;
+
+  if (s->mode & mode_display_size)
+  {
+    // When in CSV mode we always display the full size
+    if (s->mode & mode_csv)
+    {
+      printf ("%"PRIu64",", s->actual_bytes);
+    }
+    // We reserve ten characters for digits followed by two spaces
+    else if (s->bytes_read > 9999999999LL)
+      printf ("9999999999  ");
+    else
+      printf ("%10"PRIu64"  ", s->actual_bytes);      
+  }	
+}
+
+
+static char display_asterisk(state *s)
+{
+  if (NULL == s) return ' ';
+  return (s->mode & mode_asterisk) ? '*' : ' ';
+}
+
+
+
 static void display_banner(state *s)
 {
-  int argc;
-  size_t bytes_written, current_bytes;
-  hashname_t i;
-  
   print_status("%s", HASHDEEP_HEADER_10);
 
   fprintf (stdout,"%ssize,",HASHDEEP_PREFIX);  
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {
     if (s->hashes[i]->inuse)
       printf ("%s,", s->hashes[i]->name);
@@ -39,14 +63,14 @@ static void display_banner(state *s)
 #endif
 
   // Accounts for '## ', command prompt, and space before first argument
-  bytes_written = 8;
+  size_t bytes_written = 8;
 
-  for (argc = 0 ; argc < s->argc ; ++argc)
+  for (int argc = 0 ; argc < s->argc ; ++argc)
   {
     fprintf(stdout," ");
     bytes_written++;
 
-    current_bytes = _tcslen(s->argv[argc]);
+    size_t current_bytes = _tcslen(s->argv[argc]);
 
     // The extra 32 bytes is a fudge factor
     if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH)
@@ -67,8 +91,6 @@ static void display_banner(state *s)
 
 int display_hash_simple(state *s)
 {
-  hashname_t i;
-
   if ( ! (s->banner_displayed))
     display_banner(s);
 
@@ -81,7 +103,7 @@ int display_hash_simple(state *s)
   else
     printf ("%"PRIu64",", s->actual_bytes);
 
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {
     if (s->hashes[i]->inuse)
       printf("%s,", s->current_file->hash[i]);

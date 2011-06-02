@@ -1,3 +1,8 @@
+#ifndef UI_H
+#define UI_H
+
+#include <sys/cdefs.h>
+__BEGIN_DECLS
 
 /* $Id$ */
 
@@ -30,3 +35,7 @@ void make_newline(const state *s);
 void try_msg(void);
 
 int display_hash(state *s);
+
+__END_DECLS
+#endif
+

@@ -3,6 +3,10 @@
 
 // $Id$
 
+#include <sys/cdefs.h>
+__BEGIN_DECLS
+
+
 // Unicode support 
 #ifdef _WIN32
 
@@ -75,6 +79,8 @@
 #define _gmtime64   gmtime
 
 #endif
+
+__END_DECLS
 
 
 #endif //   __TCHAR_LOCAL_H

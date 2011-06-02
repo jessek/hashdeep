@@ -47,13 +47,13 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_hashdeep_OBJECTS = hashdeep.$(OBJEXT) audit.$(OBJEXT) \
-	match.$(OBJEXT) multihash.$(OBJEXT) display.$(OBJEXT) \
-	hashtable.$(OBJEXT) hash.$(OBJEXT) dig.$(OBJEXT) \
-	cycles.$(OBJEXT) ui.$(OBJEXT) helpers.$(OBJEXT) \
-	progname.$(OBJEXT) md5.$(OBJEXT) sha1.$(OBJEXT) \
-	sha256.$(OBJEXT) tiger.$(OBJEXT) whirlpool.$(OBJEXT) \
-	md5deep_hashtable.$(OBJEXT) files.$(OBJEXT)
+am_hashdeep_OBJECTS = main.$(OBJEXT) audit.$(OBJEXT) match.$(OBJEXT) \
+	multihash.$(OBJEXT) display.$(OBJEXT) hashtable.$(OBJEXT) \
+	hash.$(OBJEXT) dig.$(OBJEXT) cycles.$(OBJEXT) ui.$(OBJEXT) \
+	helpers.$(OBJEXT) progname.$(OBJEXT) md5.$(OBJEXT) \
+	sha1.$(OBJEXT) sha256.$(OBJEXT) tiger.$(OBJEXT) \
+	whirlpool.$(OBJEXT) md5deep_hashtable.$(OBJEXT) \
+	files.$(OBJEXT) xml.$(OBJEXT)
 hashdeep_OBJECTS = $(am_hashdeep_OBJECTS)
 am__DEPENDENCIES_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -173,15 +173,12 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-COMMON_DIR = @top_srcdir@/common
-hashdeep_SOURCES = hashdeep.cpp audit.c match.c multihash.c display.c hashtable.c \
-	hash.c dig.c cycles.c ui.c helpers.c progname.c \
-	md5.c sha1.c sha256.c tiger.c whirlpool.c md5deep_hashtable.c files.c
+hashdeep_SOURCES = main.cpp audit.c match.c multihash.c display.cpp hashtable.c \
+	hash.c dig.c cycles.c ui.c helpers.cpp progname.c \
+	md5.c sha1.c sha256.c tiger.c whirlpool.c md5deep_hashtable.c files.c xml.cpp
 
 
-# The math library is required for floor(), hence -lm
-# We use strsep do our string processing, but some operating systems
-# don't have it yet (e.g. OpenSolaris). We if don't have strsep
+# If don't have strsep
 # we compile it ourselves using a local copy via EXTRA_HASHDEEP
 EXTRA_hashdeep_SOURCES = lib-strsep.c
 hashdeep_LDADD = ${EXTRA_HASHDEEP} -lm
@@ -275,10 +272,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/display.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/files.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hashdeep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hashtable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lib-strsep.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5deep_hashtable.Po@am__quote@
@@ -289,6 +286,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tiger.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/whirlpool.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xml.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

@@ -2,39 +2,7 @@
 
 // $Id$ 
 
-static void display_size(state *s)
-{
-  if (NULL == s)
-    return;
-
-  if (s->mode & mode_display_size)
-  {
-    // When in CSV mode we always display the full size
-    if (s->mode & mode_csv)
-    {
-      printf ("%"PRIu64",", s->actual_bytes);
-    }
-    // We reserve ten characters for digits followed by two spaces
-    else if (s->bytes_read > 9999999999LL)
-      printf ("9999999999  ");
-    else
-      printf ("%10"PRIu64"  ", s->actual_bytes);      
-  }	
-}
-
-
-static char display_asterisk(state *s)
-{
-  if (NULL == s)
-    return ' ';
-
-  if (s->mode & mode_asterisk)
-    return '*';
-  return ' ';
-}
-
-
-static int display_match_result(state *s)
+static int md5deep_display_match_result(state *s)
 {  
   int known_hash;
 
@@ -79,7 +47,7 @@ static int display_match_result(state *s)
 }
 
 
-int display_hash(state *s)
+int md5deep_display_hash(state *s)
 {
   if (NULL == s)
     return TRUE;
@@ -96,7 +64,7 @@ int display_hash(state *s)
   // going to display *anything* yet. If we're in matching mode, we
   // have to evaluate if there was a match first. 
   if ((s->mode & mode_match) || (s->mode & mode_match_neg))
-    return display_match_result(s);
+    return md5deep_display_match_result(s);
 
   display_size(s);
 

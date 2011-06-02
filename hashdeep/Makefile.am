@@ -1,14 +1,10 @@
-COMMON_DIR = @top_srcdir@/common
-
 bin_PROGRAMS = hashdeep
 
-hashdeep_SOURCES = hashdeep.cpp audit.c match.c multihash.c display.c hashtable.c \
-	hash.c dig.c cycles.c ui.c helpers.c progname.c \
-	md5.c sha1.c sha256.c tiger.c whirlpool.c md5deep_hashtable.c files.c
+hashdeep_SOURCES = main.cpp audit.c match.c multihash.c display.cpp hashtable.c \
+	hash.c dig.c cycles.c ui.c helpers.cpp progname.c \
+	md5.c sha1.c sha256.c tiger.c whirlpool.c md5deep_hashtable.c files.c xml.cpp
 
-# The math library is required for floor(), hence -lm
-# We use strsep do our string processing, but some operating systems
-# don't have it yet (e.g. OpenSolaris). We if don't have strsep
+# If don't have strsep
 # we compile it ourselves using a local copy via EXTRA_HASHDEEP
 
 EXTRA_hashdeep_SOURCES = lib-strsep.c

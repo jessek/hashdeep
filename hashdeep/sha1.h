@@ -19,6 +19,8 @@
 
 #include "common.h"
 
+__BEGIN_DECLS
+
 struct SHA1_Context{
   uint32_t state[5];
   uint32_t count[2];
@@ -41,5 +43,7 @@ int hash_init_sha1(void *ctx);
 int hash_update_sha1(void *ctx, unsigned char *buf, uint64_t len);
 int hash_final_sha1(void *ctx, unsigned char *digest);
 
+
+__END_DECLS
 
 #endif   /* ifndef __SHA1_H */

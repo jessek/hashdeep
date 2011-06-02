@@ -18,7 +18,9 @@
 #define _SHA256_H
 
 #include "common.h"
+#include <sys/cdefs.h>
 
+__BEGIN_DECLS
 typedef struct {
   uint32_t total[2];
   uint32_t state[8];
@@ -35,5 +37,6 @@ int hash_init_sha256(void * ctx);
 int hash_update_sha256(void * ctx, unsigned char *buf, uint64_t len);
 int hash_final_sha256(void * ctx, unsigned char *digest);
 
+__END_DECLS
 
 #endif /* sha256.h */

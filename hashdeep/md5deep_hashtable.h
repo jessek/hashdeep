@@ -21,6 +21,8 @@
 #ifndef __MD5DEEP_HASHTABLE_H
 #define __MD5DEEP_HASHTABLE_H
 
+__BEGIN_DECLS
+
 
 /* The HASH_TABLE_SIZE must be more than 16 to the power of HASH_SIG_FIGS */
 #define HASH_SIG_FIGS           5
@@ -41,5 +43,7 @@ typedef hashNode *hashTable[HASH_TABLE_SIZE + 1];
 #define HASHTABLE_OK            0
 #define HASHTABLE_INVALID_HASH  1
 #define HASHTABLE_OUT_OF_MEMORY 2
+
+__END_DECLS
 
 #endif  /* #ifdef __HASHTABLE */

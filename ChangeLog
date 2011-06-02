@@ -1,3 +1,9 @@
+2011-06-02  Simson Garfinkel  <simsong@alphonse-mucha>
+
+	* md5deep/Makefile.am (INCLUDES): removed references to -lm as we no longer use floor.
+
+	* hashdeep/hashdeep.cpp (main): renamed to main.cpp
+
 2011-06-01  Simson Garfinkel  <simsong@alphonse-mucha>
 
 	* md5deep/hashTable.c: renamed to hashdeeb/md5deep_hashtable.c

@@ -8,8 +8,19 @@
 #define __COMMON_H
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+#include "config.h"
 #endif
+
+#ifndef __BEGIN_DECLS
+#if defined(__cplusplus)
+#define __BEGIN_DECLS   extern "C" {
+#define __END_DECLS     }
+#else
+#define __BEGIN_DECLS
+#define __END_DECLS
+#endif
+#endif
+
 
 #ifdef _WIN32
 // Required to enable 64-bit stat functions
@@ -167,7 +178,6 @@ extern char *__progname;
 
 #else   // ifndef _WIN32
 
-
 // The current cross compiler for OS X->Windows does not support a few
 // critical error codes normally defined in errno.h. Because we need 
 // these to detect fatal errors while reading files, we have them here. 
@@ -211,10 +221,14 @@ extern char *__progname;
 //#define lstat(A,B)      stat(A,B)
 #define realpath(A,B)   _fullpath(B,A,PATH_MAX) 
 
+__BEGIN_DECLS
+
 char *basename(char *a);
 extern char *optarg;
 extern int optind;
 int getopt(int argc, char *const argv[], const char *optstring);
+
+__END_DECLS
 
 #endif   /* ifndef _WIN32,#else */
 
@@ -329,6 +343,8 @@ typedef enum
 
 typedef struct _state state;
 
+__BEGIN_DECLS
+
 // ----------------------------------------------------------------
 // CYCLE CHECKING
 // ----------------------------------------------------------------
@@ -360,4 +376,7 @@ off_t find_file_size(FILE *f);
 // ------------------------------------------------------------------ 
 int process_win32(state *s, TCHAR *fn);
 int process_normal(state *s, TCHAR *fn);
+
+__END_DECLS
+
 #endif /* ifndef __COMMON_H */

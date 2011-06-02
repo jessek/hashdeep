@@ -22,6 +22,8 @@
 // -------------------------------------------------------------- 
 // After this is the algorithm itself. You shouldn't change these
 
+__BEGIN_DECLS
+
 typedef struct _context_md5_t {
   uint32_t buf[4];
   uint32_t bits[2];
@@ -39,5 +41,7 @@ void MD5Transform(uint32_t buf[4], uint32_t const in[16]);
 int hash_init_md5(void * ctx);
 int hash_update_md5(void *ctx, unsigned char *buf, uint64_t len);
 int hash_final_md5(void *ctx, unsigned char *digest);
+
+__END_DECLS
 
 #endif /* ifndef __MD5_H */

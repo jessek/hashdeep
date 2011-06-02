@@ -19,6 +19,9 @@
 
 #include "common.h"
 
+__BEGIN_DECLS
+
+
 #define TIGER_BLOCKSIZE 64
 #define TIGER_HASHSIZE 24
 
@@ -38,5 +41,7 @@ int hash_update_tiger(void * ctx, unsigned char  *buf, uint64_t len);
 int hash_final_tiger(void * ctx, unsigned char *sum);
 
 #define context_tiger_t TIGER_CONTEXT
+
+__END_DECLS
 
 #endif /* ifndef __TIGER_H */

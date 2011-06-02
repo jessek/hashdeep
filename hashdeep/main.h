@@ -10,7 +10,7 @@
 #ifdef __cplusplus
 #include "dfxml.h"
 #else
-#define DFXML void
+#define XML void
 #endif
 
 #ifndef HAVE_STRSEP
@@ -273,17 +273,17 @@ struct _state {
     match_partial, match_moved, match_unused, match_unknown, match_total;
 
   /* output in DFXML */
-    DFXML       *dfxml;
+    XML       *dfxml;
 };
 
 #include "ui.h"
-
 #include "md5.h"
 #include "sha1.h"
 #include "sha256.h"
 #include "whirlpool.h"
 #include "tiger.h"
 
+__BEGIN_DECLS
 /* GENERIC ROUTINES */
 void clear_algorithms_inuse(state *s);
 
@@ -321,5 +321,7 @@ int hash_stdin(state *s);
 /* HELPER FUNCTIONS */
 void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
 void sanity_check(state *s, int condition, const char *msg);
+
+__END_DECLS
 
 #endif /* ifndef __HASHDEEP_H */

@@ -1,15 +1,7 @@
 // HASHDEEP
 // $Id$
 
-extern "C" {
-
-#ifdef MD5DEEP
-#include "md5deep.h"
-#else
 #include "main.h"
-#endif
-
-};
 
 #ifdef _WIN32 
 // This can't go in main.h or we get multiple definitions of it
@@ -175,8 +167,6 @@ int setup_hashing_algorithms(state *s)
 
 void clear_algorithms_inuse(state *s)
 {
-    //hashname_t i;
-
   if (NULL == s)
     return;
 
@@ -190,8 +180,6 @@ void clear_algorithms_inuse(state *s)
 
 static int initialize_hashing_algorithms(state *s)
 {
-    //hashname_t i;
-  
   for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {
     if (NULL == s->current_file->hash[i])
@@ -294,7 +282,7 @@ static int process_command_line(state *s, int argc, char **argv)
 	fatal_error(s,"%s: Unable to parse hashing algorithms",__progname);
       break;
       
-    case 'd': s->dfxml = 1; break;
+    case 'd': s->dfxml = new XML(); break;
     case 'M': s->mode |= mode_display_hash;	  
     case 'm': s->primary_function = primary_match;      break;
       

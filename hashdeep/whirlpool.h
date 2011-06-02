@@ -5,7 +5,7 @@
 #define __WHIRLPOOL_H
 
 #include "common.h"
-
+__BEGIN_DECLS
 
 /* ----------------------------------------------------------------------
    Original headers from Whirlpool
@@ -150,13 +150,12 @@ void NESSIEfinalize(struct NESSIEstruct * const structpointer,
 
 #define context_whirlpool_t NESSIEstruct
 
-
 int hash_init_whirlpool(void * ctx);
 int hash_update_whirlpool(void * ctx, unsigned char *buf, uint64_t len);
 int hash_final_whirlpool(void * ctx, unsigned char *digest);
 
-
-
-
 #endif   /* PORTABLE_C__ */
+
+__END_DECLS
+
 #endif   /* __WHIRLPOOL_H */

@@ -72,7 +72,7 @@ static string xml_am("&amp;");
 static string xml_ap("&apos;");
 static string xml_qu("&quot;");
 
-string xml::xmlescape(const string &xml)
+string XML::xmlescape(const string &xml)
 {
     string ret;
     for(string::const_iterator i = xml.begin(); i!=xml.end(); i++){
@@ -94,7 +94,7 @@ string xml::xmlescape(const string &xml)
  * Strip an XML string as necessary for a tag name.
  */
 
-string xml::xmlstrip(const string &xml)
+string XML::xmlstrip(const string &xml)
 {
     string ret;
     for(string::const_iterator i = xml.begin(); i!=xml.end(); i++){
@@ -107,7 +107,7 @@ string xml::xmlstrip(const string &xml)
 
 /****************************************************************/
 
-xml::xml()
+XML::XML()
 {
     out = 0;
     make_dtd = false;
@@ -115,24 +115,33 @@ xml::xml()
     gettimeofday(&t0,0);
 }
 
-void xml::set_tempfile_template(std::string temp)
+XML::XML(FILE *out_)
+{
+    out = out_;
+    make_dtd = false;
+    tempfile_template = "/tmp/xml_XXXXXXXX"; // a reasonable default
+    gettimeofday(&t0,0);
+    open();
+}
+
+void XML::set_tempfile_template(std::string temp)
 {
     tempfile_template = temp;
 }
 
 
-void xml::set_outFILE(FILE *out_)
+void XML::set_outFILE(FILE *out_)
 {
     out = out_;
 }
 
-void xml::set_outfilename(string outfilename_)
+void XML::set_outfilename(string outfilename_)
 {
     outfilename = outfilename_;
     tempfile_template = outfilename_ + "_tmp_XXXXXXXX"; // a better default
 }
 
-void xml::set_makeDTD(bool flag)
+void XML::set_makeDTD(bool flag)
 {
     make_dtd = flag;
     if(make_dtd){			// need to write to a temp file
@@ -155,13 +164,13 @@ void xml::set_makeDTD(bool flag)
 
 static const char *xml_header = "<?xml version='1.0' encoding='UTF-8'?>\n";
 
-void xml::open()
+void XML::open()
 {
     if(out==0) out = fopen(cstr(outfilename),"w");
     fputs(xml_header,out);		// write out the XML header
 }
 
-void xml::close()
+void XML::close()
 {
     if(make_dtd){
 	/* If we are making the DTD, then we have been writing to a temp file.
@@ -195,7 +204,7 @@ void xml::close()
     fclose(out);
 }
 
-void xml::write_dtd(FILE *f)
+void XML::write_dtd(FILE *f)
 {
     fprintf(f,"<!DOCTYPE fiwalk\n");
     fprintf(f,"[\n");
@@ -212,7 +221,7 @@ void xml::write_dtd(FILE *f)
 /**
  * make sure that a tag is valid and, if so, add it to the list of tags we use
  */
-void xml::verify_tag(string tag)
+void XML::verify_tag(string tag)
 {
     if(tag[0]=='/') tag = tag.substr(1);
     if(tag.find(" ") != string::npos){
@@ -222,12 +231,12 @@ void xml::verify_tag(string tag)
     tags.insert(tag);
 }
 
-void xml::puts(const string &v)
+void XML::puts(const string &v)
 {
     fputs(v.c_str(),out);
 }
 
-void xml::spaces()
+void XML::spaces()
 {
     string sp;
     for(int i=tag_stack.size();i>0;i--){
@@ -237,13 +246,13 @@ void xml::spaces()
     puts(sp);
 }
 
-void xml::tagout(const string &tag,const string &attribute)
+void XML::tagout(const string &tag,const string &attribute)
 {
     verify_tag(tag);
     fprintf(out,"<%s%s%s>",cstr(tag),attribute.size()>0 ? " " : "",cstr(attribute));
 }
 
-void xml::xmlout(const string &tag,const string &value,const string &attribute,bool escape_value)
+void XML::xmlout(const string &tag,const string &value,const string &attribute,bool escape_value)
 {
     spaces();
     tagout(tag,attribute);
@@ -254,7 +263,7 @@ void xml::xmlout(const string &tag,const string &value,const string &attribute,b
 }
 
 
-void xml::xmlprintf(const std::string &tag,const std::string &attribute, const char *fmt,...)
+void XML::xmlprintf(const std::string &tag,const std::string &attribute, const char *fmt,...)
 {
     spaces();
     tagout(tag,attribute);
@@ -266,7 +275,7 @@ void xml::xmlprintf(const std::string &tag,const std::string &attribute, const c
     fputc('\n',out);
 }
 
-void xml::push(const string &tag,const string &attribute)
+void XML::push(const string &tag,const string &attribute)
 {
     spaces();
     tag_stack.push(tag);
@@ -274,7 +283,7 @@ void xml::push(const string &tag,const string &attribute)
     fputc('\n',out);
 }
 
-void xml::pop()
+void XML::pop()
 {
     assert(tag_stack.size()>0);
     string tag = tag_stack.top();
@@ -284,7 +293,7 @@ void xml::pop()
     fputc('\n',out);
 }
 
-void xml::printf(const char *format,...)
+void XML::printf(const char *format,...)
 {
     va_list ap;
     va_start(ap, format);
@@ -292,7 +301,7 @@ void xml::printf(const char *format,...)
     va_end(ap);
 }
 
-void xml::comment(const string &comment)
+void XML::comment(const string &comment)
 {
     fputs("<!-- ",out);
     fputs(comment.c_str(),out);

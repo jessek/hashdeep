@@ -68,9 +68,7 @@ static void update_display(state *s, time_t elapsed)
   else 
   {
     // Estimate the number of seconds using only integer math.
-    // The old method:
-    //    seconds = (uint64_t)floor(((double)s->total_megs/mb_read - 1) * elapsed);
-    // sometimes produced wacky values, especially on Win32 systems.
+    //
     // We now compute the number of bytes read per second and then
     // use that to determine how long the whole file should take. 
     // By subtracting the number of elapsed seconds from that, we should
@@ -396,7 +394,7 @@ static int hash(state *s)
       if (s->mode & mode_not_matched)
 	is_known_hash(s->hash_result,NULL);
       else
-	status = display_hash(s);
+	status = md5deep_display_hash(s);
 #else
       display_hash(s);
 #endif    

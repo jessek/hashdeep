@@ -62,7 +62,7 @@
 #endif
 
 #ifdef __cplusplus
-class xml {
+class XML {
     std::string outfilename;
     FILE  *out;				// where it is being written
     std::set<std::string> tags;			// XML tags
@@ -86,7 +86,8 @@ public:
 	return command_line;
     }
 
-    xml();			
+    XML();			
+    XML(FILE *out);
 
     void set_outFILE(FILE *out);	  // writes to this FILE without a DTD
     void set_outfilename(std::string outfilename);     // writes to this outfile with a DTD (needs a temp file)
