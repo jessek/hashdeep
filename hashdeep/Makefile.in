@@ -53,7 +53,8 @@ am_hashdeep_OBJECTS = main.$(OBJEXT) audit.$(OBJEXT) match.$(OBJEXT) \
 	helpers.$(OBJEXT) progname.$(OBJEXT) md5.$(OBJEXT) \
 	sha1.$(OBJEXT) sha256.$(OBJEXT) tiger.$(OBJEXT) \
 	whirlpool.$(OBJEXT) md5deep_hashtable.$(OBJEXT) \
-	files.$(OBJEXT) xml.$(OBJEXT)
+	files.$(OBJEXT) xml.$(OBJEXT) md5deep_main.$(OBJEXT) \
+	md5deep_display.$(OBJEXT) md5deep_match.$(OBJEXT)
 hashdeep_OBJECTS = $(am_hashdeep_OBJECTS)
 am__DEPENDENCIES_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -175,7 +176,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 hashdeep_SOURCES = main.cpp audit.c match.c multihash.c display.cpp hashtable.c \
 	hash.c dig.c cycles.c ui.c helpers.cpp progname.c \
-	md5.c sha1.c sha256.c tiger.c whirlpool.c md5deep_hashtable.c files.c xml.cpp
+	md5.c sha1.c sha256.c tiger.c whirlpool.c md5deep_hashtable.c files.c xml.cpp \
+	md5deep_main.c md5deep_display.c md5deep_match.c
 
 
 # If don't have strsep
@@ -278,7 +280,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5deep_display.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5deep_hashtable.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5deep_main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5deep_match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multihash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/progname.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1.Po@am__quote@

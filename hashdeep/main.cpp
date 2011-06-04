@@ -2,6 +2,12 @@
 // $Id$
 
 #include "main.h"
+#include <string>
+#include <algorithm>
+
+__BEGIN_DECLS
+extern int md5deep_main(int argc,char **argv);
+__END_DECLS
 
 #ifdef _WIN32 
 // This can't go in main.h or we get multiple definitions of it
@@ -17,13 +23,12 @@ static void usage(state *s)
 {
   print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
   print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-V|-h] [-o <mode>] [FILES]",CMD_PROMPT,__progname);
-
   print_status("");
 
   print_status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
-  fprintf(stdout,"     legal values are ");
+  print_status("     legal values are ");
   for (int i = 0 ; i < NUM_ALGORITHMS ; i++)
-    fprintf(stdout,"%s%s",s->hashes[i]->name,(i+1<NUM_ALGORITHMS)?",":NEWLINE);
+      print_status("%s%s",s->hashes[i]->name,(i+1<NUM_ALGORITHMS)?",":NEWLINE);
 
   print_status("-a - audit mode. Validates FILES against known hashes. Requires -k");
   print_status("-d - output in DFXML (Digital Forensics XML)");
@@ -421,37 +426,43 @@ int main(int argc, char **argv)
 {
   int count, status = EXIT_SUCCESS;
   TCHAR *fn;
-  state *s;
 
   /* Because the main() function can handle wchar_t arguments on Win32,
-     we need a way to reference those values. Thus we make a duplciate
-     of the argc and argv values. */ 
+   * we need a way to reference those values. Thus we make a duplciate
+   * of the argc and argv values.
+   */ 
 
 #ifndef __GLIBC__
   __progname  = basename(argv[0]);
 #endif
 
-  s = (state *)malloc(sizeof(state));
-  if (NULL == s)
-  {
-    // We can't use fatal_error because it requires a valid state
-    print_status("%s: Unable to allocate state variable", __progname);
-    return EXIT_FAILURE;
+  /**
+   * Originally this program was two sets of progarms:
+   * 'hashdeep' with the new interface, and 'md5deep', 'sha1deep', etc
+   * with the old interface. Now we are a single program and we figure out
+   * which interface to use based on how we are started.
+   */
+  std::string firstfour = std::string(__progname).substr(0,4);
+  std::transform(firstfour.begin(), firstfour.end(), firstfour.begin(), ::tolower);
+  if(firstfour != "hash"){
+      return md5deep_main(argc,argv);
   }
 
-  if (initialize_state(s))
-  {
+  state *s = (state *)malloc(sizeof(struct _state));
+  if (initialize_state(s)) {
     print_status("%s: Unable to initialize state variable", __progname);
     return EXIT_FAILURE;
   }
-
   process_command_line(s,argc,argv);
- 
-  if (initialize_hashing_algorithms(s))
+  exit(0);
+
+  if (initialize_hashing_algorithms(s)){
     return EXIT_FAILURE;
+  }
    
-  if (primary_audit == s->primary_function)
-    setup_audit(s);
+  if (primary_audit == s->primary_function){
+      setup_audit(s);
+  }
 
 #ifdef _WIN32
   if (prepare_windows_command_line(s))
@@ -463,23 +474,22 @@ int main(int argc, char **argv)
 
   MD5DEEP_ALLOC(TCHAR,s->cwd,PATH_MAX);
   s->cwd = _tgetcwd(s->cwd,PATH_MAX);
-  if (NULL == s->cwd)
-    fatal_error(s,"%s: %s", __progname, strerror(errno));
+  if (NULL == s->cwd){
+      fatal_error(s,"%s: %s", __progname, strerror(errno));
+  }
 
   /* Anything left on the command line at this point is a file
-     or directory we're supposed to process. If there's nothing
+     or directory we're supposed to process-> If there's nothing
      specified, we should tackle standard input */
   
-  if (optind == argc)
-    hash_stdin(s);
-  else
-  {
+  if (optind == argc){
+      hash_stdin(s);
+  }   else {
     MD5DEEP_ALLOC(TCHAR,fn,PATH_MAX);
 
     count = optind;
 
-    while (count < s->argc)
-    {  
+    while (count < s->argc) {  
       generate_filename(s,fn,s->cwd,s->argv[count]);
 
 #ifdef _WIN32

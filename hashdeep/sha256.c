@@ -13,7 +13,6 @@
 
 /* $Id$ */
 
-//#include "main.h"
 #include <string.h>
 #include "sha256.h"
 

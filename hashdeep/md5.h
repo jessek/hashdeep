@@ -18,7 +18,6 @@
 #define __MD5_H
 
 #include "common.h"
-
 // -------------------------------------------------------------- 
 // After this is the algorithm itself. You shouldn't change these
 

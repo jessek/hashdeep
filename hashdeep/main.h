@@ -1,8 +1,8 @@
 
 /* $Id: main.h,v 1.14 2007/12/28 01:49:36 jessekornblum Exp $ */
 
-#ifndef __HASHDEEP_H
-#define __HASHDEEP_H
+#ifndef __MAIN_H
+#define __MAIN_H
 
 #include "common.h"
 #include "md5deep_hashtable.h"
@@ -184,8 +184,6 @@ typedef enum
 #define TYPE_UNKNOWN    254
 
 
-
-
 struct _state {
 
   /* Basic Program State */
@@ -275,6 +273,7 @@ struct _state {
   /* output in DFXML */
     XML       *dfxml;
 };
+typedef struct _state state;
 
 #include "ui.h"
 #include "md5.h"
@@ -322,6 +321,39 @@ int hash_stdin(state *s);
 void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
 void sanity_check(state *s, int condition, const char *msg);
 
+// ----------------------------------------------------------------
+// CYCLE CHECKING
+// ----------------------------------------------------------------
+int have_processed_dir(TCHAR *fn);
+int processing_dir(TCHAR *fn);
+int done_processing_dir(TCHAR *fn);
+
+// ------------------------------------------------------------------
+// HELPER FUNCTIONS
+// ------------------------------------------------------------------ 
+void     setup_expert_mode(state *s, char *arg);
+void     generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
+uint64_t find_block_size(state *s, char *input_str);
+void     chop_line(char *s);
+void     shift_string(char *fn, size_t start, size_t new_start);
+
+// Works like dirname(3), but accepts a TCHAR* instead of char*
+int my_dirname(TCHAR *c);
+int my_basename(TCHAR *s);
+
+int find_comma_separated_string(char *s, unsigned int n);
+int find_quoted_string(char *buf, unsigned int n);
+
+// Return the size, in bytes of an open file stream. On error, return -1 
+off_t find_file_size(FILE *f);
+
+// ------------------------------------------------------------------
+// MAIN PROCESSING
+// ------------------------------------------------------------------ 
+int process_win32(state *s, TCHAR *fn);
+int process_normal(state *s, TCHAR *fn);
+
+
 __END_DECLS
 
-#endif /* ifndef __HASHDEEP_H */
+#endif /* ifndef __MAIN_H */

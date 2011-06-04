@@ -21,7 +21,6 @@
 #endif
 #endif
 
-
 #ifdef _WIN32
 // Required to enable 64-bit stat functions
 # define __MSVCRT_VERSION__ 0x0601
@@ -140,7 +139,6 @@ NEWLINE, NEWLINE, NEWLINE
 // Strings have to be long enough to handle inputs from matched hashing files.
 // The NSRL is already larger than 256 bytes. We go longer to be safer. 
 #define MAX_STRING_LENGTH    2048
-
 #define MAX_TIME_STRING_LENGTH  31
 
 // This denotes when we don't know the file size.
@@ -154,8 +152,6 @@ NEWLINE, NEWLINE, NEWLINE
 #define STRINGS_CASE_EQUAL(A,B)   (!strncasecmp(A,B,_MAX(strlen(A),strlen(B))))
 #define STRINGS_EQUAL(A,B)        (!strncmp(A,B,_MAX(strlen(A),strlen(B))))
 #define WSTRINGS_EQUAL(A,B)       (!_tcsncmp(A,B,_MAX(_tcslen(A),_tcslen(B))))
-
-
 
 
 extern char *__progname;
@@ -215,19 +211,17 @@ extern char *__progname;
 #define ftello   ftell
 #define fseeko   fseek
 
-//  We create macros for the Windows equivalent UNIX functions.
+// We create macros for the Windows equivalent UNIX functions.
 // No worries about lstat to stat; Windows doesn't have symbolic links 
 // This function has been replaced with _lstat in the code. See tchar-local.h 
 //#define lstat(A,B)      stat(A,B)
 #define realpath(A,B)   _fullpath(B,A,PATH_MAX) 
 
 __BEGIN_DECLS
-
 char *basename(char *a);
 extern char *optarg;
 extern int optind;
 int getopt(int argc, char *const argv[], const char *optstring);
-
 __END_DECLS
 
 #endif   /* ifndef _WIN32,#else */
@@ -337,46 +331,5 @@ typedef enum
     file_unknown
     
   } filetype_t; 
-
-
-
-
-typedef struct _state state;
-
-__BEGIN_DECLS
-
-// ----------------------------------------------------------------
-// CYCLE CHECKING
-// ----------------------------------------------------------------
-int have_processed_dir(TCHAR *fn);
-int processing_dir(TCHAR *fn);
-int done_processing_dir(TCHAR *fn);
-
-// ------------------------------------------------------------------
-// HELPER FUNCTIONS
-// ------------------------------------------------------------------ 
-void     setup_expert_mode(state *s, char *arg);
-void     generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
-uint64_t find_block_size(state *s, char *input_str);
-void     chop_line(char *s);
-void     shift_string(char *fn, size_t start, size_t new_start);
-
-// Works like dirname(3), but accepts a TCHAR* instead of char*
-int my_dirname(TCHAR *c);
-int my_basename(TCHAR *s);
-
-int find_comma_separated_string(char *s, unsigned int n);
-int find_quoted_string(char *buf, unsigned int n);
-
-// Return the size, in bytes of an open file stream. On error, return -1 
-off_t find_file_size(FILE *f);
-
-// ------------------------------------------------------------------
-// MAIN PROCESSING
-// ------------------------------------------------------------------ 
-int process_win32(state *s, TCHAR *fn);
-int process_normal(state *s, TCHAR *fn);
-
-__END_DECLS
 
 #endif /* ifndef __COMMON_H */

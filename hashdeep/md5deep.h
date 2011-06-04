@@ -19,10 +19,6 @@
 #include "common.h"
 #include "md5deep_hashtable.h"
 
-
-
-
-
 /* We no longer use this */
 #if 0
 typedef struct _state {

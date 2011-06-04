@@ -17,7 +17,7 @@
 
 /* $Id$ */
 
-#include "common.h"
+#include "md5.h"
 
 
 #ifndef WORDS_BIGENDIAN

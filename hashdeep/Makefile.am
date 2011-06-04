@@ -2,7 +2,8 @@ bin_PROGRAMS = hashdeep
 
 hashdeep_SOURCES = main.cpp audit.c match.c multihash.c display.cpp hashtable.c \
 	hash.c dig.c cycles.c ui.c helpers.cpp progname.c \
-	md5.c sha1.c sha256.c tiger.c whirlpool.c md5deep_hashtable.c files.c xml.cpp
+	md5.c sha1.c sha256.c tiger.c whirlpool.c md5deep_hashtable.c files.c xml.cpp \
+	md5deep_main.c md5deep_display.c md5deep_match.c
 
 # If don't have strsep
 # we compile it ourselves using a local copy via EXTRA_HASHDEEP

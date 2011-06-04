@@ -13,7 +13,7 @@
 
 #include "main.h"
 #include "common.h"
-//#include "md5deep.h"
+
 
 /* ---------------------------------------------------------------------
    How to add more file types that we can read known hashes from:
