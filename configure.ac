@@ -72,12 +72,33 @@ AC_FUNC_STAT
 AC_FUNC_VPRINTF
 
 # We use strsep do our string processing, but some operating systems
-# don't have it yet (e.g. OpenSolaris). We if don't have strsep
-# we compile it ourselves using a local copy.
-AC_CHECK_FUNC([strsep],
-              [AC_DEFINE([HAVE_STRSEP], [1],	
-			 [Define if we have strsep.])],
-              EXTRA_HASHDEEP='lib-strsep.$(OBJEXT)')
-AC_SUBST([EXTRA_HASHDEEP])
+# don't have it yet (e.g. OpenSolaris). We if don't have strsep, we'll include the GPL version
+AC_CHECK_FUNCS([strsep getprogname])
+
+# See if __progname is defined on this system
+AC_TRY_COMPILE([extern char *__progname;],
+	[const char *progname = __progname;],
+	extern_progname=yes,
+	extern_progname=no)
+if test "$extern_progname" = yes; then
+  AC_DEFINE(HAVE_EXTERN_PROGNAME,1,[define to 1 if __progname is available])
+fi
+
+# This allows us to easily disable optimizations for debugging
+AC_ARG_WITH([noopt], AC_HELP_STRING([--with-noopt],[Drop -O C flags]))
+if test x"${AFF_NOOPT}" != "x" ; then
+   with_noopt="yes";
+fi
+
+if test "${with_noopt}" = "yes" ; then
+  CFLAGS=`echo "$CFLAGS" | sed s/-O[[0-9]]//`             # note the double quoting! 
+  CXXFLAGS=`echo "$CXXFLAGS" | sed s/-O[[0-9]]//`
+fi
+
+################################################################
+# I am a glutten for punishment and this is security-critical software
+CFLAGS="$CFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
+CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
+
 
 AC_OUTPUT

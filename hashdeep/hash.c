@@ -1,6 +1,5 @@
-// MD5DEEP - hash.c
 //
-// By Jesse Kornblum
+// By Jesse Kornblum and Simson Garfinkel
 //
 // This is a work of the US Government. In accordance with 17 USC 105,
 // copyright protection is not available for any work of the US Government.
@@ -10,28 +9,13 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 // $Id$
+//
+// 2011 JUN 1 - SLG - Removed #ifdef MD5DEEP, since we now have a single binary for both MD5DEEP and HASHDEEP
 
 
-
-#ifdef MD5DEEP
-
-// Code for md5deep 
-#include "md5deep.h"
-#define HASH_INITIALIZE()      s->hash_init(s->hash_context)
-#define HASH_UPDATE(BUF,SIZE)  s->hash_update(s->hash_context,BUF,SIZE)
-#define HASH_FINALIZE()        s->hash_finalize(s->hash_context,s->hash_sum)
-
-#else
 
 // Code for hashdeep 
 #include "main.h"
-#define HASH_INITIALIZE()      multihash_initialize(s)
-#define HASH_UPDATE(BUF,SIZE)  multihash_update(s,BUF,SIZE)
-#define HASH_FINALIZE()        multihash_finalize(s);
-
-#endif // ifdef MD5DEEP
-		    
-
 
 // At least one user has suggested changing update_display() to 
 // use human readable units (e.g. GB) when displaying the updates.
@@ -213,7 +197,7 @@ static int compute_hash(state *s)
       if (file_fatal_error())
 	return FALSE; 
       
-      HASH_UPDATE(buffer,current_read);
+      multihash_update(s,buffer,current_read);
       
       clearerr(s->handle);
       
@@ -225,7 +209,7 @@ static int compute_hash(state *s)
     {
       // If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE
       // bytes and must reflect that in how we update the hash.
-      HASH_UPDATE(buffer,current_read);
+	multihash_update(s,buffer,current_read);
     }
     
     // Check if we've hit the end of the file 
@@ -264,23 +248,9 @@ static int compute_hash(state *s)
 }
 
 
-// Macro to convert raw hex bytes to ASCII output
-#ifdef MD5DEEP
-static char hex[] = "0123456789abcdef";	
-#define HASH_TO_STR(SRC,DEST,LEN)				\
-  size_t __i;							\
-  for (__i = 0; __i < LEN ; ++__i)				\
-    {								\
-      DEST[2 * __i    ] = hex[(SRC[__i] >> 4) & 0xf];		\
-      DEST[2 * __i + 1] = hex[ SRC[__i]       & 0xf];		\
-    }
-
-static int hash_triage(state *s)
+static int md5deep_hash_triage(state *s)
 {
-  if (NULL == s)
-    return TRUE;
-
-  memset(s->hash_result,0,(2 * s->hash_length) + 1);
+  memset(s->md5deep_mode_hash_result,0,(2 * s->md5deep_mode_hash_length) + 1);
 
   // We use the piecewise mode to get a partial hash of the first 
   // 512 bytes of the file. But we'll have to remove piecewise mode
@@ -288,10 +258,9 @@ static int hash_triage(state *s)
   s->block_size = 512;
   s->mode |= mode_piecewise;
 
-  HASH_INITIALIZE();
+  multihash_initialize(s);
     
-  if (!compute_hash(s))
-  {
+  if (!compute_hash(s))  {
     if (s->mode & mode_piecewise)
       free(s->full_name);
     return TRUE;
@@ -299,45 +268,38 @@ static int hash_triage(state *s)
 
   s->mode -= mode_piecewise;
   
-  HASH_FINALIZE();
-  HASH_TO_STR(s->hash_sum, s->hash_result, s->hash_length);
-
-  printf ("%"PRIu64"\t%s", s->stat_bytes, s->hash_result);
+  multihash_finalize(s);
+  printf ("%"PRIu64"\t%s", s->stat_bytes, s->md5deep_mode_hash_result);
   
   return FALSE;
 }
-#endif
 
 
+/**
+ * Not postivie, but it appears that this function is called to hash each file.
+ */
 static int hash(state *s)
 {
   int done = FALSE, status = FALSE;
   TCHAR *tmp_name = NULL;
-  //  uint64_t start_offset;
   
-  if (NULL == s)
-    return TRUE;
+  s->actual_bytes = 0;
 
-  s->actual_bytes = 0LL;
-
-  if (s->mode & mode_estimate)
-  {
+  if (s->mode & mode_estimate)  {
     time(&(s->start_time));
     s->last_time = s->start_time;
   }
 
-#ifdef MD5DEEP
   if (s->mode & mode_triage)
   {
     // Hash and display the first 512 bytes of this file
-    hash_triage(s);
+    md5deep_hash_triage(s);
 
     // Rather than muck about with updating the state of the input
     // file, just reset everything and process it normally.
     s->actual_bytes = 0;
     fseeko(s->handle, 0, SEEK_SET);
   }
-#endif
   
   if ( s->mode & mode_piecewise )
   {
@@ -354,10 +316,10 @@ static int hash(state *s)
   
   while (!done)
   {
-#ifdef MD5DEEP
-    memset(s->hash_result,0,(2 * s->hash_length) + 1);
-#endif
-    HASH_INITIALIZE();
+      if(s->md5deep_mode_hash_result){
+	  memset(s->md5deep_mode_hash_result,0,(2 * s->md5deep_mode_hash_length) + 1);
+      }
+      multihash_initialize(s);
     
     s->read_start = s->actual_bytes;
 
@@ -383,31 +345,28 @@ static int hash(state *s)
 		   tmp_name, s->read_start, tmp_end);
       }
       
-      HASH_FINALIZE();
+      multihash_finalize(s);
 
-#ifdef MD5DEEP
-      HASH_TO_STR(s->hash_sum, s->hash_result, s->hash_length);
-      
-      // Under not matched mode, we only display those known hashes that
-      // didn't match any input files. Thus, we don't display anything now.
-      // The lookup is to mark those known hashes that we do encounter
-      if (s->mode & mode_not_matched)
-	is_known_hash(s->hash_result,NULL);
-      else
-	status = md5deep_display_hash(s);
-#else
-      display_hash(s);
-#endif    
+      if(s->md5deep_mode){
+	  // Under not matched mode, we only display those known hashes that
+	  // didn't match any input files. Thus, we don't display anything now.
+	  // The lookup is to mark those known hashes that we do encounter
+	  if (s->mode & mode_not_matched)
+	      md5deep_is_known_hash(s->md5deep_mode_hash_result,NULL);
+	  else
+	      status = md5deep_display_hash(s);
+      } else {
+	  display_hash(s);
+      }
     }
+    
 
     if (s->mode & mode_piecewise)
-      done = feof(s->handle);
+	done = feof(s->handle);
     else
-      done = TRUE;
+	done = TRUE;
   }
 
-
-  
   if (s->mode & mode_piecewise)
   {
     free(s->full_name);
@@ -472,17 +431,12 @@ int hash_file(state *s, TCHAR *fn)
     {
       if (s->mode & mode_size_all)
       {
-	// Whereas md5deep has only one hash to wipe, hashdeep has several
-#ifdef MD5DEEP
-	memset(s->hash_result, '*', HASH_STRING_LENGTH);
-#else
 	int i;
 	for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
 	{
 	  if (s->hashes[i]->inuse)
 	    memset(s->current_file->hash[i], '*', s->hashes[i]->byte_length);
 	}
-#endif
 
 	display_hash(s);
       }

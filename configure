@@ -604,7 +604,6 @@ ac_includes_default="\
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
-EXTRA_HASHDEEP
 LIBOBJS
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
@@ -705,6 +704,7 @@ ac_user_opts='
 enable_option_checking
 enable_dependency_tracking
 enable_largefile
+with_noopt
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1341,6 +1341,11 @@ Optional Features:
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --disable-largefile     omit support for large files
+
+Optional Packages:
+  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-noopt            Drop -O C flags
 
 Some influential environment variables:
   CC          C compiler command
@@ -6721,17 +6726,64 @@ done
 
 
 # We use strsep do our string processing, but some operating systems
-# don't have it yet (e.g. OpenSolaris). We if don't have strsep
-# we compile it ourselves using a local copy.
-ac_fn_c_check_func "$LINENO" "strsep" "ac_cv_func_strsep"
-if test "x$ac_cv_func_strsep" = xyes; then :
+# don't have it yet (e.g. OpenSolaris). We if don't have strsep, we'll include the GPL version
+for ac_func in strsep getprogname
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
 
-$as_echo "#define HAVE_STRSEP 1" >>confdefs.h
+fi
+done
 
+
+# See if __progname is defined on this system
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+extern char *__progname;
+int
+main ()
+{
+const char *progname = __progname;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  extern_progname=yes
 else
-  EXTRA_HASHDEEP='lib-strsep.$(OBJEXT)'
+  extern_progname=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+if test "$extern_progname" = yes; then
+
+$as_echo "#define HAVE_EXTERN_PROGNAME 1" >>confdefs.h
+
 fi
 
+# This allows us to easily disable optimizations for debugging
+
+# Check whether --with-noopt was given.
+if test "${with_noopt+set}" = set; then :
+  withval=$with_noopt;
+fi
+
+if test x"${AFF_NOOPT}" != "x" ; then
+   with_noopt="yes";
+fi
+
+if test "${with_noopt}" = "yes" ; then
+  CFLAGS=`echo "$CFLAGS" | sed s/-O[0-9]//`             # note the double quoting!
+  CXXFLAGS=`echo "$CXXFLAGS" | sed s/-O[0-9]//`
+fi
+
+################################################################
+# I am a glutten for punishment and this is security-critical software
+CFLAGS="$CFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
+CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
 
 
 cat >confcache <<\_ACEOF

@@ -7,9 +7,9 @@
 #ifndef __COMMON_H
 #define __COMMON_H
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
+
+#include <assert.h>
 
 #ifndef __BEGIN_DECLS
 #if defined(__cplusplus)
@@ -130,7 +130,6 @@ NEWLINE, NEWLINE, NEWLINE
 #include "tiger.h"
 #include "whirlpool.h"
 
-
 #define TRUE   1
 #define FALSE  0
 
@@ -232,10 +231,6 @@ if (NULL == VAR)  \
    return STATUS_INTERNAL_ERROR; \
 memset(VAR,0,SIZE * sizeof(TYPE));
 
-// The default size for hashing 
-#define MD5DEEP_IDEAL_BLOCK_SIZE 8192
-
-#define HASH_STRING_LENGTH   (s->hash_length * 2)
 
 // Return values for the program 
 // RBF - Document these return values for hashdeep 
@@ -295,8 +290,6 @@ memset(VAR,0,SIZE * sizeof(TYPE));
 #define mode_symlink       (1LL)<<57
 
 // Modes 58-62 are reserved for future use in expert mode
-
-
 // These are the types of files we can encounter while hashing 
 // Note these will be stored in a uint8_t, so should be between
 // zero and 255.

@@ -1,17 +1,28 @@
-bin_PROGRAMS = hashdeep
+OTHERS=md5deep sha1deep sha256deep tigerdeep whirlpooldeep
+
+bin_PROGRAMS = hashdeep 
 
 hashdeep_SOURCES = main.cpp audit.c match.c multihash.c display.cpp hashtable.c \
-	hash.c dig.c cycles.c ui.c helpers.cpp progname.c \
+	hash.c dig.c cycles.c ui.c helpers.cpp \
 	md5.c sha1.c sha256.c tiger.c whirlpool.c md5deep_hashtable.c files.c xml.cpp \
-	md5deep_main.c md5deep_display.c md5deep_match.c
+	md5deep_match.c \
+	common.h \
+	main.h \
+	md5.h \
+	md5deep.h \
+	md5deep_hashtable.h \
+	sha1.h \
+	sha256.h \
+	strsep.h \
+	tchar-local.h \
+	tiger.h \
+	whirlpool.h \
+	xml.h 
 
-# If don't have strsep
-# we compile it ourselves using a local copy via EXTRA_HASHDEEP
+${OTHERS}: hashdeep
+	/bin/rm -f $@ ; ln hashdeep $@
 
-EXTRA_hashdeep_SOURCES = lib-strsep.c
-hashdeep_LDADD = ${EXTRA_HASHDEEP} -lm
-hashdeep_DEPENDENCIES = ${EXTRA_HASHDEEP}
+all: ${OTHERS}
 
-EXTRA_DIST = main.h strsep.h ${man_MANS}
+CLEANFILES=hashdeep64.exe $(OTHERS)
 
-CLEANFILES=hashdeep64.exe

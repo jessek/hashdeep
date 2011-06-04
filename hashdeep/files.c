@@ -70,7 +70,7 @@ typedef struct _ENCASE_HASH_HEADER {
 "\"file_id\",\"hashset_id\",\"file_name\",\"directory\",\"hash\",\"file_size\",\"date_modified\",\"time_modified\",\"time_zone\",\"comments\",\"date_accessed\",\"time_accessed\""
 
 
-
+#define HASH_STRING_LENGTH   (s->md5deep_mode_hash_length * 2)
 
 int valid_hash(state *s, char *buf) 
 {
@@ -411,8 +411,6 @@ int find_hash_in_line(state *s, char *buf, int fileType, char *fn)
 
   case TYPE_MD5DEEP_SIZE:
     return (find_md5deep_size_hash(s,buf,fn));
-
-	  
   }
 
   return FALSE;

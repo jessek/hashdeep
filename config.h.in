@@ -13,11 +13,17 @@
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 #undef HAVE_DOPRNT
 
+/* define to 1 if __progname is available */
+#undef HAVE_EXTERN_PROGNAME
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
 #undef HAVE_FSEEKO
+
+/* Define to 1 if you have the `getprogname' function. */
+#undef HAVE_GETPROGNAME
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -54,7 +60,7 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define if we have strsep. */
+/* Define to 1 if you have the `strsep' function. */
 #undef HAVE_STRSEP
 
 /* Define to 1 if `st_blksize' is a member of `struct stat'. */

@@ -50,13 +50,12 @@ PROGRAMS = $(bin_PROGRAMS)
 am_hashdeep_OBJECTS = main.$(OBJEXT) audit.$(OBJEXT) match.$(OBJEXT) \
 	multihash.$(OBJEXT) display.$(OBJEXT) hashtable.$(OBJEXT) \
 	hash.$(OBJEXT) dig.$(OBJEXT) cycles.$(OBJEXT) ui.$(OBJEXT) \
-	helpers.$(OBJEXT) progname.$(OBJEXT) md5.$(OBJEXT) \
-	sha1.$(OBJEXT) sha256.$(OBJEXT) tiger.$(OBJEXT) \
-	whirlpool.$(OBJEXT) md5deep_hashtable.$(OBJEXT) \
-	files.$(OBJEXT) xml.$(OBJEXT) md5deep_main.$(OBJEXT) \
-	md5deep_display.$(OBJEXT) md5deep_match.$(OBJEXT)
+	helpers.$(OBJEXT) md5.$(OBJEXT) sha1.$(OBJEXT) \
+	sha256.$(OBJEXT) tiger.$(OBJEXT) whirlpool.$(OBJEXT) \
+	md5deep_hashtable.$(OBJEXT) files.$(OBJEXT) xml.$(OBJEXT) \
+	md5deep_match.$(OBJEXT)
 hashdeep_OBJECTS = $(am_hashdeep_OBJECTS)
-am__DEPENDENCIES_1 =
+hashdeep_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -70,8 +69,8 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
-SOURCES = $(hashdeep_SOURCES) $(EXTRA_hashdeep_SOURCES)
-DIST_SOURCES = $(hashdeep_SOURCES) $(EXTRA_hashdeep_SOURCES)
+SOURCES = $(hashdeep_SOURCES)
+DIST_SOURCES = $(hashdeep_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -97,7 +96,6 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
-EXTRA_HASHDEEP = @EXTRA_HASHDEEP@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -174,19 +172,25 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+OTHERS = md5deep sha1deep sha256deep tigerdeep whirlpooldeep
 hashdeep_SOURCES = main.cpp audit.c match.c multihash.c display.cpp hashtable.c \
-	hash.c dig.c cycles.c ui.c helpers.cpp progname.c \
+	hash.c dig.c cycles.c ui.c helpers.cpp \
 	md5.c sha1.c sha256.c tiger.c whirlpool.c md5deep_hashtable.c files.c xml.cpp \
-	md5deep_main.c md5deep_display.c md5deep_match.c
+	md5deep_match.c \
+	common.h \
+	main.h \
+	md5.h \
+	md5deep.h \
+	md5deep_hashtable.h \
+	sha1.h \
+	sha256.h \
+	strsep.h \
+	tchar-local.h \
+	tiger.h \
+	whirlpool.h \
+	xml.h 
 
-
-# If don't have strsep
-# we compile it ourselves using a local copy via EXTRA_HASHDEEP
-EXTRA_hashdeep_SOURCES = lib-strsep.c
-hashdeep_LDADD = ${EXTRA_HASHDEEP} -lm
-hashdeep_DEPENDENCIES = ${EXTRA_HASHDEEP}
-EXTRA_DIST = main.h strsep.h ${man_MANS}
-CLEANFILES = hashdeep64.exe
+CLEANFILES = hashdeep64.exe $(OTHERS)
 all: all-am
 
 .SUFFIXES:
@@ -276,16 +280,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hashtable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/helpers.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lib-strsep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5deep_display.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5deep_hashtable.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5deep_main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5deep_match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multihash.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/progname.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha256.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tiger.Po@am__quote@
@@ -520,6 +520,11 @@ uninstall-am: uninstall-binPROGRAMS
 	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
 	uninstall-am uninstall-binPROGRAMS
 
+
+${OTHERS}: hashdeep
+	/bin/rm -f $@ ; ln hashdeep $@
+
+all: ${OTHERS}
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

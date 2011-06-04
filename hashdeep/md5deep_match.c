@@ -39,6 +39,7 @@ void init_table(void)
   
 #define ENCASE_START_HASHES 0x480
 
+#define hash_length md5deep_mode_hash_length
 
 static int parse_encase_file(state *s, char *fn, FILE *handle)
 {
@@ -122,7 +123,6 @@ static int parse_encase_file(state *s, char *fn, FILE *handle)
 int md5deep_load_match_file(state *s, char *fn) 
 {
   uint64_t line_number = 0;
-  char buf[MAX_STRING_LENGTH + 1];
   char *known_fn;
   int file_type, status;
   FILE *f;
@@ -177,6 +177,8 @@ int md5deep_load_match_file(state *s, char *fn)
     return FALSE;
   }
 
+  char buf[MAX_STRING_LENGTH + 1];
+  memset(buf,0,sizeof(buf));
   while (fgets(buf,MAX_STRING_LENGTH,f)) 
   {
     ++line_number;

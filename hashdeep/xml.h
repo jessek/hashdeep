@@ -51,16 +51,6 @@
 #include <afflib/afflib.h>
 #endif
 
-#ifndef __BEGIN_DECLS
-#if defined(__cplusplus)
-#define __BEGIN_DECLS   extern "C" {
-#define __END_DECLS     }
-#else
-#define __BEGIN_DECLS
-#define __END_DECLS
-#endif
-#endif
-
 #ifdef __cplusplus
 class XML {
     std::string outfilename;
@@ -77,6 +67,7 @@ class XML {
     struct timeval t0;
 
 public:
+    void make_indent(){spaces();}
     static std::string make_command_line(int argc,char * const *argv){
 	std::string command_line;
 	for(int i=0;i<argc;i++){

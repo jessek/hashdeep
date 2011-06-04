@@ -8,14 +8,15 @@
 #include "md5deep_hashtable.h"
 
 #ifdef __cplusplus
-#include "dfxml.h"
+#include "xml.h"
 #else
 #define XML void
 #endif
 
-#ifndef HAVE_STRSEP
-# include "strsep.h"
-#endif
+// The default size for hashing 
+#define MD5DEEP_IDEAL_BLOCK_SIZE 8192
+
+
 
 /* HOW TO ADD A NEW HASHING ALGORITHM
 
@@ -39,6 +40,12 @@
   * Update the usage function and man page to include the function     */
 
 
+#include "md5.h"
+#include "sha1.h"
+#include "sha256.h"
+#include "tiger.h"
+#include "whirlpool.h"
+
 typedef enum
 { 
   alg_md5=0, 
@@ -54,7 +61,7 @@ typedef enum
 
 #define NUM_ALGORITHMS  alg_unknown
 
-
+/* Which ones are enabled by default */
 #define DEFAULT_ENABLE_MD5         TRUE
 #define DEFAULT_ENABLE_SHA1        FALSE
 #define DEFAULT_ENABLE_SHA256      TRUE
@@ -111,23 +118,23 @@ typedef enum
 
 
 /* These describe the version of the file format being used, not
-   the version of the program. */
+ *   the version of the program.
+ */
 #define HASHDEEP_PREFIX     "%%%% "
 #define HASHDEEP_HEADER_10  "%%%% HASHDEEP-1.0"
 
 
-typedef struct _file_data_t
-{
-  char                * hash[NUM_ALGORITHMS];
+/* This describes the file being hashed.*/
+
+typedef struct _file_data_t {
+  char                * hash[NUM_ALGORITHMS]; // the hex hashes
   uint64_t              file_size;
   TCHAR               * file_name;
   uint64_t              used;
   struct _file_data_t * next;
 } file_data_t;
 
-
-typedef struct _hashtable_entry_t
-{
+typedef struct _hashtable_entry_t {
   status_t                     status; 
   file_data_t                * data;
   struct _hashtable_entry_t  * next;   
@@ -152,17 +159,15 @@ typedef struct _algorithm_t
   int ( *f_update)(void *, unsigned char *, uint64_t );
   int ( *f_finalize)(void *, unsigned char *);
 
-  /* The set of known hashes for this algorithm */
-  hashtable_t   * known;
 
-  unsigned char * hash_sum;
+  hashtable_t   * known;	/* The set of known hashes for this algorithm */
+  unsigned char * hash_sum;	// printable
   int             inuse;
 } algorithm_t;
 
 
 /* Primary modes of operation  */
-typedef enum  
-{ 
+typedef enum  { 
   primary_compute, 
   primary_match, 
   primary_match_neg, 
@@ -183,8 +188,7 @@ typedef enum
 #define TYPE_ENCASE       9
 #define TYPE_UNKNOWN    254
 
-
-struct _state {
+typedef struct _state {
 
   /* Basic Program State */
   primary_t       primary_function;
@@ -234,8 +238,6 @@ struct _state {
   uint64_t        read_end;
   uint64_t        bytes_read;
 
-  
-
   /* We don't want to use s->full_name, but it's required for hash.c */
   TCHAR         * full_name;
   TCHAR         * short_name;
@@ -252,7 +254,7 @@ struct _state {
   // Hashing algorithms 
   // We don't define hash_string_length, it's just twice this length. 
   // We use a signed value as this gets compared with the output of strlen() */
-  size_t          hash_length;
+    //size_t          hash_length;
 
   // Which filetypes this algorithm supports and their position in the file
   uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
@@ -270,17 +272,15 @@ struct _state {
   uint64_t        match_exact, match_expect,
     match_partial, match_moved, match_unused, match_unknown, match_total;
 
+    /* Legacy 'md5deep', 'sha1deep', etc. mode.  */
+    int	md5deep_mode;
+    int md5deep_mode_hash_length;	// in bytes
+    char *md5deep_mode_hash_result;	// printable ASCII; md5deep_mode_hash_length*2+1 bytes long
+    char known_fn[PATH_MAX+1];
+
   /* output in DFXML */
     XML       *dfxml;
-};
-typedef struct _state state;
-
-#include "ui.h"
-#include "md5.h"
-#include "sha1.h"
-#include "sha256.h"
-#include "whirlpool.h"
-#include "tiger.h"
+} state;
 
 __BEGIN_DECLS
 /* GENERIC ROUTINES */
@@ -302,6 +302,7 @@ void multihash_finalize(state *s);
 status_t load_match_file(state *s, char *fn);
 status_t display_match_result(state *s);
 
+int md5deep_display_hash(state *s);
 int display_hash_simple(state *s);
 
 /* AUDIT MODE */
@@ -352,6 +353,63 @@ off_t find_file_size(FILE *f);
 // ------------------------------------------------------------------ 
 int process_win32(state *s, TCHAR *fn);
 int process_normal(state *s, TCHAR *fn);
+int md5deep_process_command_line(state *s, int argc, char **argv);
+
+
+/* ui.c */
+/* User Interface Functions */
+
+// Display an ordinary message with newline added
+void print_status(const char *fmt, ...);
+
+// Display an error message if not in silent mode
+void print_error(const state *s, const char *fmt, ...);
+
+// Display an error message if not in silent mode with a Unicode filename
+void print_error_unicode(const state *s, const TCHAR *fn, const char *fmt, ...);
+
+// Display an error message, if not in silent mode,  
+// and exit with EXIT_FAILURE
+void fatal_error(const state *s, const char *fmt, ...);
+
+// Display an error message, ask user to contact the developer, 
+// and exit with EXIT_FAILURE
+void internal_error(const char *fmt, ... );
+
+// Display a filename, possibly including Unicode characters
+void display_filename(FILE *out, const TCHAR *fn);
+
+void print_debug(const char *fmt, ...);
+
+void make_newline(const state *s);
+
+void try_msg(void);
+
+int display_hash(state *s);
+
+
+
+// ----------------------------------------------------------------
+// FILE MATCHING
+// ---------------------------------------------------------------- 
+
+// md5deep_match.c
+int md5deep_load_match_file(state *s, char *fn);
+int md5deep_is_known_hash(char *h, char *known_fn);
+//int was_input_not_matched(void);
+int md5deep_finalize_matching(state *s);
+
+// Add a single hash to the matching set
+void md5deep_add_hash(state *s, char *h, char *fn);
+
+// Functions for file evaluation (files.c) 
+int valid_hash(state *s, char *buf);
+int hash_file_type(state *s, FILE *f);
+int find_hash_in_line(state *s, char *buf, int fileType, char *filename);
+
+
+
+
 
 
 __END_DECLS

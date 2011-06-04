@@ -36,42 +36,42 @@ void multihash_update(state *s, unsigned char *buf, uint64_t len)
 }
 
 
+/**
+ * multihash_finalizes finalizes each algorithm and converts to hex.
+ */
 void multihash_finalize(state *s)
 {
-  hashname_t i;
-  uint16_t j, len;
-  static char hex[] = "0123456789abcdef";
+    hashname_t i;
+    uint16_t j, len;
+    static char hex[] = "0123456789abcdef";
 
-  char * result;
+    char * result;
 
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-    {
-      if (s->hashes[i]->inuse)
-	{
-	  s->hashes[i]->f_finalize(s->hashes[i]->hash_context,
-				   s->hashes[i]->hash_sum);
+    for (i = 0 ; i < NUM_ALGORITHMS ; ++i) {
+	if (s->hashes[i]->inuse) {
+	    s->hashes[i]->f_finalize(s->hashes[i]->hash_context,
+				     s->hashes[i]->hash_sum);
 	  
-	  len = s->hashes[i]->byte_length / 2;       
+	    len = s->hashes[i]->byte_length / 2;       
 	  
-	  // Shorthand to make the code easier to read
-	  result = s->current_file->hash[i];
+	    // Shorthand to make the code easier to read
+	    result = s->current_file->hash[i];
 
-	  for (j = 0; j < len ; ++j) 
-	    {
-	      result[2 * j] = hex[(s->hashes[i]->hash_sum[j] >> 4) & 0xf];
-	      result[2 * j + 1] = hex[s->hashes[i]->hash_sum[j] & 0xf];
+	    for (j = 0; j < len ; ++j) {
+		result[2 * j] = hex[(s->hashes[i]->hash_sum[j] >> 4) & 0xf];
+		result[2 * j + 1] = hex[s->hashes[i]->hash_sum[j] & 0xf];
 	      
 	    }
-	  result[s->hashes[i]->byte_length] = 0;
+	    result[s->hashes[i]->byte_length] = 0;
 	}
     }
 
-  s->current_file->file_name = s->full_name;
+    s->current_file->file_name = s->full_name;
 
-  if (s->mode & mode_piecewise)
-    s->current_file->file_size = s->bytes_read;
-  else
-    s->current_file->file_size = s->actual_bytes;
+    if (s->mode & mode_piecewise)
+	s->current_file->file_size = s->bytes_read;
+    else
+	s->current_file->file_size = s->actual_bytes;
 }
 
 

@@ -1,0 +1,6 @@
+a493fc86e3b9d8ec6b97710bdeb04f9918950b65d7e2404a  /tmp/test/copying.txt
+1d66ee489c55f1e4a3ffb03a1fc29287102da4aa1e43697f  /tmp/test/deadbeef.txt
+8dd705b7fbb1b83fca7eead3c481e12712ad36b8fa8baf6a  /tmp/test/foo.txt
+eed33a664bfdf6066bb1c90e221ac2a5b5b25aa0192cf221  /tmp/test/install.txt
+1d573194a056eb3200f9d302900c843c3d41ab4ed06c03df  /tmp/test/one-byte-file
+3293ac630c13f0245f92bbb1766e16167a4e58492dde73f3  /tmp/test/zero-byte-file

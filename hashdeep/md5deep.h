@@ -105,8 +105,6 @@ typedef struct _state {
 } _state;
 #endif
 
-
-
 void sanity_check(state *s, int condition, const char *msg);
 
 // ----------------------------------------------------------------
@@ -119,32 +117,6 @@ int hash_stdin(state *s);
 
 // Sets up hashing algorithm and allocates memory 
 int setup_hashing_algorithm(state *s);
-
-
-
-
-// ----------------------------------------------------------------
-// FILE MATCHING
-// ---------------------------------------------------------------- 
-
-// md5deep_match.c
-int md5deep_load_match_file(state *s, char *fn);
-int md5deep_is_known_hash(char *h, char *known_fn);
-//int was_input_not_matched(void);
-int md5deep_finalize_matching(state *s);
-
-// Add a single hash to the matching set
-void md5deep_add_hash(state *s, char *h, char *fn);
-
-// Functions for file evaluation (files.c) 
-int valid_hash(state *s, char *buf);
-int hash_file_type(state *s, FILE *f);
-int find_hash_in_line(state *s, char *buf, int fileType, char *filename);
-
-
-
-#include "ui.h"
-
 
 
 // ------------------------------------------------------------------

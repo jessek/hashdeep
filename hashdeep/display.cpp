@@ -1,5 +1,9 @@
 
 #include "main.h"
+#include "xml.h"
+
+#include <string>
+using namespace std;
 
 // $Id$
 
@@ -40,8 +44,7 @@ static void display_banner(state *s)
   print_status("%s", HASHDEEP_HEADER_10);
 
   fprintf (stdout,"%ssize,",HASHDEEP_PREFIX);  
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
-  {
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
     if (s->hashes[i]->inuse)
       printf ("%s,", s->hashes[i]->name);
   }  
@@ -84,15 +87,40 @@ static void display_banner(state *s)
   }
 
   fprintf(stdout,"%s## %s",NEWLINE, NEWLINE);
-
-  s->banner_displayed = TRUE;
 }
 
 
+void display_dfxml(state *s,int known_hash)
+{
+    s->dfxml->push("fileobject");
+    s->dfxml->xmlout("filename",s->current_file->file_name);
+    for(int i=0;i<NUM_ALGORITHMS;i++){
+	if(s->hashes[i]->inuse){
+	    string attrib="type='";
+	    for(const char *cc=s->hashes[i]->name;*cc;cc++){
+		attrib.push_back(toupper(*cc)); // add it in uppercase
+	    }
+	    attrib.append("'");
+	    s->dfxml->xmlout("hashdigest",s->current_file->hash[i],attrib,0);
+	}
+    }
+    if(s->mode & mode_which || known_hash){
+	s->dfxml->xmlout("matched",known_hash);
+    }
+    s->dfxml->pop();			// file object
+}
+
 int display_hash_simple(state *s)
 {
-  if ( ! (s->banner_displayed))
-    display_banner(s);
+    if ( s->dfxml==0 && s->banner_displayed==0){
+	display_banner(s);
+	s->banner_displayed = 1;
+    }
+
+    if(s->dfxml){
+	display_dfxml(s,0);
+	return FALSE;
+    }
 
   // In piecewise mode the size of each 'file' is the size
   // of the block it came from. This is important when doing an
@@ -115,15 +143,126 @@ int display_hash_simple(state *s)
   return FALSE;
 }
 
+/* The old display_match_result from md5deep */
+static int md5deep_display_match_result(state *s)
+{  
+  int known_hash = md5deep_is_known_hash(s->md5deep_mode_hash_result,s->known_fn);
+  if ((known_hash && (s->mode & mode_match)) ||
+      (!known_hash && (s->mode & mode_match_neg)))
+  {
+      if(s->dfxml){
+	  display_dfxml(s,known_hash);
+	  return FALSE;
+      }
+
+    display_size(s);
+
+    if (s->mode & mode_display_hash)
+    {
+      printf ("%s", s->md5deep_mode_hash_result);
+      if (s->mode & mode_csv)
+	printf (",");
+      else
+	printf (" %c", display_asterisk(s));
+    }
+
+    if (s->mode & mode_which)
+    {
+      if (known_hash && (s->mode & mode_match))
+      {
+	display_filename(stdout,s->full_name);
+	printf (" matched %s", s->known_fn);
+      }
+      else
+      {
+	display_filename(stdout,s->full_name);
+	printf (" does NOT match");
+      }
+    }
+    else
+      display_filename(stdout,s->full_name);
+
+    make_newline(s);
+  }
+  return FALSE;
+}
+
+
+/* The old display_hash from the md5deep program, with a few modifications */
+int md5deep_display_hash(state *s)
+{
+    if (s->mode & mode_triage) {
+	if(s->dfxml){
+	    display_dfxml(s,1);
+	    return FALSE;
+	}
+	printf ("\t%s\t", s->md5deep_mode_hash_result);
+	display_filename(stdout,s->full_name);
+	make_newline(s);
+	return FALSE;
+    }
+
+  // We can't call display_size here because we don't know if we're
+  // going to display *anything* yet. If we're in matching mode, we
+  // have to evaluate if there was a match first. 
+  if ((s->mode & mode_match) || (s->mode & mode_match_neg))
+    return md5deep_display_match_result(s);
+
+  if(s->dfxml){
+      display_dfxml(s,0);
+      return FALSE;
+  }
+
+  display_size(s);
+
+  printf ("%s", s->md5deep_mode_hash_result);
+
+  if (s->mode & mode_quiet)
+    printf ("  ");
+  else
+  {
+    if ((s->mode & mode_piecewise) ||
+	!(s->is_stdin))
+    {
+      if (s->mode & mode_timestamp)
+      {
+	struct tm * my_time = _gmtime64(&(s->timestamp));
+
+	// The format is four digit year, two digit month, 
+	// two digit hour, two digit minute, two digit second
+	strftime(s->time_str, 
+		 MAX_TIME_STRING_LENGTH, 
+		 "%Y:%m:%d:%H:%M:%S", 
+		 my_time);
+
+	printf ("%c%s", (s->mode & mode_csv?',':' '), s->time_str);
+      }
+
+      
+      if (s->mode & mode_csv)
+	printf(",");
+      else
+	printf(" %c", display_asterisk(s));      
+
+      display_filename(stdout,s->full_name);
+    }
+  }
+
+  make_newline(s);
+  return FALSE;
+}
 
 // This function is called by hash.c when the hashing operation is complete.
 int display_hash(state *s)
 {
-  if (NULL == s)
-    return TRUE;
+    assert(s!=NULL);
+    
+    if(s->md5deep_mode){
+	md5deep_display_hash(s);
+	return TRUE;
+    }
 
-  switch (s->primary_function)
-    {
+    switch (s->primary_function) {
     case primary_compute: 
       return display_hash_simple(s);
 

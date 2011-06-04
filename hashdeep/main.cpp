@@ -4,6 +4,16 @@
 #include "main.h"
 #include <string>
 #include <algorithm>
+#include <iostream>
+
+using namespace std;
+
+#ifdef HAVE_EXTERN_PROGNAME
+extern char *__progname;
+#else
+char *__progname;
+#endif
+
 
 __BEGIN_DECLS
 extern int md5deep_main(int argc,char **argv);
@@ -16,6 +26,11 @@ __END_DECLS
 int _CRT_fmode = _O_BINARY;
 #endif
 
+
+// bring in strsep if it is needed
+#ifndef HAVE_STRSEP
+#include "lib-strsep.c"
+#endif
 
 // So that the usage message fits in a standard DOS window, this
 // function should produce no more than 22 lines of text.
@@ -68,6 +83,9 @@ static void check_flags_okay(state *s)
 
 
 
+/**
+ * Add a hash algorithm. This could be table driven, but it isn't.
+ */
 static int 
 add_algorithm(state *s, 
 	      hashname_t pos,
@@ -199,21 +217,22 @@ static int initialize_hashing_algorithms(state *s)
 }
 
 
+/*
+ * Add each hashing algorithm by name.
+ */
 static int parse_hashing_algorithms(state *s, char *val)
 {
-  uint8_t i;
-  char **ap, *buf[MAX_KNOWN_COLUMNS];
+    char *buf[MAX_KNOWN_COLUMNS];
 
   if (NULL == s || NULL == val)
     return TRUE;
 
-  for (ap = buf ; (*ap = strsep(&val,",")) != NULL ; )
+  for (char **ap = buf ; (*ap = strsep(&val,",")) != NULL ; )
     if (*ap != '\0')
       if (++ap >= &buf[MAX_KNOWN_COLUMNS])
 	break;
 
-  for (i = 0 ; i < MAX_KNOWN_COLUMNS && buf[i] != NULL ; i++)
-  {
+  for (int i = 0 ; i < MAX_KNOWN_COLUMNS && buf[i] != NULL ; i++)  {
     if (STRINGS_CASE_EQUAL(buf[i],"md5"))
       s->hashes[alg_md5]->inuse = TRUE;
     
@@ -231,16 +250,13 @@ static int parse_hashing_algorithms(state *s, char *val)
     else if (STRINGS_CASE_EQUAL(buf[i],"whirlpool"))
       s->hashes[alg_whirlpool]->inuse = TRUE;
     
-    else if (STRINGS_CASE_EQUAL(buf[i],"all"))
-    {
-	//hashname_t count;
+    else if (STRINGS_CASE_EQUAL(buf[i],"all")) {
       for (int count = 0 ; count < NUM_ALGORITHMS ; ++count)
 	s->hashes[count]->inuse = TRUE;
       return FALSE;
     }
       
-    else
-    {
+    else {
       print_error(s,"%s: Unknown algorithm: %s", __progname, buf[i]);
       try_msg();
       exit(EXIT_FAILURE);
@@ -255,10 +271,8 @@ static int process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVh")) != -1)
-  {
-    switch (i)
-    {
+  while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVh")) != -1)  {
+    switch (i) {
     case 'o':
       s->mode |= mode_expert; 
       setup_expert_mode(s,optarg);
@@ -287,7 +301,7 @@ static int process_command_line(state *s, int argc, char **argv)
 	fatal_error(s,"%s: Unable to parse hashing algorithms",__progname);
       break;
       
-    case 'd': s->dfxml = new XML(); break;
+    case 'd': s->dfxml = new XML(stdout); break;
     case 'M': s->mode |= mode_display_hash;	  
     case 'm': s->primary_function = primary_match;      break;
       
@@ -378,11 +392,7 @@ static int process_command_line(state *s, int argc, char **argv)
 
 static int initialize_state(state *s) 
 {
-  if (NULL == s)
-    return TRUE;
-
-  if (setup_hashing_algorithms(s))
-    return TRUE;
+  if (setup_hashing_algorithms(s)) return TRUE;
 
   MD5DEEP_ALLOC(file_data_t,s->current_file,1);
   MD5DEEP_ALLOC(TCHAR,s->full_name,PATH_MAX);
@@ -425,16 +435,25 @@ static int prepare_windows_command_line(state *s)
 int main(int argc, char **argv)
 {
   int count, status = EXIT_SUCCESS;
-  TCHAR *fn;
 
   /* Because the main() function can handle wchar_t arguments on Win32,
    * we need a way to reference those values. Thus we make a duplciate
    * of the argc and argv values.
    */ 
 
-#ifndef __GLIBC__
+#ifndef HAVE_EXTERN_PROGNAME
+#ifdef HAVE_GETPROGNAME
+  __progname  = getprogname();
+#else
   __progname  = basename(argv[0]);
 #endif
+#endif
+
+  state *s = (state *)malloc(sizeof(struct _state));
+  if (s==0 || initialize_state(s)) {
+    print_status("%s: Unable to initialize state variable", __progname);
+    return EXIT_FAILURE;
+  }
 
   /**
    * Originally this program was two sets of progarms:
@@ -442,23 +461,59 @@ int main(int argc, char **argv)
    * with the old interface. Now we are a single program and we figure out
    * which interface to use based on how we are started.
    */
-  std::string firstfour = std::string(__progname).substr(0,4);
-  std::transform(firstfour.begin(), firstfour.end(), firstfour.begin(), ::tolower);
-  if(firstfour != "hash"){
-      return md5deep_main(argc,argv);
+  std::string progname(__progname);
+  /* Convert progname to lower case */
+  std::transform(progname.begin(), progname.end(), progname.begin(), ::tolower);
+  std::string algname = progname.substr(0,progname.find("deep"));
+  if(algname=="hash"){			// we are hashdeep
+      process_command_line(s,argc,argv);
+      if (initialize_hashing_algorithms(s)){
+	  return EXIT_FAILURE;
+      }
+  } else {
+      clear_algorithms_inuse(s);
+      char buf[256];
+      strcpy(buf,algname.c_str());
+      parse_hashing_algorithms(s,buf);
+      if (initialize_hashing_algorithms(s)){
+	  return EXIT_FAILURE;
+      }
+      for(int i=0;i<NUM_ALGORITHMS;++i){
+	  if(s->hashes[i]->inuse){
+	      s->md5deep_mode = 1;
+	      s->md5deep_mode_hash_length = s->hashes[i]->byte_length/2; // used for parsing files of hashes
+	      s->md5deep_mode_hash_result = s->current_file->hash[i]; // where the hex hash will be
+	      break;
+	  }
+      }
+      if(s->md5deep_mode==0){
+	  cerr << progname << ": unknown hash: " <<algname << "\n";
+	  exit(1);
+      }
+      md5deep_process_command_line(s,argc,argv);
   }
 
-  state *s = (state *)malloc(sizeof(struct _state));
-  if (initialize_state(s)) {
-    print_status("%s: Unable to initialize state variable", __progname);
-    return EXIT_FAILURE;
-  }
-  process_command_line(s,argc,argv);
-  exit(0);
+  /* Set up the XML */
+    if(s->dfxml){
+	XML &xreport = *s->dfxml;
+	xreport.push("dfxml","xmloutputversion='1.0'");
+	xreport.push("metadata",
+		       "\n  xmlns='http://md5deep.sourceforge.net/md5deep/' "
+		       "\n  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
+		       "\n  xmlns:dc='http://purl.org/dc/elements/1.1/'" );
+	xreport.xmlout("dc:type","Hash List","",false);
+	xreport.pop();
+	xreport.add_DFXML_creator(PACKAGE_NAME,PACKAGE_VERSION,XML::make_command_line(argc,argv));
+	xreport.push("configuration");
+	xreport.push("algorithms");
+	for(int i=0;i<NUM_ALGORITHMS;i++){
+	    xreport.make_indent();
+	    xreport.printf("<algorithm name='%s' enabled='%d'/>\n",s->hashes[i]->name,s->hashes[i]->inuse);
+	}
+	xreport.pop();			// algorithms
+	xreport.pop();			// configuration
+    }
 
-  if (initialize_hashing_algorithms(s)){
-    return EXIT_FAILURE;
-  }
    
   if (primary_audit == s->primary_function){
       setup_audit(s);
@@ -479,33 +534,281 @@ int main(int argc, char **argv)
   }
 
   /* Anything left on the command line at this point is a file
-     or directory we're supposed to process-> If there's nothing
+     or directory we're supposed to process. If there's nothing
      specified, we should tackle standard input */
   
   if (optind == argc){
       hash_stdin(s);
   }   else {
-    MD5DEEP_ALLOC(TCHAR,fn,PATH_MAX);
+      TCHAR fn[PATH_MAX];;
 
-    count = optind;
+      count = optind;
 
-    while (count < s->argc) {  
-      generate_filename(s,fn,s->cwd,s->argv[count]);
-
+      while (count < s->argc) {  
+	  generate_filename(s,fn,s->cwd,s->argv[count]);
+	  
 #ifdef _WIN32
-      status = process_win32(s,fn);
+	  status = process_win32(s,fn);
 #else
-      status = process_normal(s,fn);
+	  status = process_normal(s,fn);
 #endif
-
-     ++count;
-    }
-
-    free(fn);
+	  
+	  ++count;
+      }
   }
   
   if (primary_audit == s->primary_function)
-    status = display_audit_results(s);
-
+      status = display_audit_results(s);
+  
+  if(s->dfxml) s->dfxml->pop();		// outermost
   return status;
 }
+/****************************************************************
+ * Legacy code from md5deep follows....
+ *
+ ****************************************************************/
+
+
+// So that the usage message fits in a standard DOS window, this
+// function should produce no more than 22 lines of text. 
+void md5deep_usage(void) 
+{
+  print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
+  print_status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,__progname);
+
+  print_status("See the man page or README.txt file for the full list of options");
+  print_status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
+  print_status("-r  - recursive mode. All subdirectories are traversed");
+  print_status("-e  - compute estimated time remaining for each file");
+  print_status("-s  - silent mode. Suppress all error messages");
+  print_status("-S  - displays warnings on bad hashes only");
+  print_status("-z  - display file size before hash");
+  print_status("-m <file> - enables matching mode. See README/man page");
+  print_status("-x <file> - enables negative matching mode. See README/man page");
+	 
+  print_status("-M and -X are the same as -m and -x but also print hashes of each file");
+  print_status("-w  - displays which known file generated a match");
+  print_status("-n  - displays known hashes that did not match any input files");
+  print_status("-a and -A add a single hash to the positive or negative matching set");
+  print_status("-b  - prints only the bare name of files; all path information is omitted");
+  print_status("-l  - print relative paths for filenames");
+  print_status("-k  - print asterisk before filename");
+  print_status("-t  - print GMT timestamp");
+  print_status("-i/I- only process files smaller than the given threshold");
+  print_status("-o  - only process certain types of files. See README/manpage");
+  print_status("-v  - display version number and exit");
+}
+
+
+static void md5deep_check_flags_okay(state *s)
+{
+  if (NULL == s)
+    exit (STATUS_USER_ERROR);
+
+  sanity_check(s,
+	       ((s->mode & mode_match) || (s->mode & mode_match_neg)) &&
+	       !s->hashes_loaded,
+	       "Unable to load any matching files");
+
+  sanity_check(s,
+	       (s->mode & mode_relative) && (s->mode & mode_barename),
+	       "Relative paths and bare filenames are mutally exclusive");
+  
+  sanity_check(s,
+	       (s->mode & mode_piecewise) && (s->mode & mode_display_size),
+	       "Piecewise mode and file size display is just plain silly");
+
+
+  /* If we try to display non-matching files but haven't initialized the
+     list of matching files in the first place, bad things will happen. */
+  sanity_check(s,
+	       (s->mode & mode_not_matched) && 
+	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)),
+	       "Matching or negative matching must be enabled to display non-matching files");
+
+  sanity_check(s,
+	       (s->mode & mode_which) && 
+	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)), 
+	       "Matching or negative matching must be enabled to display which file matched");
+  
+
+  // Additional sanity checks will go here as needed... 
+}
+
+
+static void md5deep_check_matching_modes(state *s)
+{
+    if (NULL == s){
+	exit (STATUS_USER_ERROR);
+    }
+
+    sanity_check(s,
+		 (s->mode & mode_match) && (s->mode & mode_match_neg),
+		 "Regular and negative matching are mutually exclusive.");
+}
+
+
+int md5deep_process_command_line(state *s, int argc, char **argv)
+{
+  int i;
+
+  if (NULL == s)
+    return TRUE;
+  
+  while ((i = getopt(argc,
+		     argv,
+		     "df:I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZ")) != -1) { 
+    switch (i) {
+
+    case 'd': s->dfxml = new XML(stdout); break;
+    case 'f':
+      s->input_list = strdup(optarg);
+      s->mode |= mode_read_from_file;
+      break;
+
+    case 'I':
+      s->mode |= mode_size_all;
+      // Note that there is no break here
+    case 'i':
+      s->mode |= mode_size;
+      s->size_threshold = find_block_size(s,optarg);
+      if (0 == s->size_threshold) {
+	print_error(s,"%s: Requested size threshold implies not hashing anything",
+		    __progname);
+	exit(STATUS_USER_ERROR);
+      }
+      break;
+
+    case 'p':
+      s->mode |= mode_piecewise;
+      s->piecewise_size = find_block_size(s, optarg);
+      if (0 == s->piecewise_size) {
+	print_error(s,"%s: Illegal size value for piecewise mode.", __progname);
+	exit(STATUS_USER_ERROR);
+      }
+
+      break;
+
+
+    case 'Z':
+      s->mode |= mode_triage;
+      break;
+
+    case 't':
+      s->mode |= mode_timestamp;
+      MD5DEEP_ALLOC(char,s->time_str,MAX_TIME_STRING_LENGTH);
+      break;
+    case 'n': 
+      s->mode |= mode_not_matched; 
+      break;
+    case 'w': 
+      s->mode |= mode_which; 
+      break;
+
+    case 'a':
+      s->mode |= mode_match;
+      md5deep_check_matching_modes(s);
+      md5deep_add_hash(s,optarg,optarg);
+      s->hashes_loaded = TRUE;
+      break;
+
+    case 'A':
+      s->mode |= mode_match_neg;
+      md5deep_check_matching_modes(s);
+      md5deep_add_hash(s,optarg,optarg);
+      s->hashes_loaded = TRUE;
+      break;
+
+    case 'o': 
+      s->mode |= mode_expert; 
+      setup_expert_mode(s,optarg);
+      break;
+      
+    case 'M':
+      s->mode |= mode_display_hash;
+    case 'm':
+      s->mode |= mode_match;
+      md5deep_check_matching_modes(s);
+      if (md5deep_load_match_file(s,optarg))
+	s->hashes_loaded = TRUE;
+      break;
+
+    case 'X':
+      s->mode |= mode_display_hash;
+    case 'x':
+      s->mode |= mode_match_neg;
+      md5deep_check_matching_modes(s);
+      if (md5deep_load_match_file(s,optarg))
+	s->hashes_loaded = TRUE;
+      break;
+
+    case 'c':
+      s->mode |= mode_csv;
+      break;
+
+    case 'z': 
+      s->mode |= mode_display_size; 
+      break;
+
+    case '0': 
+      s->mode |= mode_zero; 
+      break;
+
+    case 'S': 
+      s->mode |= mode_warn_only;
+      s->mode |= mode_silent;
+      break;
+
+    case 's':
+      s->mode |= mode_silent;
+      break;
+
+    case 'e':
+      s->mode |= mode_estimate;
+      break;
+
+    case 'r':
+      s->mode |= mode_recursive;
+      break;
+
+    case 'k':
+      s->mode |= mode_asterisk;
+      break;
+
+    case 'b': 
+      s->mode |= mode_barename; 
+      break;
+      
+    case 'l': 
+      s->mode |= mode_relative; 
+      break;
+
+    case 'q': 
+      s->mode |= mode_quiet; 
+      break;
+
+    case 'h':
+	md5deep_usage();
+      exit (STATUS_OK);
+
+    case 'v':
+      print_status("%s",VERSION);
+      exit (STATUS_OK);
+
+    case 'V':
+      // COPYRIGHT is a format string, complete with newlines
+      print_status(COPYRIGHT);
+      exit (STATUS_OK);
+
+    default:
+      try_msg();
+      exit (STATUS_USER_ERROR);
+
+    }
+  }
+
+  md5deep_check_flags_okay(s);
+  return STATUS_OK;
+}
+
+
