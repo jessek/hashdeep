@@ -1,0 +1,81 @@
+MD5DEEP TESTS
+
+No flags
+
+File read errors in the middle of a file
+
+Quiet mode (-q)
+
+Recursive mode (-r)
+Recursive mode on Win32
+Recursive mode on Win32 with Junction Points, Symbolic Links, etc
+
+Read physical devices on Win32 (e.g. \\Device\PhysicalDrive0 )
+
+Properly handle Unicode filenames on Win32 (i.e. recurse into
+directories with Unicode names. Hash files with Unicode names)
+
+Size mode (-z)
+
+Triage mode (-Z)
+
+Piecewise mode (-p)
+Piecewise with block size smaller than input file
+Piecewise with block size larger than input file
+
+Matching mode (-m)
+Matching mode with multiple files of known hashes
+Matching mode with multiple files of known hashes, where some are invalid
+Matching mode with multiple files of known hashes, where all are invalid
+
+Non-matching mode (-x)
+
+Matching modes with single hash (-a and -A)
+
+Matching modes with hash display (-M and -X)
+
+Matching modes with piecewise mode (-m and -x with -p)
+
+Matching modes with 'which hash matched' (-w)
+
+Matching modes with 'display unused hashes' (-n for both -m and -x)
+
+Hash specified files only (-f)
+Hash specified files only with -m and -x
+Hash specified files only with -p
+
+CSV output (-c)
+
+XML output (??)
+
+Progress indicator on large files (-e)
+
+Size threshold mode (-i and -I)
+
+Expert mode
+
+Hashing across filesystems
+Hashing via Samba
+
+
+
+HASHDEEP TESTS
+
+All applicable tests above
+
+Hashing with one algorithm
+Hashing with multiple algorithms
+Hashing with all algorithms
+
+Audit mode
+Audit mode pass
+Audit mode failure for file moved
+Audit mode failure for file added
+Audit mode failure for file deleted
+Audit mode, all levels of verbosity
+
+Loading known hashes
+
+Loading known hashes with very long lines
+
+
