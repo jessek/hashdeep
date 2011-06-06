@@ -110,7 +110,6 @@ static int parse_hashing_algorithms(state *s, char *fn, char *val)
 static filetype_t 
 identify_file(state *s, char *fn, FILE *handle)
 {
-  hashname_t i;
   hashname_t current_order[NUM_ALGORITHMS];
  
   if (NULL == s || NULL == fn || NULL == handle)
@@ -161,13 +160,13 @@ identify_file(state *s, char *fn, FILE *handle)
   }
   else
   {
-    for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
       current_order[i] = s->hash_order[i];
   }
 
   // We have to clear out the algorithm order to remove the values
   // from the previous file. This file may have different ones 
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
     s->hash_order[i] = alg_unknown;
 
   // Skip the "%%%% size," when parsing the list of hashes 
@@ -175,7 +174,7 @@ identify_file(state *s, char *fn, FILE *handle)
 
   if (s->hashes_loaded)
   {
-    i = 0;
+      int i = 0;
     while (i < NUM_ALGORITHMS && 
 	   s->hash_order[i] == current_order[i])
       i++;
@@ -193,7 +192,6 @@ identify_file(state *s, char *fn, FILE *handle)
 static status_t add_file(state *s, file_data_t *f)
 {
   status_t st;
-  hashname_t i;
 
   if (NULL == s || NULL == f)
     return status_unknown_error;
@@ -207,7 +205,7 @@ static status_t add_file(state *s, file_data_t *f)
 
   s->last = f;
 
-  i = 1;
+  int i = 1;
   while (s->hash_order[i] != alg_unknown)
   {
     st = hashtable_add(s,s->hash_order[i],f);
@@ -223,15 +221,12 @@ static status_t add_file(state *s, file_data_t *f)
 
 static int initialize_file_data(file_data_t *f)
 {
-  hashname_t i;
-
-  if (NULL == f)
-    return TRUE;
+  assert(f!=NULL);
 
   f->next = NULL;
   f->used = 0;
 
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
     f->hash[i] = NULL;
 
   return FALSE;
@@ -470,14 +465,11 @@ char * status_to_str(status_t s)
 
 status_t display_match_result(state *s)
 {
-  hashtable_entry_t *ret , *tmp;
   TCHAR * matched_filename = NULL;
   int should_display; 
-  hashname_t i;
   uint64_t my_round;
 
-  if (NULL == s)
-    fatal_error(s,"%s: NULL state in display_match_result", __progname);
+  assert(s!=NULL);
 
   my_round = s->hash_round;
   s->hash_round++;
@@ -486,12 +478,12 @@ status_t display_match_result(state *s)
 
   should_display = (primary_match_neg == s->primary_function);
 
-  for (i = 0 ; i < NUM_ALGORITHMS; ++i)
+  for (int i = 0 ; i < NUM_ALGORITHMS; ++i)
   {
     if (s->hashes[i]->inuse)
     {
-      ret = hashtable_contains(s,i);
-      tmp = ret;
+	hashtable_entry_t *ret = hashtable_contains(s,(hashname_t)i);
+      hashtable_entry_t *tmp = ret;
       while (tmp != NULL)
       {
 	switch (tmp->status) {

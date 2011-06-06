@@ -106,7 +106,7 @@ int processing_dir(TCHAR *fn)
   if (NULL == fn)
     return TRUE;
 
-  dir_table *new, *temp;
+  dir_table *n, *temp;
   TCHAR *d_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
 
 #ifdef _WIN32
@@ -142,10 +142,10 @@ int processing_dir(TCHAR *fn)
     temp = temp->next;       
   }
 
-  new = (dir_table*)malloc(sizeof(dir_table));
-  new->name = _tcsdup(d_name);
-  new->next = NULL;  
-  temp->next = new;
+  n = (dir_table*)malloc(sizeof(dir_table));
+  n->name = _tcsdup(d_name);
+  n->next = NULL;  
+  temp->next = n;
 
   free(d_name);
   return TRUE;

@@ -78,9 +78,7 @@ int audit_update(state *s)
 {
   int no_match = FALSE, exact_match = FALSE, moved = FALSE, partial = FALSE;
   file_data_t * moved_file = NULL, * partial_file = NULL;
-  hashtable_entry_t * matches, * tmp;
   uint64_t my_round;
-  hashname_t i;
   
   if (NULL == s)
     return TRUE;
@@ -93,12 +91,12 @@ int audit_update(state *s)
   // Although nobody uses match_total right now, we may in the future 
   //  s->match_total++;
 
-  for (i = 0 ; i < NUM_ALGORITHMS; ++i)
+  for (int i = 0 ; i < NUM_ALGORITHMS; i++)
   {
     if (s->hashes[i]->inuse)
     {
-      matches = hashtable_contains(s,i);
-      tmp = matches;
+	hashtable_entry_t *matches = hashtable_contains(s,(hashname_t)i);
+	hashtable_entry_t *tmp = matches;
       if (NULL == tmp)
       {
 	no_match = TRUE;

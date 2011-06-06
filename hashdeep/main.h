@@ -149,6 +149,7 @@ typedef struct _hash_table_t {
 } hashtable_t;
 
 
+/* This structure defines what's known about a hash algorithm */
 typedef struct _algorithm_t
 {
   char          * name;
@@ -249,7 +250,7 @@ typedef struct _state {
   uint8_t         expected_columns;
   file_data_t   * known, * last;
   uint64_t        hash_round;
-  uint8_t         hash_order[NUM_ALGORITHMS];
+  hashname_t      hash_order[NUM_ALGORITHMS];
 
   // Hashing algorithms 
   // We don't define hash_string_length, it's just twice this length. 

@@ -21,11 +21,11 @@
 static void remove_double_slash(TCHAR *fn)
 {
   size_t tsize = sizeof(TCHAR);
-  TCHAR DOUBLE_DIR[4], *tmp = fn, *new;
+  TCHAR DOUBLE_DIR[4], *tmp = fn, *n;
   _sntprintf(DOUBLE_DIR,3,_TEXT("%c%c"),DIR_SEPARATOR,DIR_SEPARATOR);
 
-  new = _tcsstr(tmp,DOUBLE_DIR);
-  while (NULL != new)
+  n = _tcsstr(tmp,DOUBLE_DIR);
+  while (NULL != n)
   {
 #ifdef _WIN32
     // On Windows, we have to allow the first two characters to be slashes
@@ -38,13 +38,13 @@ static void remove_double_slash(TCHAR *fn)
     {
 #endif  // ifdef _WIN32
     
-      _tmemmove(new,new+tsize,_tcslen(new));
+      _tmemmove(n,n+tsize,_tcslen(n));
 
 #ifdef _WIN32
     }
 #endif  // ifdef _WIN32
 
-    new = _tcsstr(tmp,DOUBLE_DIR);
+    n = _tcsstr(tmp,DOUBLE_DIR);
 
   }
 }

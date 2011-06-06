@@ -6,14 +6,13 @@
 status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
 {
   int partial_null = FALSE, partial_match = FALSE, partial_failure = FALSE;
-  hashname_t i;
   
   if (NULL == a || NULL == b || NULL == s)
     return status_unknown_error;  
   
   /* We first compare the hashes because they should tell us the fastest if we're
      looking at different files. Then the file size and finally the file name. */
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {
     if (s->hashes[i]->inuse)
     {
@@ -106,7 +105,7 @@ void hashtable_init(hashtable_t *t)
 
 status_t hashtable_add(state *s, hashname_t alg, file_data_t *f)
 {
-  hashtable_entry_t *new, *temp;
+  hashtable_entry_t *n, *temp;
   hashtable_t *t = s->hashes[alg]->known;
 
   if (NULL == t || NULL == f)
@@ -116,14 +115,14 @@ status_t hashtable_add(state *s, hashname_t alg, file_data_t *f)
   
   if (NULL == t->member[key])
   {
-    new = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
-    if (NULL == new)
+    n = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
+    if (NULL == n)
       return status_out_of_memory;
     
-    new->next = NULL;
-    new->data = f;
+    n->next = NULL;
+    n->data = f;
     
-    t->member[key] = new;
+    t->member[key] = n;
       return status_ok;
   }
 
@@ -141,14 +140,14 @@ status_t hashtable_add(state *s, hashname_t alg, file_data_t *f)
       return status_ok;
   }
 
-  new = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
-  if (NULL == new)
+  n = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
+  if (NULL == n)
     return status_out_of_memory;
   
-  new->next = NULL;
-  new->data = f;
+  n->next = NULL;
+  n->data = f;
   
-  temp->next = new;
+  temp->next = n;
   return status_ok;
 }
 
@@ -173,7 +172,7 @@ void hashtable_destroy(hashtable_entry_t *e)
 hashtable_entry_t * 
 hashtable_contains(state *s, hashname_t alg)
 {
-  hashtable_entry_t *ret = NULL, *new, *temp, *last = NULL;
+  hashtable_entry_t *ret = NULL, *n, *temp, *last = NULL;
   hashtable_t *t; 
   uint64_t key;
   file_data_t * f;
@@ -228,12 +227,12 @@ hashtable_contains(state *s, hashname_t alg)
 	    }
 	  else
 	    {
-	      new = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
-	      new->next = NULL;
-	      new->data = temp->data;
-	      new->status = status;
-	      last->next = new;
-	      last = new;
+	      n = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
+	      n->next = NULL;
+	      n->data = temp->data;
+	      n->status = status;
+	      last->next = n;
+	      last = n;
 	    }
 	}
     }
