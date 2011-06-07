@@ -65,61 +65,61 @@ void hashTableInit(hashTable *knownHashes)
     (*knownHashes)[count] = NULL;
 }
 
-int initialize_node(hashNode *new, char *n, char *fn)
+int initialize_node(hashNode *newNode, char *nfn, char *fn)
 {
-  new->been_matched = FALSE;
-  new->data         = strdup(n);
-  new->filename     = strdup(fn);
-  new->next         = NULL;
+  newNode->been_matched = FALSE;
+  newNode->data         = strdup(nfn);
+  newNode->filename     = strdup(fn);
+  newNode->next         = NULL;
 
-  if (new->data == NULL || new->filename == NULL)
+  if (newNode->data == NULL || newNode->filename == NULL)
     return TRUE;
   return FALSE;
 }
 
 
-int hashTableAdd(state *s, hashTable *knownHashes, char *n, char *fn) 
+int hashTableAdd(state *s, hashTable *knownHashes, char *nfn, char *fn) 
 {
-  uint64_t key = translate(n);
-  hashNode *new, *temp;
+  uint64_t key = translate(nfn);
+  hashNode *newNode, *temp;
 
-  if (!valid_hash(s,n))
+  if (!valid_hash(s,nfn))
     return HASHTABLE_INVALID_HASH;
 
   if ((*knownHashes)[key] == NULL) 
   {
 
-    if ((new = (hashNode*)malloc(sizeof(hashNode))) == NULL)
+    if ((newNode = (hashNode*)malloc(sizeof(hashNode))) == NULL)
       return HASHTABLE_OUT_OF_MEMORY;
 
-    if (initialize_node(new,n,fn))
+    if (initialize_node(newNode,nfn,fn))
       return HASHTABLE_OUT_OF_MEMORY;
 
-    (*knownHashes)[key] = new;
+    (*knownHashes)[key] = newNode;
     return HASHTABLE_OK;
   }
 
   temp = (*knownHashes)[key];
 
   // If this value is already in the table, we don't need to add it again
-  if (STRINGS_CASE_EQUAL(temp->data,n))
+  if (STRINGS_CASE_EQUAL(temp->data,nfn))
     return HASHTABLE_OK;;
   
   while (temp->next != NULL)
   {
     temp = temp->next;
     
-    if (STRINGS_CASE_EQUAL(temp->data,n))
+    if (STRINGS_CASE_EQUAL(temp->data,nfn))
       return HASHTABLE_OK;
   }
   
-  if ((new = (hashNode*)malloc(sizeof(hashNode))) == NULL)
+  if ((newNode = (hashNode*)malloc(sizeof(hashNode))) == NULL)
     return HASHTABLE_OUT_OF_MEMORY;
 
-  if (initialize_node(new,n,fn))
+  if (initialize_node(newNode,nfn,fn))
     return HASHTABLE_OUT_OF_MEMORY;
 
-  temp->next = new;
+  temp->next = newNode;
   return FALSE;
 }
 

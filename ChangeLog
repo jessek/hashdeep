@@ -1,3 +1,7 @@
+2011-06-04  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* hashdeep/hash.c (hash): s->full_name and tmp_name are now statically allocated arrays, rather than dynamcially allocated.
+
 2011-06-02  Simson Garfinkel  <simsong@alphonse-mucha>
 
 	* md5deep/Makefile.am (INCLUDES): removed references to -lm as we no longer use floor.

@@ -10,10 +10,19 @@ Below is what we've done:
 1  - Start with a new copy of the source
 2  - fix the autoconf files.
 6  - migrate to C++ (hashdeep is now hashdeep.cpp)
-
-Below is the retrench plan:
-
 3 - add DFXML to the multihash program.
-4 - add an output mode to the multihash program that exactly matches the output mode of the single hash md5deep, sha1deep, etc.
-5 - add a mode to the multihash program that exactly matches the command-line options, and have that mode be the default when the command name changes. 
-7 - remove your hashtable object for the STL red-black table.
+4 - add an output mode to the multihash program that exactly matches the output mode of the single hash md5deep, sha1deep, etc. This was done by using md5deep's output functions directly.
+5 - add a mode to the multihash program that exactly matches the command-line options, and have that mode be the default when the command name changes. This was done by using md5deep's command line parser.
+1 - Continue migration to C++ everywhere.
+
+Below is what's planned:
+
+2 - change state to a C++ class.
+3 - Remove the current file stuff from state to create another C++ class.
+4 - Have hash() function take the file being hashed and a place to put it. 
+5 - migrate to multi-threaded producer/consumer architecture with the file searching (dig) being the producer and hash() being the consumer. This will require a bunch of locks added.
+6 - Add "-j" option to control how many threads; -j0 turns off threading.
+
+What's on hold (reason: why change code that currently works?)
+1 - Start replacing char * arrays with stl::string. Consider replacing TCHAR strings with vector<TCHAR>.  
+2 - remove hashtable object for the STL red-black table.

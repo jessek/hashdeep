@@ -74,12 +74,10 @@ typedef struct _ENCASE_HASH_HEADER {
 
 int valid_hash(state *s, char *buf) 
 {
-  size_t pos = 0;
-
   if (strlen(buf) < HASH_STRING_LENGTH) 
     return FALSE;
 
-  for (pos = 0 ; pos < HASH_STRING_LENGTH ; pos++) 
+  for (size_t pos = 0 ; pos < HASH_STRING_LENGTH ; pos++) 
     if (!isxdigit(buf[pos]))
       return FALSE;
   return TRUE;

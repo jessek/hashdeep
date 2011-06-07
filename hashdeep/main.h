@@ -17,7 +17,6 @@
 #define MD5DEEP_IDEAL_BLOCK_SIZE 8192
 
 
-
 /* HOW TO ADD A NEW HASHING ALGORITHM
 
   * Add a value for the algorithm to the hashname_t enumeration
@@ -126,19 +125,21 @@ typedef enum
 
 /* This describes the file being hashed.*/
 
-typedef struct _file_data_t {
+class file_data_t {
+public:
   char                * hash[NUM_ALGORITHMS]; // the hex hashes
   uint64_t              file_size;
   TCHAR               * file_name;
   uint64_t              used;
-  struct _file_data_t * next;
-} file_data_t;
+  class file_data_t * next;
+};
 
-typedef struct _hashtable_entry_t {
+class hashtable_entry_t {
+public:
   status_t                     status; 
   file_data_t                * data;
   struct _hashtable_entry_t  * next;   
-} hashtable_entry_t;
+};
 
 /* HASH_TABLE_SIZE must be at least 16 to the power of HASH_TABLE_SIG_FIGS */
 #define HASH_TABLE_SIG_FIGS   5
@@ -275,7 +276,7 @@ typedef struct _state {
 
     /* Legacy 'md5deep', 'sha1deep', etc. mode.  */
     int	md5deep_mode;
-    int md5deep_mode_hash_length;	// in bytes
+    size_t md5deep_mode_hash_length;	// in bytes
     char *md5deep_mode_hash_result;	// printable ASCII; md5deep_mode_hash_length*2+1 bytes long
     char known_fn[PATH_MAX+1];
 
