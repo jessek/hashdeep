@@ -284,7 +284,7 @@ static int check_for_encase(state *s, FILE *f)
 
 int hash_file_type(state *s, FILE *f) 
 {
-  char *known_fn;
+  char known_fn[PATH_MAX+1];
   char buf[MAX_STRING_LENGTH + 1];
   rewind(f);
 
@@ -347,28 +347,23 @@ int hash_file_type(state *s, FILE *f)
   /* Plain files can have comments, so the first line(s) may not
      contain a valid hash. But if we should process this file
      if we can find even *one* valid hash */
-  known_fn = (char *)malloc(sizeof(char) * PATH_MAX);
   do 
   {
     if (find_bsd_hash(s,buf,known_fn))
     {
-      free(known_fn);
       return TYPE_BSD;
     }
 
     if (find_md5deep_size_hash(s,buf,known_fn))
     {
-      free(known_fn);
       return TYPE_MD5DEEP_SIZE;
     }
 
     if (find_plain_hash(s,buf,known_fn))
     {
-      free(known_fn);
       return TYPE_PLAIN;
     }
   } while ((fgets(buf,MAX_STRING_LENGTH,f)) != NULL);
-  free(known_fn);
 
   return TYPE_UNKNOWN;
 }

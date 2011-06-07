@@ -20,13 +20,13 @@ static void display_size(state *s)
     // When in CSV mode we always display the full size
     if (s->mode & mode_csv)
     {
-      printf ("%"PRIu64",", s->actual_bytes);
+      printf ("%"PRIu64",", s->current_file->actual_bytes);
     }
     // We reserve ten characters for digits followed by two spaces
-    else if (s->bytes_read > 9999999999LL)
+    else if (s->current_file->bytes_read > 9999999999LL)
       printf ("9999999999  ");
     else
-      printf ("%10"PRIu64"  ", s->actual_bytes);      
+      printf ("%10"PRIu64"  ", s->current_file->actual_bytes);      
   }	
 }
 
@@ -93,7 +93,7 @@ static void display_banner(state *s)
 void display_dfxml(state *s,int known_hash)
 {
     s->dfxml->push("fileobject");
-    s->dfxml->xmlout("filename",s->current_file->file_name);
+    s->dfxml->xmlout("filename",s->current_file->file_name0);
     for(int i=0;i<NUM_ALGORITHMS;i++){
 	if(s->hashes[i]->inuse){
 	    string attrib="type='";
@@ -127,9 +127,9 @@ int display_hash_simple(state *s)
   // audit in piecewise mode. In all other cases we use the 
   // total number of bytes from the file we *actually* read
   if (s->mode & mode_piecewise)
-    printf ("%"PRIu64",", s->bytes_read);
+    printf ("%"PRIu64",", s->current_file->bytes_read);
   else
-    printf ("%"PRIu64",", s->actual_bytes);
+    printf ("%"PRIu64",", s->current_file->actual_bytes);
 
   for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
   {
@@ -227,15 +227,13 @@ int md5deep_display_hash(state *s)
       if (s->mode & mode_timestamp)
       {
 	struct tm * my_time = _gmtime64(&(s->timestamp));
+	char time_str[MAX_TIME_STRING_LENGTH];
 
 	// The format is four digit year, two digit month, 
 	// two digit hour, two digit minute, two digit second
-	strftime(s->time_str, 
-		 MAX_TIME_STRING_LENGTH, 
-		 "%Y:%m:%d:%H:%M:%S", 
-		 my_time);
+	strftime(time_str, sizeof(time_str), "%Y:%m:%d:%H:%M:%S", my_time);
 
-	printf ("%c%s", (s->mode & mode_csv?',':' '), s->time_str);
+	printf ("%c%s", (s->mode & mode_csv?',':' '), time_str);
       }
 
       

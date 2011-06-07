@@ -1,3 +1,11 @@
+2011-06-07  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* hashdeep/files.cpp (hash_file_type): known_fn changed from char * to char[PATH_MAX+1]
+
+	* hashdeep/main.h (class state): time_str is now a local variable, not in state.
+
+	* hashdeep/main.cpp (main): state and the other structures defined in main.h are now classes.
+
 2011-06-04  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* hashdeep/hash.c (hash): s->full_name and tmp_name are now statically allocated arrays, rather than dynamcially allocated.

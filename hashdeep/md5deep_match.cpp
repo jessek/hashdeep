@@ -123,7 +123,7 @@ static int parse_encase_file(state *s, char *fn, FILE *handle)
 int md5deep_load_match_file(state *s, char *fn) 
 {
   uint64_t line_number = 0;
-  char *known_fn;
+  char known_fn[PATH_MAX+1];
   int file_type, status;
   FILE *f;
 
@@ -171,18 +171,12 @@ int md5deep_load_match_file(state *s, char *fn)
   else 
     line_number++;
   
-  if ((known_fn = (char *)malloc(sizeof(char) * PATH_MAX)) == NULL)
-  {
-    print_error(s,"%s: Out of memory before read", fn);
-    return FALSE;
-  }
-
   char buf[MAX_STRING_LENGTH + 1];
   memset(buf,0,sizeof(buf));
   while (fgets(buf,MAX_STRING_LENGTH,f)) 
   {
     ++line_number;
-    memset(known_fn,sizeof(char),PATH_MAX);
+    memset(known_fn,0,PATH_MAX);
 
     if (find_hash_in_line(s,buf,file_type,known_fn) != TRUE) 
     {
@@ -200,13 +194,11 @@ int md5deep_load_match_file(state *s, char *fn)
 	print_error(s,"%s: %s: Out of memory at line %" PRIu64 "%s",
 		    __progname, fn, line_number, NEWLINE);
 	fclose(f);
-	free(known_fn);
 	return FALSE;
       }
     }
   }
 
-  free(known_fn);
   fclose(f);
 
 #ifdef __DEBUG

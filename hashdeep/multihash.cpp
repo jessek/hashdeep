@@ -64,9 +64,9 @@ void multihash_finalize(state *s)
     s->current_file->file_name = s->full_name;
 
     if (s->mode & mode_piecewise)
-	s->current_file->file_size = s->bytes_read;
+	s->current_file->file_size = s->current_file->bytes_read;
     else
-	s->current_file->file_size = s->actual_bytes;
+	s->current_file->file_size = s->current_file->actual_bytes;
 }
 
 

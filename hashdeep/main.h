@@ -115,7 +115,6 @@ typedef enum
   } status_t;
 
 
-
 /* These describe the version of the file format being used, not
  *   the version of the program.
  */
@@ -124,21 +123,36 @@ typedef enum
 
 
 /* This describes the file being hashed.*/
-
 class file_data_t {
 public:
-  char                * hash[NUM_ALGORITHMS]; // the hex hashes
-  uint64_t              file_size;
-  TCHAR               * file_name;
-  uint64_t              used;
-  class file_data_t * next;
+    char                * hash[NUM_ALGORITHMS]; // the hex hashes
+    uint64_t              file_size;
+    TCHAR               * file_name;	// normally file name, but permuted for piecewise hashing
+    TCHAR		* file_name0;	// real file name
+    uint64_t              used;
+
+  // How many bytes (and megs) we think are in the file, via stat(2)
+  // and how many bytes we've actually read in the file
+  uint64_t        stat_bytes;
+  uint64_t        stat_megs;
+  uint64_t        actual_bytes;
+
+  // Where the last read operation started and ended
+  // bytes_read is a shorthand for read_end - read_start
+  uint64_t        read_start;
+  uint64_t        read_end;
+  uint64_t        bytes_read;
+
+    class file_data_t * next;		// can be in a linked list, strangely...
 };
+
+
 
 class hashtable_entry_t {
 public:
-  status_t                     status; 
-  file_data_t                * data;
-  struct _hashtable_entry_t  * next;   
+  status_t           status; 
+  file_data_t        * data;
+  hashtable_entry_t  * next;   
 };
 
 /* HASH_TABLE_SIZE must be at least 16 to the power of HASH_TABLE_SIG_FIGS */
@@ -161,11 +175,11 @@ typedef struct _algorithm_t
   int ( *f_update)(void *, unsigned char *, uint64_t );
   int ( *f_finalize)(void *, unsigned char *);
 
-
   hashtable_t   * known;	/* The set of known hashes for this algorithm */
   unsigned char * hash_sum;	// printable
   int             inuse;
 } algorithm_t;
+
 
 
 /* Primary modes of operation  */
@@ -190,12 +204,11 @@ typedef enum  {
 #define TYPE_ENCASE       9
 #define TYPE_UNKNOWN    254
 
-typedef struct _state {
-
+class state {
+public:;
   /* Basic Program State */
   primary_t       primary_function;
   uint64_t        mode;
-  int             return_value;
   time_t          start_time, last_time;
 
   /* Command line arguments */
@@ -215,7 +228,6 @@ typedef struct _state {
 #else
   time_t        timestamp;
 #endif
-  char          * time_str;
 
   // Lists of known hashes 
   hashTable     known_hashes;
@@ -227,18 +239,6 @@ typedef struct _state {
 
   // When only hashing files larger/smaller than a given threshold
   uint64_t        size_threshold;
-
-  // How many bytes (and megs) we think are in the file, via stat(2)
-  // and how many bytes we've actually read in the file
-  uint64_t        stat_bytes;
-  uint64_t        stat_megs;
-  uint64_t        actual_bytes;
-
-  // Where the last read operation started and ended
-  // bytes_read is a shorthand for read_end - read_start
-  uint64_t        read_start;
-  uint64_t        read_end;
-  uint64_t        bytes_read;
 
   /* We don't want to use s->full_name, but it's required for hash.c */
   TCHAR         * full_name;
@@ -256,7 +256,7 @@ typedef struct _state {
   // Hashing algorithms 
   // We don't define hash_string_length, it's just twice this length. 
   // We use a signed value as this gets compared with the output of strlen() */
-    //size_t          hash_length;
+
 
   // Which filetypes this algorithm supports and their position in the file
   uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
@@ -272,7 +272,7 @@ typedef struct _state {
   
   /* For audit mode, the number of each type of file */
   uint64_t        match_exact, match_expect,
-    match_partial, match_moved, match_unused, match_unknown, match_total;
+      match_partial, match_moved, match_unused, match_unknown, match_total;
 
     /* Legacy 'md5deep', 'sha1deep', etc. mode.  */
     int	md5deep_mode;
@@ -282,7 +282,7 @@ typedef struct _state {
 
   /* output in DFXML */
     XML       *dfxml;
-} state;
+};
 
 __BEGIN_DECLS
 /* GENERIC ROUTINES */
@@ -380,13 +380,9 @@ void internal_error(const char *fmt, ... );
 
 // Display a filename, possibly including Unicode characters
 void display_filename(FILE *out, const TCHAR *fn);
-
 void print_debug(const char *fmt, ...);
-
 void make_newline(const state *s);
-
 void try_msg(void);
-
 int display_hash(state *s);
 
 
@@ -408,11 +404,6 @@ void md5deep_add_hash(state *s, char *h, char *fn);
 int valid_hash(state *s, char *buf);
 int hash_file_type(state *s, FILE *f);
 int find_hash_in_line(state *s, char *buf, int fileType, char *filename);
-
-
-
-
-
 
 __END_DECLS
 

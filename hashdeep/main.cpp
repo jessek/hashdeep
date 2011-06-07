@@ -449,8 +449,8 @@ int main(int argc, char **argv)
 #endif
 #endif
 
-  state *s = (state *)malloc(sizeof(struct _state));
-  if (s==0 || initialize_state(s)) {
+  state *s = new state();
+  if (initialize_state(s)) {
     print_status("%s: Unable to initialize state variable", __progname);
     return EXIT_FAILURE;
   }
@@ -696,7 +696,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
 
     case 't':
       s->mode |= mode_timestamp;
-      MD5DEEP_ALLOC(char,s->time_str,MAX_TIME_STRING_LENGTH);
+      //MD5DEEP_ALLOC(char,s->time_str,MAX_TIME_STRING_LENGTH);
       break;
     case 'n': 
       s->mode |= mode_not_matched; 

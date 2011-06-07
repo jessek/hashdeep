@@ -481,7 +481,7 @@ static int file_type(state *s, TCHAR *fn)
     return stat_unknown;
   }
 
-  s->stat_bytes = sb.st_size;
+  s->current_file->stat_bytes = sb.st_size;
 
   // On Win32 this should be the creation time, but on all other systems
   // it will be the change time.
@@ -597,7 +597,7 @@ static int should_hash(state *s, TCHAR *fn)
 
   // We must reset the number of bytes in each file processed
   // so that we can tell if fstat reads the number successfully
-  s->stat_bytes = UNKNOWN_FILE_SIZE;
+  s->current_file->stat_bytes = UNKNOWN_FILE_SIZE;
   s->timestamp   = 0;
 
   type = file_type(s,fn);

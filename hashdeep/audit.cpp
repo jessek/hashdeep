@@ -103,7 +103,7 @@ int audit_update(state *s)
       }
       else while (tmp != NULL)
       {
-	//	print_status("Got status %d for %s", tmp->status, tmp->data->file_name);
+	// print_status("Got status %d for %s", tmp->status, tmp->data->file_name);
 
 	if (tmp->data->used != s->hash_round)
 	{
