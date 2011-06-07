@@ -130,6 +130,7 @@ public:
     TCHAR               * file_name;	// normally file name, but permuted for piecewise hashing
     TCHAR		* file_name0;	// real file name
     uint64_t              used;
+    char known_fn[PATH_MAX+1];
 
   // How many bytes (and megs) we think are in the file, via stat(2)
   // and how many bytes we've actually read in the file
@@ -236,7 +237,6 @@ public:;
   // The type of file, as report by stat
   uint8_t       input_type;
 
-
   // When only hashing files larger/smaller than a given threshold
   uint64_t        size_threshold;
 
@@ -249,7 +249,8 @@ public:;
   int             hashes_loaded;
   algorithm_t   * hashes[NUM_ALGORITHMS];
   uint8_t         expected_columns;
-  file_data_t   * known, * last;
+    file_data_t * known;
+  file_data_t   * last;
   uint64_t        hash_round;
   hashname_t      hash_order[NUM_ALGORITHMS];
 
@@ -278,7 +279,6 @@ public:;
     int	md5deep_mode;
     size_t md5deep_mode_hash_length;	// in bytes
     char *md5deep_mode_hash_result;	// printable ASCII; md5deep_mode_hash_length*2+1 bytes long
-    char known_fn[PATH_MAX+1];
 
   /* output in DFXML */
     XML       *dfxml;

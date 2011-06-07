@@ -2,7 +2,7 @@
 # set GENERATE=yes to generate the outputs of the tests
 # Run with tests.sh <base> to test programs in <base>
 DEFAULT_BASE=/opt/local/bin/
-GENERATE=yes
+GENERATE=no
 
 if [ x$1 != "x" ]; then
   BASE=$1

@@ -146,7 +146,7 @@ int display_hash_simple(state *s)
 /* The old display_match_result from md5deep */
 static int md5deep_display_match_result(state *s)
 {  
-  int known_hash = md5deep_is_known_hash(s->md5deep_mode_hash_result,s->known_fn);
+  int known_hash = md5deep_is_known_hash(s->md5deep_mode_hash_result,s->current_file->known_fn);
   if ((known_hash && (s->mode & mode_match)) ||
       (!known_hash && (s->mode & mode_match_neg)))
   {
@@ -171,7 +171,7 @@ static int md5deep_display_match_result(state *s)
       if (known_hash && (s->mode & mode_match))
       {
 	display_filename(stdout,s->full_name);
-	printf (" matched %s", s->known_fn);
+	printf (" matched %s", s->current_file->known_fn);
       }
       else
       {
