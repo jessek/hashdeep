@@ -394,7 +394,7 @@ static int initialize_state(state *s)
 {
   if (setup_hashing_algorithms(s)) return TRUE;
 
-  MD5DEEP_ALLOC(file_data_t,s->current_file,1);
+  s->current_file = new file_data_t();
   MD5DEEP_ALLOC(TCHAR,s->full_name,PATH_MAX);
   MD5DEEP_ALLOC(TCHAR,s->short_name,PATH_MAX);
   MD5DEEP_ALLOC(TCHAR,s->msg,PATH_MAX);

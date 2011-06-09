@@ -219,20 +219,6 @@ static status_t add_file(state *s, file_data_t *f)
 }
 
 
-static int initialize_file_data(file_data_t *f)
-{
-  assert(f!=NULL);
-
-  f->next = NULL;
-  f->used = 0;
-
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
-    f->hash[i] = NULL;
-
-  return FALSE;
-}
-
-
 #ifdef _DEBUG
 static void display_file_data(state *s, file_data_t * t)
 {
@@ -306,12 +292,14 @@ status_t read_file(state *s, char *fn, FILE *handle)
     record_valid = TRUE;
     chop_line(buf);
 
-    file_data_t * t = (file_data_t *)malloc(sizeof(file_data_t));
+    file_data_t * t = new file_data_t(); // how does C++ new fail?
+#if 0
     if (NULL == t)
       fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
 		  __progname, fn, line_number);
+    //initialize_file_data(t);
+#endif
 
-    initialize_file_data(t);
 
     int done = FALSE;
     size_t pos = 0;

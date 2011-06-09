@@ -90,6 +90,7 @@ public:
     
     void open();			// opens the output file
     void close();			// writes the output to the file
+    void writexml(const std::string &xml); // writes formatted xml with indentation
     void tagout(const std::string &tag,const std::string &attribute);
     void xmlout(const std::string &tag,const std::string &value, const std::string &attribute,const bool escape_value);
     void xmlout(const std::string &tag,const std::string &value){ xmlout(tag,value,"",true); }

@@ -246,11 +246,27 @@ void XML::spaces()
     puts(sp);
 }
 
+void XML::writexml(const string &xml)
+{
+    bool first = true;
+    for(string::const_iterator it = xml.begin(); it!=xml.end(); it++){
+	if(first){
+	    spaces();
+	    first = false;
+	}
+	fputc(*it,out);
+	if((*it)=='\n'){
+	    first = true;
+	}
+    }
+}
+
 void XML::tagout(const string &tag,const string &attribute)
 {
     verify_tag(tag);
     fprintf(out,"<%s%s%s>",cstr(tag),attribute.size()>0 ? " " : "",cstr(attribute));
 }
+
 
 void XML::xmlout(const string &tag,const string &value,const string &attribute,bool escape_value)
 {

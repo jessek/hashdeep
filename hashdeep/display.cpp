@@ -90,26 +90,40 @@ static void display_banner(state *s)
 }
 
 
-void display_dfxml(state *s,int known_hash)
+static std::string itos(uint64_t i)
 {
-    s->dfxml->push("fileobject");
-    s->dfxml->xmlout("filename",s->current_file->file_name0);
+    char buf[256];
+    snprintf(buf,sizeof(buf),"%"PRIu64,i);
+    return string(buf);
+}
+
+static void compute_dfxml(state *s,int known_hash)
+{
+    if(s->mode & mode_piecewise){
+	uint64_t bytes = s->current_file->read_end - s->current_file->read_start;
+	s->current_file->dfxml_hash += string("<byte_run file_offset='") + itos(s->current_file->read_start)
+	    + string("' bytes='") + itos(bytes) + string("'>\n   ");
+    }
     for(int i=0;i<NUM_ALGORITHMS;i++){
 	if(s->hashes[i]->inuse){
-	    string attrib="type='";
+	    s->current_file->dfxml_hash += "<hashdigest type='";
 	    for(const char *cc=s->hashes[i]->name;*cc;cc++){
-		attrib.push_back(toupper(*cc)); // add it in uppercase
+		s->current_file->dfxml_hash.push_back(toupper(*cc)); // add it in uppercase
 	    }
-	    attrib.append("'");
-	    s->dfxml->xmlout("hashdigest",s->current_file->hash[i],attrib,0);
+	    s->current_file->dfxml_hash += string("'>") + s->current_file->hash[i] + string("</hashdigest>\n");
 	}
     }
     if(s->mode & mode_which || known_hash){
-	s->dfxml->xmlout("matched",known_hash);
+	s->current_file->dfxml_hash += string("<matched>1</matched>");
     }
-    s->dfxml->pop();			// file object
+    if(s->mode & mode_piecewise){
+	s->current_file->dfxml_hash += "</byte_run>\n";
+    }
 }
 
+/*
+ * Externally called to display a simple hash
+ */
 int display_hash_simple(state *s)
 {
     if ( s->dfxml==0 && s->banner_displayed==0){
@@ -118,7 +132,7 @@ int display_hash_simple(state *s)
     }
 
     if(s->dfxml){
-	display_dfxml(s,0);
+	compute_dfxml(s,0);
 	return FALSE;
     }
 
@@ -151,7 +165,7 @@ static int md5deep_display_match_result(state *s)
       (!known_hash && (s->mode & mode_match_neg)))
   {
       if(s->dfxml){
-	  display_dfxml(s,known_hash);
+	  compute_dfxml(s,known_hash);
 	  return FALSE;
       }
 
@@ -193,7 +207,7 @@ int md5deep_display_hash(state *s)
 {
     if (s->mode & mode_triage) {
 	if(s->dfxml){
-	    display_dfxml(s,1);
+	    compute_dfxml(s,1);
 	    return FALSE;
 	}
 	printf ("\t%s\t", s->md5deep_mode_hash_result);
@@ -209,7 +223,7 @@ int md5deep_display_hash(state *s)
     return md5deep_display_match_result(s);
 
   if(s->dfxml){
-      display_dfxml(s,0);
+      compute_dfxml(s,0);
       return FALSE;
   }
 

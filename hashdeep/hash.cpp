@@ -27,9 +27,6 @@ static void update_display(state *s, time_t elapsed)
 {
   uint64_t hour, min, seconds, mb_read;
 
-  if (NULL == s)
-    return;
-
   memset(s->msg,0,LINE_LENGTH);
 
   // If we've read less than one MB, then the computed value for mb_read 
@@ -276,6 +273,7 @@ static int md5deep_hash_triage(state *s)
 
 /**
  * This function is called to hash each file.
+ * Called by: hash_stdin and hash_file.
  */
 static int hash(state *s)
 {
@@ -323,8 +321,11 @@ static int hash(state *s)
     
     s->current_file->read_start = s->current_file->actual_bytes;
 
-    if (!compute_hash(s))
-    {
+    /**
+     * call compute_hash(), which computes the hash of the full file,
+     * or all of the piecewise hashes.
+     */
+    if (!compute_hash(s)) {
       if (s->mode & mode_piecewise)
 	free(s->full_name);
       return TRUE;
@@ -373,6 +374,19 @@ static int hash(state *s)
     s->full_name = tmp_name;
   }
   
+  /**
+   * If we are in dfxml mode, output the DFXML, which may optionally include
+   * all of the piecewise information.
+   */
+  if(s->dfxml){
+      s->dfxml->push("fileobject");
+      s->dfxml->xmlout("filename",s->full_name);
+      s->dfxml->writexml(s->current_file->dfxml_hash);
+      s->dfxml->pop();
+  }
+	
+
+
   return status;
 }
 
@@ -446,8 +460,7 @@ int hash_file(state *s, TCHAR *fn)
     }
 
 
-    if (s->mode & mode_estimate)
-    {
+    if (s->mode & mode_estimate)    {
       s->current_file->stat_megs = s->current_file->stat_bytes / ONE_MEGABYTE;
       shorten_filename(s->short_name,s->full_name);    
     }    

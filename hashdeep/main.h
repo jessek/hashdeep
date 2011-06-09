@@ -125,12 +125,20 @@ typedef enum
 /* This describes the file being hashed.*/
 class file_data_t {
 public:
+    file_data_t():file_size(0),file_name(0),used(0),
+		  stat_bytes(0),stat_megs(0),actual_bytes(0),
+		  read_start(0),read_end(0),bytes_read(0) {
+	for(int i=0;i<NUM_ALGORITHMS;i++){
+	    hash[i]=NULL;
+	}
+    }
     char                * hash[NUM_ALGORITHMS]; // the hex hashes
     uint64_t              file_size;
     TCHAR               * file_name;	// normally file name, but permuted for piecewise hashing
     TCHAR		* file_name0;	// real file name
     uint64_t              used;
     char known_fn[PATH_MAX+1];
+    std::string		dfxml_hash;	// the DFXML hash digest for the piece just hashed
 
   // How many bytes (and megs) we think are in the file, via stat(2)
   // and how many bytes we've actually read in the file
@@ -144,7 +152,7 @@ public:
   uint64_t        read_end;
   uint64_t        bytes_read;
 
-    class file_data_t * next;		// can be in a linked list, strangely...
+  class file_data_t * next;		// can be in a linked list, strangely...
 };
 
 
@@ -276,9 +284,9 @@ public:;
       match_partial, match_moved, match_unused, match_unknown, match_total;
 
     /* Legacy 'md5deep', 'sha1deep', etc. mode.  */
-    int	md5deep_mode;
+    bool	md5deep_mode;		// if true, then we were run as md5deep, sha1deep, etc.
     size_t md5deep_mode_hash_length;	// in bytes
-    char *md5deep_mode_hash_result;	// printable ASCII; md5deep_mode_hash_length*2+1 bytes long
+    char  *md5deep_mode_hash_result;	// printable ASCII; md5deep_mode_hash_length*2+1 bytes long
 
   /* output in DFXML */
     XML       *dfxml;
