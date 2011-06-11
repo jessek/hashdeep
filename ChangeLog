@@ -1,3 +1,10 @@
+2011-06-11 Jesse Kornblum
+
+	* display.cpp (display_size) Removed ten character limit on
+	  displayed sizes. We now display the full size regardless
+	  of mode.
+
+
 2011-06-07  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* hashdeep/files.cpp (hash_file_type): known_fn changed from char * to char[PATH_MAX+1]
