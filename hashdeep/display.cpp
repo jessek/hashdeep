@@ -16,7 +16,14 @@ static void display_size(state *s)
   if (NULL == s) 
     return;
 
-  printf ("%"PRIu64",", s->current_file->actual_bytes);
+  if (s->mode & mode_display_size)
+  {
+    // Under CSV mode we have to include a comma, otherwise two spaces
+    if (s->mode & mode_csv)
+      printf ("%"PRIu64",", s->current_file->actual_bytes);
+    else
+      printf ("%"PRIu64"  ", s->current_file->actual_bytes);   
+  }
 }
 
 
