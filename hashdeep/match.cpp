@@ -112,8 +112,9 @@ identify_file(state *s, char *fn, FILE *handle)
 {
   hashname_t current_order[NUM_ALGORITHMS];
  
-  if (NULL == s || NULL == fn || NULL == handle)
-    internal_error("%s: NULL values in identify_file", __progname);
+  assert(s!=0);
+  assert(fn!=0);
+  assert(handle!=0);
 
   char * buf = (char *)malloc(MAX_STRING_LENGTH);
   if (NULL == buf)
@@ -270,8 +271,9 @@ status_t read_file(state *s, char *fn, FILE *handle)
   // of header we've already read
   uint64_t line_number = 2;
 
-  if (NULL == s || NULL == fn || NULL == handle)
-    return status_unknown_error;
+  assert(s!=0);
+  assert(fn!=0);
+  assert(handle!=0);
 
   line = (char *)malloc(sizeof(char) * MAX_STRING_LENGTH);
   if (NULL == line)
@@ -401,22 +403,19 @@ status_t read_file(state *s, char *fn, FILE *handle)
 status_t load_match_file(state *s, char *fn)
 {
   status_t status = status_ok;
-  FILE * handle;
   filetype_t type;
 
-  if (NULL == s || NULL == fn)
-    return status_unknown_error;
+  assert(s!=0);
+  assert(fn!=0);
 
-  handle = fopen(fn,"rb");
-  if (NULL == handle)
-  {
+  FILE *handle = fopen(fn,"rb");
+  if (NULL == handle) {
     print_error(s,"%s: %s: %s", __progname, fn, strerror(errno));
     return status_file_error;
   }
   
   type = identify_file(s,fn,handle);
-  if (file_unknown == type)
-  {
+  if (file_unknown == type)  {
     print_error(s,"%s: %s: Unable to identify file format", __progname, fn);
     fclose(handle);
     return status_unknown_filetype;

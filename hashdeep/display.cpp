@@ -232,7 +232,7 @@ int md5deep_display_hash(state *s)
   else
   {
     if ((s->mode & mode_piecewise) ||
-	!(s->is_stdin))
+	!(s->current_file->is_stdin))
     {
       if (s->mode & mode_timestamp)
       {

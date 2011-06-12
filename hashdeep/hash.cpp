@@ -162,8 +162,8 @@ static int compute_hash(state *s)
   remaining = s->block_size;
 
   // We get weird results calling ftell on stdin!
-  if (!(s->is_stdin))
-    s->current_file->read_start = ftello(s->handle);
+  if (!(s->current_file->is_stdin))
+    s->current_file->read_start = ftello(s->current_file->handle);
   s->current_file->read_end   = s->current_file->read_start;
   s->current_file->bytes_read = 0;
 
@@ -174,20 +174,20 @@ static int compute_hash(state *s)
 
     this_start = s->current_file->read_end;
 
-    current_read = fread(buffer, 1, mysize, s->handle);
+    current_read = fread(buffer, 1, mysize, s->current_file->handle);
     
     s->current_file->actual_bytes += current_read;
     s->current_file->read_end     += current_read;
     s->current_file->bytes_read   += current_read;
       
     // If an error occured, display a message but still add this block 
-    if (ferror(s->handle))
+    if (ferror(s->current_file->handle))
     {
       if ( ! (s->mode & mode_silent))
 	print_error_unicode(s,
 			    s->full_name,
 			    "error at offset %"PRIu64": %s",
-			    ftello(s->handle),
+			    ftello(s->current_file->handle),
 			    strerror(errno));
 	   
       if (file_fatal_error())
@@ -195,11 +195,11 @@ static int compute_hash(state *s)
       
       multihash_update(s,buffer,current_read);
       
-      clearerr(s->handle);
+      clearerr(s->current_file->handle);
       
       // The file pointer's position is now undefined. We have to manually
       // advance it to the start of the next buffer to read. 
-      fseeko(s->handle,SEEK_SET,this_start + mysize);
+      fseeko(s->current_file->handle,SEEK_SET,this_start + mysize);
     } 
     else
     {
@@ -209,7 +209,7 @@ static int compute_hash(state *s)
     }
     
     // Check if we've hit the end of the file 
-    if (feof(s->handle))
+    if (feof(s->current_file->handle))
     {	
       // If we've been printing time estimates, we now need to clear the line.
       if (s->mode & mode_estimate)
@@ -280,7 +280,6 @@ static int hash(state *s)
   int done = FALSE, status = FALSE;
   TCHAR *tmp_name = NULL;		// used to change file_name for piecewise hashing
   
-  s->current_file->file_name0 = s->full_name;
   s->current_file->actual_bytes = 0;
 
   if (s->mode & mode_estimate)  {
@@ -296,7 +295,7 @@ static int hash(state *s)
     // Rather than muck about with updating the state of the input
     // file, just reset everything and process it normally.
     s->current_file->actual_bytes = 0;
-    fseeko(s->handle, 0, SEEK_SET);
+    fseeko(s->current_file->handle, 0, SEEK_SET);
   }
   
   if ( s->mode & mode_piecewise )
@@ -363,7 +362,7 @@ static int hash(state *s)
     
 
     if (s->mode & mode_piecewise)
-	done = feof(s->handle);
+	done = feof(s->current_file->handle);
     else
 	done = TRUE;
   }
@@ -384,9 +383,6 @@ static int hash(state *s)
       s->dfxml->writexml(s->current_file->dfxml_hash);
       s->dfxml->pop();
   }
-	
-
-
   return status;
 }
 
@@ -422,7 +418,7 @@ int hash_file(state *s, TCHAR *fn)
   if (NULL == s || NULL == fn)
     return TRUE;
 
-  s->is_stdin = FALSE;
+  s->current_file->is_stdin = FALSE;
 
   if (s->mode & mode_barename)
   {
@@ -432,13 +428,13 @@ int hash_file(state *s, TCHAR *fn)
   else
     s->full_name = fn;
 
-  if ((s->handle = _tfopen(fn,_TEXT("rb"))) != NULL)
+  if ((s->current_file->handle = _tfopen(fn,_TEXT("rb"))) != NULL)
   {
     // We should have the file size already from the stat functions
     // called during digging. If for some reason that failed, we'll
     // try some ioctl calls now to get the full size.
     if (UNKNOWN_FILE_SIZE == s->current_file->stat_bytes)
-      s->current_file->stat_bytes = find_file_size(s->handle);
+      s->current_file->stat_bytes = find_file_size(s->current_file->handle);
 
     // If this file is above the size threshold set by the user, skip it
     if ((s->mode & mode_size) && (s->current_file->stat_bytes > s->size_threshold))
@@ -455,7 +451,7 @@ int hash_file(state *s, TCHAR *fn)
 	display_hash(s);
       }
 
-      fclose(s->handle);
+      fclose(s->current_file->handle);
       return STATUS_OK;
     }
 
@@ -467,7 +463,7 @@ int hash_file(state *s, TCHAR *fn)
 
     status = hash(s);
 
-    fclose(s->handle);
+    fclose(s->current_file->handle);
   }
   else
   {
@@ -485,8 +481,8 @@ int hash_stdin(state *s)
     return TRUE;
 
   _tcsncpy(s->full_name,_TEXT("stdin"),PATH_MAX);
-  s->is_stdin  = TRUE;
-  s->handle    = stdin;
+  s->current_file->is_stdin  = TRUE;
+  s->current_file->handle    = stdin;
 
   if (s->mode & mode_estimate) {
     s->short_name = s->full_name;

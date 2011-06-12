@@ -122,20 +122,22 @@ typedef enum
 #define HASHDEEP_HEADER_10  "%%%% HASHDEEP-1.0"
 
 
-/* This describes the file being hashed.*/
+/** This class describes the file being hashed.
+ */
 class file_data_t {
 public:
-    file_data_t():file_size(0),file_name(0),used(0),
+    file_data_t():handle(0),is_stdin(0),file_size(0),file_name(0),used(0),
 		  stat_bytes(0),stat_megs(0),actual_bytes(0),
 		  read_start(0),read_end(0),bytes_read(0) {
 	for(int i=0;i<NUM_ALGORITHMS;i++){
 	    hash[i]=NULL;
 	}
     }
+    FILE          * handle;
+    int             is_stdin;
     char                * hash[NUM_ALGORITHMS]; // the hex hashes
     uint64_t              file_size;
     TCHAR               * file_name;	// normally file name, but permuted for piecewise hashing
-    TCHAR		* file_name0;	// real file name
     uint64_t              used;
     char known_fn[PATH_MAX+1];
     std::string		dfxml_hash;	// the DFXML hash digest for the piece just hashed
@@ -171,6 +173,7 @@ public:
 typedef struct _hash_table_t {
   hashtable_entry_t * member[HASH_TABLE_SIZE];
 } hashtable_t;
+
 
 
 /* This structure defines what's known about a hash algorithm */
@@ -228,8 +231,6 @@ public:;
 
   /* The file currently being hashed */
   file_data_t   * current_file;
-  int             is_stdin;
-  FILE          * handle;
   unsigned char * buffer;
 
 #ifdef _WIN32
@@ -241,9 +242,6 @@ public:;
   // Lists of known hashes 
   hashTable     known_hashes;
   uint32_t      expected_hashes;
-
-  // The type of file, as report by stat
-  uint8_t       input_type;
 
   // When only hashing files larger/smaller than a given threshold
   uint64_t        size_threshold;

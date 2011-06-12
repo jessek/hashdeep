@@ -37,10 +37,7 @@ __BEGIN_DECLS
 #define _sstat         _tstat64
 #define _tstat_t       struct __stat64
 
-
-
 #else  // ifdef _WIN32
-
 
 #define  PRINTF_S   "s"
 
