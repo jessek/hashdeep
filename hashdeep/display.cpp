@@ -22,7 +22,7 @@ static void display_size(state *s)
     if (s->mode & mode_csv)
       printf ("%"PRIu64",", s->current_file->actual_bytes);
     else
-      printf ("%"PRIu64"  ", s->current_file->actual_bytes);   
+      printf ("%10"PRIu64"  ", s->current_file->actual_bytes);   
   }
 }
 
@@ -180,17 +180,17 @@ static int md5deep_display_match_result(state *s)
     {
       if (known_hash && (s->mode & mode_match))
       {
-	display_filename(stdout,s->full_name);
+	display_filename(stdout,s->current_file->full_name);
 	printf (" matched %s", s->current_file->known_fn);
       }
       else
       {
-	display_filename(stdout,s->full_name);
+	display_filename(stdout,s->current_file->full_name);
 	printf (" does NOT match");
       }
     }
     else
-      display_filename(stdout,s->full_name);
+      display_filename(stdout,s->current_file->full_name);
 
     make_newline(s);
   }
@@ -207,7 +207,7 @@ int md5deep_display_hash(state *s)
 	    return FALSE;
 	}
 	printf ("\t%s\t", s->md5deep_mode_hash_result);
-	display_filename(stdout,s->full_name);
+	display_filename(stdout,s->current_file->full_name);
 	make_newline(s);
 	return FALSE;
     }
@@ -236,7 +236,7 @@ int md5deep_display_hash(state *s)
     {
       if (s->mode & mode_timestamp)
       {
-	struct tm * my_time = _gmtime64(&(s->timestamp));
+	struct tm * my_time = _gmtime64(&(s->current_file->timestamp));
 	char time_str[MAX_TIME_STRING_LENGTH];
 
 	// The format is four digit year, two digit month, 
@@ -252,7 +252,7 @@ int md5deep_display_hash(state *s)
       else
 	printf(" %c", display_asterisk(s));      
 
-      display_filename(stdout,s->full_name);
+      display_filename(stdout,s->current_file->full_name);
     }
   }
 

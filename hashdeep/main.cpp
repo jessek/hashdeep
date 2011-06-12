@@ -390,15 +390,19 @@ static int process_command_line(state *s, int argc, char **argv)
 }
 
 
+/* This is now the only place MD5DEEP_ALLOC is used */
+#define MD5DEEP_ALLOC(TYPE,VAR,SIZE)     \
+VAR = (TYPE *)malloc(sizeof(TYPE) * SIZE);  \
+if (NULL == VAR)  \
+   return STATUS_INTERNAL_ERROR; \
+memset(VAR,0,SIZE * sizeof(TYPE));
+
 static int initialize_state(state *s) 
 {
   if (setup_hashing_algorithms(s)) return TRUE;
 
   s->current_file = new file_data_t();
-  MD5DEEP_ALLOC(TCHAR,s->full_name,PATH_MAX);
-  MD5DEEP_ALLOC(TCHAR,s->short_name,PATH_MAX);
-  MD5DEEP_ALLOC(TCHAR,s->msg,PATH_MAX);
-  MD5DEEP_ALLOC(unsigned char,s->buffer,MD5DEEP_IDEAL_BLOCK_SIZE);
+  MD5DEEP_ALLOC(TCHAR,s->current_file->full_name,PATH_MAX);
 
   s->known            = NULL;
   s->last             = NULL;
@@ -527,9 +531,9 @@ int main(int argc, char **argv)
   s->argv = argv;
 #endif
 
-  MD5DEEP_ALLOC(TCHAR,s->cwd,PATH_MAX);
-  s->cwd = _tgetcwd(s->cwd,PATH_MAX);
-  if (NULL == s->cwd){
+  memset(s->cwd,0,sizeof(s->cwd));	// zero this out
+  _tgetcwd(s->cwd,sizeof(s->cwd));	// try to get the cwd
+  if (s->cwd[0]==0){			// verify that we got it.
       fatal_error(s,"%s: %s", __progname, strerror(errno));
   }
 
@@ -696,7 +700,6 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
 
     case 't':
       s->mode |= mode_timestamp;
-      //MD5DEEP_ALLOC(char,s->time_str,MAX_TIME_STRING_LENGTH);
       break;
     case 'n': 
       s->mode |= mode_not_matched; 

@@ -43,21 +43,20 @@ void init_table(void)
 
 static int parse_encase_file(state *s, char *fn, FILE *handle)
 {
-  unsigned char *buffer;
-  char *result;
+  unsigned char buffer[64];
+  char result[1024];			// must be at least s->hash_length*2
   uint32_t count = 0;
   
-  if (NULL == s || NULL == fn || NULL == handle)
-    return STATUS_INTERNAL_ERROR;
-  
+  assert(s!=0);
+  assert(fn!=0);
+  assert(handle!=0);
+  assert(sizeof(result) >= s->hash_length*2 + 1);
+
   // Each hash entry is 18 bytes. 16 bytes for the hash and 
   // two \0 characters at the end. We reserve 19 characters 
   // as fread will append an extra \0 to the string 
-  MD5DEEP_ALLOC(unsigned char,buffer,19);
-  MD5DEEP_ALLOC(char,result,(s->hash_length * 2) + 1);
 
-  if (fseeko(handle,ENCASE_START_HASHES,SEEK_SET))
-  {
+  if (fseeko(handle,ENCASE_START_HASHES,SEEK_SET))  {
     print_error(s,"%s: Unable to seek to start of hashes", fn);
     return STATUS_USER_ERROR;
   }
@@ -74,15 +73,13 @@ static int parse_encase_file(state *s, char *fn, FILE *handle)
       {
 	print_error(s,"%s: No hash found in line %"PRIu32, fn, count + 1);
 	print_error(s,"%s: %s", fn, strerror(errno));
-	free(buffer);
-	free(result);
 	return STATUS_USER_ERROR;
       }
     }
 
     ++count;        
                 
-    snprintf(result,(s->hash_length * 2) + 1,
+    snprintf(result,sizeof(result),
 	 "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
 	     buffer[0],
 	     buffer[1],                      
@@ -101,17 +98,13 @@ static int parse_encase_file(state *s, char *fn, FILE *handle)
 	     buffer[14],                     
 	     buffer[15]);
 
-    if (hashTableAdd(s,&knownHashes,result,fn))
-    {
+    if (hashTableAdd(s,&knownHashes,result,fn))    {
       print_error(s,"%s: %s: Out of memory at line %" PRIu32,
 		  __progname, fn, count);
       return STATUS_INTERNAL_ERROR;
     }
   }
 
-  free(buffer);
-  free(result);
-  
   if (s->expected_hashes != count)
     print_error(s,
 		"%s: Expecting %"PRIu32" hashes, found %"PRIu32"\n", 

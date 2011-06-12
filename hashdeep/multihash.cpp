@@ -21,12 +21,11 @@ void multihash_update(state *s, unsigned char *buf, uint64_t len)
   // We have to copy the data being hashed from the buffer we were
   // passed into another structure because the SHA-1 update 
   // routine modifies it.
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
-  {
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
     if (s->hashes[i]->inuse)
     {
-      memcpy(s->buffer,buf,len);
-      s->hashes[i]->f_update(s->hashes[i]->hash_context,s->buffer,len);
+      memcpy(s->current_file->buffer,buf,len);
+      s->hashes[i]->f_update(s->hashes[i]->hash_context,s->current_file->buffer,len);
     }
   }
 }
@@ -61,7 +60,7 @@ void multihash_finalize(state *s)
 	}
     }
 
-    s->current_file->file_name = s->full_name;
+    s->current_file->file_name = s->current_file->full_name;
 
     if (s->mode & mode_piecewise)
 	s->current_file->file_size = s->current_file->bytes_read;

@@ -27,7 +27,7 @@ static void update_display(state *s, time_t elapsed)
 {
   uint64_t hour, min, seconds, mb_read;
 
-  memset(s->msg,0,LINE_LENGTH);
+  memset(s->current_file->msg,0,sizeof(s->current_file->msg));
 
   // If we've read less than one MB, then the computed value for mb_read 
   // will be zero. Later on we may need to divide the total file size, 
@@ -38,10 +38,10 @@ static void update_display(state *s, time_t elapsed)
     mb_read = s->current_file->actual_bytes / ONE_MEGABYTE;
   
   if (s->current_file->stat_megs==0)  {
-    _sntprintf(s->msg,
-	       LINE_LENGTH-1,
+    _sntprintf(s->current_file->msg,
+	       sizeof(s->current_file->msg)-1,
 	       _TEXT("%s: %"PRIu64"MB done. Unable to estimate remaining time.%s"),
-	       s->short_name,
+	       s->current_file->short_name,
 	       mb_read,
 	       _TEXT(BLANK_LINE));
   }
@@ -66,9 +66,9 @@ static void update_display(state *s, time_t elapsed)
     min = seconds/60;
     seconds -= min * 60;
 
-    _sntprintf(s->msg,LINE_LENGTH-1,
+    _sntprintf(s->current_file->msg,sizeof(s->current_file->msg)-1,
 	       _TEXT("%s: %"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s"),
-	       s->short_name,
+	       s->current_file->short_name,
 	       mb_read,
 	       s->current_file->stat_megs,
 	       hour,
@@ -78,7 +78,7 @@ static void update_display(state *s, time_t elapsed)
   }
 
   fprintf(stderr,"\r");
-  display_filename(stderr,s->msg);
+  display_filename(stderr,s->current_file->msg);
 }
 
 
@@ -185,7 +185,7 @@ static int compute_hash(state *s)
     {
       if ( ! (s->mode & mode_silent))
 	print_error_unicode(s,
-			    s->full_name,
+			    s->current_file->full_name,
 			    "error at offset %"PRIu64": %s",
 			    ftello(s->current_file->handle),
 			    strerror(errno));
@@ -258,7 +258,7 @@ static int md5deep_hash_triage(state *s)
     
   if (!compute_hash(s))  {
     if (s->mode & mode_piecewise)
-      free(s->full_name);
+      free(s->current_file->full_name);
     return TRUE;
   }
 
@@ -303,9 +303,9 @@ static int hash(state *s)
     s->block_size = s->piecewise_size;
     
     // We copy out the original file name and saved it in tmp_name
-    tmp_name = s->full_name;
-    s->full_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
-    if (NULL == s->full_name)
+    tmp_name = s->current_file->full_name;
+    s->current_file->full_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
+    if (NULL == s->current_file->full_name)
     {
       return TRUE;
     }
@@ -326,7 +326,7 @@ static int hash(state *s)
      */
     if (!compute_hash(s)) {
       if (s->mode & mode_piecewise)
-	free(s->full_name);
+	free(s->current_file->full_name);
       return TRUE;
     }
 
@@ -341,7 +341,7 @@ static int hash(state *s)
 	uint64_t tmp_end = 0;
 	if (s->current_file->read_end != 0)
 	  tmp_end = s->current_file->read_end - 1;
-	_sntprintf(s->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
+	_sntprintf(s->current_file->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
 		   tmp_name, s->current_file->read_start, tmp_end);
       }
       
@@ -369,8 +369,8 @@ static int hash(state *s)
 
   if (s->mode & mode_piecewise)
   {
-    free(s->full_name);
-    s->full_name = tmp_name;
+    free(s->current_file->full_name);
+    s->current_file->full_name = tmp_name;
   }
   
   /**
@@ -379,7 +379,7 @@ static int hash(state *s)
    */
   if(s->dfxml){
       s->dfxml->push("fileobject");
-      s->dfxml->xmlout("filename",s->full_name);
+      s->dfxml->xmlout("filename",s->current_file->full_name);
       s->dfxml->writexml(s->current_file->dfxml_hash);
       s->dfxml->pop();
   }
@@ -406,7 +406,7 @@ static int setup_barename(state *s, TCHAR *fn)
     return TRUE;
   }
 
-  s->full_name = basen;
+  s->current_file->full_name = basen;
   return FALSE;
 }
 
@@ -426,7 +426,7 @@ int hash_file(state *s, TCHAR *fn)
       return TRUE;
   }
   else
-    s->full_name = fn;
+    s->current_file->full_name = fn;
 
   if ((s->current_file->handle = _tfopen(fn,_TEXT("rb"))) != NULL)
   {
@@ -458,7 +458,7 @@ int hash_file(state *s, TCHAR *fn)
 
     if (s->mode & mode_estimate)    {
       s->current_file->stat_megs = s->current_file->stat_bytes / ONE_MEGABYTE;
-      shorten_filename(s->short_name,s->full_name);    
+      shorten_filename(s->current_file->short_name,s->current_file->full_name);    
     }    
 
     status = hash(s);
@@ -480,13 +480,13 @@ int hash_stdin(state *s)
   if (NULL == s)
     return TRUE;
 
-  _tcsncpy(s->full_name,_TEXT("stdin"),PATH_MAX);
+  _tcsncpy(s->current_file->full_name,_TEXT("stdin"),PATH_MAX);
   s->current_file->is_stdin  = TRUE;
   s->current_file->handle    = stdin;
 
   if (s->mode & mode_estimate) {
-    s->short_name = s->full_name;
-    s->current_file->stat_megs = 0;
+      _tcsncpy(s->current_file->short_name,s->current_file->full_name,sizeof(s->current_file->short_name));
+      s->current_file->stat_megs = 0;
   }
 
   return (hash(s));

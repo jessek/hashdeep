@@ -485,7 +485,7 @@ static int file_type(state *s, TCHAR *fn)
 
   // On Win32 this should be the creation time, but on all other systems
   // it will be the change time.
-  s->timestamp = sb.st_ctime; 
+  s->current_file->timestamp = sb.st_ctime; 
 
   return file_type_helper(sb);
 }
@@ -598,7 +598,7 @@ static int should_hash(state *s, TCHAR *fn)
   // We must reset the number of bytes in each file processed
   // so that we can tell if fstat reads the number successfully
   s->current_file->stat_bytes = UNKNOWN_FILE_SIZE;
-  s->timestamp   = 0;
+  s->current_file->timestamp   = 0;
 
   type = file_type(s,fn);
   
@@ -649,7 +649,7 @@ int process_normal(state *s, TCHAR *fn)
 int process_win32(state *s, TCHAR *fn)
 {
   int rc, status = STATUS_OK;
-  TCHAR *asterisk, *question, *tmp, *dirname, *new_fn;
+  TCHAR *asterisk, *question;
   WIN32_FIND_DATA FindFileData;
   HANDLE hFind;
 
@@ -675,10 +675,10 @@ int process_win32(state *s, TCHAR *fn)
 #define FATAL_ERROR_UNK(A) if (NULL == A) fatal_error(s,"%s: %s", __progname, strerror(errno));
 #define FATAL_ERROR_MEM(A) if (NULL == A) fatal_error(s,"%s: Out of memory", __progname);
   
-  MD5DEEP_ALLOC(TCHAR,new_fn,PATH_MAX);
+  TCHAR new_fn[PATH_MAX];
+  TCHAR dirname[PATH_MAX];
   
-  dirname = _tcsdup(fn);
-  FATAL_ERROR_MEM(dirname);
+  _tcsncpy(dirname,fn,sizeof(dirname);
   
   my_dirname(dirname);
   
@@ -698,15 +698,14 @@ int process_win32(state *s, TCHAR *fn)
       
       if (s->mode & mode_relative)
       {
-	_sntprintf(new_fn,PATH_MAX,
-		   _TEXT("%s%s"), dirname, FindFileData.cFileName);
+	  _sntprintf(new_fn,sizeof(new_fn),
+		     _TEXT("%s%s"), dirname, FindFileData.cFileName);
       }
       else
       {	  
-	MD5DEEP_ALLOC(TCHAR,tmp,PATH_MAX);
-	_sntprintf(tmp,PATH_MAX,_TEXT("%s%s"),dirname,FindFileData.cFileName);
+	  TCHAR tmp[PATH_MAX];
+	  _sntprintf(tmp,sizeof(tmp),_TEXT("%s%s"),dirname,FindFileData.cFileName);
 	_wfullpath(new_fn,tmp,PATH_MAX);
-	free(tmp);
       }
       
       if (!(is_junction_point(s,new_fn)))
@@ -725,8 +724,6 @@ int process_win32(state *s, TCHAR *fn)
     // acknowledge that an unknown error occured and hope we
     // can continue.
     print_error_unicode(s,fn,"Unknown error while expanding wildcard");
-    free(dirname);
-    free(new_fn);
     return STATUS_OK;
   }
   
@@ -737,10 +734,6 @@ int process_win32(state *s, TCHAR *fn)
 			fn,
 			"Unknown error while cleaning up wildcard expansion");
   }
-
-  free(dirname);
-  free(new_fn);
-
   return status;
 }
 #endif

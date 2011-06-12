@@ -225,11 +225,6 @@ __END_DECLS
 
 #endif   /* ifndef _WIN32,#else */
 
-#define MD5DEEP_ALLOC(TYPE,VAR,SIZE)     \
-VAR = (TYPE *)malloc(sizeof(TYPE) * SIZE);  \
-if (NULL == VAR)  \
-   return STATUS_INTERNAL_ERROR; \
-memset(VAR,0,SIZE * sizeof(TYPE));
 
 
 // Return values for the program 

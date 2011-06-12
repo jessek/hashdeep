@@ -133,14 +133,26 @@ public:
 	    hash[i]=NULL;
 	}
     }
-    FILE          * handle;
-    int             is_stdin;
-    char                * hash[NUM_ALGORITHMS]; // the hex hashes
-    uint64_t              file_size;
-    TCHAR               * file_name;	// normally file name, but permuted for piecewise hashing
-    uint64_t              used;
+
+  /* We don't want to use s->full_name, but it's required for hash.c */
+  TCHAR         * full_name;
+  TCHAR         short_name[PATH_MAX];
+  TCHAR         msg[LINE_LENGTH+1];
+
+    FILE         * handle;
+    int           is_stdin;
+    unsigned char buffer[MD5DEEP_IDEAL_BLOCK_SIZE]; // next buffer to hash
+    char         * hash[NUM_ALGORITHMS]; // the hex hashes
+    uint64_t       file_size;
+    TCHAR        * file_name;	// normally file name, but permuted for piecewise hashing
+    uint64_t       used;
     char known_fn[PATH_MAX+1];
-    std::string		dfxml_hash;	// the DFXML hash digest for the piece just hashed
+    std::string	   dfxml_hash;	// the DFXML hash digest for the piece just hashed
+#ifdef _WIN32
+  __time64_t    timestamp;
+#else
+  time_t        timestamp;
+#endif
 
   // How many bytes (and megs) we think are in the file, via stat(2)
   // and how many bytes we've actually read in the file
@@ -227,17 +239,10 @@ public:;
   TCHAR        ** argv;
   int             argc;
   char          * input_list;
-  TCHAR         * cwd;
+  TCHAR           cwd[PATH_MAX+1];
 
   /* The file currently being hashed */
   file_data_t   * current_file;
-  unsigned char * buffer;
-
-#ifdef _WIN32
-  __time64_t    timestamp;
-#else
-  time_t        timestamp;
-#endif
 
   // Lists of known hashes 
   hashTable     known_hashes;
@@ -246,16 +251,11 @@ public:;
   // When only hashing files larger/smaller than a given threshold
   uint64_t        size_threshold;
 
-  /* We don't want to use s->full_name, but it's required for hash.c */
-  TCHAR         * full_name;
-  TCHAR         * short_name;
-  TCHAR         * msg;
-
   /* The set of known values */
   int             hashes_loaded;
   algorithm_t   * hashes[NUM_ALGORITHMS];
   uint8_t         expected_columns;
-    file_data_t * known;
+  file_data_t * known;
   file_data_t   * last;
   uint64_t        hash_round;
   hashname_t      hash_order[NUM_ALGORITHMS];

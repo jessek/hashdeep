@@ -1,3 +1,16 @@
+2011-06-12  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/main.cpp (main): s->cwd is now pre-allocated
+
+	* hashdeep/main.h (class file_data_t): timestamp moved to current_file
+
+	* hashdeep/multihash.cpp (multihash_update): moved *buffer from dynamic allocation to allocated withn the current_file.
+
+	* hashdeep/hash.cpp (hash_stdin): moved full_name,short_name and msg into current_file
+
+	* hashdeep/md5deep_match.cpp (parse_encase_file): increased buffer[] from 19 bytes to 64; why be stingy? It's no longer dynamically allocated.
+	(parse_encase_file): increased result from dynamically allocated at s->hash_length*2 to 1024.
+
 2011-06-11 Jesse Kornblum
 
 	* display.cpp (display_size) Removed ten character limit on
