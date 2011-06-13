@@ -391,19 +391,11 @@ static int process_command_line(state *s, int argc, char **argv)
 
 
 /* This is now the only place MD5DEEP_ALLOC is used */
-#define MD5DEEP_ALLOC(TYPE,VAR,SIZE)     \
-VAR = (TYPE *)malloc(sizeof(TYPE) * SIZE);  \
-if (NULL == VAR)  \
-   return STATUS_INTERNAL_ERROR; \
-memset(VAR,0,SIZE * sizeof(TYPE));
-
 static int initialize_state(state *s) 
 {
   if (setup_hashing_algorithms(s)) return TRUE;
 
-  s->current_file = new file_data_t();
-  MD5DEEP_ALLOC(TCHAR,s->current_file->full_name,PATH_MAX);
-
+  s->current_file = new file_data_t(s);
   s->known            = NULL;
   s->last             = NULL;
   s->piecewise_size   = 0;

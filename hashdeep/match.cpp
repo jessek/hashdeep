@@ -2,6 +2,7 @@
 // $Id$
 
 #include "main.h"
+#include <new>
 
 static int match_valid_hash(state *s, hashname_t a, char *buf)
 {
@@ -279,8 +280,7 @@ status_t read_file(state *s, char *fn, FILE *handle)
   if (NULL == line)
     fatal_error(s,"%s: Out of memory while trying to read %s", __progname,fn);
 
-  while (fgets(line,MAX_STRING_LENGTH,handle))
-  {
+  while (fgets(line,MAX_STRING_LENGTH,handle)) {
     line_number++;
 
     // Lines starting with a pound sign are comments and can be ignored
@@ -294,14 +294,14 @@ status_t read_file(state *s, char *fn, FILE *handle)
     record_valid = TRUE;
     chop_line(buf);
 
-    file_data_t * t = new file_data_t(); // how does C++ new fail?
-#if 0
-    if (NULL == t)
+    // C++ typically fails with a bad_alloc, but you can make it return null
+    // http://www.cplusplus.com/reference/std/new/bad_alloc/
+    // http://www.cplusplus.com/reference/std/new/nothrow/
+    file_data_t * t = new (std::nothrow) file_data_t(s); // C++ new fails with a bad_a
+    if (NULL == t){
       fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
 		  __progname, fn, line_number);
-    //initialize_file_data(t);
-#endif
-
+    }
 
     int done = FALSE;
     size_t pos = 0;

@@ -89,8 +89,7 @@ typedef enum
    
 
 /* Return codes */
-typedef enum 
-  {
+typedef enum   {
     status_ok = 0,
 
     /* Matching hashes */
@@ -112,7 +111,7 @@ typedef enum
     status_unknown_error,
     status_omg_ponies
 
-  } status_t;
+} status_t;
 
 
 /* These describe the version of the file format being used, not
@@ -126,18 +125,21 @@ typedef enum
  */
 class file_data_t {
 public:
-    file_data_t():handle(0),is_stdin(0),file_size(0),file_name(0),used(0),
+    file_data_t(class state *s_):s(s_),handle(0),is_stdin(0),file_size(0),file_name(0),used(0),
 		  stat_bytes(0),stat_megs(0),actual_bytes(0),
 		  read_start(0),read_end(0),bytes_read(0) {
 	for(int i=0;i<NUM_ALGORITHMS;i++){
 	    hash[i]=NULL;
 	}
+	full_name = (TCHAR *)calloc(sizeof(TCHAR),PATH_MAX);
     }
 
+    class state *s;			// backpointer to my state
+
   /* We don't want to use s->full_name, but it's required for hash.c */
-  TCHAR         * full_name;
-  TCHAR         short_name[PATH_MAX];
-  TCHAR         msg[LINE_LENGTH+1];
+    TCHAR         * full_name;
+    TCHAR         short_name[PATH_MAX];
+    TCHAR         msg[LINE_LENGTH+1];
 
     FILE         * handle;
     int           is_stdin;
@@ -149,24 +151,24 @@ public:
     char known_fn[PATH_MAX+1];
     std::string	   dfxml_hash;	// the DFXML hash digest for the piece just hashed
 #ifdef _WIN32
-  __time64_t    timestamp;
+    __time64_t    timestamp;
 #else
-  time_t        timestamp;
+    time_t        timestamp;
 #endif
 
-  // How many bytes (and megs) we think are in the file, via stat(2)
-  // and how many bytes we've actually read in the file
-  uint64_t        stat_bytes;
-  uint64_t        stat_megs;
-  uint64_t        actual_bytes;
+    // How many bytes (and megs) we think are in the file, via stat(2)
+    // and how many bytes we've actually read in the file
+    uint64_t        stat_bytes;
+    uint64_t        stat_megs;
+    uint64_t        actual_bytes;
 
-  // Where the last read operation started and ended
-  // bytes_read is a shorthand for read_end - read_start
-  uint64_t        read_start;
-  uint64_t        read_end;
-  uint64_t        bytes_read;
-
-  class file_data_t * next;		// can be in a linked list, strangely...
+    // Where the last read operation started and ended
+    // bytes_read is a shorthand for read_end - read_start
+    uint64_t        read_start;
+    uint64_t        read_end;
+    uint64_t        bytes_read;
+    
+    class file_data_t * next;		// can be in a linked list, strangely...
 };
 
 

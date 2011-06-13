@@ -13,7 +13,6 @@
 // 2011 JUN 1 - SLG - Removed #ifdef MD5DEEP, since we now have a single binary for both MD5DEEP and HASHDEEP
 
 
-
 // Code for hashdeep 
 #include "main.h"
 
@@ -477,9 +476,6 @@ int hash_file(state *s, TCHAR *fn)
 
 int hash_stdin(state *s)
 {
-  if (NULL == s)
-    return TRUE;
-
   _tcsncpy(s->current_file->full_name,_TEXT("stdin"),PATH_MAX);
   s->current_file->is_stdin  = TRUE;
   s->current_file->handle    = stdin;

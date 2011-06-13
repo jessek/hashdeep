@@ -49,6 +49,7 @@ do
    esac
    if [ $mode = "generate" ]
    then
+     echo ""
      cp /tmp/test$i.out test$i.out
    fi
    if [ $mode = "test" ]
