@@ -16,22 +16,21 @@ void setup_audit(state *s)
 
 int audit_status(state *s)
 {
-  file_data_t * tmp = s->known;
+  file_data_t *tmp_fdt = s->known;
 
   s->match_unused = 0;
 
-  while (tmp != NULL)
+  while (tmp_fdt != NULL)
   {
-    if (0 == tmp->used)
+    if (0 == tmp_fdt->used)
     {
       s->match_unused++;
-      if (s->mode & mode_more_verbose)
-      {
-	display_filename(stdout,tmp->file_name);
+      if (s->mode & mode_more_verbose) {
+	display_filename(stdout,tmp_fdt);
 	print_status(": Known file not used");
       }
     }
-    tmp = tmp->next;
+    tmp_fdt = tmp_fdt->next;
   }
     
   return (0 == s->match_unused  && 
@@ -117,7 +116,7 @@ int audit_update(state *s)
 	    // This shouldn't happen 
 	  case status_no_match:
 	    no_match = TRUE;
-	    print_error_unicode(s,s->current_file->file_name,
+	    print_error_unicode(s,s->current_file->full_name,
 				"Internal error: Got match for \"no match\"");
 	     
 	    break;
@@ -159,7 +158,7 @@ int audit_update(state *s)
     s->match_exact++;
     if (s->mode & mode_insanely_verbose)
     {
-      display_filename(stdout,s->current_file->file_name);
+	display_filename(stdout,s->current_file);
       print_status(": Ok");
     }
   }
@@ -169,7 +168,7 @@ int audit_update(state *s)
     s->match_unknown++;
     if (s->mode & mode_more_verbose)
     {
-      display_filename(stdout,s->current_file->file_name);
+      display_filename(stdout,s->current_file);
       print_status(": No match");
     }
   } 
@@ -179,9 +178,9 @@ int audit_update(state *s)
     s->match_moved++;
     if (s->mode & mode_more_verbose)
     {
-	display_filename(stdout,s->current_file->file_name);
+	display_filename(stdout,s->current_file);
 	fprintf(stdout,": Moved from ");
-	display_filename(stdout,moved_file->file_name);
+	display_filename(stdout,moved_file);
 	print_status("");
     }
 
@@ -192,16 +191,15 @@ int audit_update(state *s)
   // have an exact match to EVILEVIL.EXE but still have a collision 
   // with the real ntoskrnl.exe. When this happens we should report
   // both results. 
-  if (partial)
-  {
+  if (partial)  {
     // We only record the hash collision if it wasn't anything else.
     // At the same time, however, a collision is such a significant
     // event that we print it no matter what. 
     if (!exact_match && !moved && !no_match)
       s->match_partial++;
-    display_filename(stdout,s->current_file->file_name);
+    display_filename(stdout,s->current_file);
     fprintf(stdout,": Hash collision with ");
-    display_filename(stdout,partial_file->file_name);
+    display_filename(stdout,partial_file);
     print_status("");
   }
   

@@ -15,10 +15,6 @@ char *__progname;
 #endif
 
 
-__BEGIN_DECLS
-extern int md5deep_main(int argc,char **argv);
-__END_DECLS
-
 #ifdef _WIN32 
 // This can't go in main.h or we get multiple definitions of it
 // Allows us to open standard input in binary mode by default 
@@ -37,7 +33,8 @@ int _CRT_fmode = _O_BINARY;
 static void usage(state *s)
 {
   print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
-  print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-V|-h] [-o <mode>] [FILES]",CMD_PROMPT,__progname);
+  print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-V|-h] [-o <mode>] [FILES]",
+	       CMD_PROMPT,__progname);
   print_status("");
 
   print_status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
@@ -62,7 +59,42 @@ static void usage(state *s)
   print_status("-o - only process certain types of files. See README/manpage");
   print_status("-v - verbose mode. Use again to be more verbose.");
   print_status("-V - display version number and exit");
+  print_status("-W FILE - write output to a file");
 }
+
+
+// So that the usage message fits in a standard DOS window, this
+// function should produce no more than 22 lines of text. 
+static void md5deep_usage(void) 
+{
+  print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
+  print_status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,__progname);
+
+  print_status("See the man page or README.txt file for the full list of options");
+  print_status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
+  print_status("-r  - recursive mode. All subdirectories are traversed");
+  print_status("-e  - compute estimated time remaining for each file");
+  print_status("-s  - silent mode. Suppress all error messages");
+  print_status("-S  - displays warnings on bad hashes only");
+  print_status("-z  - display file size before hash");
+  print_status("-m <file> - enables matching mode. See README/man page");
+  print_status("-x <file> - enables negative matching mode. See README/man page");
+	 
+  print_status("-M and -X are the same as -m and -x but also print hashes of each file");
+  print_status("-w  - displays which known file generated a match");
+  print_status("-n  - displays known hashes that did not match any input files");
+  print_status("-a and -A add a single hash to the positive or negative matching set");
+  print_status("-b  - prints only the bare name of files; all path information is omitted");
+  print_status("-l  - print relative paths for filenames");
+  print_status("-k  - print asterisk before filename");
+  print_status("-t  - print GMT timestamp");
+  print_status("-i/I- only process files smaller than the given threshold");
+  print_status("-o  - only process certain types of files. See README/manpage");
+  print_status("-v  - display version number and exit");
+  print_status("-W FILE - write output to a file");
+}
+
+
 
 
 static void check_flags_okay(state *s)
@@ -271,7 +303,7 @@ static int process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVh")) != -1)  {
+  while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVhW:")) != -1)  {
     switch (i) {
     case 'o':
       s->mode |= mode_expert; 
@@ -374,6 +406,10 @@ static int process_command_line(state *s, int argc, char **argv)
       print_status("%s", VERSION);
       exit(EXIT_SUCCESS);
 	  
+    case 'W':
+	s->outfile = optarg;
+	break;
+
     case 'h':
       usage(s);
       exit(EXIT_SUCCESS);
@@ -395,7 +431,7 @@ static int initialize_state(state *s)
 {
   if (setup_hashing_algorithms(s)) return TRUE;
 
-  s->current_file = new file_data_t(s);
+  s->current_file     = new file_data_t(s);
   s->known            = NULL;
   s->last             = NULL;
   s->piecewise_size   = 0;
@@ -565,37 +601,6 @@ int main(int argc, char **argv)
  ****************************************************************/
 
 
-// So that the usage message fits in a standard DOS window, this
-// function should produce no more than 22 lines of text. 
-void md5deep_usage(void) 
-{
-  print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
-  print_status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,__progname);
-
-  print_status("See the man page or README.txt file for the full list of options");
-  print_status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
-  print_status("-r  - recursive mode. All subdirectories are traversed");
-  print_status("-e  - compute estimated time remaining for each file");
-  print_status("-s  - silent mode. Suppress all error messages");
-  print_status("-S  - displays warnings on bad hashes only");
-  print_status("-z  - display file size before hash");
-  print_status("-m <file> - enables matching mode. See README/man page");
-  print_status("-x <file> - enables negative matching mode. See README/man page");
-	 
-  print_status("-M and -X are the same as -m and -x but also print hashes of each file");
-  print_status("-w  - displays which known file generated a match");
-  print_status("-n  - displays known hashes that did not match any input files");
-  print_status("-a and -A add a single hash to the positive or negative matching set");
-  print_status("-b  - prints only the bare name of files; all path information is omitted");
-  print_status("-l  - print relative paths for filenames");
-  print_status("-k  - print asterisk before filename");
-  print_status("-t  - print GMT timestamp");
-  print_status("-i/I- only process files smaller than the given threshold");
-  print_status("-o  - only process certain types of files. See README/manpage");
-  print_status("-v  - display version number and exit");
-}
-
-
 static void md5deep_check_flags_okay(state *s)
 {
   if (NULL == s)
@@ -626,8 +631,8 @@ static void md5deep_check_flags_okay(state *s)
 	       (s->mode & mode_which) && 
 	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)), 
 	       "Matching or negative matching must be enabled to display which file matched");
-  
-
+ 
+ 
   // Additional sanity checks will go here as needed... 
 }
 
@@ -653,7 +658,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
   
   while ((i = getopt(argc,
 		     argv,
-		     "df:I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZ")) != -1) { 
+		     "df:I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:")) != -1) { 
     switch (i) {
 
     case 'd': s->dfxml = new XML(stdout); break;
@@ -794,6 +799,10 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       // COPYRIGHT is a format string, complete with newlines
       print_status(COPYRIGHT);
       exit (STATUS_OK);
+
+    case 'W':
+	s->outfile = optarg;
+	break;
 
     default:
       try_msg();

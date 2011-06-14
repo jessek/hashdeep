@@ -11,6 +11,13 @@ using namespace std;
  ** These are from the original hashdeep/display.c
  ****************************************************************/
 
+std::string itos(uint64_t i)
+{
+    char buf[256];
+    snprintf(buf,sizeof(buf),"%"PRIu64,i);
+    return string(buf);
+}
+
 static void display_size(state *s)
 {
   if (NULL == s) 
@@ -27,11 +34,66 @@ static void display_size(state *s)
 }
 
 
+static std::string shorten_filename(const std::string &fn)
+{
+    if (fn.size() < MAX_FILENAME_LENGTH){
+	return fn;
+    }
+    return(fn.substr(0,MAX_FILENAME_LENGTH-3) + "...");
+}
+
 static char display_asterisk(state *s)
 {
-  if (NULL == s) return ' ';
-  return (s->mode & mode_asterisk) ? '*' : ' ';
+    return (s->mode & mode_asterisk) ? '*' : ' ';
 }
+
+
+/**
+ * output the string, typically a fn, optionally performing unicode escaping
+ */
+
+void output_unicode(FILE *out,const std::string &utf8)
+{
+    fwrite(utf8.c_str(),utf8.size(),1,out);
+}
+
+/* By default, we display in UTF-8.
+ * We escape UTF-8 if requested.
+ */
+void display_filename(FILE *out, const file_data_t &fdt)
+{
+#if 0
+    /* old windows code */
+  size_t pos,len;
+
+  len = _tcslen(fn);
+
+  for (pos = 0 ; pos < len ; ++pos)
+  {
+    // We can only display the English (00) code page
+    if (0 == (fn[pos] & 0xff00))
+      fprintf (out,"%c", (char)(fn[pos]));
+    else
+      fprintf (out,"?");
+  }
+  
+#else
+  if(fdt.print_short_name){
+      output_unicode(out,shorten_filename(fdt.full_name));
+  } else {
+      output_unicode(out,fdt.full_name);
+  }
+  if(fdt.file_name_annotation.size()>0){
+      output_unicode(out,fdt.file_name_annotation);
+  }
+#endif
+}
+void display_filename(FILE *out, const file_data_t *fdt)
+{
+    display_filename(out,*fdt);
+}
+
+
 
 
 
@@ -47,7 +109,7 @@ static void display_banner(state *s)
   print_status("filename");
 
   fprintf(stdout,"## Invoked from: ");
-  display_filename(stdout,s->cwd);
+  output_unicode(stdout,s->cwd);
   fprintf(stdout,"%s",NEWLINE);
   
   // Display the command prompt as the user saw it
@@ -78,20 +140,13 @@ static void display_banner(state *s)
       bytes_written = 3;
     }
 
-    display_filename(stdout,s->argv[argc]);
+    output_unicode(stdout,s->argv[argc]);
     bytes_written += current_bytes;
   }
 
   fprintf(stdout,"%s## %s",NEWLINE, NEWLINE);
 }
 
-
-static std::string itos(uint64_t i)
-{
-    char buf[256];
-    snprintf(buf,sizeof(buf),"%"PRIu64,i);
-    return string(buf);
-}
 
 static void compute_dfxml(state *s,int known_hash)
 {
@@ -147,7 +202,7 @@ int display_hash_simple(state *s)
       printf("%s,", s->current_file->hash[i]);
   }
   
-  display_filename(stdout,s->current_file->file_name);
+  display_filename(stdout,s->current_file);
   fprintf(stdout,"%s",NEWLINE);
 
   return FALSE;
@@ -156,7 +211,7 @@ int display_hash_simple(state *s)
 /* The old display_match_result from md5deep */
 static int md5deep_display_match_result(state *s)
 {  
-  int known_hash = md5deep_is_known_hash(s->md5deep_mode_hash_result,s->current_file->known_fn);
+  int known_hash = md5deep_is_known_hash(s->md5deep_mode_hash_result,&s->current_file->known_fn);
   if ((known_hash && (s->mode & mode_match)) ||
       (!known_hash && (s->mode & mode_match_neg)))
   {
@@ -180,17 +235,18 @@ static int md5deep_display_match_result(state *s)
     {
       if (known_hash && (s->mode & mode_match))
       {
-	display_filename(stdout,s->current_file->full_name);
-	printf (" matched %s", s->current_file->known_fn);
+	display_filename(stdout,s->current_file);
+	printf (" matched ");
+	output_unicode(stdout,s->current_file->known_fn);
       }
       else
       {
-	display_filename(stdout,s->current_file->full_name);
+	display_filename(stdout,s->current_file);
 	printf (" does NOT match");
       }
     }
     else
-      display_filename(stdout,s->current_file->full_name);
+      display_filename(stdout,s->current_file);
 
     make_newline(s);
   }
@@ -207,7 +263,7 @@ int md5deep_display_hash(state *s)
 	    return FALSE;
 	}
 	printf ("\t%s\t", s->md5deep_mode_hash_result);
-	display_filename(stdout,s->current_file->full_name);
+	display_filename(stdout,s->current_file);
 	make_newline(s);
 	return FALSE;
     }
@@ -215,8 +271,9 @@ int md5deep_display_hash(state *s)
   // We can't call display_size here because we don't know if we're
   // going to display *anything* yet. If we're in matching mode, we
   // have to evaluate if there was a match first. 
-  if ((s->mode & mode_match) || (s->mode & mode_match_neg))
-    return md5deep_display_match_result(s);
+    if ((s->mode & mode_match) || (s->mode & mode_match_neg)){
+	return md5deep_display_match_result(s);
+    }
 
   if(s->dfxml){
       compute_dfxml(s,0);
@@ -229,8 +286,7 @@ int md5deep_display_hash(state *s)
 
   if (s->mode & mode_quiet)
     printf ("  ");
-  else
-  {
+  else  {
     if ((s->mode & mode_piecewise) ||
 	!(s->current_file->is_stdin))
     {
@@ -252,7 +308,7 @@ int md5deep_display_hash(state *s)
       else
 	printf(" %c", display_asterisk(s));      
 
-      display_filename(stdout,s->current_file->full_name);
+      display_filename(stdout,s->current_file);
     }
   }
 

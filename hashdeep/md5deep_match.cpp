@@ -220,7 +220,7 @@ void md5deep_add_hash(state *s, char *h, char *fn)
 }
 
 
-int md5deep_is_known_hash(char *h, char *known_fn) 
+int md5deep_is_known_hash(char *h, std::string *known_fn) 
 {
   int status;
 

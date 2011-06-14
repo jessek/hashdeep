@@ -125,30 +125,31 @@ typedef enum   {
  */
 class file_data_t {
 public:
-    file_data_t(class state *s_):s(s_),handle(0),is_stdin(0),file_size(0),file_name(0),used(0),
-		  stat_bytes(0),stat_megs(0),actual_bytes(0),
-		  read_start(0),read_end(0),bytes_read(0) {
+    file_data_t(const class state *s_):s(s_),handle(0),is_stdin(0),
+				       print_short_name(0),file_size(0),used(0),
+				       stat_bytes(0),stat_megs(0),actual_bytes(0),
+				       read_start(0),read_end(0),bytes_read(0) {
 	for(int i=0;i<NUM_ALGORITHMS;i++){
 	    hash[i]=NULL;
 	}
 	full_name = (TCHAR *)calloc(sizeof(TCHAR),PATH_MAX);
     }
 
-    class state *s;			// backpointer to my state
-
-  /* We don't want to use s->full_name, but it's required for hash.c */
-    TCHAR         * full_name;
-    TCHAR         short_name[PATH_MAX];
-    TCHAR         msg[LINE_LENGTH+1];
-
+    const class state *s;	// backpointer to my statem
     FILE         * handle;
     int           is_stdin;
+
+  /* We don't want to use s->full_name, but it's required for hash.c */
+    std::string    full_name;		// including path
+    std::string	   file_name;		// just the file_name, apparently
+    std::string	   file_name_annotation;// print after file name
+    int		   print_short_name;	// shorten full_name if necessary.
+
     unsigned char buffer[MD5DEEP_IDEAL_BLOCK_SIZE]; // next buffer to hash
     char         * hash[NUM_ALGORITHMS]; // the hex hashes
     uint64_t       file_size;
-    TCHAR        * file_name;	// normally file name, but permuted for piecewise hashing
     uint64_t       used;
-    char known_fn[PATH_MAX+1];
+    std::string    known_fn;		// if we do an md5deep_is_known_hash, this is set to be the filename of the known hash
     std::string	   dfxml_hash;	// the DFXML hash digest for the piece just hashed
 #ifdef _WIN32
     __time64_t    timestamp;
@@ -238,8 +239,8 @@ public:;
   time_t          start_time, last_time;
 
   /* Command line arguments */
-  TCHAR        ** argv;
   int             argc;
+  TCHAR        ** argv;			// never allocated, never freed
   char          * input_list;
   TCHAR           cwd[PATH_MAX+1];
 
@@ -288,11 +289,11 @@ public:;
     size_t md5deep_mode_hash_length;	// in bytes
     char  *md5deep_mode_hash_result;	// printable ASCII; md5deep_mode_hash_length*2+1 bytes long
 
-  /* output in DFXML */
-    XML       *dfxml;
+
+    XML       *dfxml;  /* output in DFXML */
+    std::string	outfile;	// where output goes
 };
 
-__BEGIN_DECLS
 /* GENERIC ROUTINES */
 void clear_algorithms_inuse(state *s);
 
@@ -366,6 +367,13 @@ int process_normal(state *s, TCHAR *fn);
 int md5deep_process_command_line(state *s, int argc, char **argv);
 
 
+/* display.cpp */
+std::string itos(uint64_t i);
+void output_unicode(FILE *out,const std::string &ucs);
+void display_filename(FILE *out, const file_data_t &fdt);
+void display_filename(FILE *out, const file_data_t *fdt); // calls one above
+
+
 /* ui.c */
 /* User Interface Functions */
 
@@ -376,7 +384,7 @@ void print_status(const char *fmt, ...);
 void print_error(const state *s, const char *fmt, ...);
 
 // Display an error message if not in silent mode with a Unicode filename
-void print_error_unicode(const state *s, const TCHAR *fn, const char *fmt, ...);
+void print_error_unicode(const state *s, const std::string &fn, const char *fmt, ...);
 
 // Display an error message, if not in silent mode,  
 // and exit with EXIT_FAILURE
@@ -387,7 +395,6 @@ void fatal_error(const state *s, const char *fmt, ...);
 void internal_error(const char *fmt, ... );
 
 // Display a filename, possibly including Unicode characters
-void display_filename(FILE *out, const TCHAR *fn);
 void print_debug(const char *fmt, ...);
 void make_newline(const state *s);
 void try_msg(void);
@@ -401,7 +408,7 @@ int display_hash(state *s);
 
 // md5deep_match.c
 int md5deep_load_match_file(state *s, char *fn);
-int md5deep_is_known_hash(char *h, char *known_fn);
+int md5deep_is_known_hash(char *h, std::string *known_fn);
 //int was_input_not_matched(void);
 int md5deep_finalize_matching(state *s);
 
@@ -412,7 +419,5 @@ void md5deep_add_hash(state *s, char *h, char *fn);
 int valid_hash(state *s, char *buf);
 int hash_file_type(state *s, FILE *f);
 int find_hash_in_line(state *s, char *buf, int fileType, char *filename);
-
-__END_DECLS
 
 #endif /* ifndef __MAIN_H */

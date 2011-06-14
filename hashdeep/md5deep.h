@@ -49,7 +49,7 @@ int hashTableAdd(state *s, hashTable *knownHashes, char *n, char *fn);
 // alter known if the hashTable does not contain n. This function
 // assumes that fn has already been malloc'ed to hold at least 
 // PATH_MAX characters 
-int hashTableContains(hashTable *knownHashes, char *n, char *known);
+int hashTableContains(hashTable *knownHashes, char *n, std::string *known);
 
 // Find any hashes that have not been used. If there are any, and display
 // is TRUE, prints them to stdout. Regardless of display, then returns

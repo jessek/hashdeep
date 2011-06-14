@@ -124,7 +124,12 @@ int hashTableAdd(state *s, hashTable *knownHashes, char *nfn, char *fn)
 }
 
 
-int hashTableContains(hashTable *knownHashes, char *n, char *known) 
+/**
+ * @param knownHashes - hash table of the hashes.
+ * @param n - the hash being probed.
+ * @param *known  - set to be the filename if found
+ */
+int hashTableContains(hashTable *knownHashes, char *n, std::string *known) 
 {
   uint64_t key = translate(n);
   hashNode *temp;
@@ -137,12 +142,10 @@ int hashTableContains(hashTable *knownHashes, char *n, char *known)
   temp = (*knownHashes)[key];
 
   do {
-    if (STRINGS_CASE_EQUAL(temp->data,n))
-    {
-      temp->been_matched = TRUE;
-      if (known != NULL)
-	strncpy(known,temp->filename,PATH_MAX);
-      return TRUE;
+    if (STRINGS_CASE_EQUAL(temp->data,n))    {
+	temp->been_matched = TRUE;
+	if (known) (*known) = temp->filename;
+	return TRUE;
     }
 
     temp = temp->next;

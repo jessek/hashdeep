@@ -256,7 +256,7 @@ static void print_last_error(char * function_name)
   
   // Display the error message and exit the process
   fprintf(stdout,"%s failed with error %ld: ", function_name, dwLastError);
-  display_filename(stdout,pszMessage);
+  output_unicode(stdout,pszMessage);
   
   LocalFree(pszMessage);
 }

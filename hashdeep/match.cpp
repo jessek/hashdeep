@@ -227,7 +227,7 @@ static void display_file_data(state *s, file_data_t * t)
   int i;
 
   fprintf(stdout,"  Filename: ");
-  display_filename(stdout,t->file_name);
+  display_filename(stdout,t);
   fprintf(stdout,"%s",NEWLINE);
 
   print_status("      Size: %"PRIu64, t->file_size);
@@ -373,10 +373,7 @@ status_t read_file(state *s, char *fn, FILE *handle)
 			__progname, 
 			GetLastError()); 
 #else
-	  t->file_name = strdup(buf);
-	  if (NULL == t->file_name)
-	    fatal_error(s,"%s: Out of memory while allocating filename %s", 
-			__progname, buf);
+	  t->file_name = buf;
 #endif
 	  done = TRUE;
 	}
@@ -452,9 +449,9 @@ char * status_to_str(status_t s)
 
 status_t display_match_result(state *s)
 {
-  TCHAR * matched_filename = NULL;
-  int should_display; 
-  uint64_t my_round;
+    file_data_t *matched_fdt = NULL;
+    int should_display; 
+    uint64_t my_round;
 
   assert(s!=NULL);
 
@@ -479,7 +476,7 @@ status_t display_match_result(state *s)
 	  //  as far as we're concerned. 
 	case status_file_name_mismatch:
 	case status_match:
-	  matched_filename = tmp->data->file_name;
+	    matched_fdt = tmp->data;
 	  should_display = (primary_match_neg != s->primary_function);
 	  break;
 	  
@@ -490,9 +487,9 @@ status_t display_match_result(state *s)
 	  if (tmp->data->used != s->hash_round)
 	  {
 	    tmp->data->used = s->hash_round;
-	    display_filename(stderr,s->current_file->file_name);
+	    display_filename(stderr,s->current_file);
 	    fprintf(stderr,": Hash collision with ");
-	    display_filename(stderr,tmp->data->file_name);
+	    display_filename(stderr,tmp->data);
 	    fprintf(stderr,"%s", NEWLINE);
 
 	    // Technically this wasn't a match, so we're still ok
@@ -521,14 +518,14 @@ status_t display_match_result(state *s)
       display_hash_simple(s);
     else
     {
-      display_filename(stdout,s->current_file->file_name);
+      display_filename(stdout,s->current_file);
       if (s->mode & mode_which && primary_match == s->primary_function)
       {
 	fprintf(stdout," matches ");
-	if (NULL == matched_filename)
+	if (NULL == matched_fdt)
 	  fprintf(stdout,"(unknown file)");
 	else
-	  display_filename(stdout,matched_filename);
+	  display_filename(stdout,matched_fdt);
       }
       print_status("");
     }

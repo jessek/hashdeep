@@ -50,13 +50,13 @@ void print_error(const state *s, const char *fmt, ...)
 }
 
 
-void print_error_unicode(const state *s, const TCHAR *fn, const char *fmt, ...)
+void print_error_unicode(const state *s, const std::string &fn, const char *fmt, ...)
 {
-  if (!(s->mode & mode_silent))
-  {
-    display_filename(stderr,fn);
-    fprintf(stderr,": ");
-    MD5DEEP_PRINT_MSG(stderr,fmt);
+  if (!(s->mode & mode_silent))  {
+
+      output_unicode(stderr,fn);
+      fprintf(stderr,": ");
+      MD5DEEP_PRINT_MSG(stderr,fmt);
   }
 }
 
@@ -83,32 +83,6 @@ void internal_error(const char *fmt, ... )
   exit (STATUS_INTERNAL_ERROR);
 }
 
-
-#ifdef _WIN32
-void display_filename(const FILE *out, const TCHAR *fn)
-{
-  size_t pos,len;
-
-  if (NULL == fn)
-    return;
-
-  len = _tcslen(fn);
-
-  for (pos = 0 ; pos < len ; ++pos)
-  {
-    // We can only display the English (00) code page
-    if (0 == (fn[pos] & 0xff00))
-      fprintf (out,"%c", (char)(fn[pos]));
-    else
-      fprintf (out,"?");
-  }
-}
-#else
-void display_filename(FILE *out, const TCHAR *fn)
-{
-  fprintf (out,"%s", fn);
-}
-#endif
 
 void try_msg(void)
 {

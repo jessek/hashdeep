@@ -1,3 +1,9 @@
+2011-06-14  Simson Garfinkel  <simsong@11.sub-75-243-148.myvzw.com>
+
+	* hashdeep/main.h: removed __BEGIN_DECLS and __END_DECLS; we are now a C++ program!
+
+	* hashdeep/hash.cpp: moved shorten_filename to display.cpp becuase the shortened filenames are just used in a particular case. we can set a flag to print them and generate them on the fly.
+
 2011-06-12  Simson Garfinkel  <simsong@imac3.home>
 
 	* hashdeep/main.cpp (main): s->cwd is now pre-allocated

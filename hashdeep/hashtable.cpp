@@ -31,22 +31,20 @@ status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
   if (!partial_match && !partial_failure)
     return status_no_match;
 
-  if (partial_failure)
-  {
+  if (partial_failure)  {
     if (partial_match)
       return status_partial_match;
     else
       return status_no_match;
   }
   
-  if (a->file_size != b->file_size)
+  if (a->file_size != b->file_size){
     return status_file_size_mismatch;
+  }
   
-  // We can't compare something that's NULL 
-  if (NULL == a->file_name || NULL == b->file_name)
+  if (a->file_name != b->file_name){
     return status_file_name_mismatch;
-  if (!(WSTRINGS_EQUAL(a->file_name,b->file_name)))
-    return status_file_name_mismatch;
+  }
   
   return status_match;
 }

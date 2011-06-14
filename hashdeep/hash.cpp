@@ -16,6 +16,8 @@
 // Code for hashdeep 
 #include "main.h"
 
+using namespace std;
+
 // At least one user has suggested changing update_display() to 
 // use human readable units (e.g. GB) when displaying the updates.
 // The problem is that once the display goes above 1024MB, there
@@ -26,8 +28,6 @@ static void update_display(state *s, time_t elapsed)
 {
   uint64_t hour, min, seconds, mb_read;
 
-  memset(s->current_file->msg,0,sizeof(s->current_file->msg));
-
   // If we've read less than one MB, then the computed value for mb_read 
   // will be zero. Later on we may need to divide the total file size, 
   // total_megs, by mb_read. Dividing by zero can create... problems 
@@ -37,15 +37,15 @@ static void update_display(state *s, time_t elapsed)
     mb_read = s->current_file->actual_bytes / ONE_MEGABYTE;
   
   if (s->current_file->stat_megs==0)  {
-    _sntprintf(s->current_file->msg,
-	       sizeof(s->current_file->msg)-1,
-	       _TEXT("%s: %"PRIu64"MB done. Unable to estimate remaining time.%s"),
-	       s->current_file->short_name,
-	       mb_read,
-	       _TEXT(BLANK_LINE));
+      s->current_file->print_short_name = 1;
+      char msg[64];
+      _sntprintf(msg,sizeof(msg)-1,
+		 _TEXT("%"PRIu64"MB done. Unable to estimate remaining time.%s"),
+		 mb_read,
+		 _TEXT(BLANK_LINE));
+      s->current_file->file_name_annotation = msg;
   }
-  else 
-  {
+  else {
     // Estimate the number of seconds using only integer math.
     //
     // We now compute the number of bytes read per second and then
@@ -65,53 +65,23 @@ static void update_display(state *s, time_t elapsed)
     min = seconds/60;
     seconds -= min * 60;
 
-    _sntprintf(s->current_file->msg,sizeof(s->current_file->msg)-1,
-	       _TEXT("%s: %"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s"),
-	       s->current_file->short_name,
+      s->current_file->print_short_name = 1;
+    char msg[64];
+    _sntprintf(msg,sizeof(msg)-1,
+	       _TEXT("%"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s"),
 	       mb_read,
 	       s->current_file->stat_megs,
 	       hour,
 	       min,
 	       seconds,
 	       _TEXT(BLANK_LINE));
+    s->current_file->file_name_annotation = msg;
   }
 
   fprintf(stderr,"\r");
-  display_filename(stderr,s->current_file->msg);
+  display_filename(stderr,s->current_file);
 }
 
-
-
-static void shorten_filename(TCHAR *dest, TCHAR *src)
-{
-  TCHAR *basen;
-
-  if (NULL == dest || NULL == src)
-    return;
-
-  if (_tcslen(src) < MAX_FILENAME_LENGTH)
-  {
-    _tcsncpy(dest,src, MAX_FILENAME_LENGTH);
-    return;
-  }
-
-  basen = _tcsdup(src);
-  if (NULL == basen)
-    return;
-
-  if (my_basename(basen))
-    return;
-
-  if (_tcslen(basen) < MAX_FILENAME_LENGTH)
-  {
-    _tcsncpy(dest,basen,MAX_FILENAME_LENGTH);
-    return;
-  }
-
-  basen[MAX_FILENAME_LENGTH - 3] = 0;
-  _sntprintf(dest,MAX_FILENAME_LENGTH,_TEXT("%s..."),basen);
-  free(basen);
-}
 
 
 // Returns TRUE if errno is currently set to a fatal error. That is,
@@ -139,14 +109,15 @@ static int file_fatal_error(void)
 }
 
 
+/**
+ * compute the hash. return FALSE if error, TRUE if success
+ */
+
 static int compute_hash(state *s)
 {
   time_t current_time;
   uint64_t current_read, mysize, remaining, this_start;
   unsigned char buffer[MD5DEEP_IDEAL_BLOCK_SIZE];
-
-  if (NULL == s)
-    return TRUE;
 
   // Although we need to read MD5DEEP_BLOCK_SIZE bytes before
   // we exit this function, we may not be able to do that in 
@@ -240,6 +211,7 @@ static int compute_hash(state *s)
       }
     }
   }      
+  return TRUE;
 }
 
 
@@ -256,8 +228,6 @@ static int md5deep_hash_triage(state *s)
   multihash_initialize(s);
     
   if (!compute_hash(s))  {
-    if (s->mode & mode_piecewise)
-      free(s->current_file->full_name);
     return TRUE;
   }
 
@@ -277,7 +247,6 @@ static int md5deep_hash_triage(state *s)
 static int hash(state *s)
 {
   int done = FALSE, status = FALSE;
-  TCHAR *tmp_name = NULL;		// used to change file_name for piecewise hashing
   
   s->current_file->actual_bytes = 0;
 
@@ -286,8 +255,7 @@ static int hash(state *s)
     s->last_time = s->start_time;
   }
 
-  if (s->mode & mode_triage)
-  {
+  if (s->mode & mode_triage)  {
     // Hash and display the first 512 bytes of this file
     md5deep_hash_triage(s);
 
@@ -297,21 +265,11 @@ static int hash(state *s)
     fseeko(s->current_file->handle, 0, SEEK_SET);
   }
   
-  if ( s->mode & mode_piecewise )
-  {
+  if ( s->mode & mode_piecewise )  {
     s->block_size = s->piecewise_size;
-    
-    // We copy out the original file name and saved it in tmp_name
-    tmp_name = s->current_file->full_name;
-    s->current_file->full_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
-    if (NULL == s->current_file->full_name)
-    {
-      return TRUE;
-    }
   }
   
-  while (!done)
-  {
+  while (!done)  {
       if(s->md5deep_mode_hash_result){
 	  memset(s->md5deep_mode_hash_result,0,(2 * s->md5deep_mode_hash_length) + 1);
       }
@@ -324,8 +282,6 @@ static int hash(state *s)
      * or all of the piecewise hashes.
      */
     if (!compute_hash(s)) {
-      if (s->mode & mode_piecewise)
-	free(s->current_file->full_name);
       return TRUE;
     }
 
@@ -338,10 +294,14 @@ static int hash(state *s)
       if (s->mode & mode_piecewise)
       {
 	uint64_t tmp_end = 0;
-	if (s->current_file->read_end != 0)
-	  tmp_end = s->current_file->read_end - 1;
-	_sntprintf(s->current_file->full_name,PATH_MAX,_TEXT("%s offset %"PRIu64"-%"PRIu64),
-		   tmp_name, s->current_file->read_start, tmp_end);
+	if (s->current_file->read_end != 0){
+	    tmp_end = s->current_file->read_end - 1;
+	}
+	s->current_file->file_name_annotation =
+	    string(" offset ")
+	    + itos(s->current_file->read_start)
+	    + string("-")
+	    + itos(tmp_end);
       }
       
       multihash_finalize(s);
@@ -366,12 +326,6 @@ static int hash(state *s)
 	done = TRUE;
   }
 
-  if (s->mode & mode_piecewise)
-  {
-    free(s->current_file->full_name);
-    s->current_file->full_name = tmp_name;
-  }
-  
   /**
    * If we are in dfxml mode, output the DFXML, which may optionally include
    * all of the piecewise information.
@@ -457,7 +411,7 @@ int hash_file(state *s, TCHAR *fn)
 
     if (s->mode & mode_estimate)    {
       s->current_file->stat_megs = s->current_file->stat_bytes / ONE_MEGABYTE;
-      shorten_filename(s->current_file->short_name,s->current_file->full_name);    
+      s->current_file->print_short_name=1;
     }    
 
     status = hash(s);
@@ -476,14 +430,9 @@ int hash_file(state *s, TCHAR *fn)
 
 int hash_stdin(state *s)
 {
-  _tcsncpy(s->current_file->full_name,_TEXT("stdin"),PATH_MAX);
-  s->current_file->is_stdin  = TRUE;
-  s->current_file->handle    = stdin;
-
-  if (s->mode & mode_estimate) {
-      _tcsncpy(s->current_file->short_name,s->current_file->full_name,sizeof(s->current_file->short_name));
-      s->current_file->stat_megs = 0;
-  }
-
-  return (hash(s));
+    s->current_file->full_name = "stdin";
+    s->current_file->is_stdin  = TRUE;
+    s->current_file->handle    = stdin;
+    s->current_file->stat_megs = 0;
+    return hash(s);
 }
