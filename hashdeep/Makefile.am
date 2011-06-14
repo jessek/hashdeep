@@ -10,6 +10,7 @@ hashdeep_SOURCES = main.cpp audit.cpp match.cpp multihash.cpp display.cpp hashta
 	md5deep_hashtable.cpp files.cpp \
 	common.h main.h md5deep.h md5deep_hashtable.h \
 	strsep.h tchar-local.h xml.h  \
+	utf8.h utf8/checked.h utf8/core.h utf8/unchecked.h \
 	${ALGS}
 
 ${OTHERS}: hashdeep

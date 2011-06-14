@@ -1,4 +1,3 @@
-
 #include "main.h"
 
 /* $Id$ */
@@ -101,7 +100,7 @@ void hashtable_init(hashtable_t *t)
 
 
 
-status_t hashtable_add(state *s, hashname_t alg, file_data_t *f)
+status_t hashtable_add(state *s, hashid_t alg, file_data_t *f)
 {
   hashtable_entry_t *n, *temp;
   hashtable_t *t = s->hashes[alg]->known;
@@ -168,7 +167,7 @@ void hashtable_destroy(hashtable_entry_t *e)
 
 
 hashtable_entry_t * 
-hashtable_contains(state *s, hashname_t alg)
+hashtable_contains(state *s, hashid_t alg)
 {
   hashtable_entry_t *ret = NULL, *n, *temp, *last = NULL;
   hashtable_t *t; 

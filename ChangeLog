@@ -1,3 +1,7 @@
+2011-06-14  Simson Garfinkel  <simsong@alphonse-mucha.local.tld>
+
+	* hashdeep/main.h: changed hashname_t to hashid_t becuase it is an id number, not a name.
+
 2011-06-14  Simson Garfinkel  <simsong@11.sub-75-243-148.myvzw.com>
 
 	* hashdeep/main.h: removed __BEGIN_DECLS and __END_DECLS; we are now a C++ program!

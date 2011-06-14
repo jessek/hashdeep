@@ -1,4 +1,3 @@
-
 // $Id$ 
 
 #include "main.h"
@@ -94,7 +93,7 @@ int audit_update(state *s)
   {
     if (s->hashes[i]->inuse)
     {
-	hashtable_entry_t *matches = hashtable_contains(s,(hashname_t)i);
+	hashtable_entry_t *matches = hashtable_contains(s,(hashid_t)i);
 	hashtable_entry_t *tmp = matches;
       if (NULL == tmp)
       {
@@ -118,7 +117,6 @@ int audit_update(state *s)
 	    no_match = TRUE;
 	    print_error_unicode(s,s->current_file->full_name,
 				"Internal error: Got match for \"no match\"");
-	     
 	    break;
     
 	  case status_file_name_mismatch:

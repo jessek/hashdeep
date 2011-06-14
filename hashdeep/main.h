@@ -19,7 +19,7 @@
 
 /* HOW TO ADD A NEW HASHING ALGORITHM
 
-  * Add a value for the algorithm to the hashname_t enumeration
+  * Add a value for the algorithm to the hashid_t enumeration
 
   * Add the functions to compute the hashes. There should be three functions,
     an initialization route, an update routine, and a finalize routine.
@@ -56,7 +56,7 @@ typedef enum
   /* alg_unknown must always be last in this list. It's used
      as a loop terminator in many functions. */
   alg_unknown 
-} hashname_t;
+} hashid_t;
 
 #define NUM_ALGORITHMS  alg_unknown
 
@@ -173,7 +173,6 @@ public:
 };
 
 
-
 class hashtable_entry_t {
 public:
   status_t           status; 
@@ -188,7 +187,6 @@ public:
 typedef struct _hash_table_t {
   hashtable_entry_t * member[HASH_TABLE_SIZE];
 } hashtable_t;
-
 
 
 /* This structure defines what's known about a hash algorithm */
@@ -206,7 +204,6 @@ typedef struct _algorithm_t
   unsigned char * hash_sum;	// printable
   int             inuse;
 } algorithm_t;
-
 
 
 /* Primary modes of operation  */
@@ -261,7 +258,7 @@ public:;
   file_data_t * known;
   file_data_t   * last;
   uint64_t        hash_round;
-  hashname_t      hash_order[NUM_ALGORITHMS];
+  hashid_t      hash_order[NUM_ALGORITHMS];
 
   // Hashing algorithms 
   // We don't define hash_string_length, it's just twice this length. 
@@ -299,8 +296,8 @@ void clear_algorithms_inuse(state *s);
 
 /* HASH TABLE */
 void hashtable_init(hashtable_t *t);
-status_t hashtable_add(state *s, hashname_t alg, file_data_t *f);
-hashtable_entry_t * hashtable_contains(state *s, hashname_t alg);
+status_t hashtable_add(state *s, hashid_t alg, file_data_t *f);
+hashtable_entry_t * hashtable_contains(state *s, hashid_t alg);
 void hashtable_destroy(hashtable_entry_t *e);
 
 /* MULTIHASHING */

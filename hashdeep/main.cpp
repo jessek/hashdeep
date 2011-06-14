@@ -120,7 +120,7 @@ static void check_flags_okay(state *s)
  */
 static int 
 add_algorithm(state *s, 
-	      hashname_t pos,
+	      hashid_t pos,
 	      const char *name, 
 	      uint16_t len, 
 	      int ( *func_init)(void *),
@@ -578,13 +578,11 @@ int main(int argc, char **argv)
 
       while (count < s->argc) {  
 	  generate_filename(s,fn,s->cwd,s->argv[count]);
-	  
 #ifdef _WIN32
 	  status = process_win32(s,fn);
 #else
 	  status = process_normal(s,fn);
 #endif
-	  
 	  ++count;
       }
   }

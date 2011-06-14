@@ -4,7 +4,7 @@
 #include "main.h"
 #include <new>
 
-static int match_valid_hash(state *s, hashname_t a, char *buf)
+static int match_valid_hash(state *s, hashid_t a, char *buf)
 {
   size_t pos = 0;
 
@@ -111,7 +111,7 @@ static int parse_hashing_algorithms(state *s, char *fn, char *val)
 static filetype_t 
 identify_file(state *s, char *fn, FILE *handle)
 {
-  hashname_t current_order[NUM_ALGORITHMS];
+  hashid_t current_order[NUM_ALGORITHMS];
  
   assert(s!=0);
   assert(fn!=0);
@@ -193,11 +193,6 @@ identify_file(state *s, char *fn, FILE *handle)
 
 static status_t add_file(state *s, file_data_t *f)
 {
-  status_t st;
-
-  if (NULL == s || NULL == f)
-    return status_unknown_error;
-
   f->next = NULL;
 
   if (NULL == s->known)
@@ -210,10 +205,10 @@ static status_t add_file(state *s, file_data_t *f)
   int i = 1;
   while (s->hash_order[i] != alg_unknown)
   {
-    st = hashtable_add(s,s->hash_order[i],f);
-    if (st != status_ok)
-      return st;
-    ++i;
+      status_t st = hashtable_add(s,s->hash_order[i],f);
+      if (st != status_ok)
+	  return st;
+      ++i;
   }
 
   return status_ok;
@@ -462,11 +457,9 @@ status_t display_match_result(state *s)
 
   should_display = (primary_match_neg == s->primary_function);
 
-  for (int i = 0 ; i < NUM_ALGORITHMS; ++i)
-  {
-    if (s->hashes[i]->inuse)
-    {
-	hashtable_entry_t *ret = hashtable_contains(s,(hashname_t)i);
+  for (int i = 0 ; i < NUM_ALGORITHMS; ++i)  {
+      if (s->hashes[i]->inuse)    {
+	hashtable_entry_t *ret = hashtable_contains(s,(hashid_t)i);
       hashtable_entry_t *tmp = ret;
       while (tmp != NULL)
       {
