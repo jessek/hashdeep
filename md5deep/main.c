@@ -422,6 +422,8 @@ int main(int argc, char **argv)
 #ifdef _WIN32
   if (prepare_windows_command_line(s))
     fatal_error(s,"%s: Unable to process command line arguments", __progname);
+
+  check_wow64(s);
 #else
   s->argc = argc;
   s->argv = argv;

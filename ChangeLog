@@ -1,3 +1,10 @@
+2011-06-15 Jesse Kornblum
+
+	* Added warning message for programs running under WoW64
+
+	* Fixed cosmetic error in hashdeep, bug 3313963.
+
+
 2011-05-23 Jesse Kornblum
 
 	* Resolved bug 3307444 regarding the prefix type for multipliers.

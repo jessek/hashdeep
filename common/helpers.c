@@ -14,6 +14,43 @@
 
 #include "main.h"
 
+#ifdef _WIN32
+#include "ui.h"
+
+// The following is adapted from
+// http://msdn.microsoft.com/en-us/library/ms684139(v=VS.85).aspx
+
+typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+LPFN_ISWOW64PROCESS fnIsWow64Process;
+
+void check_wow64(state *s)
+{
+  BOOL result;
+
+  fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(GetModuleHandle(TEXT("kernel32")),
+							  "IsWow64Process");
+  
+  // If this system doesn't have the function IsWow64Process then
+  // it's definitely not running under WoW64.
+  if (NULL == fnIsWow64Process)
+    return;
+
+  if (! fnIsWow64Process(GetCurrentProcess(), &result))
+  {
+    // The function failed? WTF? Well, let's not worry about it.
+    return;
+  }
+
+  if (result) 
+  {
+    print_error(s,"%s: WARNING: You are running a 32-bit program on a 64-bit system.", __progname);
+    print_error(s,"%s: You probably want to use the 64-bit version of this program.", __progname);
+  }
+
+}
+#endif   // ifdef _WIN32
+
+
 void setup_expert_mode(state *s, char *arg)
 {
   unsigned int i = 0;

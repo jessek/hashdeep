@@ -362,6 +362,7 @@ int find_quoted_string(char *buf, unsigned int n);
 // Return the size, in bytes of an open file stream. On error, return -1 
 off_t find_file_size(FILE *f);
 
+void check_wow64(state *s);
 
 // ------------------------------------------------------------------
 // MAIN PROCESSING
