@@ -115,7 +115,7 @@ static void display_banner(state *s)
   // Display the command prompt as the user saw it
   fprintf(stdout,"## ");
 #ifdef _WIN32
-  _ftprintf(stdout,_TEXT("%c:\\>"), s->cwd[0]);
+  fprintf(stdout,"%c:\\>", s->cwd[0]);
 #else
   if (0 == geteuid())
     fprintf(stdout,"#");
