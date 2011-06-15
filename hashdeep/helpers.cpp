@@ -14,13 +14,6 @@
 
 #include "main.h"
 
-/*
-
-  // This code is ported from the trunk and will be installed in version4
-  // before release. It's used to determine if the program is running
-  // under WoW64, or a 32-bit program running on a 64-bit system.
-  // RBF - Enable WoW64 check
-
 #ifdef _WIN32
 #include "ui.h"
 
@@ -56,7 +49,7 @@ void check_wow64(state *s)
 
 }
 #endif   // ifdef _WIN32
-*/
+
 
 void setup_expert_mode(state *s, char *arg)
 {
