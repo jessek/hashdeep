@@ -39,10 +39,8 @@ static void update_display(state *s, time_t elapsed)
   if (s->current_file->stat_megs==0)  {
       s->current_file->print_short_name = 1;
       char msg[64];
-      _sntprintf(msg,sizeof(msg)-1,
-		 _TEXT("%"PRIu64"MB done. Unable to estimate remaining time.%s"),
-		 mb_read,
-		 _TEXT(BLANK_LINE));
+      snprintf(msg,sizeof(msg)-1,"%"PRIu64"MB done. Unable to estimate remaining time.%s",
+	       mb_read,BLANK_LINE);
       s->current_file->file_name_annotation = msg;
   }
   else {
@@ -66,15 +64,15 @@ static void update_display(state *s, time_t elapsed)
     seconds -= min * 60;
 
       s->current_file->print_short_name = 1;
-    char msg[64];
-    _sntprintf(msg,sizeof(msg)-1,
-	       _TEXT("%"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s"),
+      char msg[64];
+    snprintf(msg,sizeof(msg)-1,
+	       "%"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s",
 	       mb_read,
 	       s->current_file->stat_megs,
 	       hour,
 	       min,
 	       seconds,
-	       _TEXT(BLANK_LINE));
+	     BLANK_LINE);
     s->current_file->file_name_annotation = msg;
   }
 
@@ -433,6 +431,5 @@ int hash_stdin(state *s)
     s->current_file->full_name = "stdin";
     s->current_file->is_stdin  = TRUE;
     s->current_file->handle    = stdin;
-    s->current_file->stat_megs = 0;
     return hash(s);
 }

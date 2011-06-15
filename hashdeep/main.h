@@ -132,25 +132,23 @@ public:
 	for(int i=0;i<NUM_ALGORITHMS;i++){
 	    hash[i]=NULL;
 	}
-	full_name = (TCHAR *)calloc(sizeof(TCHAR),PATH_MAX);
     }
-
     const class state *s;	// backpointer to my statem
-    FILE         * handle;
-    int           is_stdin;
+    FILE         *handle;		// the file we are reading
+    bool           is_stdin;		// flag if the file is stdin
 
   /* We don't want to use s->full_name, but it's required for hash.c */
     std::string    full_name;		// including path
     std::string	   file_name;		// just the file_name, apparently
     std::string	   file_name_annotation;// print after file name
-    int		   print_short_name;	// shorten full_name if necessary.
+    bool	   print_short_name;	// shorten full_name if necessary.
 
     unsigned char buffer[MD5DEEP_IDEAL_BLOCK_SIZE]; // next buffer to hash
     char         * hash[NUM_ALGORITHMS]; // the hex hashes
     uint64_t       file_size;
-    uint64_t       used;
-    std::string    known_fn;		// if we do an md5deep_is_known_hash, this is set to be the filename of the known hash
-    std::string	   dfxml_hash;	// the DFXML hash digest for the piece just hashed
+    uint64_t       used;	      // was hash used in file system?
+    std::string    known_fn;	      // if we do an md5deep_is_known_hash, this is set to be the filename of the known hash
+    std::string	   dfxml_hash;	      // the DFXML hash digest for the piece just hashed
 #ifdef _WIN32
     __time64_t    timestamp;
 #else
@@ -169,9 +167,11 @@ public:
     uint64_t        read_end;
     uint64_t        bytes_read;
     
-    class file_data_t * next;		// can be in a linked list, strangely...
+    //    class file_data_t * next;		// can be in a linked list, strangely...
 };
 
+
+/* New hashtable - by */
 
 class hashtable_entry_t {
 public:
