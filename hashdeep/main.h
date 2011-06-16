@@ -6,12 +6,9 @@
 
 #include "common.h"
 #include "md5deep_hashtable.h"
-
-#ifdef __cplusplus
 #include "xml.h"
-#else
-#define XML void
-#endif
+
+#include <map>
 
 // The default size for hashing 
 #define MD5DEEP_IDEAL_BLOCK_SIZE 8192
@@ -33,8 +30,8 @@
   * Update parse_algorithm_name in main.c and parse_hashing_algorithms
     in match.c to handle your algorithm. 
 
-  * See if you need to increase ALGORITHM_NAME_LENGTH or
-    ALGORITHM_CONTEXT_SIZE for your algorithm.
+  * See if you need to increase MAX_ALGORITHM_NAME_LENGTH or
+  MAX_ALGORITHM_CONTEXT_SIZE for your algorithm.
 
   * Update the usage function and man page to include the function     */
 
@@ -70,11 +67,13 @@ typedef enum
 
 /* When parsing algorithm names supplied by the user, they must be 
    fewer than ALGORITHM_NAME_LENGTH characters. */
-#define ALGORITHM_NAME_LENGTH  15 
+#define MAX_ALGORITHM_NAME_LENGTH  15 
 
 /* The largest number of bytes needed for a hash algorithm's context
    variable. They all get initialized to this size. */
-#define ALGORITHM_CONTEXT_SIZE 256
+#define MAX_ALGORITHM_CONTEXT_SIZE 256
+
+#define MAX_ALGORITHM_RESIDUE_SIZE 256	// in bytes
 
 /* The largest number of columns we can expect in a file of knowns.
    Normally this should be the number of hash algorithms plus a column
@@ -88,7 +87,8 @@ typedef enum
 #define MAX_KNOWN_COLUMNS  (NUM_ALGORITHMS + 6)
    
 
-/* Return codes */
+/** status_t describes what kind of match was made.
+ */
 typedef enum   {
     status_ok = 0,
 
@@ -125,26 +125,23 @@ typedef enum   {
  */
 class file_data_t {
 public:
-    file_data_t(const class state *s_):s(s_),handle(0),is_stdin(0),
+    file_data_t(const class state *s_):/* s(s_),*/handle(0),is_stdin(0),
 				       print_short_name(0),file_size(0),used(0),
 				       stat_bytes(0),stat_megs(0),actual_bytes(0),
 				       read_start(0),read_end(0),bytes_read(0) {
-	for(int i=0;i<NUM_ALGORITHMS;i++){
-	    hash[i]=NULL;
-	}
     }
-    const class state *s;	// backpointer to my statem
-    FILE         *handle;		// the file we are reading
+    //    const class state *s;
+    FILE           *handle;		// the file we are reading
     bool           is_stdin;		// flag if the file is stdin
 
   /* We don't want to use s->full_name, but it's required for hash.c */
-    std::string    full_name;		// including path
     std::string	   file_name;		// just the file_name, apparently
     std::string	   file_name_annotation;// print after file name
     bool	   print_short_name;	// shorten full_name if necessary.
 
-    unsigned char buffer[MD5DEEP_IDEAL_BLOCK_SIZE]; // next buffer to hash
-    char         * hash[NUM_ALGORITHMS]; // the hex hashes
+    unsigned char  buffer[MD5DEEP_IDEAL_BLOCK_SIZE]; // next buffer to hash
+    std::string    hash_hex[NUM_ALGORITHMS];	     // the hash in hex
+    uint8_t        hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 // the context for each hash in progress
     uint64_t       file_size;
     uint64_t       used;	      // was hash used in file system?
     std::string    known_fn;	      // if we do an md5deep_is_known_hash, this is set to be the filename of the known hash
@@ -166,12 +163,20 @@ public:
     uint64_t        read_start;
     uint64_t        read_end;
     uint64_t        bytes_read;
-    
-    //    class file_data_t * next;		// can be in a linked list, strangely...
+
+    class file_data_t * next;		// can be in a linked list, strangely...
 };
 
 
-/* New hashtable - by */
+/** The hashdict is simply a map ("dictionary") that maps a hex hash code to a file_data_t object.
+ * We also provide some methods for accessing it.
+ * Note that it maps to the object, rather than a pointer to the object.
+ * This helps resolve memory allocation issues.
+ */
+
+class hashdict_t : public std::map<std::string,file_data_t> {
+};
+
 
 class hashtable_entry_t {
 public:
@@ -189,21 +194,21 @@ typedef struct _hash_table_t {
 } hashtable_t;
 
 
-/* This structure defines what's known about a hash algorithm */
-typedef struct _algorithm_t
-{
-  char          * name;
-  uint16_t        byte_length;
-  void          * hash_context; 
+/* This class holds the information known about each hash algorithm.
+ * It's sort of like the EVP system in OpenSSL.
+ */
+class algorithm_t {
+public:
+    std::string          name;
+    uint16_t        bit_length;	// 128 for MD5
 
   int ( *f_init)(void *);
   int ( *f_update)(void *, unsigned char *, uint64_t );
   int ( *f_finalize)(void *, unsigned char *);
 
   hashtable_t   * known;	/* The set of known hashes for this algorithm */
-  unsigned char * hash_sum;	// printable
-  int             inuse;
-} algorithm_t;
+  int             inuse;		// are we using this hash algorithm?
+};
 
 
 /* Primary modes of operation  */
@@ -252,8 +257,8 @@ public:;
   uint64_t        size_threshold;
 
   /* The set of known values */
-  int             hashes_loaded;
-  algorithm_t   * hashes[NUM_ALGORITHMS];
+  bool            hashes_loaded;	// true if hash values have been loaded.
+  algorithm_t     hashes[NUM_ALGORITHMS]; // 
   uint8_t         expected_columns;
   file_data_t * known;
   file_data_t   * last;
@@ -283,9 +288,7 @@ public:;
 
     /* Legacy 'md5deep', 'sha1deep', etc. mode.  */
     bool	md5deep_mode;		// if true, then we were run as md5deep, sha1deep, etc.
-    size_t md5deep_mode_hash_length;	// in bytes
-    char  *md5deep_mode_hash_result;	// printable ASCII; md5deep_mode_hash_length*2+1 bytes long
-
+    int		md5deep_mode_algorithm;	// which algorithm number we are using
 
     XML       *dfxml;  /* output in DFXML */
     std::string	outfile;	// where output goes
@@ -404,8 +407,8 @@ int display_hash(state *s);
 // ---------------------------------------------------------------- 
 
 // md5deep_match.c
-int md5deep_load_match_file(state *s, char *fn);
-int md5deep_is_known_hash(char *h, std::string *known_fn);
+int md5deep_load_match_file(state *s, const char *fn);
+int md5deep_is_known_hash(const char *h, std::string *known_fn);
 //int was_input_not_matched(void);
 int md5deep_finalize_matching(state *s);
 
@@ -413,7 +416,7 @@ int md5deep_finalize_matching(state *s);
 void md5deep_add_hash(state *s, char *h, char *fn);
 
 // Functions for file evaluation (files.c) 
-int valid_hash(state *s, char *buf);
+int valid_hash(state *s, const char *buf);
 int hash_file_type(state *s, FILE *f);
 int find_hash_in_line(state *s, char *buf, int fileType, char *filename);
 

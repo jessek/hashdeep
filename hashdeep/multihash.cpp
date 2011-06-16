@@ -5,12 +5,10 @@
 
 void multihash_initialize(state *s)
 {
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
-    {
-      if (s->hashes[i]->inuse)
-	{	  
-	  memset(s->current_file->hash[i],0,s->hashes[i]->byte_length);
-	  s->hashes[i]->f_init(s->hashes[i]->hash_context);
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)    {
+      if (s->hashes[i].inuse)	{	  
+	  s->current_file->hash_hex[i]="";
+	  s->hashes[i].f_init(s->current_file->hash_context[i]);
 	}
     }
 }
@@ -22,10 +20,9 @@ void multihash_update(state *s, unsigned char *buf, uint64_t len)
   // passed into another structure because the SHA-1 update 
   // routine modifies it.
   for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
-    if (s->hashes[i]->inuse)
-    {
+    if (s->hashes[i].inuse)    {
       memcpy(s->current_file->buffer,buf,len);
-      s->hashes[i]->f_update(s->hashes[i]->hash_context,s->current_file->buffer,len);
+      s->hashes[i].f_update(s->current_file->hash_context[i],s->current_file->buffer,len);
     }
   }
 }
@@ -33,34 +30,25 @@ void multihash_update(state *s, unsigned char *buf, uint64_t len)
 
 /**
  * multihash_finalizes finalizes each algorithm and converts to hex.
+ * Only the hex is preserved.
  */
 void multihash_finalize(state *s)
 {
-    uint16_t j, len;
+    uint16_t j;
     static char hex[] = "0123456789abcdef";
-
-    char * result;
-
+    
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
-	if (s->hashes[i]->inuse) {
-	    s->hashes[i]->f_finalize(s->hashes[i]->hash_context,
-				     s->hashes[i]->hash_sum);
-	  
-	    len = s->hashes[i]->byte_length / 2;       
-	  
-	    // Shorthand to make the code easier to read
-	    result = s->current_file->hash[i];
+	if (s->hashes[i].inuse) {
 
-	    for (j = 0; j < len ; ++j) {
-		result[2 * j] = hex[(s->hashes[i]->hash_sum[j] >> 4) & 0xf];
-		result[2 * j + 1] = hex[s->hashes[i]->hash_sum[j] & 0xf];
-	      
+	    /* Calculate the residue and convert to hex */
+	    uint8_t residue[MAX_ALGORITHM_RESIDUE_SIZE];	// large enough to hold any hash residue
+	    s->hashes[i].f_finalize(s->current_file->hash_context[i], residue);
+	    for (j = 0; j < s->hashes[i].bit_length/8 ; j++) {
+		s->current_file->hash_hex[i].push_back(hex[(residue[j] >> 4) & 0xf]);
+		s->current_file->hash_hex[i].push_back(hex[residue[j] & 0xf]);
 	    }
-	    result[s->hashes[i]->byte_length] = 0;
 	}
     }
-
-    s->current_file->file_name = s->current_file->full_name;
 
     if (s->mode & mode_piecewise)
 	s->current_file->file_size = s->current_file->bytes_read;

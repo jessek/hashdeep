@@ -79,9 +79,9 @@ void display_filename(FILE *out, const file_data_t &fdt)
   
 #else
   if(fdt.print_short_name){
-      output_unicode(out,shorten_filename(fdt.full_name));
+      output_unicode(out,shorten_filename(fdt.file_name));
   } else {
-      output_unicode(out,fdt.full_name);
+      output_unicode(out,fdt.file_name);
   }
   if(fdt.file_name_annotation.size()>0){
       output_unicode(out,fdt.file_name_annotation);
@@ -103,8 +103,9 @@ static void display_banner(state *s)
 
   fprintf (stdout,"%ssize,",HASHDEEP_PREFIX);  
   for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
-    if (s->hashes[i]->inuse)
-      printf ("%s,", s->hashes[i]->name);
+      if (s->hashes[i].inuse){
+	  printf ("%s,", s->hashes[i].name.c_str());
+      }
   }  
   print_status("filename");
 
@@ -156,12 +157,10 @@ static void compute_dfxml(state *s,int known_hash)
 	    + string("' bytes='") + itos(bytes) + string("'>\n   ");
     }
     for(int i=0;i<NUM_ALGORITHMS;i++){
-	if(s->hashes[i]->inuse){
+	if(s->hashes[i].inuse){
 	    s->current_file->dfxml_hash += "<hashdigest type='";
-	    for(const char *cc=s->hashes[i]->name;*cc;cc++){
-		s->current_file->dfxml_hash.push_back(toupper(*cc)); // add it in uppercase
-	    }
-	    s->current_file->dfxml_hash += string("'>") + s->current_file->hash[i] + string("</hashdigest>\n");
+	    s->current_file->dfxml_hash += makeupper(s->current_file->hash_hex[i]);
+	    s->current_file->dfxml_hash += string("'>") + s->current_file->hash_hex[i] + string("</hashdigest>\n");
 	}
     }
     if(s->mode & mode_which || known_hash){
@@ -196,10 +195,9 @@ int display_hash_simple(state *s)
   else
     printf ("%"PRIu64",", s->current_file->actual_bytes);
 
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
-  {
-    if (s->hashes[i]->inuse)
-      printf("%s,", s->current_file->hash[i]);
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
+    if (s->hashes[i].inuse)
+	printf("%s,", s->current_file->hash_hex[i].c_str());
   }
   
   display_filename(stdout,s->current_file);
@@ -211,7 +209,7 @@ int display_hash_simple(state *s)
 /* The old display_match_result from md5deep */
 static int md5deep_display_match_result(state *s)
 {  
-  int known_hash = md5deep_is_known_hash(s->md5deep_mode_hash_result,&s->current_file->known_fn);
+    int known_hash = md5deep_is_known_hash(s->current_file->hash_hex[s->md5deep_mode_algorithm].c_str(),&s->current_file->known_fn);
   if ((known_hash && (s->mode & mode_match)) ||
       (!known_hash && (s->mode & mode_match_neg)))
   {
@@ -224,7 +222,7 @@ static int md5deep_display_match_result(state *s)
 
     if (s->mode & mode_display_hash)
     {
-      printf ("%s", s->md5deep_mode_hash_result);
+	printf ("%s", s->current_file->hash_hex[s->md5deep_mode_algorithm].c_str());
       if (s->mode & mode_csv)
 	printf (",");
       else
@@ -262,7 +260,7 @@ int md5deep_display_hash(state *s)
 	    compute_dfxml(s,1);
 	    return FALSE;
 	}
-	printf ("\t%s\t", s->md5deep_mode_hash_result);
+	printf ("\t%s\t", s->current_file->hash_hex[s->md5deep_mode_algorithm].c_str());
 	display_filename(stdout,s->current_file);
 	make_newline(s);
 	return FALSE;
@@ -282,7 +280,7 @@ int md5deep_display_hash(state *s)
 
   display_size(s);
 
-  printf ("%s", s->md5deep_mode_hash_result);
+  printf ("%s", s->current_file->hash_hex[s->md5deep_mode_algorithm].c_str());
 
   if (s->mode & mode_quiet)
     printf ("  ");

@@ -91,7 +91,7 @@ int audit_update(state *s)
 
   for (int i = 0 ; i < NUM_ALGORITHMS; i++)
   {
-    if (s->hashes[i]->inuse)
+    if (s->hashes[i].inuse)
     {
 	hashtable_entry_t *matches = hashtable_contains(s,(hashid_t)i);
 	hashtable_entry_t *tmp = matches;
@@ -115,7 +115,7 @@ int audit_update(state *s)
 	    // This shouldn't happen 
 	  case status_no_match:
 	    no_match = TRUE;
-	    print_error_unicode(s,s->current_file->full_name,
+	    print_error_unicode(s,s->current_file->file_name,
 				"Internal error: Got match for \"no match\"");
 	    break;
     

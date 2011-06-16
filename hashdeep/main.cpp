@@ -40,7 +40,8 @@ static void usage(state *s)
   print_status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
   print_status("     legal values are ");
   for (int i = 0 ; i < NUM_ALGORITHMS ; i++)
-      print_status("%s%s",s->hashes[i]->name,(i+1<NUM_ALGORITHMS)?",":NEWLINE);
+      print_status("%s%s",s->hashes[i].name.c_str(),
+		   (i+1<NUM_ALGORITHMS)?",":NEWLINE);
 
   print_status("-a - audit mode. Validates FILES against known hashes. Requires -k");
   print_status("-d - output in DFXML (Digital Forensics XML)");
@@ -122,42 +123,29 @@ static int
 add_algorithm(state *s, 
 	      hashid_t pos,
 	      const char *name, 
-	      uint16_t len, 
+	      uint16_t bits, 
 	      int ( *func_init)(void *),
 	      int ( *func_update)(void *, unsigned char *, uint64_t ),
 	      int ( *func_finalize)(void *, unsigned char *),
 	      int inuse)
 {
-  if (NULL == s)
-    return TRUE;
+    s->hashes[pos].name = name;
+    s->hashes[pos].known = (hashtable_t *)malloc(sizeof(hashtable_t));
+    hashtable_init(s->hashes[pos].known); 
+    
+    //s->hashes[pos]->hash_sum = (unsigned char *)malloc(len * 2);
+    //if (NULL == s->hashes[pos]->hash_sum)
+    //return TRUE;
 
-  s->hashes[pos] = (algorithm_t *)malloc(sizeof(algorithm_t));
-  if (NULL == s->hashes[pos])
-    return TRUE;
-
-  s->hashes[pos]->name = strdup(name);
-  if (NULL == s->hashes[pos]->name)
-    return TRUE;
-
-  s->hashes[pos]->known = (hashtable_t *)malloc(sizeof(hashtable_t));
-  if (NULL == s->hashes[pos]->known)
-    return TRUE;
-
-  hashtable_init(s->hashes[pos]->known); 
-
-  s->hashes[pos]->hash_sum = (unsigned char *)malloc(len * 2);
-  if (NULL == s->hashes[pos]->hash_sum)
-    return TRUE;
-
-  s->hashes[pos]->hash_context = malloc(ALGORITHM_CONTEXT_SIZE);
-  if (NULL == s->hashes[pos]->hash_context)
-    return TRUE;
+    //s->hashes[pos]->hash_context = malloc(ALGORITHM_CONTEXT_SIZE);
+    //if (NULL == s->hashes[pos]->hash_context)
+    //return TRUE;
   
-  s->hashes[pos]->f_init      = func_init;
-  s->hashes[pos]->f_update    = func_update;
-  s->hashes[pos]->f_finalize  = func_finalize;
-  s->hashes[pos]->byte_length = len;
-  s->hashes[pos]->inuse       = inuse;
+  s->hashes[pos].f_init      = func_init;
+  s->hashes[pos].f_update    = func_update;
+  s->hashes[pos].f_finalize  = func_finalize;
+  s->hashes[pos].bit_length  = bits;
+  s->hashes[pos].inuse       = inuse;
 
   return FALSE;
 }
@@ -173,7 +161,7 @@ int setup_hashing_algorithms(state *s)
   if (add_algorithm(s,
 		    alg_md5,
 		    "md5",
-		    32,
+		    128,
 		    hash_init_md5,
 		    hash_update_md5,
 		    hash_final_md5,
@@ -182,7 +170,7 @@ int setup_hashing_algorithms(state *s)
   if (add_algorithm(s,
 		    alg_sha1,
 		    "sha1",
-		    40,
+		    160,
 		    hash_init_sha1,
 		    hash_update_sha1,
 		    hash_final_sha1,
@@ -191,7 +179,7 @@ int setup_hashing_algorithms(state *s)
   if (add_algorithm(s,
 		    alg_sha256,
 		    "sha256",
-		    64,
+		    256,
 		    hash_init_sha256,
 		    hash_update_sha256,
 		    hash_final_sha256,
@@ -200,7 +188,7 @@ int setup_hashing_algorithms(state *s)
   if (add_algorithm(s,
 		    alg_tiger,
 		    "tiger",
-		    48,
+		    192,
 		    hash_init_tiger,
 		    hash_update_tiger,
 		    hash_final_tiger,
@@ -209,7 +197,7 @@ int setup_hashing_algorithms(state *s)
   if (add_algorithm(s,
 		    alg_whirlpool,
 		    "whirlpool",
-		    128,
+		    512,
 		    hash_init_whirlpool,
 		    hash_update_whirlpool, 
 		    hash_final_whirlpool,
@@ -225,27 +213,9 @@ void clear_algorithms_inuse(state *s)
   if (NULL == s)
     return;
 
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
-  { 
-    if (s->hashes[i] != NULL)
-      s->hashes[i]->inuse = FALSE;
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  { 
+      s->hashes[i].inuse = false;
   }
-}
-
-
-static int initialize_hashing_algorithms(state *s)
-{
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
-  {
-    if (NULL == s->current_file->hash[i])
-    {
-      s->current_file->hash[i] = (char *)malloc(sizeof(char) * s->hashes[i]->byte_length * 2);
-      if (NULL == s->current_file->hash[i])
-	fatal_error(s,"%s: Out of memory", __progname);
-    }
-  }
-
-  return FALSE;
 }
 
 
@@ -266,25 +236,25 @@ static int parse_hashing_algorithms(state *s, char *val)
 
   for (int i = 0 ; i < MAX_KNOWN_COLUMNS && buf[i] != NULL ; i++)  {
     if (STRINGS_CASE_EQUAL(buf[i],"md5"))
-      s->hashes[alg_md5]->inuse = TRUE;
+      s->hashes[alg_md5].inuse = TRUE;
     
     else if (STRINGS_CASE_EQUAL(buf[i],"sha1") || 
 	     STRINGS_CASE_EQUAL(buf[i],"sha-1"))
-      s->hashes[alg_sha1]->inuse = TRUE;
+      s->hashes[alg_sha1].inuse = TRUE;
     
     else if (STRINGS_CASE_EQUAL(buf[i],"sha256") || 
 	     STRINGS_CASE_EQUAL(buf[i],"sha-256"))
-      s->hashes[alg_sha256]->inuse = TRUE;
+      s->hashes[alg_sha256].inuse = TRUE;
     
     else if (STRINGS_CASE_EQUAL(buf[i],"tiger"))
-      s->hashes[alg_tiger]->inuse = TRUE;
+      s->hashes[alg_tiger].inuse = TRUE;
     
     else if (STRINGS_CASE_EQUAL(buf[i],"whirlpool"))
-      s->hashes[alg_whirlpool]->inuse = TRUE;
+      s->hashes[alg_whirlpool].inuse = TRUE;
     
     else if (STRINGS_CASE_EQUAL(buf[i],"all")) {
       for (int count = 0 ; count < NUM_ALGORITHMS ; ++count)
-	s->hashes[count]->inuse = TRUE;
+	s->hashes[count].inuse = TRUE;
       return FALSE;
     }
       
@@ -366,7 +336,7 @@ static int process_command_line(state *s, int argc, char **argv)
       switch (load_match_file(s,optarg))
 	{
 	case status_ok: 
-	  s->hashes_loaded = TRUE;
+	  s->hashes_loaded = true;
 	  break;
 	  
 	case status_contains_no_hashes:
@@ -375,7 +345,7 @@ static int process_command_line(state *s, int argc, char **argv)
 	  break;
 	  
 	case status_contains_bad_hashes:
-	  s->hashes_loaded = TRUE;
+	  s->hashes_loaded = true;
 	  print_error(s,"%s: %s: contains some bad hashes, using anyway", 
 		      __progname, optarg);
 	  break;
@@ -438,8 +408,8 @@ static int initialize_state(state *s)
   s->hash_round       = 0;
   s->primary_function = primary_compute;
   s->mode             = mode_none;
-  s->hashes_loaded    = FALSE;
-  s->banner_displayed = FALSE;
+  s->hashes_loaded    = false;
+  s->banner_displayed = false;
   s->block_size       = MD5DEEP_IDEAL_BLOCK_SIZE;
   s->size_threshold   = 0;
   s->expected_columns = 0;
@@ -499,22 +469,15 @@ int main(int argc, char **argv)
   std::string algname = progname.substr(0,progname.find("deep"));
   if(algname=="hash"){			// we are hashdeep
       process_command_line(s,argc,argv);
-      if (initialize_hashing_algorithms(s)){
-	  return EXIT_FAILURE;
-      }
   } else {
       clear_algorithms_inuse(s);
       char buf[256];
       strcpy(buf,algname.c_str());
       parse_hashing_algorithms(s,buf);
-      if (initialize_hashing_algorithms(s)){
-	  return EXIT_FAILURE;
-      }
       for(int i=0;i<NUM_ALGORITHMS;++i){
-	  if(s->hashes[i]->inuse){
+	  if(s->hashes[i].inuse){
 	      s->md5deep_mode = 1;
-	      s->md5deep_mode_hash_length = s->hashes[i]->byte_length/2; // used for parsing files of hashes
-	      s->md5deep_mode_hash_result = s->current_file->hash[i]; // where the hex hash will be
+	      s->md5deep_mode_algorithm = i;
 	      break;
 	  }
       }
@@ -540,7 +503,7 @@ int main(int argc, char **argv)
 	xreport.push("algorithms");
 	for(int i=0;i<NUM_ALGORITHMS;i++){
 	    xreport.make_indent();
-	    xreport.printf("<algorithm name='%s' enabled='%d'/>\n",s->hashes[i]->name,s->hashes[i]->inuse);
+	    xreport.printf("<algorithm name='%s' enabled='%d'/>\n",s->hashes[i].name.c_str(),s->hashes[i].inuse);
 	}
 	xreport.pop();			// algorithms
 	xreport.pop();			// configuration
@@ -709,14 +672,14 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       s->mode |= mode_match;
       md5deep_check_matching_modes(s);
       md5deep_add_hash(s,optarg,optarg);
-      s->hashes_loaded = TRUE;
+      s->hashes_loaded = true;
       break;
 
     case 'A':
       s->mode |= mode_match_neg;
       md5deep_check_matching_modes(s);
       md5deep_add_hash(s,optarg,optarg);
-      s->hashes_loaded = TRUE;
+      s->hashes_loaded = true;
       break;
 
     case 'o': 
@@ -730,7 +693,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       s->mode |= mode_match;
       md5deep_check_matching_modes(s);
       if (md5deep_load_match_file(s,optarg))
-	s->hashes_loaded = TRUE;
+	s->hashes_loaded = true;
       break;
 
     case 'X':
@@ -739,7 +702,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       s->mode |= mode_match_neg;
       md5deep_check_matching_modes(s);
       if (md5deep_load_match_file(s,optarg))
-	s->hashes_loaded = TRUE;
+	s->hashes_loaded = true;
       break;
 
     case 'c':

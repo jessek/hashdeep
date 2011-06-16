@@ -153,7 +153,7 @@ static int compute_hash(state *s)
     {
       if ( ! (s->mode & mode_silent))
 	print_error_unicode(s,
-			    s->current_file->full_name,
+			    s->current_file->file_name,
 			    "error at offset %"PRIu64": %s",
 			    ftello(s->current_file->handle),
 			    strerror(errno));
@@ -215,7 +215,7 @@ static int compute_hash(state *s)
 
 static int md5deep_hash_triage(state *s)
 {
-  memset(s->md5deep_mode_hash_result,0,(2 * s->md5deep_mode_hash_length) + 1);
+    //memset(s->md5deep_mode_hash_result,0,(2 * s->md5deep_mode_hash_length) + 1);
 
   // We use the piecewise mode to get a partial hash of the first 
   // 512 bytes of the file. But we'll have to remove piecewise mode
@@ -232,7 +232,7 @@ static int md5deep_hash_triage(state *s)
   s->mode -= mode_piecewise;
   
   multihash_finalize(s);
-  printf ("%"PRIu64"\t%s", s->current_file->stat_bytes, s->md5deep_mode_hash_result);
+  printf ("%"PRIu64"\t%s", s->current_file->stat_bytes, s->current_file->hash_hex[s->md5deep_mode_algorithm].c_str());
   
   return FALSE;
 }
@@ -268,9 +268,6 @@ static int hash(state *s)
   }
   
   while (!done)  {
-      if(s->md5deep_mode_hash_result){
-	  memset(s->md5deep_mode_hash_result,0,(2 * s->md5deep_mode_hash_length) + 1);
-      }
       multihash_initialize(s);
     
     s->current_file->read_start = s->current_file->actual_bytes;
@@ -309,7 +306,7 @@ static int hash(state *s)
 	  // didn't match any input files. Thus, we don't display anything now.
 	  // The lookup is to mark those known hashes that we do encounter
 	  if (s->mode & mode_not_matched)
-	      md5deep_is_known_hash(s->md5deep_mode_hash_result,NULL);
+	      md5deep_is_known_hash(s->current_file->hash_hex[s->md5deep_mode_algorithm].c_str(),NULL);
 	  else
 	      status = md5deep_display_hash(s);
       } else {
@@ -330,7 +327,7 @@ static int hash(state *s)
    */
   if(s->dfxml){
       s->dfxml->push("fileobject");
-      s->dfxml->xmlout("filename",s->current_file->full_name);
+      s->dfxml->xmlout("filename",s->current_file->file_name);
       s->dfxml->writexml(s->current_file->dfxml_hash);
       s->dfxml->pop();
   }
@@ -357,7 +354,7 @@ static int setup_barename(state *s, TCHAR *fn)
     return TRUE;
   }
 
-  s->current_file->full_name = basen;
+  s->current_file->file_name = basen;
   return FALSE;
 }
 
@@ -377,7 +374,7 @@ int hash_file(state *s, TCHAR *fn)
       return TRUE;
   }
   else
-    s->current_file->full_name = fn;
+    s->current_file->file_name = fn;
 
   if ((s->current_file->handle = _tfopen(fn,_TEXT("rb"))) != NULL)
   {
@@ -388,20 +385,19 @@ int hash_file(state *s, TCHAR *fn)
       s->current_file->stat_bytes = find_file_size(s->current_file->handle);
 
     // If this file is above the size threshold set by the user, skip it
-    if ((s->mode & mode_size) && (s->current_file->stat_bytes > s->size_threshold))
-    {
-      if (s->mode & mode_size_all)
-      {
-	int i;
-	for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-	{
-	  if (s->hashes[i]->inuse)
-	    memset(s->current_file->hash[i], '*', s->hashes[i]->byte_length);
+    if ((s->mode & mode_size)
+	&& (s->current_file->stat_bytes > s->size_threshold)) {
+      if (s->mode & mode_size_all)      {
+	for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)	{
+	    if (s->hashes[i].inuse){
+		s->current_file->hash_hex[i] = "";
+		for(int j=0;j<s->hashes[i].bit_length/4;j++){
+		    s->current_file->hash_hex[i].push_back('*');
+		}
+	    }
 	}
-
 	display_hash(s);
       }
-
       fclose(s->current_file->handle);
       return STATUS_OK;
     }
@@ -428,7 +424,7 @@ int hash_file(state *s, TCHAR *fn)
 
 int hash_stdin(state *s)
 {
-    s->current_file->full_name = "stdin";
+    s->current_file->file_name = "stdin";
     s->current_file->is_stdin  = TRUE;
     s->current_file->handle    = stdin;
     return hash(s);

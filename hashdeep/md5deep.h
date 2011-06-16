@@ -42,14 +42,14 @@ void hashTableInit(hashTable *knownHashes);
 
 // Adds the string n to the hashTable, along with the filename fn.
 // Returns TRUE if an error occured (i.e. Out of memory) 
-int hashTableAdd(state *s, hashTable *knownHashes, char *n, char *fn);
+int hashTableAdd(state *s, hashTable *knownHashes, const char *n, const char *fn);
 
 // Returns TRUE if the hashTable contains the hash n and stores the
 // filename of the known hash in known. Returns FALSE and does not
 // alter known if the hashTable does not contain n. This function
 // assumes that fn has already been malloc'ed to hold at least 
 // PATH_MAX characters 
-int hashTableContains(hashTable *knownHashes, char *n, std::string *known);
+int hashTableContains(hashTable *knownHashes, const char *n, std::string *known);
 
 // Find any hashes that have not been used. If there are any, and display
 // is TRUE, prints them to stdout. Regardless of display, then returns

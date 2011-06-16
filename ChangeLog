@@ -1,3 +1,13 @@
+2011-06-15  Simson Garfinkel  <simsong@msimsonnet.local>
+
+	* hashdeep/main.h (class file_data_t): removed full_name, as it is redundent with file_name
+
+	* hashdeep/multihash.cpp (multihash_update): moved hash_sum and hash_context from algorithm_t structure to file_info_t structure.
+
+	* hashdeep/main.h: removed state *s backpointer.
+	ALGORITHM_NAME_LENGTH changed to MAX_ALGORITHM_NAME_LENGTH and
+	ALGORITHM_CONTEXT_SIZE changed to MAX_ALGORITHM_CONTEXT_SIZE.
+
 2011-06-14  Simson Garfinkel  <simsong@alphonse-mucha.local.tld>
 
 	* hashdeep/main.h: changed hashname_t to hashid_t becuase it is an id number, not a name.

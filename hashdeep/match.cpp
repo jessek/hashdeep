@@ -8,10 +8,10 @@ static int match_valid_hash(state *s, hashid_t a, char *buf)
 {
   size_t pos = 0;
 
-  if (strlen(buf) != s->hashes[a]->byte_length)
+  if (strlen(buf) != s->hashes[a].bit_length/4)
     return FALSE;
   
-  for (pos = 0 ; pos < s->hashes[a]->byte_length ; pos++)
+  for (pos = 0 ; pos < s->hashes[a].bit_length/4 ; pos++)
   {
     if (!isxdigit(buf[pos]))
       return FALSE;
@@ -22,7 +22,7 @@ static int match_valid_hash(state *s, hashid_t a, char *buf)
 #define TEST_ALGORITHM(CONDITION,ALG)	  \
   if (CONDITION)			  \
     {					  \
-      s->hashes[ALG]->inuse = TRUE;	  \
+      s->hashes[ALG].inuse = TRUE;	  \
       s->hash_order[order] = ALG;	  \
       buf += strlen(buf) + 1;		  \
       pos = 0;				  \
@@ -174,8 +174,7 @@ identify_file(state *s, char *fn, FILE *handle)
   // Skip the "%%%% size," when parsing the list of hashes 
   parse_hashing_algorithms(s,fn,buf + 10);
 
-  if (s->hashes_loaded)
-  {
+  if (s->hashes_loaded)  {
       int i = 0;
     while (i < NUM_ALGORITHMS && 
 	   s->hash_order[i] == current_order[i])
@@ -329,7 +328,7 @@ status_t read_file(state *s, char *fn, FILE *handle)
 	print_error(s,
 		    "%s: %s: Invalid %s hash in line %"PRIu64,
 		    __progname, fn, 
-		        s->hashes[s->hash_order[column_number]]->name,
+		    s->hashes[s->hash_order[column_number]].name.c_str(),
 		    line_number);
 	contains_bad_lines = TRUE;
 	record_valid = FALSE;
@@ -337,7 +336,7 @@ status_t read_file(state *s, char *fn, FILE *handle)
 	break;
       }
 
-      t->hash[s->hash_order[column_number]] = strdup(buf);
+      t->hash_hex[s->hash_order[column_number]] = std::string(buf);
 
       ++column_number;
       buf += strlen(buf) + 1;
@@ -458,7 +457,7 @@ status_t display_match_result(state *s)
   should_display = (primary_match_neg == s->primary_function);
 
   for (int i = 0 ; i < NUM_ALGORITHMS; ++i)  {
-      if (s->hashes[i]->inuse)    {
+      if (s->hashes[i].inuse)    {
 	hashtable_entry_t *ret = hashtable_contains(s,(hashid_t)i);
       hashtable_entry_t *tmp = ret;
       while (tmp != NULL)

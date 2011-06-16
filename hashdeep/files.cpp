@@ -70,9 +70,9 @@ typedef struct _ENCASE_HASH_HEADER {
 "\"file_id\",\"hashset_id\",\"file_name\",\"directory\",\"hash\",\"file_size\",\"date_modified\",\"time_modified\",\"time_zone\",\"comments\",\"date_accessed\",\"time_accessed\""
 
 
-#define HASH_STRING_LENGTH   (s->md5deep_mode_hash_length * 2)
+#define HASH_STRING_LENGTH   (s->hashes[s->md5deep_mode_algorithm].bit_length/4)
 
-int valid_hash(state *s, char *buf) 
+int valid_hash(state *s, const char *buf) 
 {
   if (strlen(buf) < HASH_STRING_LENGTH) 
     return FALSE;
@@ -207,7 +207,7 @@ int find_bsd_hash(state *s, char *buf, char *fn)
    you should call find_rigid_hash(buf,fn,1,4);
 
    Note that columns start with #1, not zero. */
-int find_rigid_hash(state *s, char *buf, char *fn, 
+int find_rigid_hash(state *s, char *buf,  char *fn, 
 		      unsigned int fn_location, 
 		      unsigned int hash_location)
 {

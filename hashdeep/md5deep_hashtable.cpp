@@ -42,7 +42,7 @@ int translateChar(char c)
     
 /* Translates a hex value into it's appropriate index in the array.
    In reality, this just turns the first HASH_SIG_FIGS into decimal */
-uint64_t translate(char *n) 
+uint64_t translate(const char *n) 
 { 
   int count;
   uint64_t total = 0, power = 1;
@@ -65,7 +65,7 @@ void hashTableInit(hashTable *knownHashes)
     (*knownHashes)[count] = NULL;
 }
 
-int initialize_node(hashNode *newNode, char *nfn, char *fn)
+int initialize_node(hashNode *newNode, const char *nfn, const char *fn)
 {
   newNode->been_matched = FALSE;
   newNode->data         = strdup(nfn);
@@ -78,7 +78,7 @@ int initialize_node(hashNode *newNode, char *nfn, char *fn)
 }
 
 
-int hashTableAdd(state *s, hashTable *knownHashes, char *nfn, char *fn) 
+int hashTableAdd(state *s, hashTable *knownHashes, const char *nfn, const char *fn) 
 {
   uint64_t key = translate(nfn);
   hashNode *newNode, *temp;
@@ -129,7 +129,7 @@ int hashTableAdd(state *s, hashTable *knownHashes, char *nfn, char *fn)
  * @param n - the hash being probed.
  * @param *known  - set to be the filename if found
  */
-int hashTableContains(hashTable *knownHashes, char *n, std::string *known) 
+int hashTableContains(hashTable *knownHashes, const char *n, std::string *known) 
 {
   uint64_t key = translate(n);
   hashNode *temp;

@@ -41,7 +41,7 @@ void init_table(void)
 
 #define hash_length md5deep_mode_hash_length
 
-static int parse_encase_file(state *s, char *fn, FILE *handle)
+static int parse_encase_file(state *s, const char *fn, FILE *handle)
 {
   unsigned char buffer[64];
   char result[1024];			// must be at least s->hash_length*2
@@ -50,7 +50,7 @@ static int parse_encase_file(state *s, char *fn, FILE *handle)
   assert(s!=0);
   assert(fn!=0);
   assert(handle!=0);
-  assert(sizeof(result) >= s->hash_length*2 + 1);
+
 
   // Each hash entry is 18 bytes. 16 bytes for the hash and 
   // two \0 characters at the end. We reserve 19 characters 
@@ -113,7 +113,7 @@ static int parse_encase_file(state *s, char *fn, FILE *handle)
   return STATUS_OK;
 }
 
-int md5deep_load_match_file(state *s, char *fn) 
+int md5deep_load_match_file(state *s, const char *fn) 
 {
   uint64_t line_number = 0;
   char known_fn[PATH_MAX+1];
@@ -220,15 +220,12 @@ void md5deep_add_hash(state *s, char *h, char *fn)
 }
 
 
-int md5deep_is_known_hash(char *h, std::string *known_fn) 
+int md5deep_is_known_hash(const char *h, std::string *known_fn) 
 {
   int status;
 
   // We don't check if the known_fn parameter is NULL because
   // that's a legitimate call in hash.c under mode_not_matched
-  if (NULL == h)
-    internal_error("%s: Null values passed into is_known_hash",__progname);
-
   if (!table_initialized)
     internal_error("%s: Attempt to check hash before table was initialized",
 		   __progname);
