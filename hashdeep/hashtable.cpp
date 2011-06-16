@@ -167,13 +167,7 @@ hashtable_contains(state *s, hashid_t alg)
   file_data_t * f;
   status_t status;
 
-  if (NULL == s)
-    internal_error("%s: state is NULL in hashtable_contains", __progname);
-  
   f = s->current_file;
-  if (NULL == f)
-    internal_error("%s: current_file is in hashtable_contains", __progname);
-
   key = translate(f->hash_hex[alg]);
   t   = s->hashes[alg].known;
 

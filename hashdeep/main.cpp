@@ -130,7 +130,6 @@ add_algorithm(state *s,
 	      int inuse)
 {
     s->hashes[pos].name = name;
-    s->hashes[pos].known = (hashtable_t *)malloc(sizeof(hashtable_t));
     hashtable_init(s->hashes[pos].known); 
     
     //s->hashes[pos]->hash_sum = (unsigned char *)malloc(len * 2);
@@ -396,26 +395,6 @@ static int process_command_line(state *s, int argc, char **argv)
 }
 
 
-/* This is now the only place MD5DEEP_ALLOC is used */
-static int initialize_state(state *s) 
-{
-  if (setup_hashing_algorithms(s)) return TRUE;
-
-  s->current_file     = new file_data_t(s);
-  s->known            = NULL;
-  s->last             = NULL;
-  s->piecewise_size   = 0;
-  s->hash_round       = 0;
-  s->primary_function = primary_compute;
-  s->mode             = mode_none;
-  s->hashes_loaded    = false;
-  s->banner_displayed = false;
-  s->block_size       = MD5DEEP_IDEAL_BLOCK_SIZE;
-  s->size_threshold   = 0;
-  s->expected_columns = 0;
-
-  return FALSE;
-}
 
 
 #ifdef _WIN32
@@ -652,7 +631,6 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       }
 
       break;
-
 
     case 'Z':
       s->mode |= mode_triage;

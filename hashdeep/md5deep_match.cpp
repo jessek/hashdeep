@@ -127,17 +127,16 @@ int md5deep_load_match_file(state *s, const char *fn)
   // Otherwise, we'd erase all of the previous entries!
   init_table();
 
-  if ((f = fopen(fn,"rb")) == NULL) 
-  {
+  if ((f = fopen(fn,"rb")) == NULL) {
     print_error(s,"%s: %s", fn,strerror(errno));
     return FALSE;
   }
 
   file_type = hash_file_type(s,f);
-  if (file_type == TYPE_UNKNOWN)
-  {
+  if (file_type == TYPE_UNKNOWN)  {
     print_error(s,"%s: Unable to find any hashes in file, skipped.", fn);
     fclose(f);
+    f = 0;
     return FALSE;
   }
 
@@ -147,6 +146,7 @@ int md5deep_load_match_file(state *s, const char *fn)
     // a one-line-at-a-time approach. Encase files are binary records 
     status = parse_encase_file(s,fn,f);
     fclose(f);
+    f = 0;
     
     switch (status)
     {
@@ -187,12 +187,14 @@ int md5deep_load_match_file(state *s, const char *fn)
 	print_error(s,"%s: %s: Out of memory at line %" PRIu64 "%s",
 		    __progname, fn, line_number, NEWLINE);
 	fclose(f);
+	f = 0;
 	return FALSE;
       }
     }
   }
 
   fclose(f);
+  f = 0;
 
 #ifdef __DEBUG
   hashTableEvaluate(&knownHashes);

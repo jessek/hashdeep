@@ -116,17 +116,17 @@ static int compute_hash(state *s)
 {
   time_t current_time;
   uint64_t current_read, mysize, remaining, this_start;
-  unsigned char buffer[MD5DEEP_IDEAL_BLOCK_SIZE];
+  unsigned char buffer[file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE];
 
   // Although we need to read MD5DEEP_BLOCK_SIZE bytes before
   // we exit this function, we may not be able to do that in 
   // one read operation. Instead we read in blocks of 8192 bytes 
   // (or as needed) to get the number of bytes we need. 
 
-  if (s->block_size < MD5DEEP_IDEAL_BLOCK_SIZE)
-    mysize = s->block_size;
+  if (s->block_size < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE)
+    mysize = s->current_file->block_size;
   else
-    mysize = MD5DEEP_IDEAL_BLOCK_SIZE;
+      mysize = file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE;
 
   remaining = s->block_size;
 
@@ -136,8 +136,7 @@ static int compute_hash(state *s)
   s->current_file->read_end   = s->current_file->read_start;
   s->current_file->bytes_read = 0;
 
-  while (TRUE) 
-  {    
+  while (TRUE)   {    
     // Clear the buffer in case we hit an error and need to pad the hash 
     memset(buffer,0,mysize);
 
@@ -399,7 +398,7 @@ int hash_file(state *s, TCHAR *fn)
 	}
 	display_hash(s);
       }
-      fclose(s->current_file->handle);
+      s->current_file->close();
       return STATUS_OK;
     }
 
@@ -412,8 +411,7 @@ int hash_file(state *s, TCHAR *fn)
     }    
 
     status = hash(s);
-
-    fclose(s->current_file->handle);
+    s->current_file->close();
   }
   else
   {

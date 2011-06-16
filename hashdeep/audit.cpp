@@ -2,18 +2,10 @@
 
 #include "main.h"
 
-void setup_audit(state *s)
-{
-  s->match_exact   = 0;
-  s->match_partial = 0;
-  s->match_moved   = 0;
-  s->match_unknown = 0;
-  s->match_total   = 0;
-  s->match_expect  = 0;
-}
-
-
-int audit_status(state *s)
+/**
+ * perform an audit 
+ 
+int audit_check(state *s)
 {
   file_data_t *tmp_fdt = s->known;
 
@@ -72,29 +64,39 @@ int display_audit_results(state *s)
 }
 
 
+/**
+ * called after every file is hashed when s->primary_function==primary_audit
+ */
+
 int audit_update(state *s)
 {
-  int no_match = FALSE, exact_match = FALSE, moved = FALSE, partial = FALSE;
-  file_data_t * moved_file = NULL, * partial_file = NULL;
-  uint64_t my_round;
+    bool no_match = false;
+    bool exact_match = false;
+    bool moved = false;
+    bool partial = false;
+    file_data_t * moved_file = NULL, * partial_file = NULL;
+    uint64_t my_round;			// don't know what the round is
   
-  if (NULL == s)
-    return TRUE;
+    my_round = s->hash_round;
+    s->hash_round++;
+    if (my_round > s->hash_round){
+	fatal_error(s,"%s: Too many input files", __progname);
+    }
 
-  my_round = s->hash_round;
-  s->hash_round++;
-  if (my_round > s->hash_round)
-    fatal_error(s,"%s: Too many input files", __progname);
+    // Although nobody uses match_total right now, we may in the future 
+    //  s->match_total++;
 
-  // Although nobody uses match_total right now, we may in the future 
-  //  s->match_total++;
+    for (int i = 0 ; i < NUM_ALGORITHMS; i++) {
+	if (s->hashes[i].inuse) {
 
-  for (int i = 0 ; i < NUM_ALGORITHMS; i++)
-  {
-    if (s->hashes[i].inuse)
-    {
-	hashtable_entry_t *matches = hashtable_contains(s,(hashid_t)i);
-	hashtable_entry_t *tmp = matches;
+	   
+	    hashmap_t::const_iterator match  = s->hashes[i].known.find(s->current_file->hash_hex[i]);
+	    if(match==s->hashes[i].known.end()){
+		no_match = TRUE;
+	    }
+
+	    hashtable_entry_t *matches = hashtable_contains(s,(hashid_t)i);
+	    hashtable_entry_t *tmp = matches;
       if (NULL == tmp)
       {
 	no_match = TRUE;

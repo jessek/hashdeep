@@ -1,3 +1,11 @@
+2011-06-16  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* hashdeep/main.cpp: removed initialize_state(state *s); now it's in the state constructor.
+
+	* hashdeep/Makefile.am (hashdeep_SOURCES): removed hashtable.cpp 
+
+	* hashdeep/main.h (class file_data_t): created file_data_hasher_t to hold the actual variables needed to perform the hashing; only file_data_t is stored in the hashmap_t.
+
 2011-06-15  Simson Garfinkel  <simsong@msimsonnet.local>
 
 	* hashdeep/main.h (class file_data_t): removed full_name, as it is redundent with file_name

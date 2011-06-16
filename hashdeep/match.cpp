@@ -156,12 +156,10 @@ identify_file(state *s, char *fn, FILE *handle)
   // If this is the first file of hashes being loaded, clear out the 
   // list of known values. Otherwise, record the current values to
   // let the user know if they have changed when we load the new file.
-  if ( ! s->hashes_loaded )
-  {
+  if ( ! s->hashes_loaded )  {
     clear_algorithms_inuse(s);
   }
-  else
-  {
+  else  {
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
       current_order[i] = s->hash_order[i];
   }
@@ -202,11 +200,9 @@ static status_t add_file(state *s, file_data_t *f)
   s->last = f;
 
   int i = 1;
-  while (s->hash_order[i] != alg_unknown)
-  {
+  while (s->hash_order[i] != alg_unknown)  {
       status_t st = hashtable_add(s,s->hash_order[i],f);
-      if (st != status_ok)
-	  return st;
+      if (st != status_ok) return st;
       ++i;
   }
 
@@ -252,27 +248,21 @@ static void display_all_known_files(state *s)
 #endif
 
 
-/*
-** read a hash set file.
-*/
+/**
+ * Read a hash set file.
+ */
 
-status_t read_file(state *s, char *fn, FILE *handle)
+status_t read_hash_set_file(state *s, char *fn, FILE *handle)
 {
   status_t st = status_ok;
   int contains_bad_lines = FALSE, record_valid;
-  char * line , * buf;
+  char * buf;
 
   // We start our counter at line number two for the two lines
   // of header we've already read
   uint64_t line_number = 2;
 
-  assert(s!=0);
-  assert(fn!=0);
-  assert(handle!=0);
-
-  line = (char *)malloc(sizeof(char) * MAX_STRING_LENGTH);
-  if (NULL == line)
-    fatal_error(s,"%s: Out of memory while trying to read %s", __progname,fn);
+  char line[MAX_STRING_LENGTH];
 
   while (fgets(line,MAX_STRING_LENGTH,handle)) {
     line_number++;
@@ -291,7 +281,7 @@ status_t read_file(state *s, char *fn, FILE *handle)
     // C++ typically fails with a bad_alloc, but you can make it return null
     // http://www.cplusplus.com/reference/std/new/bad_alloc/
     // http://www.cplusplus.com/reference/std/new/nothrow/
-    file_data_t * t = new (std::nothrow) file_data_t(s); // C++ new fails with a bad_a
+    file_data_t * t = new (std::nothrow) file_data_t(); // C++ new fails with a bad_a
     if (NULL == t){
       fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
 		  __progname, fn, line_number);
@@ -380,9 +370,6 @@ status_t read_file(state *s, char *fn, FILE *handle)
     if (st != status_ok)
       return st;
   }
-
-  free(line);
-
   if (contains_bad_lines)
     return status_contains_bad_hashes;
   
@@ -409,15 +396,15 @@ status_t load_match_file(state *s, char *fn)
   if (file_unknown == type)  {
     print_error(s,"%s: %s: Unable to identify file format", __progname, fn);
     fclose(handle);
+    handle=0;
     return status_unknown_filetype;
   }
 
-  status = read_file(s,fn,handle);
+  status = read_hash_set_file(s,fn,handle);
   fclose(handle);
+  handle=0;
 
   //  display_all_known_files(s);
-
-
   return status;
 }
 
@@ -447,9 +434,7 @@ status_t display_match_result(state *s)
     int should_display; 
     uint64_t my_round;
 
-  assert(s!=NULL);
-
-  my_round = s->hash_round;
+    my_round = s->hash_round;
   s->hash_round++;
   if (my_round > s->hash_round)
       fatal_error(s,"%s: Too many input files", __progname);
@@ -500,7 +485,7 @@ status_t display_match_result(state *s)
 	tmp = tmp->next;
       }
 
-      hashtable_destroy(ret);
+      //hashtable_destroy(ret);
     }
   }
 

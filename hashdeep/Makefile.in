@@ -50,9 +50,9 @@ PROGRAMS = $(bin_PROGRAMS)
 am__objects_1 = md5.$(OBJEXT) sha1.$(OBJEXT) sha256.$(OBJEXT) \
 	tiger.$(OBJEXT) whirlpool.$(OBJEXT)
 am_hashdeep_OBJECTS = main.$(OBJEXT) audit.$(OBJEXT) match.$(OBJEXT) \
-	multihash.$(OBJEXT) display.$(OBJEXT) hashtable.$(OBJEXT) \
-	hash.$(OBJEXT) dig.$(OBJEXT) cycles.$(OBJEXT) ui.$(OBJEXT) \
-	helpers.$(OBJEXT) xml.$(OBJEXT) md5deep_match.$(OBJEXT) \
+	multihash.$(OBJEXT) display.$(OBJEXT) hash.$(OBJEXT) \
+	dig.$(OBJEXT) cycles.$(OBJEXT) ui.$(OBJEXT) helpers.$(OBJEXT) \
+	xml.$(OBJEXT) md5deep_match.$(OBJEXT) \
 	md5deep_hashtable.$(OBJEXT) files.$(OBJEXT) $(am__objects_1)
 hashdeep_OBJECTS = $(am_hashdeep_OBJECTS)
 hashdeep_LDADD = $(LDADD)
@@ -176,7 +176,7 @@ OTHERS = md5deep sha1deep sha256deep tigerdeep whirlpooldeep
 ALGS = md5.c sha1.c sha256.c tiger.c whirlpool.c \
 	md5.h sha1.h sha256.h tiger.h whirlpool.h 
 
-hashdeep_SOURCES = main.cpp audit.cpp match.cpp multihash.cpp display.cpp hashtable.cpp \
+hashdeep_SOURCES = main.cpp audit.cpp match.cpp multihash.cpp display.cpp \
 	hash.cpp dig.cpp cycles.cpp ui.cpp helpers.cpp xml.cpp 	md5deep_match.cpp \
 	md5deep_hashtable.cpp files.cpp \
 	common.h main.h md5deep.h md5deep_hashtable.h \
@@ -272,7 +272,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/display.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/files.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hashtable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/match.Po@am__quote@

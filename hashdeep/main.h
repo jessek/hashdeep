@@ -8,10 +8,20 @@
 #include "md5deep_hashtable.h"
 #include "xml.h"
 
-#include <map>
+#include "md5.h"
+#include "sha1.h"
+#include "sha256.h"
+#include "tiger.h"
+#include "whirlpool.h"
 
-// The default size for hashing 
-#define MD5DEEP_IDEAL_BLOCK_SIZE 8192
+#include <map>
+#include <vector>
+
+/* These describe the version of the file format being used, not
+ *   the version of the program.
+ */
+#define HASHDEEP_PREFIX     "%%%% "
+#define HASHDEEP_HEADER_10  "%%%% HASHDEEP-1.0"
 
 
 /* HOW TO ADD A NEW HASHING ALGORITHM
@@ -33,14 +43,8 @@
   * See if you need to increase MAX_ALGORITHM_NAME_LENGTH or
   MAX_ALGORITHM_CONTEXT_SIZE for your algorithm.
 
-  * Update the usage function and man page to include the function     */
-
-
-#include "md5.h"
-#include "sha1.h"
-#include "sha256.h"
-#include "tiger.h"
-#include "whirlpool.h"
+  * Update the usage function and man page to include the function
+  */
 
 typedef enum
 { 
@@ -64,16 +68,17 @@ typedef enum
 #define DEFAULT_ENABLE_TIGER       FALSE
 #define DEFAULT_ENABLE_WHIRLPOOL   FALSE
 
-
 /* When parsing algorithm names supplied by the user, they must be 
-   fewer than ALGORITHM_NAME_LENGTH characters. */
-#define MAX_ALGORITHM_NAME_LENGTH  15 
+ * fewer than ALGORITHM_NAME_LENGTH characters.
+ */
+//#define MAX_ALGORITHM_NAME_LENGTH  15 
 
 /* The largest number of bytes needed for a hash algorithm's context
-   variable. They all get initialized to this size. */
-#define MAX_ALGORITHM_CONTEXT_SIZE 256
+ * variable. They all get initialized to this size.
+ */
+//#define 
 
-#define MAX_ALGORITHM_RESIDUE_SIZE 256	// in bytes
+  //#define MAX_ALGORITHM_RESIDUE_SIZE 256	// in bytes
 
 /* The largest number of columns we can expect in a file of knowns.
    Normally this should be the number of hash algorithms plus a column
@@ -84,6 +89,7 @@ typedef enum
    hashdeep -c md5,md5,md5,md5,...,md5,md5,md5,md5,md5,md5,md5,whirlpool
 
    the whirlpool will not be registered. */
+
 #define MAX_KNOWN_COLUMNS  (NUM_ALGORITHMS + 6)
    
 
@@ -114,38 +120,22 @@ typedef enum   {
 } status_t;
 
 
-/* These describe the version of the file format being used, not
- *   the version of the program.
- */
-#define HASHDEEP_PREFIX     "%%%% "
-#define HASHDEEP_HEADER_10  "%%%% HASHDEEP-1.0"
-
-
 /** file_data_t contains information about a file 
  * after it has been hashed.
  */
 class file_data_t {
 public:
-    file_data_t(const class state *s_):/* s(s_),*/handle(0),is_stdin(0),
-				       file_size(0),used(0),
-				       stat_bytes(0),stat_megs(0),actual_bytes(0),
-				       read_start(0),read_end(0),bytes_read(0) {
-    }
-    FILE           *handle;		// the file we are reading
-    bool           is_stdin;		// flag if the file is stdin
-
+    file_data_t():file_size(0),used(0), stat_bytes(0),stat_megs(0),actual_bytes(0) {
+    };
     /* We don't want to use s->full_name, but it's required for hash.c */
     std::string	   file_name;		// just the file_name, apparently
     std::string	   file_name_annotation;// print after file name
-    //bool	   print_short_name;	// shorten full_name if necessary.
 
-    unsigned char  buffer[MD5DEEP_IDEAL_BLOCK_SIZE]; // next buffer to hash
-    std::string    hash_hex[NUM_ALGORITHMS];	     // the hash in hex
-    uint8_t        hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 // the context for each hash in progress
+    std::string    hash_hex[NUM_ALGORITHMS];	     // the hash in hex of the entire file
+    std::string	   hash512_hex[NUM_ALGORITHMS];	     // hash of the first 512 bytes, for partial matching
     uint64_t       file_size;
     uint64_t       used;	      // was hash used in file system?
     std::string    known_fn;	      // if we do an md5deep_is_known_hash, this is set to be the filename of the known hash
-    std::string	   dfxml_hash;	      // the DFXML hash digest for the piece just hashed
 #ifdef _WIN32
     __time64_t    timestamp;
 #else
@@ -158,12 +148,6 @@ public:
     uint64_t        stat_megs;
     uint64_t        actual_bytes;
 
-    // Where the last read operation started and ended
-    // bytes_read is a shorthand for read_end - read_start
-    uint64_t        read_start;
-    uint64_t        read_end;
-    uint64_t        bytes_read;
-
     class file_data_t * next;		// can be in a linked list, strangely...
 };
 
@@ -173,6 +157,37 @@ public:
  * where it keeps the information that has been hashed.
  */
 class file_data_hasher_t : public file_data_t {
+public:
+    static const size_t MD5DEEP_IDEAL_BLOCK_SIZE = 8192;
+    static const size_t MAX_ALGORITHM_CONTEXT_SIZE = 256;
+    static const size_t MAX_ALGORITHM_RESIDUE_SIZE = 256;
+    file_data_hasher_t():handle(0),is_stdin(0),read_start(0),read_end(0),bytes_read(0),
+			 block_size(MD5DEEP_IDEAL_BLOCK_SIZE){
+    };
+    ~file_data_hasher_t(){
+	if(handle) fclose(handle);	// make sure that it' closed.
+    }
+    void close(){
+	if(handle){
+	    fclose(handle);
+	    handle = 0;
+	}
+    }
+
+    FILE           *handle;		// the file we are reading
+    bool           is_stdin;		// flag if the file is stdin
+    unsigned char  buffer[MD5DEEP_IDEAL_BLOCK_SIZE]; // next buffer to hash
+    uint8_t        hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 // the context for each hash in progress
+    std::string	   dfxml_hash;	      // the DFXML hash digest for the piece just hashed
+
+    // Where the last read operation started and ended
+    // bytes_read is a shorthand for read_end - read_start
+    uint64_t        read_start;
+    uint64_t        read_end;
+    uint64_t        bytes_read;
+
+    /* Size of blocks used in normal hashing */
+    uint64_t        block_size;
 };
 
 
@@ -188,6 +203,7 @@ class hashmap_t : public std::map<std::string,file_data_t> {
 };
 
 
+#if 0
 /* legacy hashtable entries; no longer moved */
 class hashtable_entry_t {
 public:
@@ -203,6 +219,7 @@ public:
 typedef struct _hash_table_t {
   hashtable_entry_t * member[HASH_TABLE_SIZE];
 } hashtable_t;
+#endif
 
 
 /* This class holds the information known about each hash algorithm.
@@ -210,15 +227,14 @@ typedef struct _hash_table_t {
  */
 class algorithm_t {
 public:
-    std::string          name;
-    uint16_t        bit_length;	// 128 for MD5
+    bool		inuse;		// are we using this hash algorithm?
+    std::string		name;
+    uint16_t		bit_length;	// 128 for MD5
+    hashmap_t		known;	/* The set of known hashes for this algorithm */
 
-  int ( *f_init)(void *);
-  int ( *f_update)(void *, unsigned char *, uint64_t );
-  int ( *f_finalize)(void *, unsigned char *);
-
-  hashtable_t   * known;	/* The set of known hashes for this algorithm */
-  int             inuse;		// are we using this hash algorithm?
+    int ( *f_init)(void *);
+    int ( *f_update)(void *, unsigned char *, uint64_t );
+    int ( *f_finalize)(void *, unsigned char *);
 };
 
 
@@ -244,59 +260,78 @@ typedef enum  {
 #define TYPE_ENCASE       9
 #define TYPE_UNKNOWN    254
 
+/* audit mode stats */
+class audit_stats {
+public:
+    audit_stats():exact(0), expect(0), partial(0), moved(0), unused(0), unknown(0), total(0){
+    };
+    /* For audit mode, the number of each type of file */
+    uint64_t	exact, expect, partial; // 
+    uint64_t	moved, unused, unknown, total; // 
+};
+
 class state {
 public:;
-  /* Basic Program State */
-  primary_t       primary_function;
-  uint64_t        mode;
-  time_t          start_time, last_time;
+    state():primary_function(primary_compute),mode(mode_none),
+	    start_time(0),last_time(0),argc(0),argv(0),
+	    input_list(0),current_file(0),expected_hashes(0),
+	    size_threshold(0),hashes_loaded(false),expected_columns(0),
+	    known(0),last(0),hash_round(0),h_plain(0),h_bsd(0),h_md5deep_size(0),
+	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
+	    h_nsrl20(0), h_encase(0),banner_displayed(false),
+	    piecewise_size(0),
+	    dfxml(0) {
+	current_file = new file_data_hasher_t();
+    };
 
-  /* Command line arguments */
-  int             argc;
-  TCHAR        ** argv;			// never allocated, never freed
-  char          * input_list;
-  TCHAR           cwd[PATH_MAX+1];
+    /* Basic Program State */
+    primary_t       primary_function;
+    uint64_t        mode;
+    time_t          start_time, last_time;
 
-  /* The file currently being hashed */
-  file_data_t   * current_file;
+    /* Command line arguments */
+    int             argc;
+    TCHAR        ** argv;			// never allocated, never freed
+    char          * input_list;
+    std::string     cwd;
 
-  // Lists of known hashes 
-  hashTable     known_hashes;
-  uint32_t      expected_hashes;
+    /* The file currently being hashed */
+    file_data_hasher_t   * current_file;
 
-  // When only hashing files larger/smaller than a given threshold
-  uint64_t        size_threshold;
+    // Lists of known hashes 
+    hashTable     known_hashes;
+    uint32_t      expected_hashes;
 
-  /* The set of known values */
-  bool            hashes_loaded;	// true if hash values have been loaded.
-  algorithm_t     hashes[NUM_ALGORITHMS]; // 
-  uint8_t         expected_columns;
-  file_data_t   * known;
-  file_data_t   * last;
-  uint64_t        hash_round;
-  hashid_t      hash_order[NUM_ALGORITHMS];
+    // When only hashing files larger/smaller than a given threshold
+    uint64_t        size_threshold;
 
-  // Hashing algorithms 
-  // We don't define hash_string_length, it's just twice this length. 
-  // We use a signed value as this gets compared with the output of strlen() */
+    /* The set of known values */
+    bool            hashes_loaded;	// true if hash values have been loaded.
+    algorithm_t     hashes[NUM_ALGORITHMS]; // 
+    uint8_t         expected_columns;
+    
+    vector<file_data_t *>seen;		// list of hashes that have been seen.
+    //file_data_t   * known;
+    //file_data_t   * last;
+    uint64_t        hash_round;
+    hashid_t        hash_order[NUM_ALGORITHMS];
+
+    // Hashing algorithms 
+    // We don't define hash_string_length, it's just twice this length. 
+    // We use a signed value as this gets compared with the output of strlen() */
+
+    // Which filetypes this algorithm supports and their position in the file
+    uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
+    uint8_t      h_ilook, h_ilook3, h_ilook4, h_nsrl15, h_nsrl20, h_encase;
+
+    bool             banner_displayed;
 
 
-  // Which filetypes this algorithm supports and their position in the file
-  uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
-  uint8_t      h_ilook, h_ilook3, h_ilook4, h_nsrl15, h_nsrl20, h_encase;
+    /* Size of blocks used in piecewise hashing */
+    uint64_t        piecewise_size;
 
-  int             banner_displayed;
-
-  /* Size of blocks used in normal hashing */
-  uint64_t        block_size;
-
-  /* Size of blocks used in piecewise hashing */
-  uint64_t        piecewise_size;
+    class audit_stats match;		// for the audit mode
   
-  /* For audit mode, the number of each type of file */
-  uint64_t        match_exact, match_expect,
-      match_partial, match_moved, match_unused, match_unknown, match_total;
-
     /* Legacy 'md5deep', 'sha1deep', etc. mode.  */
     bool	md5deep_mode;		// if true, then we were run as md5deep, sha1deep, etc.
     int		md5deep_mode_algorithm;	// which algorithm number we are using
@@ -309,10 +344,12 @@ public:;
 void clear_algorithms_inuse(state *s);
 
 /* HASH TABLE */
+#if 0
 void hashtable_init(hashtable_t *t);
 status_t hashtable_add(state *s, hashid_t alg, file_data_t *f);
 hashtable_entry_t * hashtable_contains(state *s, hashid_t alg);
 void hashtable_destroy(hashtable_entry_t *e);
+#endif
 
 /* MULTIHASHING */
 void multihash_initialize(state *s);
@@ -330,7 +367,7 @@ int display_hash_simple(state *s);
 /* AUDIT MODE */
 
 void setup_audit(state *s);
-int audit_status(state *s);
+int audit_check(state *s);		// performs an audit; return 0 if pass, -1 if fail
 int display_audit_results(state *s);
 int audit_update(state *s);
 
