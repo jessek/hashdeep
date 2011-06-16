@@ -221,7 +221,7 @@ static void display_file_data(state *s, file_data_t * t)
   int i;
 
   fprintf(stdout,"  Filename: ");
-  display_filename(stdout,t);
+  display_filename(stdout,t,false);
   fprintf(stdout,"%s",NEWLINE);
 
   print_status("      Size: %"PRIu64, t->file_size);
@@ -479,9 +479,9 @@ status_t display_match_result(state *s)
 	  if (tmp->data->used != s->hash_round)
 	  {
 	    tmp->data->used = s->hash_round;
-	    display_filename(stderr,s->current_file);
+	    display_filename(stderr,s->current_file,false);
 	    fprintf(stderr,": Hash collision with ");
-	    display_filename(stderr,tmp->data);
+	    display_filename(stderr,tmp->data,false);
 	    fprintf(stderr,"%s", NEWLINE);
 
 	    // Technically this wasn't a match, so we're still ok
@@ -510,14 +510,14 @@ status_t display_match_result(state *s)
       display_hash_simple(s);
     else
     {
-      display_filename(stdout,s->current_file);
+	display_filename(stdout,s->current_file,false);
       if (s->mode & mode_which && primary_match == s->primary_function)
       {
 	fprintf(stdout," matches ");
 	if (NULL == matched_fdt)
 	  fprintf(stdout,"(unknown file)");
 	else
-	  display_filename(stdout,matched_fdt);
+	    display_filename(stdout,matched_fdt,false);
       }
       print_status("");
     }

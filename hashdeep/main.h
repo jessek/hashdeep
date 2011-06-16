@@ -121,23 +121,23 @@ typedef enum   {
 #define HASHDEEP_HEADER_10  "%%%% HASHDEEP-1.0"
 
 
-/** This class describes the file being hashed.
+/** file_data_t contains information about a file 
+ * after it has been hashed.
  */
 class file_data_t {
 public:
     file_data_t(const class state *s_):/* s(s_),*/handle(0),is_stdin(0),
-				       print_short_name(0),file_size(0),used(0),
+				       file_size(0),used(0),
 				       stat_bytes(0),stat_megs(0),actual_bytes(0),
 				       read_start(0),read_end(0),bytes_read(0) {
     }
-    //    const class state *s;
     FILE           *handle;		// the file we are reading
     bool           is_stdin;		// flag if the file is stdin
 
-  /* We don't want to use s->full_name, but it's required for hash.c */
+    /* We don't want to use s->full_name, but it's required for hash.c */
     std::string	   file_name;		// just the file_name, apparently
     std::string	   file_name_annotation;// print after file name
-    bool	   print_short_name;	// shorten full_name if necessary.
+    //bool	   print_short_name;	// shorten full_name if necessary.
 
     unsigned char  buffer[MD5DEEP_IDEAL_BLOCK_SIZE]; // next buffer to hash
     std::string    hash_hex[NUM_ALGORITHMS];	     // the hash in hex
@@ -168,16 +168,27 @@ public:
 };
 
 
-/** The hashdict is simply a map ("dictionary") that maps a hex hash code to a file_data_t object.
- * We also provide some methods for accessing it.
- * Note that it maps to the object, rather than a pointer to the object.
- * This helps resolve memory allocation issues.
+/** file_data_hasher_t contains information about a file
+ * being hashed. It is a subclass of file_data_t, which is
+ * where it keeps the information that has been hashed.
  */
-
-class hashdict_t : public std::map<std::string,file_data_t> {
+class file_data_hasher_t : public file_data_t {
 };
 
 
+
+/** The hashmap is simply a map ("dictionary") that maps a hex hash
+ * code to a file_data_t object.  We also provide some methods for
+ * accessing it.  Note that it maps to the object, rather than a
+ * pointer to the object.  This helps resolve memory allocation
+ * issues.
+ */
+
+class hashmap_t : public std::map<std::string,file_data_t> {
+};
+
+
+/* legacy hashtable entries; no longer moved */
 class hashtable_entry_t {
 public:
   status_t           status; 
@@ -260,7 +271,7 @@ public:;
   bool            hashes_loaded;	// true if hash values have been loaded.
   algorithm_t     hashes[NUM_ALGORITHMS]; // 
   uint8_t         expected_columns;
-  file_data_t * known;
+  file_data_t   * known;
   file_data_t   * last;
   uint64_t        hash_round;
   hashid_t      hash_order[NUM_ALGORITHMS];
@@ -371,8 +382,10 @@ int md5deep_process_command_line(state *s, int argc, char **argv);
 /* display.cpp */
 std::string itos(uint64_t i);
 void output_unicode(FILE *out,const std::string &ucs);
-void display_filename(FILE *out, const file_data_t &fdt);
-void display_filename(FILE *out, const file_data_t *fdt); // calls one above
+void display_filename(FILE *out, const file_data_t &fdt,bool shorten);
+inline void display_filename(FILE *out, const file_data_t *fdt,bool shorten){
+    display_filename(out,*fdt,shorten);
+};
 
 
 /* ui.c */

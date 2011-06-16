@@ -31,7 +31,7 @@ static void dump_table(void)
   printf ("\nTable contents:\n");
   while (t != NULL)
   {
-    display_filename(stdout,t->name);
+    display_filename(stdout,t->name,true);
     printf ("\n");
     t = t->next;
   }

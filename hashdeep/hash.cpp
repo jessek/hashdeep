@@ -27,6 +27,7 @@ using namespace std;
 static void update_display(state *s, time_t elapsed)
 {
   uint64_t hour, min, seconds, mb_read;
+  bool shorten = false;
 
   // If we've read less than one MB, then the computed value for mb_read 
   // will be zero. Later on we may need to divide the total file size, 
@@ -37,7 +38,7 @@ static void update_display(state *s, time_t elapsed)
     mb_read = s->current_file->actual_bytes / ONE_MEGABYTE;
   
   if (s->current_file->stat_megs==0)  {
-      s->current_file->print_short_name = 1;
+      shorten = true;
       char msg[64];
       snprintf(msg,sizeof(msg)-1,"%"PRIu64"MB done. Unable to estimate remaining time.%s",
 	       mb_read,BLANK_LINE);
@@ -63,7 +64,7 @@ static void update_display(state *s, time_t elapsed)
     min = seconds/60;
     seconds -= min * 60;
 
-      s->current_file->print_short_name = 1;
+    shorten = 1;
       char msg[64];
     snprintf(msg,sizeof(msg)-1,
 	       "%"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s",
@@ -77,7 +78,7 @@ static void update_display(state *s, time_t elapsed)
   }
 
   fprintf(stderr,"\r");
-  display_filename(stderr,s->current_file);
+  display_filename(stderr,s->current_file,shorten);
 }
 
 
@@ -405,7 +406,9 @@ int hash_file(state *s, TCHAR *fn)
 
     if (s->mode & mode_estimate)    {
       s->current_file->stat_megs = s->current_file->stat_bytes / ONE_MEGABYTE;
-      s->current_file->print_short_name=1;
+
+      /* TK - deal with this */
+      //shorten = true;
     }    
 
     status = hash(s);

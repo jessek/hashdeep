@@ -25,7 +25,7 @@ int audit_status(state *s)
     {
       s->match_unused++;
       if (s->mode & mode_more_verbose) {
-	display_filename(stdout,tmp_fdt);
+	  display_filename(stdout,tmp_fdt,false);
 	print_status(": Known file not used");
       }
     }
@@ -156,7 +156,7 @@ int audit_update(state *s)
     s->match_exact++;
     if (s->mode & mode_insanely_verbose)
     {
-	display_filename(stdout,s->current_file);
+	display_filename(stdout,s->current_file,false);
       print_status(": Ok");
     }
   }
@@ -166,7 +166,7 @@ int audit_update(state *s)
     s->match_unknown++;
     if (s->mode & mode_more_verbose)
     {
-      display_filename(stdout,s->current_file);
+	display_filename(stdout,s->current_file,false);
       print_status(": No match");
     }
   } 
@@ -176,9 +176,9 @@ int audit_update(state *s)
     s->match_moved++;
     if (s->mode & mode_more_verbose)
     {
-	display_filename(stdout,s->current_file);
+	display_filename(stdout,s->current_file,false);
 	fprintf(stdout,": Moved from ");
-	display_filename(stdout,moved_file);
+	display_filename(stdout,moved_file,false);
 	print_status("");
     }
 
@@ -195,9 +195,9 @@ int audit_update(state *s)
     // event that we print it no matter what. 
     if (!exact_match && !moved && !no_match)
       s->match_partial++;
-    display_filename(stdout,s->current_file);
+    display_filename(stdout,s->current_file,false);
     fprintf(stdout,": Hash collision with ");
-    display_filename(stdout,partial_file);
+    display_filename(stdout,partial_file,false);
     print_status("");
   }
   

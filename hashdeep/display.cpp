@@ -60,7 +60,7 @@ void output_unicode(FILE *out,const std::string &utf8)
 /* By default, we display in UTF-8.
  * We escape UTF-8 if requested.
  */
-void display_filename(FILE *out, const file_data_t &fdt)
+void display_filename(FILE *out, const file_data_t &fdt, bool shorten)
 {
 #if 0
     /* old windows code */
@@ -78,7 +78,7 @@ void display_filename(FILE *out, const file_data_t &fdt)
   }
   
 #else
-  if(fdt.print_short_name){
+  if(shorten){
       output_unicode(out,shorten_filename(fdt.file_name));
   } else {
       output_unicode(out,fdt.file_name);
@@ -87,10 +87,6 @@ void display_filename(FILE *out, const file_data_t &fdt)
       output_unicode(out,fdt.file_name_annotation);
   }
 #endif
-}
-void display_filename(FILE *out, const file_data_t *fdt)
-{
-    display_filename(out,*fdt);
 }
 
 
@@ -200,7 +196,7 @@ int display_hash_simple(state *s)
 	printf("%s,", s->current_file->hash_hex[i].c_str());
   }
   
-  display_filename(stdout,s->current_file);
+  display_filename(stdout,s->current_file,false);
   fprintf(stdout,"%s",NEWLINE);
 
   return FALSE;
@@ -233,18 +229,18 @@ static int md5deep_display_match_result(state *s)
     {
       if (known_hash && (s->mode & mode_match))
       {
-	display_filename(stdout,s->current_file);
+	  display_filename(stdout,s->current_file,false);
 	printf (" matched ");
 	output_unicode(stdout,s->current_file->known_fn);
       }
       else
       {
-	display_filename(stdout,s->current_file);
+	  display_filename(stdout,s->current_file,false);
 	printf (" does NOT match");
       }
     }
     else
-      display_filename(stdout,s->current_file);
+	display_filename(stdout,s->current_file,false);
 
     make_newline(s);
   }
@@ -261,7 +257,7 @@ int md5deep_display_hash(state *s)
 	    return FALSE;
 	}
 	printf ("\t%s\t", s->current_file->hash_hex[s->md5deep_mode_algorithm].c_str());
-	display_filename(stdout,s->current_file);
+	display_filename(stdout,s->current_file,false);
 	make_newline(s);
 	return FALSE;
     }
@@ -306,7 +302,7 @@ int md5deep_display_hash(state *s)
       else
 	printf(" %c", display_asterisk(s));      
 
-      display_filename(stdout,s->current_file);
+      display_filename(stdout,s->current_file,false);
     }
   }
 
