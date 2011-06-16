@@ -348,6 +348,7 @@ void     generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
 uint64_t find_block_size(state *s, char *input_str);
 void     chop_line(char *s);
 void     shift_string(char *fn, size_t start, size_t new_start);
+void     check_wow64(state *s);
 
 // Works like dirname(3), but accepts a TCHAR* instead of char*
 int my_dirname(TCHAR *c);
