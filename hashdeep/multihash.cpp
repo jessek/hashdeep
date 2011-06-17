@@ -41,7 +41,7 @@ void multihash_finalize(state *s)
 	if (s->hashes[i].inuse) {
 
 	    /* Calculate the residue and convert to hex */
-	    uint8_t residue[MAX_ALGORITHM_RESIDUE_SIZE];	// large enough to hold any hash residue
+	    uint8_t residue[file_data_hasher_t::MAX_ALGORITHM_RESIDUE_SIZE];
 	    s->hashes[i].f_finalize(s->current_file->hash_context[i], residue);
 	    for (j = 0; j < s->hashes[i].bit_length/8 ; j++) {
 		s->current_file->hash_hex[i].push_back(hex[(residue[j] >> 4) & 0xf]);

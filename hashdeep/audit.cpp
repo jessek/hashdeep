@@ -2,65 +2,61 @@
 
 #include "main.h"
 
+uint64_t hashlist_t::count_unused(state *s)
+{
+    uint64_t count=0;
+    for(std::vector<file_data_t *>::const_iterator i = this->begin(); i != this->end(); i++){
+	if((*i)->used==0){
+	    count++;
+	    if (s->mode & mode_more_verbose) {
+		display_filename(stdout,*i,false);
+		print_status(": Known file not used");
+	    }
+	}
+    }
+    return count;
+}
+
 /**
- * perform an audit 
+ * perform an audit
+ */
  
+
 int audit_check(state *s)
 {
-  file_data_t *tmp_fdt = s->known;
-
-  s->match_unused = 0;
-
-  while (tmp_fdt != NULL)
-  {
-    if (0 == tmp_fdt->used)
-    {
-      s->match_unused++;
-      if (s->mode & mode_more_verbose) {
-	  display_filename(stdout,tmp_fdt,false);
-	print_status(": Known file not used");
-      }
-    }
-    tmp_fdt = tmp_fdt->next;
-  }
-    
-  return (0 == s->match_unused  && 
-	  0 == s->match_unknown && 
-	  0 == s->match_moved);
+    /* Count the number of unused */
+    s->match.unused = s->known.count_unused(s);
+    return (0 == s->match.unused  && 
+	    0 == s->match.unknown && 
+	    0 == s->match.moved);
 }
 
 
 int display_audit_results(state *s)
 {
-  int status = EXIT_SUCCESS;
-
-  if (NULL == s)
-    return EXIT_FAILURE;
-  
-  if (!audit_status(s))
-    {
-      print_status("%s: Audit failed", __progname);
-      status = EXIT_FAILURE;
+    int status = EXIT_SUCCESS;
+    
+    if (audit_check(s)==0) {
+	print_status("%s: Audit failed", __progname);
+	status = EXIT_FAILURE;
     }
-  else
-    print_status("%s: Audit passed", __progname);
-  
-  if (s->mode & mode_verbose)
-    {
-      /*
-      print_status("   Input files examined: %"PRIu64, s->match_total);
-      print_status("  Known files expecting: %"PRIu64, s->match_expect);
-      print_status(" ");
-      */
-      print_status("          Files matched: %"PRIu64, s->match_exact);
-      print_status("Files partially matched: %"PRIu64, s->match_partial);
-      print_status("            Files moved: %"PRIu64, s->match_moved);
-      print_status("        New files found: %"PRIu64, s->match_unknown);
-      print_status("  Known files not found: %"PRIu64, s->match_unused);
-
+    else {
+	print_status("%s: Audit passed", __progname);
     }
   
-  return status;
+    if (s->mode & mode_verbose)    {
+	/*
+	  print_status("   Input files examined: %"PRIu64, s->match_total);
+	  print_status("  Known files expecting: %"PRIu64, s->match_expect);
+	  print_status(" ");
+	*/
+	print_status("          Files matched: %"PRIu64, s->match.exact);
+	print_status("Files partially matched: %"PRIu64, s->match.partial);
+	print_status("            Files moved: %"PRIu64, s->match.moved);
+	print_status("        New files found: %"PRIu64, s->match.unknown);
+	print_status("  Known files not found: %"PRIu64, s->match.unused);
+    }
+    return status;
 }
 
 
@@ -70,6 +66,7 @@ int display_audit_results(state *s)
 
 int audit_update(state *s)
 {
+#if 0
     bool no_match = false;
     bool exact_match = false;
     bool moved = false;
@@ -79,17 +76,17 @@ int audit_update(state *s)
   
     my_round = s->hash_round;
     s->hash_round++;
-    if (my_round > s->hash_round){
+    if (my_round > s->hash_round){	// wonder what this is for???
 	fatal_error(s,"%s: Too many input files", __progname);
     }
 
     // Although nobody uses match_total right now, we may in the future 
     //  s->match_total++;
 
+    // Check all of the algorithms.
     for (int i = 0 ; i < NUM_ALGORITHMS; i++) {
 	if (s->hashes[i].inuse) {
-
-	   
+	    
 	    hashmap_t::const_iterator match  = s->hashes[i].known.find(s->current_file->hash_hex[i]);
 	    if(match==s->hashes[i].known.end()){
 		no_match = TRUE;
@@ -146,7 +143,7 @@ int audit_update(state *s)
       }
       hashtable_destroy(matches);
     }
-  }
+    }
 
   // If there was an exact match, that overrides any other matching
   // 'moved' file. Usually this happens when the same file exists
@@ -203,5 +200,6 @@ int audit_update(state *s)
     print_status("");
   }
   
+#endif
   return FALSE;
 }

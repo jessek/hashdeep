@@ -96,8 +96,6 @@ static void md5deep_usage(void)
 }
 
 
-
-
 static void check_flags_okay(state *s)
 {
   sanity_check(s,
@@ -119,8 +117,7 @@ static void check_flags_okay(state *s)
 /**
  * Add a hash algorithm. This could be table driven, but it isn't.
  */
-static int 
-add_algorithm(state *s, 
+void state::add_algorithm(
 	      hashid_t pos,
 	      const char *name, 
 	      uint16_t bits, 
@@ -129,81 +126,62 @@ add_algorithm(state *s,
 	      int ( *func_finalize)(void *, unsigned char *),
 	      int inuse)
 {
-    s->hashes[pos].name = name;
-    hashtable_init(s->hashes[pos].known); 
-    
-    //s->hashes[pos]->hash_sum = (unsigned char *)malloc(len * 2);
-    //if (NULL == s->hashes[pos]->hash_sum)
-    //return TRUE;
-
-    //s->hashes[pos]->hash_context = malloc(ALGORITHM_CONTEXT_SIZE);
-    //if (NULL == s->hashes[pos]->hash_context)
-    //return TRUE;
-  
-  s->hashes[pos].f_init      = func_init;
-  s->hashes[pos].f_update    = func_update;
-  s->hashes[pos].f_finalize  = func_finalize;
-  s->hashes[pos].bit_length  = bits;
-  s->hashes[pos].inuse       = inuse;
-
-  return FALSE;
+    hashes[pos].name = name;
+    hashes[pos].known.alg_num = pos;
+    hashes[pos].f_init      = func_init;
+    hashes[pos].f_update    = func_update;
+    hashes[pos].f_finalize  = func_finalize;
+    hashes[pos].bit_length  = bits;
+    hashes[pos].inuse       = inuse;
 }
 
 
-int setup_hashing_algorithms(state *s)
+/*
+ * Load the hashing algorithms array.
+ */
+void state::load_hashing_algorithms()
 {
-  if (NULL == s)
-    return TRUE;
-
   /* The DEFAULT_ENABLE variables are in main.h */
-
-  if (add_algorithm(s,
-		    alg_md5,
-		    "md5",
-		    128,
-		    hash_init_md5,
-		    hash_update_md5,
-		    hash_final_md5,
-		    DEFAULT_ENABLE_MD5))
-    return TRUE;
-  if (add_algorithm(s,
+    add_algorithm(
+		  alg_md5,
+		  "md5",
+		  128,
+		  hash_init_md5,
+		  hash_update_md5,
+		  hash_final_md5,
+		  DEFAULT_ENABLE_MD5);
+    add_algorithm(
 		    alg_sha1,
 		    "sha1",
 		    160,
 		    hash_init_sha1,
 		    hash_update_sha1,
 		    hash_final_sha1,
-		    DEFAULT_ENABLE_SHA1))
-    return TRUE;
-  if (add_algorithm(s,
+		    DEFAULT_ENABLE_SHA1);
+    add_algorithm(
 		    alg_sha256,
 		    "sha256",
 		    256,
 		    hash_init_sha256,
 		    hash_update_sha256,
 		    hash_final_sha256,
-		    DEFAULT_ENABLE_SHA256))
-    return TRUE;
-  if (add_algorithm(s,
+		    DEFAULT_ENABLE_SHA256);
+    add_algorithm(
 		    alg_tiger,
 		    "tiger",
 		    192,
 		    hash_init_tiger,
 		    hash_update_tiger,
 		    hash_final_tiger,
-		    DEFAULT_ENABLE_TIGER))
-    return TRUE;
-  if (add_algorithm(s,
+		    DEFAULT_ENABLE_TIGER);
+    add_algorithm(
 		    alg_whirlpool,
 		    "whirlpool",
 		    512,
 		    hash_init_whirlpool,
 		    hash_update_whirlpool, 
 		    hash_final_whirlpool,
-		    DEFAULT_ENABLE_WHIRLPOOL))
-    return TRUE;
-
-  return FALSE;
+		    DEFAULT_ENABLE_WHIRLPOOL);
 }
 
 
@@ -224,9 +202,6 @@ void clear_algorithms_inuse(state *s)
 static int parse_hashing_algorithms(state *s, char *val)
 {
     char *buf[MAX_KNOWN_COLUMNS];
-
-  if (NULL == s || NULL == val)
-    return TRUE;
 
   for (char **ap = buf ; (*ap = strsep(&val,",")) != NULL ; )
     if (*ap != '\0')
@@ -332,8 +307,7 @@ static int process_command_line(state *s, int argc, char **argv)
     case 'w': s->mode |= mode_which;        break;
       
     case 'k':
-      switch (load_match_file(s,optarg))
-	{
+      switch (load_match_file(s,optarg)) {
 	case status_ok: 
 	  s->hashes_loaded = true;
 	  break;
@@ -431,10 +405,10 @@ int main(int argc, char **argv)
 #endif
 
   state *s = new state();
-  if (initialize_state(s)) {
-    print_status("%s: Unable to initialize state variable", __progname);
-    return EXIT_FAILURE;
-  }
+  //if (initialize_state(s)) {
+  //print_status("%s: Unable to initialize state variable", __progname);
+  //return EXIT_FAILURE;
+  //}
 
   /**
    * Originally this program was two sets of progarms:
@@ -489,9 +463,9 @@ int main(int argc, char **argv)
     }
 
    
-  if (primary_audit == s->primary_function){
-      setup_audit(s);
-  }
+    //  if (primary_audit == s->primary_function){
+    //setup_audit(s);
+    //}
 
 #ifdef _WIN32
   if (prepare_windows_command_line(s))
@@ -503,11 +477,13 @@ int main(int argc, char **argv)
   s->argv = argv;
 #endif
 
-  memset(s->cwd,0,sizeof(s->cwd));	// zero this out
-  _tgetcwd(s->cwd,sizeof(s->cwd));	// try to get the cwd
-  if (s->cwd[0]==0){			// verify that we got it.
+  //memset(s->cwd,0,sizeof(s->cwd));	// zero this out
+  char buf[PATH_MAX];
+  _tgetcwd(buf,sizeof(buf));	// try to get the cwd
+  if (buf[0]==0){			// verify that we got it.
       fatal_error(s,"%s: %s", __progname, strerror(errno));
   }
+  s->cwd = buf;				// remember
 
   /* Anything left on the command line at this point is a file
      or directory we're supposed to process. If there's nothing

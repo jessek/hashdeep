@@ -124,15 +124,15 @@ uint64_t find_block_size(state *s, char *input_str)
 // Remove the newlines, if any. Works on both DOS and *nix newlines
 void chop_line(char *s)
 {
-  if (NULL == s)
-    return;
-
-  size_t pos = strlen(s);
-
-  if (s[pos - 2] == '\r' && s[pos - 1] == '\n')
-    s[pos - 2] = 0;
-  else if (s[pos-1] == '\n')
-    s[pos - 1] = 0;
+    size_t pos = strlen(s);
+    
+    if (s[pos - 2] == '\r' && s[pos - 1] == '\n'){
+	s[pos - 2] = 0;
+	return;
+    }
+    if (s[pos-1] == '\n'){
+	s[pos - 1] = 0;
+    }
 }
 
 
@@ -163,33 +163,35 @@ static int is_absolute_path(TCHAR *fn)
 }
 
 
-void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input)
+void generate_filename(state *s, TCHAR *fn, std::string cwd, TCHAR *input)
 {
-  if (NULL == fn || NULL == input || NULL == cwd || NULL == s)
-    internal_error("Error calling generate_filename");
+    if (NULL == fn || NULL == input)
+	internal_error("Error calling generate_filename");
 
-  if ((s->mode & mode_relative) || is_absolute_path(input))
-    _tcsncpy(fn,input,PATH_MAX);
-  else
-  {
-    // Windows systems don't have symbolic links, so we don't
-    // have to worry about carefully preserving the paths
-    // they follow. Just use the system command to resolve the paths
+    if ((s->mode & mode_relative) || is_absolute_path(input))
+	_tcsncpy(fn,input,PATH_MAX);
+    else {
+	// Windows systems don't have symbolic links, so we don't
+	// have to worry about carefully preserving the paths
+	// they follow. Just use the system command to resolve the paths
+	//
+	// Actually, they can have symbolic links...
 #ifdef _WIN32
-    _wfullpath(fn,input,PATH_MAX);
+	_wfullpath(fn,input,PATH_MAX);
 #else	  
-    if (NULL == cwd)
-    {
-      // If we can't get the current working directory, we're not
-      // going to be able to build the relative path to this file anyway.
-      // So we just call realpath and make the best of things 
-      if (NULL == realpath(input,fn))
-	internal_error("Error calling realpath in generate_filename");
-    }
-    else
-      snprintf(fn,PATH_MAX,"%s%c%s",cwd,DIR_SEPARATOR,input);
+	if (cwd=="") {
+	    // If we can't get the current working directory, we're not
+	    // going to be able to build the relative path to this file anyway.
+	    // So we just call realpath and make the best of things 
+	    if (NULL == realpath(input,fn)){
+		internal_error("Error calling realpath in generate_filename");
+	    }
+	}
+	else {
+	    snprintf(fn,PATH_MAX,"%s%c%s",cwd.c_str(),DIR_SEPARATOR,input);
+	}
 #endif
-  }
+    }
 }
 
 

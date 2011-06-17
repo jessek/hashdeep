@@ -123,12 +123,12 @@ static int compute_hash(state *s)
   // one read operation. Instead we read in blocks of 8192 bytes 
   // (or as needed) to get the number of bytes we need. 
 
-  if (s->block_size < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE)
+  if (s->current_file->block_size < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE)
     mysize = s->current_file->block_size;
   else
       mysize = file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE;
 
-  remaining = s->block_size;
+  remaining = s->current_file->block_size;
 
   // We get weird results calling ftell on stdin!
   if (!(s->current_file->is_stdin))
@@ -193,7 +193,7 @@ static int compute_hash(state *s)
       if (remaining == 0)
 	return TRUE;
 
-      if (remaining < MD5DEEP_IDEAL_BLOCK_SIZE)
+      if (remaining < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE)
 	mysize = remaining;
     }
     
@@ -220,7 +220,7 @@ static int md5deep_hash_triage(state *s)
   // We use the piecewise mode to get a partial hash of the first 
   // 512 bytes of the file. But we'll have to remove piecewise mode
   // before returning to the main hashing code
-  s->block_size = 512;
+  s->current_file->block_size = 512;
   s->mode |= mode_piecewise;
 
   multihash_initialize(s);
@@ -264,7 +264,7 @@ static int hash(state *s)
   }
   
   if ( s->mode & mode_piecewise )  {
-    s->block_size = s->piecewise_size;
+    s->current_file->block_size = s->piecewise_size;
   }
   
   while (!done)  {
@@ -391,7 +391,7 @@ int hash_file(state *s, TCHAR *fn)
 	for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)	{
 	    if (s->hashes[i].inuse){
 		s->current_file->hash_hex[i] = "";
-		for(int j=0;j<s->hashes[i].bit_length/4;j++){
+		for(size_t j=0;j<s->hashes[i].bit_length/4;j++){
 		    s->current_file->hash_hex[i].push_back('*');
 		}
 	    }

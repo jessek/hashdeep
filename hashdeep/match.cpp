@@ -108,8 +108,10 @@ static int parse_hashing_algorithms(state *s, char *fn, char *val)
 
 
 
-static filetype_t 
-identify_file(state *s, char *fn, FILE *handle)
+/**
+ * Returns the file type of a given input file.
+ */
+static filetype_t identify_file(state *s, char *fn, FILE *handle)
 {
   hashid_t current_order[NUM_ALGORITHMS];
  
@@ -117,29 +119,21 @@ identify_file(state *s, char *fn, FILE *handle)
   assert(fn!=0);
   assert(handle!=0);
 
-  char * buf = (char *)malloc(MAX_STRING_LENGTH);
-  if (NULL == buf)
-    return file_unknown;
+  char buf[MAX_STRING_LENGTH];
 
   // Find the header 
-  if ((fgets(buf,MAX_STRING_LENGTH,handle)) == NULL) 
-    {
-      free(buf);
+  if ((fgets(buf,MAX_STRING_LENGTH,handle)) == NULL) {
       return file_unknown;
     }
 
   chop_line(buf);
 
-  if ( ! STRINGS_EQUAL(buf,HASHDEEP_HEADER_10))
-    {
-      free(buf);
+  if ( ! STRINGS_EQUAL(buf,HASHDEEP_HEADER_10)) {
       return file_unknown;
     }
 
   // Find which hashes are in this file
-  if ((fgets(buf,MAX_STRING_LENGTH,handle)) == NULL) 
-    {
-      free(buf);
+  if ((fgets(buf,MAX_STRING_LENGTH,handle)) == NULL) {
       return file_unknown;
     }
 
@@ -147,47 +141,44 @@ identify_file(state *s, char *fn, FILE *handle)
 
   // We don't use STRINGS_EQUAL here because we only care about
   // the first ten characters for right now. 
-  if (strncasecmp("%%%% size,",buf,10))
-  {
-    free(buf);
-    return file_unknown;
+  if (strncasecmp("%%%% size,",buf,10))  {
+      return file_unknown;
   }
 
   // If this is the first file of hashes being loaded, clear out the 
   // list of known values. Otherwise, record the current values to
   // let the user know if they have changed when we load the new file.
   if ( ! s->hashes_loaded )  {
-    clear_algorithms_inuse(s);
+      clear_algorithms_inuse(s);
   }
   else  {
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
-      current_order[i] = s->hash_order[i];
+	current_order[i] = s->hash_order[i];
   }
 
   // We have to clear out the algorithm order to remove the values
   // from the previous file. This file may have different ones 
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
-    s->hash_order[i] = alg_unknown;
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i){
+      s->hash_order[i] = alg_unknown;
+  }
 
   // Skip the "%%%% size," when parsing the list of hashes 
   parse_hashing_algorithms(s,fn,buf + 10);
 
   if (s->hashes_loaded)  {
       int i = 0;
-    while (i < NUM_ALGORITHMS && 
-	   s->hash_order[i] == current_order[i])
-      i++;
-    if (i < NUM_ALGORITHMS)
-      print_error(s,"%s: %s: Hashes not in same format as previously loaded",
-		  __progname, fn);
+      while (i < NUM_ALGORITHMS && s->hash_order[i] == current_order[i])
+	  i++;
+      if (i < NUM_ALGORITHMS)
+	  print_error(s,"%s: %s: Hashes not in same format as previously loaded",
+		      __progname, fn);
   }
-
-  free(buf);
   return file_hashdeep_10;
 }
 
 
 
+#if 0
 static status_t add_file(state *s, file_data_t *f)
 {
   f->next = NULL;
@@ -207,43 +198,41 @@ static status_t add_file(state *s, file_data_t *f)
   }
 
   return status_ok;
-
 }
+#endif
 
 
 #ifdef _DEBUG
+/**
+ * debug functions. These don't work anymore.
+ */
 static void display_file_data(state *s, file_data_t * t)
 {
-  int i;
-
-  fprintf(stdout,"  Filename: ");
-  display_filename(stdout,t,false);
-  fprintf(stdout,"%s",NEWLINE);
-
-  print_status("      Size: %"PRIu64, t->file_size);
-
-  for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-    print_status("%10s: %s", s->hashes[i]->name, t->hash[i]);
-  print_status("");
+    int i;
+    
+    fprintf(stdout,"  Filename: ");
+    display_filename(stdout,t,false);
+    fprintf(stdout,"%s",NEWLINE);
+    
+    print_status("      Size: %"PRIu64, t->file_size);
+    
+    for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
+	print_status("%10s: %s", s->hashes[i]->name, t->hash[i]);
+    print_status("");
 }
 
 static void display_all_known_files(state *s)
 {
-  if (NULL == s)
-    return;
-
-  if (NULL == s->known)
-  {
-    print_status("No known hashes");
-    return;
-  }
-
-  file_data_t * tmp = s->known;
-  while (tmp != NULL)
-  {
-    display_file_data(s,tmp);
-    tmp = tmp->next;
-  }
+    if (NULL == s->known) {
+	print_status("No known hashes");
+	return;
+    }
+    
+    file_data_t * tmp = s->known;
+    while (tmp != NULL)	{
+	display_file_data(s,tmp);
+	tmp = tmp->next;
+    }
 }
 #endif
 
@@ -254,158 +243,137 @@ static void display_all_known_files(state *s)
 
 status_t read_hash_set_file(state *s, char *fn, FILE *handle)
 {
-  status_t st = status_ok;
-  int contains_bad_lines = FALSE, record_valid;
-  char * buf;
+    status_t st = status_ok;
+    int contains_bad_lines = FALSE;
+    int record_valid=0;
 
-  // We start our counter at line number two for the two lines
-  // of header we've already read
-  uint64_t line_number = 2;
+    // We start our counter at line number two for the two lines
+    // of header we've already read
+    uint64_t line_number = 2;
 
-  char line[MAX_STRING_LENGTH];
+    char line[MAX_STRING_LENGTH];	// holds the line we are reading
 
-  while (fgets(line,MAX_STRING_LENGTH,handle)) {
-    line_number++;
+    while (fgets(line,MAX_STRING_LENGTH,handle)) {
+	line_number++;			// count where we are
 
-    // Lines starting with a pound sign are comments and can be ignored
-    if ('#' == line[0])
-      continue;
-
-    // We're going to be advancing the string variable, so we
-    // make sure to use a temporary pointer. If not, we'll end up
-    // overwriting random data the next time we read.
-    buf = line;
-    record_valid = TRUE;
-    chop_line(buf);
-
-    // C++ typically fails with a bad_alloc, but you can make it return null
-    // http://www.cplusplus.com/reference/std/new/bad_alloc/
-    // http://www.cplusplus.com/reference/std/new/nothrow/
-    file_data_t * t = new (std::nothrow) file_data_t(); // C++ new fails with a bad_a
-    if (NULL == t){
-      fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
-		  __progname, fn, line_number);
-    }
-
-    int done = FALSE;
-    size_t pos = 0;
-    uint8_t column_number = 0;
-
-    while (!done)
-    {
-      if ( ! (',' == buf[pos] || 0 == buf[pos]))
-      {
-	++pos;
-	continue;
-      }
-
-      // Terminate the string so that we can do comparisons easily
-      buf[pos] = 0;
-
-      // The first column should always be the file size
-      if (0 == column_number)
-      {
-	t->file_size = (uint64_t)strtoll(buf,NULL,10);
-	buf += strlen(buf) + 1;
-	pos = 0;
-	column_number++;
-	continue;
-      }
-
-      // All other columns should contain a valid hash
-      if ( ! match_valid_hash(s,s->hash_order[column_number],buf))
-      {
-	print_error(s,
-		    "%s: %s: Invalid %s hash in line %"PRIu64,
-		    __progname, fn, 
-		    s->hashes[s->hash_order[column_number]].name.c_str(),
-		    line_number);
-	contains_bad_lines = TRUE;
-	record_valid = FALSE;
-	// Break out (done = true) and then process the next line
-	break;
-      }
-
-      t->hash_hex[s->hash_order[column_number]] = std::string(buf);
-
-      ++column_number;
-      buf += strlen(buf) + 1;
-      pos = 0;
-
-      // The 'last' column (even if there are more commas in the line)
-      // is the filename. Note that valid filenames can contain commas! 
-      if (column_number == s->expected_columns)
-	{
-#ifdef _WIN32
-	  size_t len = strlen(buf);
-	  t->file_name = (TCHAR *)malloc(sizeof(TCHAR) * (len+1));
-	  if (NULL == t->file_name)
-	    fatal_error(s,"%s: Out of memory", __progname);
-	  
-	  // On Windows we must convert the filename from ANSI to Unicode.
-	  // The -1 parameter for the input length asserts that the input
-	  // string, argv[i] is NULL terminated and that the function should
-	  // process the whole thing. The full definition of this function:
-	  // http://msdn2.microsoft.com/en-us/library/ms776413(VS.85).aspx
-	  if ( ! MultiByteToWideChar(CP_ACP,
-				     MB_PRECOMPOSED,
-				     buf,
-				     -1,   
-				     t->file_name,
-				     len+1))
-	    fatal_error(s,"%s: MultiByteToWideChar failed (%d)", 
-			__progname, 
-			GetLastError()); 
-#else
-	  t->file_name = buf;
-#endif
-	  done = TRUE;
+	// Lines starting with a pound sign are comments and can be ignored
+	if ('#' == line[0]){
+	    continue;
 	}
+
+	// We're going to be advancing the string variable, so we
+	// make sure to use a temporary pointer. If not, we'll end up
+	// overwriting random data the next time we read.
+	char *buf = line;
+	record_valid = TRUE;
+	chop_line(buf);
+
+	// C++ typically fails with a bad_alloc, but you can make it return null
+	// http://www.cplusplus.com/reference/std/new/bad_alloc/
+	// http://www.cplusplus.com/reference/std/new/nothrow/
+	file_data_t *t = new (std::nothrow) file_data_t(); // C++ new fails with a bad_a
+	if (NULL == t){
+	    fatal_error(s,"%s: %s: Out of memory in line %"PRIu64, 
+			__progname, fn, line_number);
+	}
+
+	int done = FALSE;
+	size_t pos = 0;
+	uint8_t column_number = 0;
+
+	/* Process possibly multiple hashes on the line */
+	while (!done) {
+	    // scan past any comma 
+	    if ( ! (',' == buf[pos] || 0 == buf[pos])) {
+		++pos;
+		continue;
+	    }
+
+	    // Terminate the string so that we can do comparisons easily
+	    buf[pos] = 0;
+
+	    // The first column should always be the file size
+	    if (0 == column_number) {
+		t->file_size = (uint64_t)strtoll(buf,NULL,10);
+		buf += strlen(buf) + 1;
+		pos = 0;
+		column_number++;
+		continue;
+	    }
+
+	    // All other columns should contain a valid hash in hex
+	    if ( ! match_valid_hash(s,s->hash_order[column_number],buf)) {
+		print_error(s,
+			    "%s: %s: Invalid %s hash in line %"PRIu64,
+			    __progname, fn, 
+			    s->hashes[s->hash_order[column_number]].name.c_str(),
+			    line_number);
+		contains_bad_lines = TRUE;
+		record_valid = FALSE;
+		// Break out (done = true) and then process the next line
+		break;
+	    }
+
+	    // Convert the hash to a std::string and save it
+	    t->hash_hex[s->hash_order[column_number]] = std::string(buf);
+
+	    ++column_number;
+	    buf += strlen(buf) + 1;
+	    pos = 0;
+
+	    // The 'last' column (even if there are more commas in the line)
+	    // is the filename. Note that valid filenames can contain commas! 
+	    if (column_number == s->expected_columns) {
+		t->file_name = buf;
+		done = TRUE;
+	    }
+	}
+
+	if ( ! record_valid) {
+	    continue;
+	}
+
+	/* add the file to the hash map for all the hashes in use */
+	for (int i = 0 ; i < NUM_ALGORITHMS ; ++i){
+	    if(s->hashes[i].inuse) s->hashes[i].known.add_file(t);
+	}
+	/* add the file to the list of hashes that we have */
+	s->known.push_back(t);
+	//st = add_file(s,t);
+	//if (st != status_ok) return st;
     }
-
-    if ( ! record_valid)
-      continue;
-
-    st = add_file(s,t);
-    if (st != status_ok)
-      return st;
-  }
-  if (contains_bad_lines)
-    return status_contains_bad_hashes;
-  
-  return st;
+    if (contains_bad_lines){
+	return status_contains_bad_hashes;
+    }
+    
+    return st;
 }
 
 
-
+/** Loads a file of known hashes
+ */
 status_t load_match_file(state *s, char *fn)
 {
-  status_t status = status_ok;
-  filetype_t type;
+    status_t status = status_ok;
+    filetype_t type;
 
-  assert(s!=0);
-  assert(fn!=0);
-
-  FILE *handle = fopen(fn,"rb");
-  if (NULL == handle) {
-    print_error(s,"%s: %s: %s", __progname, fn, strerror(errno));
-    return status_file_error;
-  }
+    FILE *handle = fopen(fn,"rb");
+    if (NULL == handle) {
+	print_error(s,"%s: %s: %s", __progname, fn, strerror(errno));
+	return status_file_error;
+    }
   
-  type = identify_file(s,fn,handle);
-  if (file_unknown == type)  {
-    print_error(s,"%s: %s: Unable to identify file format", __progname, fn);
+    type = identify_file(s,fn,handle);
+    if (file_unknown == type)  {
+	print_error(s,"%s: %s: Unable to identify file format", __progname, fn);
+	fclose(handle);
+	return status_unknown_filetype;
+    }
+    status = read_hash_set_file(s,fn,handle);
     fclose(handle);
-    handle=0;
-    return status_unknown_filetype;
-  }
 
-  status = read_hash_set_file(s,fn,handle);
-  fclose(handle);
-  handle=0;
-
-  //  display_all_known_files(s);
-  return status;
+    //  display_all_known_files(s);
+    return status;
 }
 
 
@@ -430,19 +398,20 @@ char * status_to_str(status_t s)
 
 status_t display_match_result(state *s)
 {
+#if 0
     file_data_t *matched_fdt = NULL;
     int should_display; 
     uint64_t my_round;
-
+    
     my_round = s->hash_round;
-  s->hash_round++;
-  if (my_round > s->hash_round)
-      fatal_error(s,"%s: Too many input files", __progname);
+    s->hash_round++;
+    if (my_round > s->hash_round)
+	fatal_error(s,"%s: Too many input files", __progname);
 
-  should_display = (primary_match_neg == s->primary_function);
-
-  for (int i = 0 ; i < NUM_ALGORITHMS; ++i)  {
-      if (s->hashes[i].inuse)    {
+    should_display = (primary_match_neg == s->primary_function);
+    
+    for (int i = 0 ; i < NUM_ALGORITHMS; ++i)  {
+	if (s->hashes[i].inuse)    {
 	hashtable_entry_t *ret = hashtable_contains(s,(hashid_t)i);
       hashtable_entry_t *tmp = ret;
       while (tmp != NULL)
@@ -508,5 +477,6 @@ status_t display_match_result(state *s)
     }
   }
   
+#endif
   return status_ok;
 }

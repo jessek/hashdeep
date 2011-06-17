@@ -1,6 +1,7 @@
 2011-06-16  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* hashdeep/main.cpp: removed initialize_state(state *s); now it's in the state constructor.
+	(state::load_hashing_algorithms): this is now a method
 
 	* hashdeep/Makefile.am (hashdeep_SOURCES): removed hashtable.cpp 
 

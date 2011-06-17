@@ -11,8 +11,7 @@ status_t file_data_compare(state *s, file_data_t *a, file_data_t *b)
   
   /* We first compare the hashes because they should tell us the fastest if we're
      looking at different files. Then the file size and finally the file name. */
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
-  {
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
     if (s->hashes[i].inuse)
     {
       /* We have to avoid calling STRINGS_EQUAL on NULL values, but

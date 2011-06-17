@@ -35,7 +35,7 @@
 
   * Add your new code to Makefile.am under hashdeep_SOURCES
 
-  * Add a call to insert the algorithm in setup_hashing_algorithms
+  * Add a call to insert the algorithm in state::load_hashing_algorithms
 
   * Update parse_algorithm_name in main.c and parse_hashing_algorithms
     in match.c to handle your algorithm. 
@@ -120,8 +120,8 @@ typedef enum   {
 } status_t;
 
 
-/** file_data_t contains information about a file 
- * after it has been hashed.
+/** file_data_t contains information about a file.
+ * It can be created by hashing an actual file, or by reading a hash file a file of hashes. 
  */
 class file_data_t {
 public:
@@ -148,13 +148,12 @@ public:
     uint64_t        stat_megs;
     uint64_t        actual_bytes;
 
-    class file_data_t * next;		// can be in a linked list, strangely...
+    //class file_data_t * next;		// can be in a linked list, strangely...
 };
 
 
-/** file_data_hasher_t contains information about a file
- * being hashed. It is a subclass of file_data_t, which is
- * where it keeps the information that has been hashed.
+/** file_data_hasher_t is a subclass of file_data_t.
+ * It contains additional information necessary to actually hash a file.
  */
 class file_data_hasher_t : public file_data_t {
 public:
@@ -177,7 +176,7 @@ public:
     FILE           *handle;		// the file we are reading
     bool           is_stdin;		// flag if the file is stdin
     unsigned char  buffer[MD5DEEP_IDEAL_BLOCK_SIZE]; // next buffer to hash
-    uint8_t        hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 // the context for each hash in progress
+    uint8_t        hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 
     std::string	   dfxml_hash;	      // the DFXML hash digest for the piece just hashed
 
     // Where the last read operation started and ended
@@ -193,13 +192,26 @@ public:
 
 
 /** The hashmap is simply a map ("dictionary") that maps a hex hash
- * code to a file_data_t object.  We also provide some methods for
- * accessing it.  Note that it maps to the object, rather than a
- * pointer to the object.  This helps resolve memory allocation
- * issues.
+ * code to a pointer to a file_data_t object.  We will have one of these
+ * maps for each hash algorithm. All will point to the same file_data_t structures,
+ * though, which is why the map maps to a pointer, rather than an object.
  */
 
-class hashmap_t : public std::map<std::string,file_data_t> {
+class hashmap_t : public std::map<std::string,file_data_t *> {
+public:;
+    int		alg_num;		   // which algorithm number the map is for.
+
+    void add_file(file_data_t *fi){
+	insert(std::pair<std::string,file_data_t *>(fi->hash_hex[alg_num],fi));
+    }
+};
+
+
+/** The hashlist is simply a vector that holds a list of file_data_t pointers
+ */
+class hashlist_t : public std::vector<file_data_t *> {
+public:;
+    uint64_t    count_unused(class state *s); // count unused and optionally perform audit
 };
 
 
@@ -229,8 +241,8 @@ class algorithm_t {
 public:
     bool		inuse;		// are we using this hash algorithm?
     std::string		name;
-    uint16_t		bit_length;	// 128 for MD5
-    hashmap_t		known;	/* The set of known hashes for this algorithm */
+    size_t		bit_length;	// 128 for MD5
+    hashmap_t		known;		/* The set of known hashes for this algorithm */
 
     int ( *f_init)(void *);
     int ( *f_update)(void *, unsigned char *, uint64_t );
@@ -267,22 +279,41 @@ public:
     };
     /* For audit mode, the number of each type of file */
     uint64_t	exact, expect, partial; // 
-    uint64_t	moved, unused, unknown, total; // 
+    uint64_t	moved, unused, unknown, total; //
+    void clear(){
+	exact = 0;
+	expect = 0;
+	partial = 0;
+	moved = 0;
+	unused = 0;
+	unknown = 0;
+	total = 0;
+    }
 };
 
 class state {
+    void add_algorithm(hashid_t pos,const char *name,uint16_t bits, 
+		       int ( *func_init)(void *),
+		       int ( *func_update)(void *, unsigned char *, uint64_t ),
+		       int ( *func_finalize)(void *, unsigned char *),
+		       int inuse);
+    void load_hashing_algorithms();
 public:;
     state():primary_function(primary_compute),mode(mode_none),
 	    start_time(0),last_time(0),argc(0),argv(0),
 	    input_list(0),current_file(0),expected_hashes(0),
 	    size_threshold(0),hashes_loaded(false),expected_columns(0),
-	    known(0),last(0),hash_round(0),h_plain(0),h_bsd(0),h_md5deep_size(0),
+	    hash_round(0),h_plain(0),h_bsd(0),h_md5deep_size(0),
 	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
 	    h_nsrl20(0), h_encase(0),banner_displayed(false),
 	    piecewise_size(0),
 	    dfxml(0) {
+	load_hashing_algorithms();
 	current_file = new file_data_hasher_t();
     };
+    ~state(){
+	if(current_file) delete current_file;
+    }
 
     /* Basic Program State */
     primary_t       primary_function;
@@ -307,10 +338,11 @@ public:;
 
     /* The set of known values */
     bool            hashes_loaded;	// true if hash values have been loaded.
+    hashlist_t	    known;
     algorithm_t     hashes[NUM_ALGORITHMS]; // 
     uint8_t         expected_columns;
     
-    vector<file_data_t *>seen;		// list of hashes that have been seen.
+    std::vector<file_data_t *>seen;		// list of hashes that have been seen.
     //file_data_t   * known;
     //file_data_t   * last;
     uint64_t        hash_round;
@@ -366,7 +398,7 @@ int display_hash_simple(state *s);
 
 /* AUDIT MODE */
 
-void setup_audit(state *s);
+//void setup_audit(state *s);
 int audit_check(state *s);		// performs an audit; return 0 if pass, -1 if fail
 int display_audit_results(state *s);
 int audit_update(state *s);
@@ -378,7 +410,7 @@ int hash_stdin(state *s);
 
 
 /* HELPER FUNCTIONS */
-void generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
+void generate_filename(state *s, TCHAR *fn, std::string cwd, TCHAR *input);
 void sanity_check(state *s, int condition, const char *msg);
 
 // ----------------------------------------------------------------
