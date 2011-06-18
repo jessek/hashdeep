@@ -242,11 +242,11 @@ static int md5deep_hash_triage(state *s)
  * This function is called to hash each file.
  * Called by: hash_stdin and hash_file.
  */
-static int hash(state *s)
+static int hash(state *s,file_data_hasher_t *fdht)
 {
   int done = FALSE, status = FALSE;
   
-  s->current_file->actual_bytes = 0;
+  fdht->actual_bytes = 0;
 
   if (s->mode & mode_estimate)  {
     time(&(s->start_time));
@@ -259,18 +259,18 @@ static int hash(state *s)
 
     // Rather than muck about with updating the state of the input
     // file, just reset everything and process it normally.
-    s->current_file->actual_bytes = 0;
-    fseeko(s->current_file->handle, 0, SEEK_SET);
+    fdht->actual_bytes = 0;
+    fseeko(fdht->handle, 0, SEEK_SET);
   }
   
   if ( s->mode & mode_piecewise )  {
-    s->current_file->block_size = s->piecewise_size;
+    fdht->block_size = s->piecewise_size;
   }
   
   while (!done)  {
       multihash_initialize(s);
     
-    s->current_file->read_start = s->current_file->actual_bytes;
+    fdht->read_start = fdht->actual_bytes;
 
     /**
      * call compute_hash(), which computes the hash of the full file,
@@ -284,17 +284,17 @@ static int hash(state *s)
     // data during this read OR if the whole file is zero bytes long.
     // If the file is zero bytes, we won't have read anything, but
     // still need to display a hash.
-    if (s->current_file->bytes_read != 0 || 0 == s->current_file->stat_bytes)
+    if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes)
     {
       if (s->mode & mode_piecewise)
       {
 	uint64_t tmp_end = 0;
-	if (s->current_file->read_end != 0){
-	    tmp_end = s->current_file->read_end - 1;
+	if (fdht->read_end != 0){
+	    tmp_end = fdht->read_end - 1;
 	}
-	s->current_file->file_name_annotation =
+	fdht->file_name_annotation =
 	    string(" offset ")
-	    + itos(s->current_file->read_start)
+	    + itos(fdht->read_start)
 	    + string("-")
 	    + itos(tmp_end);
       }
@@ -306,17 +306,17 @@ static int hash(state *s)
 	  // didn't match any input files. Thus, we don't display anything now.
 	  // The lookup is to mark those known hashes that we do encounter
 	  if (s->mode & mode_not_matched)
-	      md5deep_is_known_hash(s->current_file->hash_hex[s->md5deep_mode_algorithm].c_str(),NULL);
+	      md5deep_is_known_hash(fdht->hash_hex[s->md5deep_mode_algorithm].c_str(),NULL);
 	  else
-	      status = md5deep_display_hash(s);
+	      status = md5deep_display_hash(s,fdht);
       } else {
-	  display_hash(s);
+	  display_hash(s,fdht);
       }
     }
     
 
     if (s->mode & mode_piecewise)
-	done = feof(s->current_file->handle);
+	done = feof(fdht->handle);
     else
 	done = TRUE;
   }
@@ -327,14 +327,16 @@ static int hash(state *s)
    */
   if(s->dfxml){
       s->dfxml->push("fileobject");
-      s->dfxml->xmlout("filename",s->current_file->file_name);
-      s->dfxml->writexml(s->current_file->dfxml_hash);
+      s->dfxml->xmlout("filename",fdht->file_name);
+      s->dfxml->writexml(fdht->dfxml_hash);
       s->dfxml->pop();
   }
   return status;
 }
 
 
+#if 0
+/* What is this? It looks like bad news */
 static int setup_barename(state *s, TCHAR *fn)
 {
   if (NULL == s || NULL == fn)
@@ -357,6 +359,7 @@ static int setup_barename(state *s, TCHAR *fn)
   s->current_file->file_name = basen;
   return FALSE;
 }
+#endif
 
 
 int hash_file(state *s, TCHAR *fn)
@@ -368,53 +371,53 @@ int hash_file(state *s, TCHAR *fn)
 
   s->current_file->is_stdin = FALSE;
 
+#if 0
   if (s->mode & mode_barename)
   {
     if (setup_barename(s,fn))
       return TRUE;
   }
   else
-    s->current_file->file_name = fn;
+#endif
 
-  if ((s->current_file->handle = _tfopen(fn,_TEXT("rb"))) != NULL)
+    s->current_file->file_name = fn;
+  file_data_hasher_t *fdht = s->current_file;
+
+  if ((fdht->handle = _tfopen(fn,_TEXT("rb"))) != NULL)
   {
     // We should have the file size already from the stat functions
     // called during digging. If for some reason that failed, we'll
     // try some ioctl calls now to get the full size.
-    if (UNKNOWN_FILE_SIZE == s->current_file->stat_bytes)
-      s->current_file->stat_bytes = find_file_size(s->current_file->handle);
+    if (UNKNOWN_FILE_SIZE == fdht->stat_bytes)
+      fdht->stat_bytes = find_file_size(fdht->handle);
 
     // If this file is above the size threshold set by the user, skip it
     if ((s->mode & mode_size)
-	&& (s->current_file->stat_bytes > s->size_threshold)) {
+	&& (fdht->stat_bytes > s->size_threshold)) {
       if (s->mode & mode_size_all)      {
 	for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)	{
 	    if (s->hashes[i].inuse){
-		s->current_file->hash_hex[i] = "";
+		fdht->hash_hex[i] = "";
 		for(size_t j=0;j<s->hashes[i].bit_length/4;j++){
-		    s->current_file->hash_hex[i].push_back('*');
+		    fdht->hash_hex[i].push_back('*');
 		}
 	    }
 	}
-	display_hash(s);
+	display_hash(s,fdht);
       }
-      s->current_file->close();
+      fdht->close();
       return STATUS_OK;
     }
 
 
     if (s->mode & mode_estimate)    {
-      s->current_file->stat_megs = s->current_file->stat_bytes / ONE_MEGABYTE;
-
-      /* TK - deal with this */
-      //shorten = true;
+	fdht->stat_megs = fdht->stat_bytes / ONE_MEGABYTE;
     }    
 
-    status = hash(s);
-    s->current_file->close();
+    status = hash(s,fdht);
+    fdht->close();
   }
-  else
-  {
+  else  {
     print_error_unicode(s,fn,"%s", strerror(errno));
   }
 
@@ -428,5 +431,5 @@ int hash_stdin(state *s)
     s->current_file->file_name = "stdin";
     s->current_file->is_stdin  = TRUE;
     s->current_file->handle    = stdin;
-    return hash(s);
+    return hash(s,s->current_file);
 }

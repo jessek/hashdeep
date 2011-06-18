@@ -1,8 +1,16 @@
 // $Id$ 
 
+/** audit.cpp
+ * Contains the logic for performing the audit.
+ * Also has implementation of the hashlist, searching, etc.
+ */
+
 #include "main.h"
 
-uint64_t hashlist_t::count_unused(state *s)
+/**
+ * Return the number of entries in the hashlist that have used==0
+ */
+uint64_t hashlist::count_unused()
 {
     uint64_t count=0;
     for(std::vector<file_data_t *>::const_iterator i = this->begin(); i != this->end(); i++){
@@ -18,6 +26,78 @@ uint64_t hashlist_t::count_unused(state *s)
 }
 
 /**
+ * Adds a file_data_t pointer to the hashlist.
+ * Does not copy the object; that must be done elsewhere.
+ */
+void hashlist::add_file(file_data_t *fi){ 
+    push_back(fi);
+    for(int i=0;i<NUM_ALGORITHMS;i++){
+	if(s->hashes[i].inuse){
+	    hashmaps[i].add_file(fi,i);
+	}
+    };
+};
+
+
+/**
+ * Search for the provided fdt in the hashlist and return the status of the match.
+ */
+status_t hashlist::search(const file_data_t *fdt) const
+{
+    bool file_size_mismatch = false;
+    bool file_name_mismatch = false;
+  
+    /* Iterate through each of the hashes in the haslist until we find a match.
+     */
+    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
+	/* Only search hash functions that are in use and hashes that are in the fdt */
+	if (s->hashes[i].inuse && fdt->hash_hex[i].size()){
+	    hashmap::const_iterator it = hashmaps[i].find(fdt->hash_hex[i]);
+	    if(it != hashmaps[i].end()){
+		/* found a match*/
+
+		const file_data_t *match = it->second;
+
+		/* Verify that all of the other hash functions for *it match fdt as well. */
+		for(int j=0;j<NUM_ALGORITHMS;j++){
+		    if(s->hashes[j].inuse && j!=i && fdt->hash_hex[i].size() && match->hash_hex[i].size()){
+			if(fdt->hash_hex[j] != match->hash_hex[j]){
+			    /* Amazing. We found a match on one hash a a non-match on another.
+			     * Call the newspapers! This is a newsorthy event.
+			     */
+			    return status_partial_match;
+			}
+		    }
+		}
+		/* If we got here we matched on all of the hashes.
+		 * Which is to be expected.
+		 * Check to see if the sizes are the same.
+		 */
+		if(fdt->file_size != match->file_size){
+		    /* Amazing. We found two files that have the same hash but different
+		     * file sizes. This has never happened before in the history of the world.
+		     * Call the newspapers!
+		     */
+		    file_size_mismatch = true;
+		}
+		/* See if the hashes are the same but the name changed.
+		 */
+		if(fdt->file_name != match->file_name){
+		    file_name_mismatch = true;
+		}
+	    }
+	}
+    }
+    /* If we get here, then all of the hash matches for all of the algorithms have been
+     * checked and found to be equal if present.
+     */
+    if(file_size_mismatch) return status_file_size_mismatch;
+    if(file_name_mismatch) return status_file_name_mismatch;
+    return status_match;
+}
+
+
+/**
  * perform an audit
  */
  
@@ -25,7 +105,7 @@ uint64_t hashlist_t::count_unused(state *s)
 int audit_check(state *s)
 {
     /* Count the number of unused */
-    s->match.unused = s->known.count_unused(s);
+    s->match.unused = s->known.count_unused();
     return (0 == s->match.unused  && 
 	    0 == s->match.unknown && 
 	    0 == s->match.moved);
@@ -61,10 +141,12 @@ int display_audit_results(state *s)
 
 
 /**
- * called after every file is hashed when s->primary_function==primary_audit
+ * Called after every file is hashed by display_hash
+ * when s->primary_function==primary_audit
+ * Records every file seen in the 'seen' structure, referencing the 'known' structure.
  */
 
-int audit_update(state *s)
+int audit_update(state *s,file_data_t *fdt)
 {
 #if 0
     bool no_match = false;
@@ -74,23 +156,24 @@ int audit_update(state *s)
     file_data_t * moved_file = NULL, * partial_file = NULL;
     uint64_t my_round;			// don't know what the round is
   
-    my_round = s->hash_round;
+    my_round = s->hash_round;		// count number of files
     s->hash_round++;
-    if (my_round > s->hash_round){	// wonder what this is for???
+    if (my_round > s->hash_round){	// check for 64-bit overflow (highly unlikely)
 	fatal_error(s,"%s: Too many input files", __progname);
     }
 
     // Although nobody uses match_total right now, we may in the future 
     //  s->match_total++;
 
-    // Check all of the algorithms.
+    // Check all of the algorithms in use
     for (int i = 0 ; i < NUM_ALGORITHMS; i++) {
 	if (s->hashes[i].inuse) {
-	    
-	    hashmap_t::const_iterator match  = s->hashes[i].known.find(s->current_file->hash_hex[i]);
-	    if(match==s->hashes[i].known.end()){
+	    hashlist::hashmap::const_iterator match  = s->known.hashmaps[i].find(fdt->hash_hex[i]);
+	    if(match==s->known.hashmaps[i].end()){
 		no_match = TRUE;
 	    }
+	    else {
+		
 
 	    hashtable_entry_t *matches = hashtable_contains(s,(hashid_t)i);
 	    hashtable_entry_t *tmp = matches;
@@ -203,3 +286,4 @@ int audit_update(state *s)
 #endif
   return FALSE;
 }
+

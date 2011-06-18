@@ -333,14 +333,8 @@ status_t read_hash_set_file(state *s, char *fn, FILE *handle)
 	    continue;
 	}
 
-	/* add the file to the hash map for all the hashes in use */
-	for (int i = 0 ; i < NUM_ALGORITHMS ; ++i){
-	    if(s->hashes[i].inuse) s->hashes[i].known.add_file(t);
-	}
-	/* add the file to the list of hashes that we have */
-	s->known.push_back(t);
-	//st = add_file(s,t);
-	//if (st != status_ok) return st;
+	/* add the file to the known files hashlist */
+	s->known.add_file(t);
     }
     if (contains_bad_lines){
 	return status_contains_bad_hashes;
@@ -396,7 +390,7 @@ char * status_to_str(status_t s)
 */
 
 
-status_t display_match_result(state *s)
+status_t display_match_result(state *s,file_data_hasher_t *fdht)
 {
 #if 0
     file_data_t *matched_fdt = NULL;

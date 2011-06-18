@@ -126,8 +126,7 @@ void state::add_algorithm(
 	      int ( *func_finalize)(void *, unsigned char *),
 	      int inuse)
 {
-    hashes[pos].name = name;
-    hashes[pos].known.alg_num = pos;
+    hashes[pos].name		= name;
     hashes[pos].f_init      = func_init;
     hashes[pos].f_update    = func_update;
     hashes[pos].f_finalize  = func_finalize;

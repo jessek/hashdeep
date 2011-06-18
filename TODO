@@ -26,3 +26,8 @@ Below is what's planned:
 What's on hold (reason: why change code that currently works?)
 1 - Start replacing char * arrays with stl::string. Consider replacing TCHAR strings with vector<TCHAR>.  
 2 - remove hashtable object for the STL red-black table.
+================
+Test cases:
+ - An audit file with one hash different and the other the 
+
+what is mode_barename? 
