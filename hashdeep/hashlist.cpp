@@ -30,6 +30,7 @@ uint64_t hashlist::count_unused()
  * Does not copy the object; that must be done elsewhere.
  */
 void hashlist::add_file(file_data_t *fi){ 
+    fi->retain();
     push_back(fi);
     for(int i=0;i<NUM_ALGORITHMS;i++){
 	if(s->hashes[i].inuse){

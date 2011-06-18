@@ -411,7 +411,6 @@ int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
     }
     else  {
 	print_error_unicode(s,fn,"%s", strerror(errno));
-	delete fdht;
     }
     return status;
 }

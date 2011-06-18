@@ -117,9 +117,13 @@ typedef enum   {
  */
 class file_data_t {
 public:
-    file_data_t():used(0),file_size(0),stat_bytes(0),stat_megs(0),actual_bytes(0) {
+    file_data_t():refcount(0),used(0),file_size(0),stat_bytes(0),stat_megs(0),actual_bytes(0) {
     };
-    /* We don't want to use s->full_name, but it's required for hash.c */
+    // Implement a simple reference count garbage collection system
+    int		   refcount;			     // reference counting
+    void retain() { refcount++;}
+    void release() { if(--refcount==0) delete this; }
+
     std::string    hash_hex[NUM_ALGORITHMS];	     // the hash in hex of the entire file
     std::string	   hash512_hex[NUM_ALGORITHMS];	     // hash of the first 512 bytes, for partial matching
     std::string	   file_name;		// just the file_name, apparently
@@ -182,9 +186,13 @@ public:
 
 
 /** The hashlist holds a list of file_data_t pointers.
- * We store ONE of these in the state and use it as a list of all the hashes seen.
- * We also store multiple maps for each algorithm number which map the hash hex code
+ * state->known is used to hold the audit file that is loaded.
+ * state->seen is used to hold the hashes seen on the current run.
+ * We store multiple maps for each algorithm number which map the hash hex code
  * to the pointer as well. 
+ *
+ * the hashlist.cpp file contains the implementation. It's largely taken
+ * from the v3 audit.cpp and match.cpp files.
  */
 class hashlist : public std::vector<file_data_t *> {
 public:;
@@ -192,6 +200,7 @@ public:;
     class hashmap : public  std::map<std::string,file_data_t *> {
     public:;
 	void add_file(file_data_t *fi,int alg_num){
+	    fi->retain();
 	    insert(std::pair<std::string,file_data_t *>(fi->hash_hex[alg_num],fi));
 	};
     };
@@ -473,7 +482,11 @@ int display_hash( state *s, file_data_hasher_t *fdht);
 // md5deep_match.c
 int md5deep_load_match_file(state *s, const char *fn);
 int md5deep_is_known_hash(const char *h, std::string *known_fn);
-//int was_input_not_matched(void);
+//    // This function returns FALSE. hash_file, called above, returns STATUS_OK                                             
+// process_win32 also returns STATUS_OK.                                                                               
+// display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.                                              
+// Pick one and stay with it!                                                                                          
+int was_input_not_matched(void);
 int md5deep_finalize_matching(state *s);
 
 // Add a single hash to the matching set

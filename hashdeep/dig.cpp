@@ -629,20 +629,23 @@ static int should_hash(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 }
 
 
+    // RBF - Standardize return values for this function and audit functions
+    // This function returns FALSE. hash_file, called above, returns STATUS_OK
+    // process_win32 also returns STATUS_OK. 
+    // display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.
+    // Pick one and stay with it!
 int process_normal(state *s, TCHAR *fn)
 {
+    int ret = FALSE;
     file_data_hasher_t *fdht = new file_data_hasher_t();
-  clean_name(s,fn);
+    fdht->retain();
+    clean_name(s,fn);
 
-  if (should_hash(s,fdht,fn))
-      return (hash_file(s,fdht,fn));
-  
-  // RBF - Standardize return values for this function and audit functions
-  // This function returns FALSE. hash_file, called above, returns STATUS_OK
-  // process_win32 also returns STATUS_OK. 
-  // display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.
-  // Pick one and stay with it!
-  return FALSE;
+    if (should_hash(s,fdht,fn)){
+	ret = hash_file(s,fdht,fn);
+    }
+    fdht->release();
+    return ret;
 }
 
 

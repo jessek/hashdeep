@@ -1,6 +1,6 @@
 // MD5DEEP - ui.c
 //
-// By Jesse Kornblum
+// By Jesse Kornblum and Simson Garfinkel
 //
 // This is a work of the US Government. In accordance with 17 USC 105,
 // copyright protection is not available for any work of the US Government.
