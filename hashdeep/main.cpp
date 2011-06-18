@@ -232,7 +232,7 @@ static int parse_hashing_algorithms(state *s, char *val)
     }
       
     else {
-      print_error(s,"%s: Unknown algorithm: %s", __progname, buf[i]);
+      print_error("%s: Unknown algorithm: %s", __progname, buf[i]);
       try_msg();
       exit(EXIT_FAILURE);
     }    
@@ -261,7 +261,7 @@ static int process_command_line(state *s, int argc, char **argv)
       s->size_threshold = find_block_size(s,optarg);
       if (0 == s->size_threshold)
       {
-	print_error(s,"%s: Requested size threshold implies not hashing anything",
+	print_error("%s: Requested size threshold implies not hashing anything",
 		    __progname);
 	exit(STATUS_USER_ERROR);
       }
@@ -273,7 +273,7 @@ static int process_command_line(state *s, int argc, char **argv)
 	 to erase the default (or previously entered) values */
       clear_algorithms_inuse(s);
       if (parse_hashing_algorithms(s,optarg))
-	fatal_error(s,"%s: Unable to parse hashing algorithms",__progname);
+	fatal_error("%s: Unable to parse hashing algorithms",__progname);
       break;
       
     case 'd': s->dfxml = new XML(stdout); break;
@@ -292,13 +292,13 @@ static int process_command_line(state *s, int argc, char **argv)
     case 'l': s->mode |= mode_relative;     break;
     case 'e': s->mode |= mode_estimate;     break;
     case 'r': s->mode |= mode_recursive;    break;
-    case 's': s->mode |= mode_silent;       break;
+    case 's': opt_silent = true;	    break;
       
     case 'p':
       s->mode |= mode_piecewise;
       s->piecewise_size = find_block_size(s, optarg);
       if (0 == s->piecewise_size)
-	fatal_error(s,"%s: Piecewise blocks of zero bytes are impossible", 
+	fatal_error("%s: Piecewise blocks of zero bytes are impossible", 
 		    __progname);
       
       break;
@@ -306,36 +306,36 @@ static int process_command_line(state *s, int argc, char **argv)
     case 'w': s->mode |= mode_which;        break;
       
     case 'k':
-      switch (load_match_file(s,optarg)) {
-	case status_ok: 
+      switch (s->known.load_hash_file(optarg)) {
+      case hashlist::loadstatus_ok: 
 	  s->hashes_loaded = true;
 	  break;
 	  
-	case status_contains_no_hashes:
+      case hashlist::status_contains_no_hashes:
 	  /* Trying to load an empty file is fine, but we shouldn't
 	     change s->hashes_loaded */
 	  break;
 	  
-	case status_contains_bad_hashes:
+      case hashlist::status_contains_bad_hashes:
 	  s->hashes_loaded = true;
-	  print_error(s,"%s: %s: contains some bad hashes, using anyway", 
+	  print_error("%s: %s: contains some bad hashes, using anyway", 
 		      __progname, optarg);
 	  break;
 	  
-	case status_unknown_filetype:
-	case status_file_error:
+      case hashlist::status_unknown_filetype:
+      case hashlist::status_file_error:
 	  /* The loading code has already printed an error */
 	    break;
 	    
 	default:
-	  print_error(s,"%s: %s: unknown error, skipping", __progname, optarg);
+	  print_error("%s: %s: unknown error, skipping", __progname, optarg);
 	  break;
 	}
       break;
       
     case 'v':
       if (s->mode & mode_insanely_verbose)
-	print_error(s,"%s: User request for insane verbosity denied", __progname);
+	print_error("%s: User request for insane verbosity denied", __progname);
       else if (s->mode & mode_more_verbose)
 	s->mode |= mode_insanely_verbose;
       else if (s->mode & mode_verbose)
@@ -468,7 +468,7 @@ int main(int argc, char **argv)
 
 #ifdef _WIN32
   if (prepare_windows_command_line(s))
-    fatal_error(s,"%s: Unable to process command line arguments", __progname);
+    fatal_error("%s: Unable to process command line arguments", __progname);
 
   check_wow64(s);
 #else
@@ -480,7 +480,7 @@ int main(int argc, char **argv)
   char buf[PATH_MAX];
   _tgetcwd(buf,sizeof(buf));	// try to get the cwd
   if (buf[0]==0){			// verify that we got it.
-      fatal_error(s,"%s: %s", __progname, strerror(errno));
+      fatal_error("%s: %s", __progname, strerror(errno));
   }
   s->cwd = buf;				// remember
 
@@ -591,7 +591,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       s->mode |= mode_size;
       s->size_threshold = find_block_size(s,optarg);
       if (0 == s->size_threshold) {
-	print_error(s,"%s: Requested size threshold implies not hashing anything",
+	print_error("%s: Requested size threshold implies not hashing anything",
 		    __progname);
 	exit(STATUS_USER_ERROR);
       }
@@ -601,7 +601,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       s->mode |= mode_piecewise;
       s->piecewise_size = find_block_size(s, optarg);
       if (0 == s->piecewise_size) {
-	print_error(s,"%s: Illegal size value for piecewise mode.", __progname);
+	print_error("%s: Illegal size value for piecewise mode.", __progname);
 	exit(STATUS_USER_ERROR);
       }
 
@@ -672,11 +672,11 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
 
     case 'S': 
       s->mode |= mode_warn_only;
-      s->mode |= mode_silent;
+      opt_silent = true;
       break;
 
     case 's':
-      s->mode |= mode_silent;
+	opt_silent = true;
       break;
 
     case 'e':

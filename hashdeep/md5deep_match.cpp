@@ -57,7 +57,7 @@ static int parse_encase_file(state *s, const char *fn, FILE *handle)
   // as fread will append an extra \0 to the string 
 
   if (fseeko(handle,ENCASE_START_HASHES,SEEK_SET))  {
-    print_error(s,"%s: Unable to seek to start of hashes", fn);
+    print_error("%s: Unable to seek to start of hashes", fn);
     return STATUS_USER_ERROR;
   }
         
@@ -69,10 +69,10 @@ static int parse_encase_file(state *s, const char *fn, FILE *handle)
 	continue;
         
       // Users expect the line numbers to start at one, not zero.
-      if ((!(s->mode & mode_silent)) || (s->mode & mode_warn_only))
+      if ((!opt_silent) || (s->mode & mode_warn_only))
       {
-	print_error(s,"%s: No hash found in line %"PRIu32, fn, count + 1);
-	print_error(s,"%s: %s", fn, strerror(errno));
+	print_error("%s: No hash found in line %"PRIu32, fn, count + 1);
+	print_error("%s: %s", fn, strerror(errno));
 	return STATUS_USER_ERROR;
       }
     }
@@ -99,14 +99,14 @@ static int parse_encase_file(state *s, const char *fn, FILE *handle)
 	     buffer[15]);
 
     if (hashTableAdd(s,&knownHashes,result,fn))    {
-      print_error(s,"%s: %s: Out of memory at line %" PRIu32,
+      print_error("%s: %s: Out of memory at line %" PRIu32,
 		  __progname, fn, count);
       return STATUS_INTERNAL_ERROR;
     }
   }
 
   if (s->expected_hashes != count)
-    print_error(s,
+    print_error(
 		"%s: Expecting %"PRIu32" hashes, found %"PRIu32"\n", 
 		fn, s->expected_hashes, count);
 
@@ -128,13 +128,13 @@ int md5deep_load_match_file(state *s, const char *fn)
   init_table();
 
   if ((f = fopen(fn,"rb")) == NULL) {
-    print_error(s,"%s: %s", fn,strerror(errno));
+    print_error("%s: %s", fn,strerror(errno));
     return FALSE;
   }
 
   file_type = hash_file_type(s,f);
   if (file_type == TYPE_UNKNOWN)  {
-    print_error(s,"%s: Unable to find any hashes in file, skipped.", fn);
+    print_error("%s: Unable to find any hashes in file, skipped.", fn);
     fclose(f);
     f = 0;
     return FALSE;
@@ -173,7 +173,7 @@ int md5deep_load_match_file(state *s, const char *fn)
 
     if (find_hash_in_line(s,buf,file_type,known_fn) != TRUE) 
     {
-      if ((!(s->mode & mode_silent)) || (s->mode & mode_warn_only))
+      if ((!opt_silent) || (s->mode & mode_warn_only))
       {
 	fprintf(stderr,"%s: %s: No hash found in line %" PRIu64 "%s", 
 		__progname,fn,line_number,NEWLINE);
@@ -184,7 +184,7 @@ int md5deep_load_match_file(state *s, const char *fn)
       // Invalid hashes are caught above
       if (hashTableAdd(s,&knownHashes,buf,known_fn))
       {
-	print_error(s,"%s: %s: Out of memory at line %" PRIu64 "%s",
+	print_error("%s: %s: Out of memory at line %" PRIu64 "%s",
 		    __progname, fn, line_number, NEWLINE);
 	fclose(f);
 	f = 0;
@@ -215,9 +215,9 @@ void md5deep_add_hash(state *s, char *h, char *fn)
   {
   case HASHTABLE_OK: break;
   case HASHTABLE_OUT_OF_MEMORY: 
-    print_error(s,"%s: Out of memory", __progname); break;
+    print_error("%s: Out of memory", __progname); break;
   case HASHTABLE_INVALID_HASH: 
-    print_error(s,"%s: Invalid hash", __progname); break;
+    print_error("%s: Invalid hash", __progname); break;
   }
 }
 

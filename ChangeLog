@@ -1,3 +1,21 @@
+2011-06-18  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/main.h: print_error no longer takes state.
+
+	* hashdeep/ui.cpp (fatal_error): fatal_error no longer takes
+	state; mode_silent is now a global variable.  Otherwise, EVERYTHING
+	that can generate a printout needs to pass a pointer to state,
+	which defeats the purpose of encapsulation. (If we ever want to
+	have two different state instances in memory at the same time, is
+	it likely that they will have different modes? I think not.)
+	(print_error_unicode): no longer takes (state *s)
+
+	* hashdeep/common.h (filetype_t): moved to hashlist class.
+
+	* hashdeep/main.h (hashlist): status_t broken up to hashlist::loadstatus_t and hashlist::search_status_t.
+
+	* hashdeep/main.cpp (process_command_line): load_match_file() call changed to known->load_hash_file() since the database of known hashes is now kept in a hashlist.
+
 2011-06-17  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* hashdeep/hash.cpp (hash_file): largely removed s->current_file; it is now a file_data_hasher_t pointer.

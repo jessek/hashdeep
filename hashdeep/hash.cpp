@@ -151,8 +151,8 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
     // If an error occured, display a message but still add this block 
     if (ferror(fdht->handle))
     {
-      if ( ! (s->mode & mode_silent))
-	print_error_unicode(s,
+      if ( ! opt_silent)
+	print_error_unicode(
 			    fdht->file_name,
 			    "error at offset %"PRIu64": %s",
 			    ftello(fdht->handle),
@@ -345,14 +345,14 @@ static int setup_barename(state *s, TCHAR *fn)
   TCHAR *basen = _tcsdup(fn);
   if (basen == NULL)
   {
-    print_error_unicode(s,fn,"Out of memory");
+    print_error_unicode(fn,"Out of memory");
     return TRUE;
   }
 
   if (my_basename(basen))
   {
     free(basen);
-    print_error_unicode(s,fn,"%s: Illegal filename");
+    print_error_unicode(fn,"%s: Illegal filename");
     return TRUE;
   }
 
@@ -410,7 +410,7 @@ int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 	fdht->close();
     }
     else  {
-	print_error_unicode(s,fn,"%s", strerror(errno));
+	print_error_unicode(fn,"%s", strerror(errno));
     }
     return status;
 }

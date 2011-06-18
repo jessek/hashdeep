@@ -41,18 +41,18 @@ void print_status(const char *fmt, ...)
   MD5DEEP_PRINT_MSG(stdout,fmt)
 }
 
-void print_error(const state *s, const char *fmt, ...)
+void print_error(const char *fmt, ...)
 {
-  if (!(s->mode & mode_silent))
+  if (!opt_silent)
   {
     MD5DEEP_PRINT_MSG(stderr,fmt);
   }
 }
 
 
-void print_error_unicode(const state *s, const std::string &fn, const char *fmt, ...)
+void print_error_unicode(const std::string &fn, const char *fmt, ...)
 {
-  if (!(s->mode & mode_silent))  {
+  if (!opt_silent)  {
 
       output_unicode(stderr,fn);
       fprintf(stderr,": ");
@@ -62,10 +62,9 @@ void print_error_unicode(const state *s, const std::string &fn, const char *fmt,
 
 
 
-void fatal_error(const state *s, const char *fmt, ...)
+void fatal_error(const char *fmt, ...)
 {
-  if (!(s->mode & mode_silent))
-  {
+  if (!opt_silent)  {
     MD5DEEP_PRINT_MSG(stderr,fmt);
   }
 

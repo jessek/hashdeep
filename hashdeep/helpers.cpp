@@ -43,8 +43,8 @@ void check_wow64(state *s)
 
   if (result) 
   {
-    print_error(s,"%s: WARNING: You are running a 32-bit program on a 64-bit system.", __progname);
-    print_error(s,"%s: You probably want to use the 64-bit version of this program.", __progname);
+    print_error("%s: WARNING: You are running a 32-bit program on a 64-bit system.", __progname);
+    print_error("%s: You probably want to use the 64-bit version of this program.", __progname);
   }
 
 }
@@ -72,7 +72,7 @@ void setup_expert_mode(state *s, char *arg)
     case 'd': // Door (Solaris)
       s->mode |= mode_door;      break;
     default:
-      print_error(s,"%s: Unrecognized file type: %c",__progname,*(arg+i));
+      print_error("%s: Unrecognized file type: %c",__progname,*(arg+i));
     }
     ++i;
   }
@@ -107,7 +107,7 @@ uint64_t find_block_size(state *s, char *input_str)
       case 'b':
 	break;
       default:
-	print_error(s,"%s: Improper piecewise multiplier ignored", __progname);
+	print_error("%s: Improper piecewise multiplier ignored", __progname);
       }
       input_str[strlen(input_str) - 1] = 0;
     }
@@ -140,8 +140,7 @@ void sanity_check(state *s, int condition, const char *msg)
 {
   if (condition)
   {
-    if (!(s->mode & mode_silent))
-    {
+      if (!opt_silent) {
       print_status("%s: %s", __progname, msg);
       try_msg();
     }

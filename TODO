@@ -21,10 +21,12 @@ Below is what we've done:
 
 Below is what's planned:
 
-1 - migrate all hash databases to a single 
+1 - migrate all hash databases to a single class (hashlist.cpp)
+2 - Fix -k so that it loads into that database
+3 - Fix audit mode so that it reads from that database.
+4 - a file pattern that specifies what files are hashed.
 5 - migrate to multi-threaded producer/consumer architecture with the file searching (dig) being the producer and hash() being the consumer. This will require a bunch of locks added.
 6 - Add "-j" option to control how many threads; -j0 turns off threading.
-7 - a file pattern that specifies what files are hashed.
 
 What's on hold (reason: why change code that currently works?)
 ================

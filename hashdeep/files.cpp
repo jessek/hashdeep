@@ -258,7 +258,7 @@ static int check_for_encase(state *s, FILE *f)
   ENCASE_HASH_HEADER *h = (ENCASE_HASH_HEADER *)malloc(sizeof(ENCASE_HASH_HEADER));
   
   if (NULL == h)
-    fatal_error(s,"Out of memory");
+    fatal_error("Out of memory");
   
   if (sizeof(ENCASE_HASH_HEADER) != fread(h,1,sizeof(ENCASE_HASH_HEADER),f))
   {

@@ -5,7 +5,7 @@ ALGS=md5.c sha1.c sha256.c tiger.c whirlpool.c \
 
 bin_PROGRAMS = hashdeep 
 
-hashdeep_SOURCES = main.cpp audit.cpp match.cpp multihash.cpp display.cpp \
+hashdeep_SOURCES = main.cpp hashlist.cpp multihash.cpp display.cpp \
 	hash.cpp dig.cpp cycles.cpp ui.cpp helpers.cpp xml.cpp 	md5deep_match.cpp \
 	md5deep_hashtable.cpp files.cpp \
 	common.h main.h md5deep.h md5deep_hashtable.h \

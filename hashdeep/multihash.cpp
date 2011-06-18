@@ -3,18 +3,18 @@
 
 #include "main.h"
 
-void multihash_initialize(state *s,file_data_hasher_t *fdht)
+void multihash_initialize(file_data_hasher_t *fdht)
 {
   for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)    {
-      if (s->hashes[i].inuse)	{	  
+      if (hashes[i].inuse)	{	  
 	  fdht->hash_hex[i]="";
-	  s->hashes[i].f_init(fdht->hash_context[i]);
+	  hashes[i].f_init(fdht->hash_context[i]);
 	}
     }
 }
 
 
-void multihash_update(state *s, file_data_hasher_t *fdht, unsigned char *buf, uint64_t len)
+void multihash_update(file_data_hasher_t *fdht, unsigned char *buf, uint64_t len)
 {
   // We have to copy the data being hashed from the buffer we were
   // passed into another structure because the SHA-1 update 

@@ -295,15 +295,15 @@ static int is_junction_point(state *s, TCHAR *fn)
 
       if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0)
       {
-	print_error_unicode(s,fn,"Junction point, skipping");
+	print_error_unicode(fn,"Junction point, skipping");
       }
       else if (IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0)
       {
-	print_error_unicode(s,fn,"Symbolic link, skipping");
+	print_error_unicode(fn,"Symbolic link, skipping");
       }	
       else 
       {
-	print_error_unicode(s,fn,"Unknown reparse point 0x%"PRIx32", skipping",
+	print_error_unicode(fn,"Unknown reparse point 0x%"PRIx32", skipping",
 			    FindFileData.dwReserved0);
       }
     }
@@ -389,7 +389,7 @@ static int process_dir(state *s, TCHAR *fn)
 
   if (have_processed_dir(fn))
   {
-    print_error_unicode(s,fn,"symlink creates cycle");
+    print_error_unicode(fn,"symlink creates cycle");
     return STATUS_OK;
   }
 
@@ -398,7 +398,7 @@ static int process_dir(state *s, TCHAR *fn)
   
   if ((current_dir = _topendir(fn)) == NULL) 
   {
-    print_error_unicode(s,fn,"%s", strerror(errno));
+    print_error_unicode(fn,"%s", strerror(errno));
     return STATUS_OK;
   }    
 
@@ -477,7 +477,7 @@ static int file_type(state *s,file_data_hasher_t *fdht, TCHAR *fn)
 
   if (_lstat(fn,&sb))
   {
-    print_error_unicode(s,fn,"%s", strerror(errno));
+    print_error_unicode(fn,"%s", strerror(errno));
     return stat_unknown;
   }
 
@@ -513,7 +513,7 @@ static int should_hash_expert(state *s, TCHAR *fn, int type)
       process_dir(s,fn);
     else
     {
-      print_error_unicode(s,fn,"Is a directory");
+      print_error_unicode(fn,"Is a directory");
     }
     return FALSE;
 
@@ -565,7 +565,7 @@ static int should_hash_symlink(state *s, TCHAR *fn, int *link_type)
   // we use stat to examine what this symlink points to. 
   if (_sstat(fn,&sb))
   {
-    print_error_unicode(s,fn,"%s",strerror(errno));
+    print_error_unicode(fn,"%s",strerror(errno));
     return FALSE;
   }
 
@@ -577,7 +577,7 @@ static int should_hash_symlink(state *s, TCHAR *fn, int *link_type)
       process_dir(s,fn);
     else
     {
-      print_error_unicode(s,fn,"Is a directory");
+      print_error_unicode(fn,"Is a directory");
     }
     return FALSE;
   }    
@@ -611,7 +611,7 @@ static int should_hash(state *s, file_data_hasher_t *fdht,TCHAR *fn)
       process_dir(s,fn);
     else 
     {
-      print_error_unicode(s,fn,"Is a directory");
+      print_error_unicode(fn,"Is a directory");
     }
     return FALSE;
   }
@@ -672,12 +672,12 @@ int process_win32(state *s, TCHAR *fn)
   hFind = FindFirstFile(fn, &FindFileData);
   if (INVALID_HANDLE_VALUE == hFind)
   {
-    print_error_unicode(s,fn,"No such file or directory");
+    print_error_unicode(fn,"No such file or directory");
     return STATUS_OK;
   }
   
-#define FATAL_ERROR_UNK(A) if (NULL == A) fatal_error(s,"%s: %s", __progname, strerror(errno));
-#define FATAL_ERROR_MEM(A) if (NULL == A) fatal_error(s,"%s: Out of memory", __progname);
+#define FATAL_ERROR_UNK(A) if (NULL == A) fatal_error("%s: %s", __progname, strerror(errno));
+#define FATAL_ERROR_MEM(A) if (NULL == A) fatal_error("%s: Out of memory", __progname);
   
   TCHAR new_fn[PATH_MAX];
   TCHAR dirname[PATH_MAX];
@@ -727,14 +727,14 @@ int process_win32(state *s, TCHAR *fn)
     // is beserk. Rather than play their silly games, we 
     // acknowledge that an unknown error occured and hope we
     // can continue.
-    print_error_unicode(s,fn,"Unknown error while expanding wildcard");
+    print_error_unicode(fn,"Unknown error while expanding wildcard");
     return STATUS_OK;
   }
   
   rc = FindClose(hFind);
   if (0 == rc)
   {
-    print_error_unicode(s,
+    print_error_unicode(
 			fn,
 			"Unknown error while cleaning up wildcard expansion");
   }
