@@ -18,7 +18,7 @@ uint64_t hashlist::count_unused()
     for(std::vector<file_data_t *>::const_iterator i = this->begin(); i != this->end(); i++){
 	if((*i)->used==0){
 	    count++;
-	    if (s->mode & mode_more_verbose) {
+	    if (opt_verbose >= MORE_VERBOSE) {
 		display_filename(stdout,*i,false);
 		print_status(": Known file not used");
 	    }
@@ -27,19 +27,29 @@ uint64_t hashlist::count_unused()
     return count;
 }
 
+void hashlist::hashmap::add_file(file_data_t *fi,int alg_num)
+{
+    if(fi->hash_hex[alg_num].size()){
+	fi->retain();
+	insert(std::pair<std::string,file_data_t *>(fi->hash_hex[alg_num],fi));
+    }
+}
+
+
 /**
  * Adds a file_data_t pointer to the hashlist.
  * Does not copy the object; that must be done elsewhere.
+ * Notice we add the hash whether it is in use or not, as long as we have it.
  */
-void hashlist::add_fdt(file_data_t *fi){ 
+void hashlist::add_fdt(file_data_t *fi)
+{ 
     fi->retain();
     push_back(fi);
     for(int i=0;i<NUM_ALGORITHMS;i++){
-	if(s->hashes[i].inuse){
-	    hashmaps[i].add_file(fi,i);
-	}
+	hashmaps[i].add_file(fi,i);
     };
-};
+}
+
 
 
 /**
@@ -54,7 +64,7 @@ hashlist::searchstatus_t hashlist::search(const file_data_t *fdt) const
      */
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
 	/* Only search hash functions that are in use and hashes that are in the fdt */
-	if (s->hashes[i].inuse && fdt->hash_hex[i].size()){
+	if (hashes[i].inuse && fdt->hash_hex[i].size()){
 	    hashmap::const_iterator it = hashmaps[i].find(fdt->hash_hex[i]);
 	    if(it != hashmaps[i].end()){
 		/* found a match*/
@@ -63,7 +73,7 @@ hashlist::searchstatus_t hashlist::search(const file_data_t *fdt) const
 
 		/* Verify that all of the other hash functions for *it match fdt as well. */
 		for(int j=0;j<NUM_ALGORITHMS;j++){
-		    if(s->hashes[j].inuse && j!=i && fdt->hash_hex[i].size() && match->hash_hex[i].size()){
+		    if(hashes[j].inuse && j!=i && fdt->hash_hex[i].size() && match->hash_hex[i].size()){
 			if(fdt->hash_hex[j] != match->hash_hex[j]){
 			    /* Amazing. We found a match on one hash a a non-match on another.
 			     * Call the newspapers! This is a newsorthy event.
@@ -127,12 +137,12 @@ int display_audit_results(state *s)
 	print_status("%s: Audit passed", __progname);
     }
   
-    if (s->mode & mode_verbose)    {
-	/*
-	  print_status("   Input files examined: %"PRIu64, s->match_total);
-	  print_status("  Known files expecting: %"PRIu64, s->match_expect);
-	  print_status(" ");
-	*/
+    if (opt_verbose)    {
+	if(opt_verbose >= MORE_VERBOSE){
+	    print_status("   Input files examined: %"PRIu64, s->match.total);
+	    print_status("  Known files expecting: %"PRIu64, s->match.expect);
+	    print_status(" ");
+	}
 	print_status("          Files matched: %"PRIu64, s->match.exact);
 	print_status("Files partially matched: %"PRIu64, s->match.partial);
 	print_status("            Files moved: %"PRIu64, s->match.moved);
@@ -170,7 +180,7 @@ int audit_update(state *s,file_data_t *fdt)
 
     // Check all of the algorithms in use
     for (int i = 0 ; i < NUM_ALGORITHMS; i++) {
-	if (s->hashes[i].inuse) {
+	if (hashes[i].inuse) {
 	    hashlist::hashmap::const_iterator match  = s->known.hashmaps[i].find(fdt->hash_hex[i]);
 	    if(match==s->known.hashmaps[i].end()){
 		no_match = TRUE;
@@ -240,8 +250,7 @@ int audit_update(state *s,file_data_t *fdt)
   if (exact_match)
   {
     s->match_exact++;
-    if (s->mode & mode_insanely_verbose)
-    {
+    if (opt_mode >= INSANELY_VERBOSE) {
 	display_filename(stdout,s->current_file,false);
       print_status(": Ok");
     }
@@ -250,8 +259,7 @@ int audit_update(state *s,file_data_t *fdt)
   else if (no_match)
   {
     s->match_unknown++;
-    if (s->mode & mode_more_verbose)
-    {
+    if (opt_mode > MORE_VERBOSE) {
 	display_filename(stdout,s->current_file,false);
       print_status(": No match");
     }
@@ -260,8 +268,7 @@ int audit_update(state *s,file_data_t *fdt)
   else if (moved)
   {
     s->match_moved++;
-    if (s->mode & mode_more_verbose)
-    {
+    if (opt_mode > MORE_VERBOSE) {
 	display_filename(stdout,s->current_file,false);
 	fprintf(stdout,": Moved from ");
 	display_filename(stdout,moved_file,false);
@@ -295,10 +302,10 @@ static int match_valid_hash(state *s, hashid_t a, char *buf)
 {
   size_t pos = 0;
 
-  if (strlen(buf) != s->hashes[a].bit_length/4)
+  if (strlen(buf) != hashes[a].bit_length/4)
     return FALSE;
   
-  for (pos = 0 ; pos < s->hashes[a].bit_length/4 ; pos++)
+  for (pos = 0 ; pos < hashes[a].bit_length/4 ; pos++)
   {
     if (!isxdigit(buf[pos]))
       return FALSE;
@@ -306,92 +313,6 @@ static int match_valid_hash(state *s, hashid_t a, char *buf)
   return TRUE;
 }
       
-#define TEST_ALGORITHM(CONDITION,ALG)	  \
-  if (CONDITION)			  \
-    {					  \
-      s->hashes[ALG].inuse = TRUE;	  \
-      hash_order[order] = ALG;		  \
-      buf += strlen(buf) + 1;		  \
-      pos = 0;				  \
-      ++total_pos;			  \
-      ++order;				  \
-      continue;				  \
-    }
-
-static int hashlist::parse_hashing_algorithms(state *s, char *fn, char *val)
-{
-  char * buf = val;
-  size_t len = strlen(val);
-  int done = FALSE;
-
-  // The first position is always the file size, so we start with an 
-  // the first position of one.
-  uint8_t order = 1;
-
-  size_t pos = 0, total_pos = 0;
-  
-  if (NULL == s || NULL == fn || NULL == val)
-    return TRUE;
-
-  while (!done)  {
-    if ( ! (',' == buf[pos] || 0 == buf[pos]))    {
-      // If we don't find a comma or the end of the line, 
-      // we must continue to the next character
-      ++pos;
-      ++total_pos;
-      continue;
-    }
-
-    /// Terminate the string so that we can do comparisons easily
-    buf[pos] = 0;
-
-    TEST_ALGORITHM(STRINGS_CASE_EQUAL(buf,"md5"),alg_md5);
-    
-    TEST_ALGORITHM(STRINGS_CASE_EQUAL(buf,"sha1") ||
-		   STRINGS_CASE_EQUAL(buf,"sha-1"), alg_sha1);
-
-    TEST_ALGORITHM(STRINGS_CASE_EQUAL(buf,"sha256") || 
-		   STRINGS_CASE_EQUAL(buf,"sha-256"), alg_sha256);
-
-    TEST_ALGORITHM(STRINGS_CASE_EQUAL(buf,"tiger"),alg_tiger);
-
-    TEST_ALGORITHM(STRINGS_CASE_EQUAL(buf,"whirlpool"),alg_whirlpool);
-      
-    if (STRINGS_CASE_EQUAL(buf,"filename"))
-    {
-      // The filename column should be the end of the line
-      if (total_pos != len)
-      {
-	print_error("%s: %s: Badly formatted file", __progname, fn);
-	try_msg();
-	exit(EXIT_FAILURE);
-      }
-      done = TRUE;
-    }
-      
-    else
-    {
-      // If we can't parse the algorithm name, there's something
-      // wrong with it. Don't tempt fate by trying to print it,
-      // it could contain non-ASCII characters or something malicious.
-      print_error(
-		  "%s: %s: Unknown algorithm in file header, line 2.", 
-		  __progname, fn);
-      
-      try_msg();
-      exit(EXIT_FAILURE);
-    }
-  }
-
-  s->expected_columns = order;
-  s->hash_order[order] = alg_unknown;
-
-  if (done)
-    return FALSE;
-  return TRUE;
-}
-
-
 
 /**
  * Returns the file type of a given input file.
@@ -399,7 +320,7 @@ static int hashlist::parse_hashing_algorithms(state *s, char *fn, char *val)
  */
 hashlist::filetype_t hashlist::identify_filetype(const char *fn,FILE *handle)
 {
-    hashid_t current_order[NUM_ALGORITHMS];
+    //hashid_t current_order[NUM_ALGORITHMS];
  
     char buf[MAX_STRING_LENGTH];
 
@@ -427,10 +348,14 @@ hashlist::filetype_t hashlist::identify_filetype(const char *fn,FILE *handle)
 	return file_unknown;
     }
 
+    // Get a list of the hashes previously loaded
+    uint32_t hashes_previously_inuse = algorithm_t::hashes_inuse_mask();
+
+#if 0
     // If this is the first file of hashes being loaded, clear out the 
     // list of known values. Otherwise, record the current values to
     // let the user know if they have changed when we load the new file.
-    if ( ! s->hashes_loaded )  {
+    if ( ! hashes_loaded )  {
 	clear_algorithms_inuse(s);
     }
     else  {
@@ -443,17 +368,16 @@ hashlist::filetype_t hashlist::identify_filetype(const char *fn,FILE *handle)
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i){
 	s->hash_order[i] = alg_unknown;
     }
+#endif
     
     // Skip the "%%%% size," when parsing the list of hashes 
-    parse_hashing_algorithms(fn,buf + 10);
+    parse_hashing_algorithms_in_file(fn,buf + 10);
     
-    if (s->hashes_loaded)  {
-	int i = 0;
-	while (i < NUM_ALGORITHMS && s->hash_order[i] == current_order[i])
-	    i++;
-	if (i < NUM_ALGORITHMS)
-	    print_error("%s: %s: Hashes not in same format as previously loaded",
-			__progname, fn);
+    // If the set of hashes now in use doesn't match those previously in use,
+    // give a warning.
+    if (hashes_previously_inuse && hashes_previously_inuse != hashes_inuse_mask()){
+	print_error("%s: %s: Hashes not in same format as previously loaded",
+		    __progname, fn);
     }
     return file_hashdeep_10;
 }
@@ -499,7 +423,7 @@ static void display_file_data(state *s, file_data_t * t)
     print_status("      Size: %"PRIu64, t->file_size);
     
     for (i = 0 ; i < NUM_ALGORITHMS ; ++i)
-	print_status("%10s: %s", s->hashes[i]->name, t->hash[i]);
+	print_status("%10s: %s", hashes[i]->name, t->hash[i]);
     print_status("");
 }
 
@@ -520,13 +444,27 @@ static void display_all_known_files(state *s)
 
 
 /**
- * Read a hash set file.
- * Assumes file type has been identified (kind of a weird assumption)
+ * Loads a file of known hashes.
+ * First identifies the file type, then reads the file.
  */
-
-status_t read_hash_set_file(const char *fn)
+hashlist::loadstatus_t hashlist::load_hash_file(char *fn)
 {
+    loadstatus_t status = status_ok;
+    filetype_t type;
+
     FILE *handle = fopen(fn,"rb");
+    if (NULL == handle) {
+	print_error("%s: %s: %s", __progname, fn, strerror(errno));
+	return status_file_error;
+    }
+  
+    type = identify_filetype(fn,handle);
+    if (file_unknown == type)  {
+	print_error("%s: %s: Unable to identify file format", __progname, fn);
+	fclose(handle);
+	return status_unknown_filetype;
+    }
+
     status_t st = status_ok;
     int contains_bad_lines = FALSE;
     int record_valid=0;
@@ -590,7 +528,7 @@ status_t read_hash_set_file(const char *fn)
 		print_error(
 			    "%s: %s: Invalid %s hash in line %"PRIu64,
 			    __progname, fn, 
-			    s->hashes[s->hash_order[column_number]].name.c_str(),
+			    hashes[s->hash_order[column_number]].name.c_str(),
 			    line_number);
 		contains_bad_lines = TRUE;
 		record_valid = FALSE;
@@ -621,34 +559,10 @@ status_t read_hash_set_file(const char *fn)
 	s->known.add_file(t);
     }
     if (contains_bad_lines){
+	fclose(handle);
 	return status_contains_bad_hashes;
     }
     
-    return st;
-}
-
-
-/** Loads a file of known hashes
- */
- hashlist::loadstatus_t hashlist::load_hash_file(char *fn)
-{
-    loadstatus_t status = status_ok;
-    filetype_t type;
-
-    FILE *handle = fopen(fn,"rb");
-    if (NULL == handle) {
-	print_error("%s: %s: %s", __progname, fn, strerror(errno));
-	return status_file_error;
-    }
-  
-    type = identify_filetype(fn,handle);
-    if (file_unknown == type)  {
-	print_error("%s: %s: Unable to identify file format", __progname, fn);
-	fclose(handle);
-	return status_unknown_filetype;
-    }
-    status = read_hash_set_file(fn,handle);
-    fclose(handle);
     return status;
 }
 
@@ -688,7 +602,7 @@ status_t display_match_result(state *s,file_data_hasher_t *fdht)
     should_display = (primary_match_neg == s->primary_function);
     
     for (int i = 0 ; i < NUM_ALGORITHMS; ++i)  {
-	if (s->hashes[i].inuse)    {
+	if (hashes[i].inuse)    {
 	hashtable_entry_t *ret = hashtable_contains(s,(hashid_t)i);
       hashtable_entry_t *tmp = ret;
       while (tmp != NULL)

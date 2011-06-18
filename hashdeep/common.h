@@ -295,9 +295,9 @@ __END_DECLS
 #define mode_not_matched       1<<13
 #define mode_quiet             1<<14
 #define mode_piecewise         1<<15
-#define mode_verbose           1<<16
-#define mode_more_verbose      1<<17
-#define mode_insanely_verbose  1<<18
+//#define mode_verbose           1<<16
+//#define mode_more_verbose      1<<17
+//#define mode_insanely_verbose  1<<18
 #define mode_size              1<<19
 #define mode_size_all          1<<20
 #define mode_timestamp         1<<21

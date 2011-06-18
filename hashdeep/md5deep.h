@@ -20,7 +20,6 @@
 #include "md5deep_hashtable.h"
 
 /* We no longer use this */
-void sanity_check(state *s, int condition, const char *msg);
 
 // ----------------------------------------------------------------
 // PROGRAM ENGINE

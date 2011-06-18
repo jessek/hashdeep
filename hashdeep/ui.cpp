@@ -85,5 +85,5 @@ void internal_error(const char *fmt, ... )
 
 void try_msg(void)
 {
-  print_status("Try `%s -h` for more information.", __progname);
+    print_status("Try `%s -h` for more information.", __progname);
 }

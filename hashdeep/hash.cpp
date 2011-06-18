@@ -388,9 +388,9 @@ int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 	    && (fdht->stat_bytes > s->size_threshold)) {
 	    if (s->mode & mode_size_all)      {
 		for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)	{
-		    if (s->hashes[i].inuse){
+		    if (hashes[i].inuse){
 			fdht->hash_hex[i] = "";
-			for(size_t j=0;j<s->hashes[i].bit_length/4;j++){
+			for(size_t j=0;j<hashes[i].bit_length/4;j++){
 			    fdht->hash_hex[i].push_back('*');
 			}
 		    }

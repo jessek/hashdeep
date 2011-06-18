@@ -138,13 +138,12 @@ void chop_line(char *s)
 
 void sanity_check(state *s, int condition, const char *msg)
 {
-  if (condition)
-  {
+  if (condition) {
       if (!opt_silent) {
-      print_status("%s: %s", __progname, msg);
-      try_msg();
-    }
-    exit (STATUS_USER_ERROR);
+	  print_status("%s: %s", __progname, msg);
+	  try_msg();
+      }
+      exit (STATUS_USER_ERROR);
   }
 }
 

@@ -36,3 +36,6 @@ Test cases:
  - An audit file with with 1 million entries.
 
 what is mode_barename? 
+
+* Loading hashes should return a string with the set of hashes that were added.
+* Use this for comparing which hashes get added.

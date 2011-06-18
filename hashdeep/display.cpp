@@ -99,8 +99,8 @@ static void display_banner(state *s)
 
   fprintf (stdout,"%ssize,",HASHDEEP_PREFIX);  
   for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
-      if (s->hashes[i].inuse){
-	  printf ("%s,", s->hashes[i].name.c_str());
+      if (hashes[i].inuse){
+	  printf ("%s,", hashes[i].name.c_str());
       }
   }  
   print_status("filename");
@@ -153,7 +153,7 @@ static void compute_dfxml(state *s,file_data_hasher_t *fdht,int known_hash)
 	    + string("' bytes='") + itos(bytes) + string("'>\n   ");
     }
     for(int i=0;i<NUM_ALGORITHMS;i++){
-	if(s->hashes[i].inuse){
+	if(hashes[i].inuse){
 	    fdht->dfxml_hash += "<hashdigest type='";
 	    fdht->dfxml_hash += makeupper(fdht->hash_hex[i]);
 	    fdht->dfxml_hash += string("'>") + fdht->hash_hex[i] + string("</hashdigest>\n");
@@ -192,7 +192,7 @@ int display_hash_simple(state *s,file_data_hasher_t *fdht)
     printf ("%"PRIu64",", fdht->actual_bytes);
 
   for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
-    if (s->hashes[i].inuse)
+    if (hashes[i].inuse)
 	printf("%s,", fdht->hash_hex[i].c_str());
   }
   

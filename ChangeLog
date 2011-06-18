@@ -1,5 +1,7 @@
 2011-06-18  Simson Garfinkel  <simsong@imac3.home>
 
+	* hashdeep/main.cpp (process_command_line): mode_verbose, mode_more_verbose and mode_insanely_verbose now replaced with a global variable opt_verbose which has value of 0, 1, 2 or 3.
+
 	* hashdeep/main.h: print_error no longer takes state.
 
 	* hashdeep/ui.cpp (fatal_error): fatal_error no longer takes

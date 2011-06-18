@@ -70,7 +70,7 @@ typedef struct _ENCASE_HASH_HEADER {
 "\"file_id\",\"hashset_id\",\"file_name\",\"directory\",\"hash\",\"file_size\",\"date_modified\",\"time_modified\",\"time_zone\",\"comments\",\"date_accessed\",\"time_accessed\""
 
 
-#define HASH_STRING_LENGTH   (s->hashes[s->md5deep_mode_algorithm].bit_length/4)
+#define HASH_STRING_LENGTH   (hashes[s->md5deep_mode_algorithm].bit_length/4)
 
 int valid_hash(state *s, const char *buf) 
 {

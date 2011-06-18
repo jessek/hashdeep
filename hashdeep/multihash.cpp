@@ -20,9 +20,9 @@ void multihash_update(file_data_hasher_t *fdht, unsigned char *buf, uint64_t len
   // passed into another structure because the SHA-1 update 
   // routine modifies it.
   for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
-    if (s->hashes[i].inuse)    {
-      memcpy(fdht->buffer,buf,len);
-      s->hashes[i].f_update(fdht->hash_context[i],fdht->buffer,len);
+    if (hashes[i].inuse)    {
+	memcpy(fdht->buffer,buf,len);
+	hashes[i].f_update(fdht->hash_context[i],fdht->buffer,len);
     }
   }
 }
@@ -38,12 +38,12 @@ void multihash_finalize(state *s,file_data_hasher_t *fdht)
     static char hex[] = "0123456789abcdef";
     
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
-	if (s->hashes[i].inuse) {
+	if (hashes[i].inuse) {
 
 	    /* Calculate the residue and convert to hex */
 	    uint8_t residue[file_data_hasher_t::MAX_ALGORITHM_RESIDUE_SIZE];
-	    s->hashes[i].f_finalize(fdht->hash_context[i], residue);
-	    for (j = 0; j < s->hashes[i].bit_length/8 ; j++) {
+	    hashes[i].f_finalize(fdht->hash_context[i], residue);
+	    for (j = 0; j < hashes[i].bit_length/8 ; j++) {
 		fdht->hash_hex[i].push_back(hex[(residue[j] >> 4) & 0xf]);
 		fdht->hash_hex[i].push_back(hex[residue[j] & 0xf]);
 	    }
