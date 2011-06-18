@@ -1,8 +1,9 @@
 // $Id$ 
 
-/** audit.cpp
+/** hashlist.cpp
  * Contains the logic for performing the audit.
  * Also has implementation of the hashlist, searching, etc.
+ * Formerly this code was in audit.cpp and match.cpp.
  */
 
 #include "main.h"
