@@ -471,7 +471,7 @@ static int file_type_helper(_tstat_t sb)
 
 // Use a stat function to look up while kind of file this is
 // and, if possible, it's size.
-static int file_type(state *s, TCHAR *fn)
+static int file_type(state *s,file_data_hasher_t *fdht, TCHAR *fn)
 {
   _tstat_t sb;
 
@@ -481,11 +481,11 @@ static int file_type(state *s, TCHAR *fn)
     return stat_unknown;
   }
 
-  s->current_file->stat_bytes = sb.st_size;
+  fdht->stat_bytes = sb.st_size;
 
   // On Win32 this should be the creation time, but on all other systems
   // it will be the change time.
-  s->current_file->timestamp = sb.st_ctime; 
+  fdht->timestamp = sb.st_ctime; 
 
   return file_type_helper(sb);
 }
@@ -591,16 +591,16 @@ static int should_hash_symlink(state *s, TCHAR *fn, int *link_type)
 
 
 
-static int should_hash(state *s, TCHAR *fn)
+static int should_hash(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 {
   int type;
 
   // We must reset the number of bytes in each file processed
   // so that we can tell if fstat reads the number successfully
-  s->current_file->stat_bytes = UNKNOWN_FILE_SIZE;
-  s->current_file->timestamp   = 0;
+  fdht->stat_bytes = UNKNOWN_FILE_SIZE;
+  fdht->timestamp   = 0;
 
-  type = file_type(s,fn);
+  type = file_type(s,fdht,fn);
   
   if (s->mode & mode_expert)
     return (should_hash_expert(s,fn,type));
@@ -631,10 +631,11 @@ static int should_hash(state *s, TCHAR *fn)
 
 int process_normal(state *s, TCHAR *fn)
 {
+    file_data_hasher_t *fdht = new file_data_hasher_t();
   clean_name(s,fn);
 
-  if (should_hash(s,fn))
-    return (hash_file(s,fn));
+  if (should_hash(s,fdht,fn))
+      return (hash_file(s,fdht,fn));
   
   // RBF - Standardize return values for this function and audit functions
   // This function returns FALSE. hash_file, called above, returns STATUS_OK

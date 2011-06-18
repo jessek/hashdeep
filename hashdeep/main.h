@@ -281,7 +281,7 @@ public:;
 	    
 	    argc(0),argv(0),input_list(0),
 	    piecewise_size(0),
-	    current_file(0),
+	    //current_file(0),
 
 	    expected_hashes(0),expected_columns(0),
 	    size_threshold(0),
@@ -295,11 +295,11 @@ public:;
 	    banner_displayed(false),
 	    dfxml(0) {
 	load_hashing_algorithms();
-	current_file = new file_data_hasher_t();
+	//current_file = new file_data_hasher_t();
     };
-    ~state(){
-	if(current_file) delete current_file;
-    }
+    //~state(){
+	//if(current_file) delete current_file;
+    //}
 
     /* Basic Program State */
     primary_t       primary_function;
@@ -317,7 +317,7 @@ public:;
     uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */
 
     /* The file currently being hashed */
-    file_data_hasher_t   * current_file;
+    //file_data_hasher_t   * current_file;
 
     // Lists of known hashes 
     hashTable     known_hashes;
@@ -365,9 +365,9 @@ void hashtable_destroy(hashtable_entry_t *e);
 #endif
 
 /* MULTIHASHING */
-void multihash_initialize(state *s);
-void multihash_update(state *s, unsigned char *buf, uint64_t len);
-void multihash_finalize(state *s);
+void multihash_initialize(state *s,file_data_hasher_t *fdht);
+void multihash_update(state *s, file_data_hasher_t *fdht, unsigned char *buf, uint64_t len);
+void multihash_finalize(state *s,file_data_hasher_t *fdht);
 
 
 /* MATCHING MODES */
@@ -386,7 +386,7 @@ int audit_update(state *s,file_data_t *fdt);
 
 /* HASHING CODE */
 
-int hash_file(state *s, TCHAR *file_name);
+int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *file_name);
 int hash_stdin(state *s);
 
 
