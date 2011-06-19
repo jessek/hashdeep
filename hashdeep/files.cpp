@@ -14,7 +14,6 @@
 #include "main.h"
 #include "common.h"
 
-
 /* ---------------------------------------------------------------------
    How to add more file types that we can read known hashes from:
 
@@ -83,8 +82,7 @@ int find_plain_hash(state *s, char *buf, char *known_fn)
       (buf[HASH_STRING_LENGTH] != ' '))
     return FALSE;
 
-  if (known_fn != NULL)
-  {
+  if (known_fn != NULL) {
     strncpy(known_fn,buf,PATH_MAX);
 
     // Starting at the end of the hash, find the start of the filename
@@ -248,21 +246,19 @@ int find_ilook_hash(state *s, char *buf, char *known_fn)
 }
 
 
-static int check_for_encase(state *s, FILE *f)
+static int check_for_encase(state *s, FILE *f,uint32_t *expected_hashes)
 {
   ENCASE_HASH_HEADER *h = (ENCASE_HASH_HEADER *)malloc(sizeof(ENCASE_HASH_HEADER));
   
   if (NULL == h)
     fatal_error("Out of memory");
   
-  if (sizeof(ENCASE_HASH_HEADER) != fread(h,1,sizeof(ENCASE_HASH_HEADER),f))
-  {
+  if (sizeof(ENCASE_HASH_HEADER) != fread(h,1,sizeof(ENCASE_HASH_HEADER),f))  {
     free(h);
     return FALSE;
   }
   
-  if (memcmp(h->Signature,ENCASE_HEADER,8))
-  {
+  if (memcmp(h->Signature,ENCASE_HEADER,8))  {
     rewind(f);
     free(h);
     return FALSE;
@@ -272,12 +268,12 @@ static int check_for_encase(state *s, FILE *f)
   h->NumHashes = byte_reverse(h->NumHashes);  
 #endif
 
-  s->expected_hashes = h->NumHashes;
+  *expected_hashes = h->NumHashes;
   return TRUE;
 }
 
 
-int hash_file_type(state *s, FILE *f) 
+int hash_file_type(state *s, FILE *f,uint32_t *expected_hashes) 
 {
   char known_fn[PATH_MAX+1];
   char buf[MAX_STRING_LENGTH + 1];
@@ -288,7 +284,7 @@ int hash_file_type(state *s, FILE *f)
 
   if (s->h_encase)
     {
-      if (check_for_encase(s,f))
+	if (check_for_encase(s,f,expected_hashes))
 	return TYPE_ENCASE;
     }
 

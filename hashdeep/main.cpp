@@ -276,8 +276,7 @@ static int process_command_line(state *s, int argc, char **argv)
     case 'i':
       s->mode |= mode_size;
       s->size_threshold = find_block_size(s,optarg);
-      if (0 == s->size_threshold)
-      {
+      if (0 == s->size_threshold) {
 	print_error("%s: Requested size threshold implies not hashing anything",
 		    __progname);
 	exit(STATUS_USER_ERROR);
@@ -377,9 +376,6 @@ static int process_command_line(state *s, int argc, char **argv)
   return FALSE;
 }
 
-
-
-
 #ifdef _WIN32
 static int prepare_windows_command_line(state *s)
 {
@@ -477,7 +473,6 @@ int main(int argc, char **argv)
 #ifdef _WIN32
   if (prepare_windows_command_line(s))
     fatal_error("%s: Unable to process command line arguments", __progname);
-
   check_wow64(s);
 #else
   s->argc = argc;

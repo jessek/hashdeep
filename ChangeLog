@@ -1,3 +1,7 @@
+2011-06-19  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/md5deep_match.cpp (md5deep_load_match_file): expected_hashes, used in parsing EnCase hash files, is now segregated to the EnCase file parsing routines and no longer in the state variable.
+
 2011-06-18  Simson Garfinkel  <simsong@imac3.home>
 
 	* hashdeep/Makefile.am (hashdeep_SOURCES): removed strsep; no longer needed.

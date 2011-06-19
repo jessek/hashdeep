@@ -41,7 +41,7 @@ void init_table(void)
 
 #define hash_length md5deep_mode_hash_length
 
-static int parse_encase_file(state *s, const char *fn, FILE *handle)
+static int parse_encase_file(state *s, const char *fn, FILE *handle,uint32_t expected_hashes)
 {
   unsigned char buffer[64];
   char result[1024];			// must be at least s->hash_length*2
@@ -105,10 +105,10 @@ static int parse_encase_file(state *s, const char *fn, FILE *handle)
     }
   }
 
-  if (s->expected_hashes != count)
+  if (expected_hashes != count)
     print_error(
 		"%s: Expecting %"PRIu32" hashes, found %"PRIu32"\n", 
-		fn, s->expected_hashes, count);
+		fn, expected_hashes, count);
 
   return STATUS_OK;
 }
@@ -119,6 +119,7 @@ int md5deep_load_match_file(state *s, const char *fn)
   char known_fn[PATH_MAX+1];
   int file_type, status;
   FILE *f;
+  uint32_t expected_hashes=0;
 
   if (NULL == s || NULL == fn)
     return TRUE;
@@ -132,7 +133,7 @@ int md5deep_load_match_file(state *s, const char *fn)
     return FALSE;
   }
 
-  file_type = hash_file_type(s,f);
+  file_type = hash_file_type(s,f,&expected_hashes);
   if (file_type == TYPE_UNKNOWN)  {
     print_error("%s: Unable to find any hashes in file, skipped.", fn);
     fclose(f);
@@ -144,7 +145,7 @@ int md5deep_load_match_file(state *s, const char *fn)
   {
     // We can't use the normal file reading code which is based on
     // a one-line-at-a-time approach. Encase files are binary records 
-    status = parse_encase_file(s,fn,f);
+      status = parse_encase_file(s,fn,f,expected_hashes);
     fclose(f);
     f = 0;
     

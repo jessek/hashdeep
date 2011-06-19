@@ -354,8 +354,6 @@ public:;
 	    
 	    argc(0),argv(0),input_list(0),
 	    piecewise_size(0),
-
-	    expected_hashes(0),
 	    size_threshold(0),
 
 	    known(),seen(),
@@ -386,7 +384,6 @@ public:;
 
     // Lists of known hashes 
     hashTable       known_hashes;
-    uint32_t        expected_hashes;
 
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;
@@ -542,7 +539,7 @@ int md5deep_finalize_matching(state *s);
 void md5deep_add_hash(state *s, char *h, char *fn);
 
 // Functions for file evaluation (files.c) 
-int hash_file_type(state *s, FILE *f);
+int hash_file_type(state *s, FILE *f,uint32_t *expected_hashes);
 int find_hash_in_line(state *s, char *buf, int fileType, char *filename);
 
 #endif /* ifndef __MAIN_H */
