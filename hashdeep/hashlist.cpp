@@ -298,30 +298,12 @@ int audit_update(state *s,file_data_t *fdt)
   return FALSE;
 }
 
-static int match_valid_hash(state *s, hashid_t a, char *buf)
-{
-  size_t pos = 0;
-
-  if (strlen(buf) != hashes[a].bit_length/4)
-    return FALSE;
-  
-  for (pos = 0 ; pos < hashes[a].bit_length/4 ; pos++)
-  {
-    if (!isxdigit(buf[pos]))
-      return FALSE;
-  }
-  return TRUE;
-}
-      
-
 /**
  * Returns the file type of a given input file.
  * fn is provided so that error messages can be printed.
  */
 hashlist::filetype_t hashlist::identify_filetype(const char *fn,FILE *handle)
 {
-    //hashid_t current_order[NUM_ALGORITHMS];
- 
     char buf[MAX_STRING_LENGTH];
 
     // Find the header 
@@ -348,40 +330,80 @@ hashlist::filetype_t hashlist::identify_filetype(const char *fn,FILE *handle)
 	return file_unknown;
     }
 
-    // Get a list of the hashes previously loaded
-    uint32_t hashes_previously_inuse = algorithm_t::hashes_inuse_mask();
-
-#if 0
-    // If this is the first file of hashes being loaded, clear out the 
-    // list of known values. Otherwise, record the current values to
-    // let the user know if they have changed when we load the new file.
-    if ( ! hashes_loaded )  {
-	clear_algorithms_inuse(s);
-    }
-    else  {
-	for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
-	    current_order[i] = s->hash_order[i];
-    }
-
-    // We have to clear out the algorithm order to remove the values
-    // from the previous file. This file may have different ones 
-    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i){
-	s->hash_order[i] = alg_unknown;
-    }
-#endif
+    /**
+     * Remember previously loaded hashes.
+     */
+    std::string previously_enabled_algorithms = last_enabled_algorithms; 
     
     // Skip the "%%%% size," when parsing the list of hashes 
-    parse_hashing_algorithms_in_file(fn,buf + 10);
+    enable_hashing_algorithms_from_hashdeep_file(fn,buf + 10);
     
     // If the set of hashes now in use doesn't match those previously in use,
     // give a warning.
-    if (hashes_previously_inuse && hashes_previously_inuse != hashes_inuse_mask()){
+    if (previously_enabled_algorithms.size()>0 && previously_enabled_algorithms != last_enabled_algorithms){
 	print_error("%s: %s: Hashes not in same format as previously loaded",
 		    __progname, fn);
     }
     return file_hashdeep_10;
 }
 
+
+/*
+ * Examine the list of hashing algorithms in the file,
+ * enable them and note their order.
+ */
+
+void hashlist::enable_hashing_algorithms_from_hashdeep_file(const char *fn, const char *val)
+{
+    char * buf = strdup(val);
+    size_t len = strlen(val);
+
+    // The first position is always the file size, so we start with an 
+    // the first position of one.
+    uint8_t num_columns = 1;
+    size_t pos = 0, total_pos = 0;
+  
+    last_enabled_algorithms = "";
+    while (buf[0])  {
+	if(buf[pos]!=',' && buf[pos]!=0){ // scan for the end of this element or the end of the string
+	    pos++;
+	    total_pos++;
+	    continue;
+	}
+
+	std::string name = std::string(buf,pos);
+	hashid_t id = algorithm_t::get_hashid_for_name(name);
+	if(id!=alg_unknown){
+	    /* Found a known algorithm */
+	    hashes[id].inuse = TRUE;
+	    hash_column[num_columns] = id;
+	    if(last_enabled_algorithms.size()>0) last_enabled_algorithms += ",";
+	    last_enabled_algorithms += name;
+	    buf += pos;
+	    total_pos++;
+	    num_columns++;
+	    continue;
+	}
+	/* See if we found the 'filename' */
+	if (STRINGS_CASE_EQUAL(buf,"filename")) {
+	    // The filename column should be the end of the line
+	    if (total_pos != len) {
+		print_error("%s: %s: Badly formatted file", __progname, fn);
+		try_msg();
+		exit(EXIT_FAILURE);
+	    }
+	    break;			// we are done
+	}
+	// If we can't parse the algorithm name, there's something
+	// wrong with it. Don't tempt fate by trying to print it,
+	// it could contain non-ASCII characters or something malicious.
+	print_error("%s: %s: Unknown algorithm in file header, line 2.", 
+		    __progname, fn);
+	
+	try_msg();
+	exit(EXIT_FAILURE);
+    }
+}
 
 
 #if 0
@@ -397,8 +419,8 @@ static status_t add_file(state *s, file_data_t *f)
   s->last = f;
 
   int i = 1;
-  while (s->hash_order[i] != alg_unknown)  {
-      status_t st = hashtable_add(s,s->hash_order[i],f);
+  while (s->hash_column[i] != alg_unknown)  {
+      status_t st = hashtable_add(s,s->hash_column[i],f);
       if (st != status_ok) return st;
       ++i;
   }
@@ -447,9 +469,9 @@ static void display_all_known_files(state *s)
  * Loads a file of known hashes.
  * First identifies the file type, then reads the file.
  */
-hashlist::loadstatus_t hashlist::load_hash_file(char *fn)
+hashlist::loadstatus_t hashlist::load_hash_file(const char *fn)
 {
-    loadstatus_t status = status_ok;
+    loadstatus_t status = loadstatus_ok;
     filetype_t type;
 
     FILE *handle = fopen(fn,"rb");
@@ -465,7 +487,6 @@ hashlist::loadstatus_t hashlist::load_hash_file(char *fn)
 	return status_unknown_filetype;
     }
 
-    status_t st = status_ok;
     int contains_bad_lines = FALSE;
     int record_valid=0;
 
@@ -524,11 +545,9 @@ hashlist::loadstatus_t hashlist::load_hash_file(char *fn)
 	    }
 
 	    // All other columns should contain a valid hash in hex
-	    if ( ! match_valid_hash(s,s->hash_order[column_number],buf)) {
-		print_error(
-			    "%s: %s: Invalid %s hash in line %"PRIu64,
-			    __progname, fn, 
-			    hashes[s->hash_order[column_number]].name.c_str(),
+	    if ( !algorithm_t::valid_hash(hash_column[column_number],buf)) {
+		print_error("%s: %s: Invalid %s hash in line %"PRIu64,__progname, fn, 
+			    hashes[hash_column[column_number]].name.c_str(),
 			    line_number);
 		contains_bad_lines = TRUE;
 		record_valid = FALSE;
@@ -537,7 +556,7 @@ hashlist::loadstatus_t hashlist::load_hash_file(char *fn)
 	    }
 
 	    // Convert the hash to a std::string and save it
-	    t->hash_hex[s->hash_order[column_number]] = std::string(buf);
+	    t->hash_hex[hash_column[column_number]] = std::string(buf);
 
 	    ++column_number;
 	    buf += strlen(buf) + 1;
@@ -545,7 +564,7 @@ hashlist::loadstatus_t hashlist::load_hash_file(char *fn)
 
 	    // The 'last' column (even if there are more commas in the line)
 	    // is the filename. Note that valid filenames can contain commas! 
-	    if (column_number == s->expected_columns) {
+	    if (column_number == num_columns) {
 		t->file_name = buf;
 		done = TRUE;
 	    }
@@ -555,8 +574,8 @@ hashlist::loadstatus_t hashlist::load_hash_file(char *fn)
 	    continue;
 	}
 
-	/* add the file to the known files hashlist */
-	s->known.add_file(t);
+	/* add the file to the database*/
+	add_fdt(t);
     }
     if (contains_bad_lines){
 	fclose(handle);
@@ -570,11 +589,11 @@ hashlist::loadstatus_t hashlist::load_hash_file(char *fn)
  /**
   * We don't use this function anymore, but it's handy to have just in case
   */
- const char *hashlsit::searchstatus_to_str(status_t val)
+const char *hashlist::searchstatus_to_str(searchstatus_t val)
 {
     switch (val) {
     case searchstatus_ok: return "ok";
-    case status_match: return "complete match";
+    case status_match:    return "complete match";
     case status_partial_match: return "partial match";
     case status_file_size_mismatch: return "file size mismatch";
     case status_file_name_mismatch: return "file name mismatch";

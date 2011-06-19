@@ -44,9 +44,6 @@ extern int  opt_verbose;		// can be 1, 2 or 3
 
   * Add a call to insert the algorithm in state::load_hashing_algorithms
 
-  * Update parse_algorithm_name in main.c and hashlist::parse_hashing_algorithms
-    in hashlist.cpp to handle your algorithm. 
-
   * See if you need to increase MAX_ALGORITHM_NAME_LENGTH or
   MAX_ALGORITHM_CONTEXT_SIZE for your algorithm.
 
@@ -91,6 +88,7 @@ public:
     bool		inuse;
     std::string		name;
     size_t		bit_length;	// 128 for MD5
+    hashid_t		id;		// usually the position in the array...
 
     int ( *f_init)(void *);
     int ( *f_update)(void *, unsigned char *, uint64_t );
@@ -103,11 +101,12 @@ public:
 		       int inuse);
     static void load_hashing_algorithms();
     static void clear_algorithms_inuse();
-    static void parse_hashing_algorithms(const char *var); // parse one or more algorithms, set what's in use
-    static int  hashes_inuse_mask();			// returns a number with 1 bit set for each hash in use
+    static void enable_hashing_algorithms(std::string var);  // enable the algorithms in 'var'; var can be 'all'
+    static hashid_t get_hashid_for_name(std::string name);   // return the hashid_t for 'name'
+    static bool valid_hash(hashid_t alg,const char *buf); // returns true if buf is a valid hash for hashid_t a
 };
 
-algorithm_t     hashes[NUM_ALGORITHMS];		// which hash algorithms are available and in use
+extern algorithm_t     hashes[NUM_ALGORITHMS];		// which hash algorithms are available and in use
 
 
 
@@ -183,6 +182,11 @@ public:
 	    handle = 0;
 	}
     }
+    /* The actual hashing */
+    void multihash_initialize();
+    void multihash_update(const unsigned char *buffer,size_t bufsize);
+    void multihash_finalize();
+
 
     FILE           *handle;		// the file we are reading
     bool           is_stdin;		// flag if the file is stdin
@@ -278,11 +282,14 @@ public:;
      * Both of these functions take the file name and the open handle.
      * They read from the handle and just use the filename for printing error messages.
      */
-    static int		parse_hashing_algorithms_in_file(const char *fn,const char *val);
-    static filetype_t	identify_filetype(const char *fn,FILE *handle);
+    void		enable_hashing_algorithms_from_hashdeep_file(const char *fn,const char *val);
+    std::string		last_enabled_algorithms; // a string with the algorithms that were enabled last
+    hashid_t		hash_column[NUM_ALGORITHMS]; // maps a column number to a hashid;
+						     // the order columns appear in the file being loaded.
+    int			num_columns;		     // number of columns in file being loaded
+    filetype_t		identify_filetype(const char *fn,FILE *handle);
     int			parse_hashing_algorithm(const char *fn,const char *val);
     loadstatus_t	load_hash_file(const char *fn);
-    hashid_t		hash_order[NUM_ALGORITHMS]; // the order that the algorithms appear in the file being loaded
     
 
     /**
@@ -348,7 +355,7 @@ public:;
 	    argc(0),argv(0),input_list(0),
 	    piecewise_size(0),
 
-	    expected_hashes(0),expected_columns(0),
+	    expected_hashes(0),
 	    size_threshold(0),
 
 	    known(),seen(),
@@ -376,12 +383,10 @@ public:;
     // Which hash algorithms we are using
 
     /* The file currently being hashed */
-    //file_data_hasher_t   * current_file;
 
     // Lists of known hashes 
     hashTable       known_hashes;
     uint32_t        expected_hashes;
-    uint8_t         expected_columns;
 
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;
@@ -415,9 +420,6 @@ public:;
 
 };
 
-/* GENERIC ROUTINES */
-void clear_algorithms_inuse(state *s);
-
 /* HASH TABLE */
 #if 0
 void hashtable_init(hashtable_t *t);
@@ -425,11 +427,6 @@ status_t hashtable_add(state *s, hashid_t alg, file_data_t *f);
 hashtable_entry_t * hashtable_contains(state *s, hashid_t alg);
 void hashtable_destroy(hashtable_entry_t *e);
 #endif
-
-/* MULTIHASHING */
-void multihash_initialize(state *s,file_data_hasher_t *fdht);
-void multihash_update(state *s, file_data_hasher_t *fdht, unsigned char *buf, uint64_t len);
-void multihash_finalize(state *s,file_data_hasher_t *fdht);
 
 
 /* MATCHING MODES */
@@ -545,7 +542,6 @@ int md5deep_finalize_matching(state *s);
 void md5deep_add_hash(state *s, char *h, char *fn);
 
 // Functions for file evaluation (files.c) 
-int valid_hash(state *s, const char *buf);
 int hash_file_type(state *s, FILE *f);
 int find_hash_in_line(state *s, char *buf, int fileType, char *filename);
 

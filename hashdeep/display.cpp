@@ -131,8 +131,7 @@ static void display_banner(state *s)
     size_t current_bytes = _tcslen(s->argv[argc]);
 
     // The extra 32 bytes is a fudge factor
-    if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH)
-    {
+    if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
       fprintf(stdout,"%s## ", NEWLINE);
       bytes_written = 3;
     }

@@ -161,7 +161,7 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
       if (file_fatal_error())
 	return FALSE; 
       
-      multihash_update(s,fdht,buffer,current_read);
+      fdht->multihash_update(buffer,current_read);
       
       clearerr(fdht->handle);
       
@@ -173,7 +173,7 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
     {
       // If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE
       // bytes and must reflect that in how we update the hash.
-	multihash_update(s,fdht,buffer,current_read);
+	fdht->multihash_update(buffer,current_read);
     }
     
     // Check if we've hit the end of the file 
@@ -223,7 +223,7 @@ static int md5deep_hash_triage(state *s,file_data_hasher_t *fdht)
   fdht->block_size = 512;
   s->mode |= mode_piecewise;
 
-  multihash_initialize(s,fdht);
+  fdht->multihash_initialize();
     
   if (!compute_hash(s,fdht))  {
     return TRUE;
@@ -231,7 +231,7 @@ static int md5deep_hash_triage(state *s,file_data_hasher_t *fdht)
 
   s->mode -= mode_piecewise;
   
-  multihash_finalize(s,fdht);
+  fdht->multihash_finalize();
   printf ("%"PRIu64"\t%s", fdht->stat_bytes, fdht->hash_hex[s->md5deep_mode_algorithm].c_str());
   
   return FALSE;
@@ -268,9 +268,8 @@ static int hash(state *s,file_data_hasher_t *fdht)
   }
   
   while (!done)  {
-      multihash_initialize(s,fdht);
-    
-    fdht->read_start = fdht->actual_bytes;
+      fdht->multihash_initialize();
+      fdht->read_start = fdht->actual_bytes;
 
     /**
      * call compute_hash(), which computes the hash of the full file,
@@ -284,8 +283,7 @@ static int hash(state *s,file_data_hasher_t *fdht)
     // data during this read OR if the whole file is zero bytes long.
     // If the file is zero bytes, we won't have read anything, but
     // still need to display a hash.
-    if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes)
-    {
+    if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes)    {
       if (s->mode & mode_piecewise)
       {
 	uint64_t tmp_end = 0;
@@ -299,7 +297,7 @@ static int hash(state *s,file_data_hasher_t *fdht)
 	    + itos(tmp_end);
       }
       
-      multihash_finalize(s,fdht);
+      fdht->multihash_finalize();
 
       if(s->md5deep_mode){
 	  // Under not matched mode, we only display those known hashes that

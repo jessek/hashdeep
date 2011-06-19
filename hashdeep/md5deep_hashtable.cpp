@@ -80,11 +80,12 @@ int initialize_node(hashNode *newNode, const char *nfn, const char *fn)
 
 int hashTableAdd(state *s, hashTable *knownHashes, const char *nfn, const char *fn) 
 {
+    assert(0);
+#if 0
   uint64_t key = translate(nfn);
   hashNode *newNode, *temp;
 
-  if (!valid_hash(s,nfn))
-    return HASHTABLE_INVALID_HASH;
+  if (algorithm_t::valid_hash(s,nfn)) return HASHTABLE_INVALID_HASH;
 
   if ((*knownHashes)[key] == NULL) 
   {
@@ -120,6 +121,7 @@ int hashTableAdd(state *s, hashTable *knownHashes, const char *nfn, const char *
     return HASHTABLE_OUT_OF_MEMORY;
 
   temp->next = newNode;
+#endif
   return FALSE;
 }
 

@@ -72,18 +72,6 @@ typedef struct _ENCASE_HASH_HEADER {
 
 #define HASH_STRING_LENGTH   (hashes[s->md5deep_mode_algorithm].bit_length/4)
 
-int valid_hash(state *s, const char *buf) 
-{
-  if (strlen(buf) < HASH_STRING_LENGTH) 
-    return FALSE;
-
-  for (size_t pos = 0 ; pos < HASH_STRING_LENGTH ; pos++) 
-    if (!isxdigit(buf[pos]))
-      return FALSE;
-  return TRUE;
-}
-
-
 int find_plain_hash(state *s, char *buf, char *known_fn) 
 {
   size_t p = HASH_STRING_LENGTH;
@@ -110,7 +98,10 @@ int find_plain_hash(state *s, char *buf, char *known_fn)
 
   /* We have to include a validity check here so that we don't
      mistake SHA-1 hashes for MD5 hashes, among other things */
+#if 0
   return (valid_hash(s,buf));
+#endif
+  assert(0);
 }  
 
 int find_md5deep_size_hash(state *s, char *buf, char *known_fn)
@@ -189,10 +180,13 @@ int find_bsd_hash(state *s, char *buf, char *fn)
   // The hash always begins four characters after the second paren
   shift_string(temp,0,second_paren+4);
 
+#if 0
   int status = valid_hash(s,temp);
+  return status;
+#endif
+  assert(0);
   free(temp);
 
-  return status;
 }
   
 
@@ -224,7 +218,8 @@ int find_rigid_hash(state *s, char *buf,  char *fn,
   if (find_comma_separated_string(buf,hash_location-1))
     return FALSE;
 
-  return valid_hash(s,buf);
+  //return valid_hash(s,buf);
+  assert(0);
 }
 
 #ifdef WORDS_BIGENDIAN

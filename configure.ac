@@ -71,10 +71,6 @@ AC_FUNC_MEMCMP
 AC_FUNC_STAT
 AC_FUNC_VPRINTF
 
-# We use strsep do our string processing, but some operating systems
-# don't have it yet (e.g. OpenSolaris). We if don't have strsep, we'll include the GPL version
-AC_CHECK_FUNCS([strsep getprogname])
-
 # See if __progname is defined on this system
 AC_TRY_COMPILE([extern char *__progname;],
 	[const char *progname = __progname;],
