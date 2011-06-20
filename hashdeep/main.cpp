@@ -47,6 +47,63 @@ int _CRT_fmode = _O_BINARY;
 bool opt_silent = false;
 int  opt_verbose = 0;
 
+/****************************************************************
+ ** Various helper functions.
+ ****************************************************************/
+
+static void sanity_check(int condition, const char *msg)
+{
+    if (condition) {
+	if (!opt_silent) {
+	    print_status("%s: %s", __progname, msg);
+	    try_msg();
+	}
+	exit (STATUS_USER_ERROR);
+    }
+}
+
+static int is_absolute_path(char *fn)
+{
+#ifdef _WIN32
+  return FALSE;
+#endif
+  return (DIR_SEPARATOR == fn[0]);
+}
+
+
+static void generate_filename(state *s,char *fn, std::string cwd, TCHAR *input)
+{
+    if ((s->mode & mode_relative) || is_absolute_path(input)){
+	_tcsncpy(fn,input,PATH_MAX);
+    }
+    else {
+	// Windows systems don't have symbolic links, so we don't
+	// have to worry about carefully preserving the paths
+	// they follow. Just use the system command to resolve the paths
+	//
+	// Actually, they can have symbolic links...
+#ifdef _WIN32
+	_wfullpath(fn,input,PATH_MAX);
+#else	  
+	if (cwd=="") {
+	    // If we can't get the current working directory, we're not
+	    // going to be able to build the relative path to this file anyway.
+	    // So we just call realpath and make the best of things 
+	    if (NULL == realpath(input,fn)){
+		internal_error("Error calling realpath in generate_filename");
+	    }
+	}
+	else {
+	    snprintf(fn,PATH_MAX,"%s%c%s",cwd.c_str(),DIR_SEPARATOR,input);
+	}
+#endif
+    }
+}
+
+
+
+
+
 // So that the usage message fits in a standard DOS window, this
 // function should produce no more than 22 lines of text.
 static void usage(state *s)
@@ -117,14 +174,14 @@ static void md5deep_usage(void)
 
 static void check_flags_okay(state *s)
 {
-  sanity_check(s,
+  sanity_check(
 	       (((s->primary_function & primary_match) ||
 		 (s->primary_function & primary_match_neg) ||
 		 (s->primary_function & primary_audit)) &&
 		!s->hashes_loaded()),
 	       "Unable to load any matching files");
 
-  sanity_check(s,
+  sanity_check(
 	       (s->mode & mode_relative) && (s->mode & mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
@@ -394,57 +451,60 @@ static int prepare_windows_command_line(state *s)
 
 int main(int argc, char **argv)
 {
-  int count, status = EXIT_SUCCESS;
+    int count, status = EXIT_SUCCESS;
 
 
-  /* Because the main() function can handle wchar_t arguments on Win32,
-   * we need a way to reference those values. Thus we make a duplciate
-   * of the argc and argv values.
-   */ 
+    /* Because the main() function can handle wchar_t arguments on Win32,
+     * we need a way to reference those values. Thus we make a duplciate
+     * of the argc and argv values.
+     */ 
 
 #ifndef HAVE_EXTERN_PROGNAME
 #ifdef HAVE_GETPROGNAME
-  __progname  = getprogname();
+    __progname  = getprogname();
 #else
-  __progname  = basename(argv[0]);
+    __progname  = basename(argv[0]);
 #endif
 #endif
 
-  algorithm_t::load_hashing_algorithms();		// 
-  state *s = new state();
+    // Initialize the plugable algorithm system and create the state object!
 
-  /**
-   * Originally this program was two sets of progarms:
-   * 'hashdeep' with the new interface, and 'md5deep', 'sha1deep', etc
-   * with the old interface. Now we are a single program and we figure out
-   * which interface to use based on how we are started.
-   */
-  std::string progname(__progname);
-  /* Convert progname to lower case */
-  std::transform(progname.begin(), progname.end(), progname.begin(), ::tolower);
-  std::string algname = progname.substr(0,progname.find("deep"));
-  if(algname=="hash"){			// we are hashdeep
-      process_command_line(s,argc,argv);
-  } else {
-      algorithm_t::clear_algorithms_inuse();
-      char buf[256];
-      strcpy(buf,algname.c_str());
-      algorithm_t::enable_hashing_algorithms(buf);
-      for(int i=0;i<NUM_ALGORITHMS;++i){
-	  if(hashes[i].inuse){
-	      s->md5deep_mode = 1;
-	      s->md5deep_mode_algorithm = i;
-	      break;
-	  }
-      }
-      if(s->md5deep_mode==0){
-	  cerr << progname << ": unknown hash: " <<algname << "\n";
-	  exit(1);
-      }
-      md5deep_process_command_line(s,argc,argv);
-  }
+    algorithm_t::load_hashing_algorithms();		
+    state *s = new state();
 
-  /* Set up the XML */
+    /**
+     * Originally this program was two sets of progarms:
+     * 'hashdeep' with the new interface, and 'md5deep', 'sha1deep', etc
+     * with the old interface. Now we are a single program and we figure out
+     * which interface to use based on how we are started.
+     */
+    std::string progname(__progname);
+
+    /* Convert progname to lower case */
+    std::transform(progname.begin(), progname.end(), progname.begin(), ::tolower);
+    std::string algname = progname.substr(0,progname.find("deep"));
+    if(algname=="hash"){			// we are hashdeep
+	process_command_line(s,argc,argv);
+    } else {
+	algorithm_t::clear_algorithms_inuse();
+	char buf[256];
+	strcpy(buf,algname.c_str());
+	algorithm_t::enable_hashing_algorithms(buf);
+	for(int i=0;i<NUM_ALGORITHMS;++i){
+	    if(hashes[i].inuse){
+		s->md5deep_mode = 1;
+		s->md5deep_mode_algorithm = hashes[i].id;
+		break;
+	    }
+	}
+	if(s->md5deep_mode==0){
+	    cerr << progname << ": unknown hash: " <<algname << "\n";
+	    exit(1);
+	}
+	md5deep_process_command_line(s,argc,argv);
+    }
+
+    /* Set up the DFXML output if requested */
     if(s->dfxml){
 	XML &xreport = *s->dfxml;
 	xreport.push("dfxml","xmloutputversion='1.0'");
@@ -471,50 +531,60 @@ int main(int argc, char **argv)
     //}
 
 #ifdef _WIN32
-  if (prepare_windows_command_line(s))
-    fatal_error("%s: Unable to process command line arguments", __progname);
-  check_wow64(s);
+    if (prepare_windows_command_line(s)){
+	fatal_error("%s: Unable to process command line arguments", __progname);
+    }
+    check_wow64(s);
 #else
-  s->argc = argc;
-  s->argv = argv;
+    s->argc = argc;
+    s->argv = argv;
 #endif
 
-  //memset(s->cwd,0,sizeof(s->cwd));	// zero this out
-  char buf[PATH_MAX];
-  _tgetcwd(buf,sizeof(buf));	// try to get the cwd
-  if (buf[0]==0){			// verify that we got it.
-      fatal_error("%s: %s", __progname, strerror(errno));
-  }
-  s->cwd = buf;				// remember
+    /* Get the current working directory */
+    char buf[PATH_MAX];
+    _tgetcwd(buf,sizeof(buf));	// try to get the cwd
+    if (buf[0]==0){			// verify that we got it.
+	fatal_error("%s: %s", __progname, strerror(errno));
+    }
+    s->cwd = buf;				// remember
 
-  /* Anything left on the command line at this point is a file
-     or directory we're supposed to process. If there's nothing
-     specified, we should tackle standard input */
-  
-  if (optind == argc){
-      hash_stdin(s);
-  }   else {
-      TCHAR fn[PATH_MAX];;
+    /* Anything left on the command line at this point is a file
+     *  or directory we're supposed to process. If there's nothing
+     * specified, we should hash standard input
+     */
+    
+    if (optind == argc){
+	hash_stdin(s);
+    } else {
+	char fn[PATH_MAX];;
 
-      count = optind;
-
-      while (count < s->argc) {  
-	  generate_filename(s,fn,s->cwd,s->argv[count]);
+	count = optind;
+	
+	while (count < s->argc) {  
+	    generate_filename(s,fn,s->cwd,s->argv[count]);
 #ifdef _WIN32
-	  status = process_win32(s,fn);
+	    status = process_win32(s,fn);
 #else
-	  status = process_normal(s,fn);
+	    status = process_normal(s,fn);
 #endif
-	  ++count;
-      }
-  }
+	    ++count;
+	}
+    }
   
-  if (primary_audit == s->primary_function)
+    /* If we were auditing, display the audit results */
+    if (s->primary_function == primary_audit){
       status = display_audit_results(s);
+    }
   
-  if(s->dfxml) s->dfxml->pop();		// outermost
-  return status;
+    /* If we were generating DFXML, finish the job */
+    if(s->dfxml){
+	s->dfxml->pop();		// outermost
+	s->dfxml->close();
+	delete s->dfxml;
+    }
+    return status;
 }
+
 /****************************************************************
  * Legacy code from md5deep follows....
  *
@@ -526,28 +596,28 @@ static void md5deep_check_flags_okay(state *s)
   if (NULL == s)
     exit (STATUS_USER_ERROR);
 
-  sanity_check(s,
+  sanity_check(
 	       ((s->mode & mode_match) || (s->mode & mode_match_neg)) &&
 	       s->hashes_loaded(),
 	       "Unable to load any matching files");
 
-  sanity_check(s,
+  sanity_check(
 	       (s->mode & mode_relative) && (s->mode & mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
-  sanity_check(s,
+  sanity_check(
 	       (s->mode & mode_piecewise) && (s->mode & mode_display_size),
 	       "Piecewise mode and file size display is just plain silly");
 
 
   /* If we try to display non-matching files but haven't initialized the
      list of matching files in the first place, bad things will happen. */
-  sanity_check(s,
+  sanity_check(
 	       (s->mode & mode_not_matched) && 
 	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)),
 	       "Matching or negative matching must be enabled to display non-matching files");
 
-  sanity_check(s,
+  sanity_check(
 	       (s->mode & mode_which) && 
 	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)), 
 	       "Matching or negative matching must be enabled to display which file matched");
@@ -559,12 +629,7 @@ static void md5deep_check_flags_okay(state *s)
 
 static void md5deep_check_matching_modes(state *s)
 {
-    if (NULL == s){
-	exit (STATUS_USER_ERROR);
-    }
-
-    sanity_check(s,
-		 (s->mode & mode_match) && (s->mode & mode_match_neg),
+    sanity_check((s->mode & mode_match) && (s->mode & mode_match_neg),
 		 "Regular and negative matching are mutually exclusive.");
 }
 
@@ -627,13 +692,13 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
     case 'a':
       s->mode |= mode_match;
       md5deep_check_matching_modes(s);
-      md5deep_add_hash(s,optarg,optarg);
+      s->md5deep_add_hash(optarg,optarg);
       break;
 
     case 'A':
       s->mode |= mode_match_neg;
       md5deep_check_matching_modes(s);
-      md5deep_add_hash(s,optarg,optarg);
+      s->md5deep_add_hash(optarg,optarg);
       break;
 
     case 'o': 
@@ -646,7 +711,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
     case 'm':
       s->mode |= mode_match;
       md5deep_check_matching_modes(s);
-      md5deep_load_match_file(s,optarg);
+      s->md5deep_load_match_file(optarg);
       break;
 
     case 'X':
@@ -654,7 +719,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
     case 'x':
       s->mode |= mode_match_neg;
       md5deep_check_matching_modes(s);
-      md5deep_load_match_file(s,optarg);
+      s->md5deep_load_match_file(optarg);
       break;
 
     case 'c':

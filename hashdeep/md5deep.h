@@ -17,7 +17,7 @@
 #define __MD5DEEP_H
 
 #include "common.h"
-#include "md5deep_hashtable.h"
+//#include "md5deep_hashtable.h"
 
 /* We no longer use this */
 

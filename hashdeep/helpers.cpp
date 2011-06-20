@@ -136,62 +136,6 @@ void chop_line(char *s)
 }
 
 
-void sanity_check(state *s, int condition, const char *msg)
-{
-  if (condition) {
-      if (!opt_silent) {
-	  print_status("%s: %s", __progname, msg);
-	  try_msg();
-      }
-      exit (STATUS_USER_ERROR);
-  }
-}
-
-
-static int is_absolute_path(TCHAR *fn)
-{
-  if (NULL == fn)
-    internal_error("Unknown error in is_absolute_path");
-  
-#ifdef _WIN32
-  return FALSE;
-#endif
-
-  return (DIR_SEPARATOR == fn[0]);
-}
-
-
-void generate_filename(state *s, TCHAR *fn, std::string cwd, TCHAR *input)
-{
-    if (NULL == fn || NULL == input)
-	internal_error("Error calling generate_filename");
-
-    if ((s->mode & mode_relative) || is_absolute_path(input))
-	_tcsncpy(fn,input,PATH_MAX);
-    else {
-	// Windows systems don't have symbolic links, so we don't
-	// have to worry about carefully preserving the paths
-	// they follow. Just use the system command to resolve the paths
-	//
-	// Actually, they can have symbolic links...
-#ifdef _WIN32
-	_wfullpath(fn,input,PATH_MAX);
-#else	  
-	if (cwd=="") {
-	    // If we can't get the current working directory, we're not
-	    // going to be able to build the relative path to this file anyway.
-	    // So we just call realpath and make the best of things 
-	    if (NULL == realpath(input,fn)){
-		internal_error("Error calling realpath in generate_filename");
-	    }
-	}
-	else {
-	    snprintf(fn,PATH_MAX,"%s%c%s",cwd.c_str(),DIR_SEPARATOR,input);
-	}
-#endif
-    }
-}
-
 
 // The basename function kept misbehaving on OS X, so I rewrote it.
 // This function isn't perfect, nor is it designed to be. Because

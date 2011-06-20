@@ -201,10 +201,37 @@ int display_hash_simple(state *s,file_data_hasher_t *fdht)
   return FALSE;
 }
 
+#if 0
+int state::md5deep_is_known_hash(std::string hash_hex, std::string *known_fn) 
+{
+    
+    file_data_t *fdt = known.find_hash(md5deep_mode_algorithm,hash_hex);
+    if(
+    int status;
+
+    // We don't check if the known_fn parameter is NULL because
+    // that's a legitimate call in hash.c under mode_not_matched
+    if (!table_initialized)
+	internal_error("%s: Attempt to check hash before table was initialized",
+		       __progname);
+  
+    status = hashTableContains(&knownHashes,h,known_fn);
+    if (!status)
+	input_not_matched = TRUE;
+    return status;
+}
+#endif
+
+
+
 /* The old display_match_result from md5deep */
 static int md5deep_display_match_result(state *s,file_data_hasher_t *fdht)
 {  
-    int known_hash = md5deep_is_known_hash(fdht->hash_hex[s->md5deep_mode_algorithm].c_str(),&fdht->known_fn);
+    file_data_t *fs = s->known.find_hash(s->md5deep_mode_algorithm,fdht->hash_hex[s->md5deep_mode_algorithm]);
+    int known_hash = fs ? 1 : 0;
+
+    if(fs) fs->used = 1;
+
     if ((known_hash && (s->mode & mode_match)) ||
 	(!known_hash && (s->mode & mode_match_neg))) {
 	if(s->dfxml){
@@ -226,7 +253,7 @@ static int md5deep_display_match_result(state *s,file_data_hasher_t *fdht)
 		if (known_hash && (s->mode & mode_match)) {
 			display_filename(stdout,fdht,false);
 			printf (" matched ");
-			output_unicode(stdout,fdht->known_fn);
+			output_unicode(stdout,fs->file_name);
 		    }
 		else {
 			display_filename(stdout,fdht,false);

@@ -5,7 +5,7 @@
 #define __MAIN_H
 
 #include "common.h"
-#include "md5deep_hashtable.h"
+//#include "md5deep_hashtable.h"
 #include "xml.h"
 
 #include "md5.h"
@@ -146,7 +146,6 @@ public:
     std::string	   file_name_annotation;// print after file name; for piecewise hashing
 
     uint64_t       used;	 // was hash used in file system? For auditing. The round # is stored
-    std::string    known_fn;	 // if we do an md5deep_is_known_hash, this is set to be the filename of the known hash
 #ifdef _WIN32
     __time64_t    timestamp;
 #else
@@ -290,8 +289,8 @@ public:;
     filetype_t		identify_filetype(const char *fn,FILE *handle);
     int			parse_hashing_algorithm(const char *fn,const char *val);
     loadstatus_t	load_hash_file(const char *fn);
+    file_data_t		*find_hash(hashid_t alg,std::string &hash_hex); // search for hash_hex and return NULL or fdt
     
-
     /**
      * add_fdt adds a file_data_t record to the hashlist, and its hashes to the hashmaps.
      * @param state - needed to find the algorithms in use
@@ -342,27 +341,28 @@ public:
     }
 };
 
+/**
+ * The 'state' class holds the state of the hashdeep/md5deep program.
+ * This includes:
+ * startup parameters
+ * known - the list of hashes in the hash database.
+ * seen  - the list of hashes that have been seen this time through.
+ */
+
 class state {
-    void add_algorithm(hashid_t pos,const char *name,uint16_t bits, 
-		       int ( *func_init)(void *),
-		       int ( *func_update)(void *, unsigned char *, uint64_t ),
-		       int ( *func_finalize)(void *, unsigned char *),
-		       int inuse);
 public:;
     state():primary_function(primary_compute),mode(mode_none),
 	    start_time(0),last_time(0),
-	    
 	    argc(0),argv(0),input_list(0),
 	    piecewise_size(0),
-	    size_threshold(0),
-
-	    known(),seen(),
-	    hash_round(0),h_plain(0),h_bsd(0),h_md5deep_size(0),
-	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
-	    h_nsrl20(0), h_encase(0),
-
 	    banner_displayed(false),
-	    dfxml(0) {};
+	    dfxml(0),
+	    size_threshold(0),
+	    known(),seen(),
+	    file_number(0),h_plain(0),h_bsd(0),h_md5deep_size(0),
+	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
+	    h_nsrl20(0), h_encase(0)
+	    {};
 
     /* Basic Program State */
     primary_t       primary_function;
@@ -378,43 +378,65 @@ public:;
     /* Configuration */
     uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */
 
-    // Which hash algorithms we are using
-
-    /* The file currently being hashed */
+    /* output */
+    std::string		outfile;	// where output goes
+    bool             banner_displayed;	// has the header been shown (text output)
+    XML             *dfxml;  /* output in DFXML */
 
     // Lists of known hashes 
-    hashTable       known_hashes;
+    //hashTable       known_hashes;
 
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;
 
     /* The set of known values; typically read from the audit file */
     hashlist	    known;		// hashes read from the -k file
-
     hashlist	    seen;		// hashes seen on this hashing run; from the command line
-    uint64_t        hash_round;
+    uint64_t        file_number;	// the current file number. 
 
     // Which filetypes this algorithm supports and their position in the file
     uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
     uint8_t      h_ilook, h_ilook3, h_ilook4, h_nsrl15, h_nsrl20, h_encase;
 
-    /* output */
-    bool             banner_displayed;	// has the header been shown (text output)
-    XML             *dfxml;  /* output in DFXML */
-
-
     class audit_stats match;		// for the audit mode
   
-    /* Legacy 'md5deep', 'sha1deep', etc. mode.  */
+    /* Due to an inadvertant code fork several years ago, this program has different usage
+     * and output when run as 'md5deep' then when run as 'hashdeep'. We call this the
+     * 'md5deep_mode' and track it with the variables below.
+     */
     bool	md5deep_mode;		// if true, then we were run as md5deep, sha1deep, etc.
-    int		md5deep_mode_algorithm;	// which algorithm number we are using
+    hashid_t	md5deep_mode_algorithm;	// which algorithm number we are using, derrived from argv[0]
 
-    std::string	outfile;	// where output goes
+    void	md5deep_add_hash(char *h, char *fn); // explicitly add a hash
+
+
+    /* files.cpp
+     * Not quite sure what to do with this stuff yet...
+     */
+    
+    int		md5deep_is_known_hash(std::string hash_hex, std::string *known_fn); // sets known_fn to be the file
+    void	md5deep_load_match_file(const char *fn);
+    int		find_hash_in_line(char *buf, int fileType, char *filename);
+    int		parse_encase_file(const char *fn,FILE *f,uint32_t num_expected_hashes);
+    int		find_plain_hash(char *buf,char *known_fn); // returns FALSE if error
+    int         find_md5deep_size_hash(char *buf, char *known_fn);
+    int		find_bsd_hash(char *buf, char *fn);
+    int		find_rigid_hash(char *buf,  char *fn, unsigned int fn_location, unsigned int hash_location);
+    int		find_ilook_hash(char *buf, char *known_fn);
+    int		check_for_encase(FILE *f,uint32_t *expected_hashes);
+    int		identify_hash_file_type(FILE *f,uint32_t *expected_hashes); // identify the hash file type
+    int		md5deep_finalize_matching();
 
     bool hashes_loaded(){
 	return known.size()>0;
     }
+};
 
+/**
+ * the files class knows how to read various hash file types
+ */
+
+class files {
 };
 
 /* HASH TABLE */
@@ -446,8 +468,8 @@ int hash_stdin(state *s);
 
 
 /* HELPER FUNCTIONS */
-void generate_filename(state *s, TCHAR *fn, std::string cwd, TCHAR *input);
-void sanity_check(state *s, int condition, const char *msg);
+//void generate_filenames(state *s, TCHAR *fn, std::string cwd, TCHAR *input);
+//void sanity_check(state *s, int condition, const char *msg);
 
 // ----------------------------------------------------------------
 // CYCLE CHECKING
@@ -526,20 +548,14 @@ int display_hash( state *s, file_data_hasher_t *fdht);
 // ---------------------------------------------------------------- 
 
 // md5deep_match.c
-int md5deep_load_match_file(state *s, const char *fn);
-int md5deep_is_known_hash(const char *h, std::string *known_fn);
 //    // This function returns FALSE. hash_file, called above, returns STATUS_OK                                             
 // process_win32 also returns STATUS_OK.                                                                               
 // display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.                                              
 // Pick one and stay with it!                                                                                          
 int was_input_not_matched(void);
-int md5deep_finalize_matching(state *s);
 
 // Add a single hash to the matching set
-void md5deep_add_hash(state *s, char *h, char *fn);
 
 // Functions for file evaluation (files.c) 
-int hash_file_type(state *s, FILE *f,uint32_t *expected_hashes);
-int find_hash_in_line(state *s, char *buf, int fileType, char *filename);
 
 #endif /* ifndef __MAIN_H */

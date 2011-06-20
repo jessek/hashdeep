@@ -54,7 +54,7 @@ do
    fi
    if [ $mode = "test" ]
    then
-     if ! diff test$i.out /tmp/test$i.out ; 
+     if ! diff /tmp/test$i.out test$i.out ; 
      then 
        echo TEST $i FAILED.
        ((fails++))

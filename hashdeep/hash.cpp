@@ -303,10 +303,13 @@ static int hash(state *s,file_data_hasher_t *fdht)
 	  // Under not matched mode, we only display those known hashes that
 	  // didn't match any input files. Thus, we don't display anything now.
 	  // The lookup is to mark those known hashes that we do encounter
-	  if (s->mode & mode_not_matched)
-	      md5deep_is_known_hash(fdht->hash_hex[s->md5deep_mode_algorithm].c_str(),NULL);
-	  else
+	  if (s->mode & mode_not_matched){
+	      file_data_t *fs = s->known.find_hash(s->md5deep_mode_algorithm,fdht->hash_hex[s->md5deep_mode_algorithm]);
+	      if(fs) fs->used = 1;	// note that it's used!
+	  }
+	  else {
 	      status = md5deep_display_hash(s,fdht);
+	  }
       } else {
 	  display_hash(s,fdht);
       }

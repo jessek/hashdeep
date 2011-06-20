@@ -39,3 +39,26 @@ what is mode_barename?
 
 * Loading hashes should return a string with the set of hashes that were added.
 * Use this for comparing which hashes get added.
+
+md5deep:
+* Check adding an explicit hash with -a and -A
+================================================================
+Another test case:
+
+C:\Users\Jesse Kornblum\Documents\tmp>hashdeep64 -bc md5 foo bar > known1
+
+C:\Users\Jesse Kornblum\Documents\tmp>hashdeep64 -bc sha1 moo cow > known2
+
+C:\Users\Jesse Kornblum\Documents\tmp>hashdeep64 -vvvbak known1 -k
+known2 foo bar moo cow
+hashdeep64: known2: Hashes not in same format as previously loaded
+foo: Ok
+bar: Ok
+moo: Ok
+cow: Ok
+hashdeep64: Audit passed
+         Files matched: 4
+Files partially matched: 0
+           Files moved: 0
+       New files found: 0
+ Known files not found: 0

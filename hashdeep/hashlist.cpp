@@ -50,6 +50,15 @@ void hashlist::add_fdt(file_data_t *fi)
     };
 }
 
+/** 
+ * search for a hash
+ */
+file_data_t * hashlist::find_hash(hashid_t alg,std::string &hash_hex)
+{
+    std::map<std::string,file_data_t *>::iterator it = hashmaps[alg].find(hash_hex);
+    if(it==hashmaps[alg].end()) return 0;
+    return (*it).second;
+}
 
 
 /**
@@ -169,9 +178,9 @@ int audit_update(state *s,file_data_t *fdt)
     file_data_t * moved_file = NULL, * partial_file = NULL;
     uint64_t my_round;			// don't know what the round is
   
-    my_round = s->hash_round;		// count number of files
-    s->hash_round++;
-    if (my_round > s->hash_round){	// check for 64-bit overflow (highly unlikely)
+    my_round = s->file_number;		// count number of files
+    s->file_number++;
+    if (my_round > s->file_number){	// check for 64-bit overflow (highly unlikely)
 	fatal_error("%s: Too many input files", __progname);
     }
 
@@ -199,12 +208,12 @@ int audit_update(state *s,file_data_t *fdt)
       {
 	// print_status("Got status %d for %s", tmp->status, tmp->data->file_name);
 
-	if (tmp->data->used != s->hash_round)
+	if (tmp->data->used != s->file_number)
 	{
 
 	  switch (tmp->status) {
 	  case status_match:
-	    tmp->data->used = s->hash_round;
+	    tmp->data->used = s->file_number;
 	    exact_match = TRUE;
 	    break;
     
@@ -613,9 +622,9 @@ status_t display_match_result(state *s,file_data_hasher_t *fdht)
     int should_display; 
     uint64_t my_round;
     
-    my_round = s->hash_round;
-    s->hash_round++;
-    if (my_round > s->hash_round)
+    my_round = s->file_number;
+    s->file_number++;
+    if (my_round > s->file_number)
 	fatal_error("%s: Too many input files", __progname);
 
     should_display = (primary_match_neg == s->primary_function);
@@ -640,9 +649,9 @@ status_t display_match_result(state *s,file_data_hasher_t *fdht)
 	case status_partial_match:
 
 	  // We only want to display a partial hash error once per input file 
-	  if (tmp->data->used != s->hash_round)
+	  if (tmp->data->used != s->file_number)
 	  {
-	    tmp->data->used = s->hash_round;
+	    tmp->data->used = s->file_number;
 	    display_filename(stderr,s->current_file,false);
 	    fprintf(stderr,": Hash collision with ");
 	    display_filename(stderr,tmp->data,false);
