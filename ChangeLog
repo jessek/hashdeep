@@ -1,3 +1,7 @@
+2011-06-20  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/hash.cpp (hash_file): eliminated by_basename, instead we now use rfind on the string.
+
 2011-06-19  Simson Garfinkel  <simsong@imac3.home>
 
 	* hashdeep/Makefile.am (hashdeep_SOURCES): removed md5deep_hashtable.cpp and md5deep_hashtable.h 

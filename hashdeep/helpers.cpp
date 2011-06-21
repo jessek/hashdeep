@@ -137,6 +137,7 @@ void chop_line(char *s)
 
 
 
+#if 0
 // The basename function kept misbehaving on OS X, so I rewrote it.
 // This function isn't perfect, nor is it designed to be. Because
 // we're guarenteed to be working with a file here, there's no way
@@ -163,7 +164,7 @@ int my_basename(TCHAR *str)
 
   return FALSE;
 }
-
+#endif
 
 int my_dirname(TCHAR *c)
 {

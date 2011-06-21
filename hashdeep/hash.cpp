@@ -16,8 +16,6 @@
 // Code for hashdeep 
 #include "main.h"
 
-using namespace std;
-
 // At least one user has suggested changing update_display() to 
 // use human readable units (e.g. GB) when displaying the updates.
 // The problem is that once the display goes above 1024MB, there
@@ -197,13 +195,11 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
 	mysize = remaining;
     }
     
-    if (s->mode & mode_estimate)
-    {
+    if (s->mode & mode_estimate)    {
       time(&current_time);
       
       // We only update the display only if a full second has elapsed 
-      if (s->last_time != current_time) 
-      {
+      if (s->last_time != current_time)       {
 	s->last_time = current_time;
 	update_display(fdht,current_time - s->start_time);
       }
@@ -216,25 +212,24 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
 static int md5deep_hash_triage(state *s,file_data_hasher_t *fdht)
 {
     //memset(s->md5deep_mode_hash_result,0,(2 * s->md5deep_mode_hash_length) + 1);
-
-  // We use the piecewise mode to get a partial hash of the first 
-  // 512 bytes of the file. But we'll have to remove piecewise mode
-  // before returning to the main hashing code
-  fdht->block_size = 512;
-  s->mode |= mode_piecewise;
-
-  fdht->multihash_initialize();
     
-  if (!compute_hash(s,fdht))  {
-    return TRUE;
-  }
-
-  s->mode -= mode_piecewise;
-  
-  fdht->multihash_finalize();
-  printf ("%"PRIu64"\t%s", fdht->stat_bytes, fdht->hash_hex[s->md5deep_mode_algorithm].c_str());
-  
-  return FALSE;
+    // We use the piecewise mode to get a partial hash of the first 
+    // 512 bytes of the file. But we'll have to remove piecewise mode
+    // before returning to the main hashing code
+    fdht->block_size = 512;
+    s->mode |= mode_piecewise;
+    
+    fdht->multihash_initialize();
+    
+    if (!compute_hash(s,fdht))  {
+	return TRUE;
+    }
+    
+    s->mode -= mode_piecewise;
+    
+    fdht->multihash_finalize();
+    printf ("%"PRIu64"\t%s", fdht->stat_bytes, fdht->hash_hex[s->md5deep_mode_algorithm].c_str());
+    return FALSE;
 }
 
 
@@ -291,9 +286,9 @@ static int hash(state *s,file_data_hasher_t *fdht)
 	    tmp_end = fdht->read_end - 1;
 	}
 	fdht->file_name_annotation =
-	    string(" offset ")
+	    std::string(" offset ")
 	    + itos(fdht->read_start)
-	    + string("-")
+	    + std::string("-")
 	    + itos(tmp_end);
       }
       
@@ -304,7 +299,8 @@ static int hash(state *s,file_data_hasher_t *fdht)
 	  // didn't match any input files. Thus, we don't display anything now.
 	  // The lookup is to mark those known hashes that we do encounter
 	  if (s->mode & mode_not_matched){
-	      file_data_t *fs = s->known.find_hash(s->md5deep_mode_algorithm,fdht->hash_hex[s->md5deep_mode_algorithm]);
+	      file_data_t *fs = s->known.find_hash(s->md5deep_mode_algorithm,
+						   fdht->hash_hex[s->md5deep_mode_algorithm]);
 	      if(fs) fs->used = 1;	// note that it's used!
 	  }
 	  else {
@@ -336,46 +332,29 @@ static int hash(state *s,file_data_hasher_t *fdht)
 }
 
 
-#if 0
-/* What is this? It looks like bad news */
-static int setup_barename(state *s, TCHAR *fn)
-{
-  if (NULL == s || NULL == fn)
-    return TRUE;
-
-  TCHAR *basen = _tcsdup(fn);
-  if (basen == NULL)
-  {
-    print_error_unicode(fn,"Out of memory");
-    return TRUE;
-  }
-
-  if (my_basename(basen))
-  {
-    free(basen);
-    print_error_unicode(fn,"%s: Illegal filename");
-    return TRUE;
-  }
-
-  fdht->file_name = basen;
-  return FALSE;
-}
-#endif
-
-
+/**
+ * Given a file name, has it into a fdht
+ */
 int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 {
     int status = STATUS_OK;
     fdht->is_stdin = FALSE;
-
-#if 0
-    if (s->mode & mode_barename)  {
-	if (setup_barename(s,fn))
-	    return TRUE;
-    }
-    //else
-#endif
     fdht->file_name = fn;
+
+    if (s->mode & mode_barename)  {
+	/* Convert fdht->file_name to its basename */
+
+	/* The basename function kept misbehaving on OS X, so Jesse rewrote it.
+	 * This approach isn't perfect, nor is it designed to be. Because
+	 * we're guarenteed to be working with a file here, there's no way
+	 * that str will end with a DIR_SEPARATOR (e.g. /foo/bar/). This function
+	 * will not work properly for a string that ends in a DIR_SEPARATOR
+	 */
+	size_t delim = fdht->file_name.rfind(DIR_SEPARATOR);
+	if(delim!=std::string::npos){
+	    fdht->file_name = fdht->file_name.substr(delim+1);
+	}
+    }
 
     if ((fdht->handle = _tfopen(fn,_TEXT("rb"))) != NULL) {
 	// We should have the file size already from the stat functions

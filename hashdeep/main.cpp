@@ -755,9 +755,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       s->mode |= mode_asterisk;
       break;
 
-    case 'b': 
-      s->mode |= mode_barename; 
-      break;
+    case 'b': s->mode |= mode_barename; break;
       
     case 'l': 
       s->mode |= mode_relative; 

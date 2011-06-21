@@ -490,7 +490,7 @@ void     check_wow64(state *s);
 
 // Works like dirname(3), but accepts a TCHAR* instead of char*
 int my_dirname(TCHAR *c);
-int my_basename(TCHAR *s);
+//int my_basename(TCHAR *s);
 
 int find_comma_separated_string(char *s, unsigned int n);
 int find_quoted_string(char *buf, unsigned int n);
