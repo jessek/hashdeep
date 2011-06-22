@@ -23,7 +23,7 @@
    2. If your filetype has a rigid header, you should define a HEADER
       variable to make comparisons easier. 
 
-   3. Add a check for your file type to the hash_file_type() function.
+   3. Add a check for your file type to the identify_hash_file_type() function.
 
    4. Create a method to find a valid hash and filename in a line of
       your file. You are encouraged to use find_plain_hash and
@@ -74,6 +74,8 @@ typedef struct _ENCASE_HASH_HEADER {
 /**
  * looks for a valid hash in the provided buffer.
  * returns TRUE if one is present.
+ * @param known_fn - the hex hash is copied here.
+ * @param buf      - input is the hash and the filename; the filename is left here.
  */
 int state::find_plain_hash(char *buf, char *known_fn) 
 {
@@ -99,6 +101,9 @@ int state::find_plain_hash(char *buf, char *known_fn)
     return algorithm_t::valid_hash(md5deep_mode_algorithm,buf);
 }  
 
+/**
+ * detect the md5deep_size_hash file type, which has a size, a hash, and a filename.
+ */
 int state::find_md5deep_size_hash(char *buf, char *known_fn)
 {
   size_t pos; 
@@ -270,87 +275,77 @@ int state::check_for_encase(FILE *f,uint32_t *expected_hashes)
 
 int state::identify_hash_file_type(FILE *f,uint32_t *expected_hashes) 
 {
-  char known_fn[PATH_MAX+1];
-  char buf[MAX_STRING_LENGTH + 1];
-  rewind(f);
-
-  /* The "rigid" file types all have their headers in the 
-     first line of the file. We check them first */
-
-  if (h_encase)    {
+    char known_fn[PATH_MAX+1];
+    char buf[MAX_STRING_LENGTH + 1];
+    rewind(f);
+    
+    /* The "rigid" file types all have their headers in the 
+       first line of the file. We check them first */
+    
+    if (h_encase)    {
 	if (check_for_encase(f,expected_hashes))
-	return TYPE_ENCASE;
+	    return TYPE_ENCASE;
     }
-
-  if ((fgets(buf,MAX_STRING_LENGTH,f)) == NULL) 
-    return TYPE_UNKNOWN;
-  
-  if (strlen(buf) > HASH_STRING_LENGTH)
-  {
+    
+    if ((fgets(buf,MAX_STRING_LENGTH,f)) == NULL) {
+	return TYPE_UNKNOWN;
+    }
+    
+    if (strlen(buf) > HASH_STRING_LENGTH) {
 
     chop_line(buf);
 
-    if (h_hashkeeper)
-      {
+    if (h_hashkeeper)      {
 	if (STRINGS_EQUAL(buf,HASHKEEPER_HEADER))
 	  return TYPE_HASHKEEPER;
       }
     
-    if (h_nsrl15)
-      {
+    if (h_nsrl15)      {
 	if (STRINGS_EQUAL(buf,NSRL_15_HEADER))
 	  return TYPE_NSRL_15;
       }
     
-    if (h_nsrl20)
-      {
+    if (h_nsrl20) {
     if (STRINGS_EQUAL(buf,NSRL_20_HEADER))
       return TYPE_NSRL_20;
       }
     
-    if (h_ilook)
-      {
+    if (h_ilook)      {
 	if (STRINGS_EQUAL(buf,ILOOK_HEADER))
 	  return TYPE_ILOOK;
       }
 
-    if (h_ilook3)
-      {
+    if (h_ilook3)      {
 	if (STRINGS_EQUAL(buf,ILOOK3_HEADER))
 	  return TYPE_ILOOK3;
       }
 
-    if (h_ilook4)
-      {
+    if (h_ilook4)      {
 	if (STRINGS_EQUAL(buf,ILOOK4_HEADER))
 	  return TYPE_ILOOK3;
       }
 
-  }
+    }
   
   
-  /* Plain files can have comments, so the first line(s) may not
-     contain a valid hash. But if we should process this file
-     if we can find even *one* valid hash */
-  do 
-  {
-    if (find_bsd_hash(buf,known_fn))
-    {
-      return TYPE_BSD;
-    }
-
-    if (find_md5deep_size_hash(buf,known_fn))
-    {
-      return TYPE_MD5DEEP_SIZE;
-    }
-
-    if (find_plain_hash(buf,known_fn))
-    {
-      return TYPE_PLAIN;
-    }
-  } while ((fgets(buf,MAX_STRING_LENGTH,f)) != NULL);
-
-  return TYPE_UNKNOWN;
+    /* Plain files can have comments, so the first line(s) may not
+       contain a valid hash. But if we should process this file
+       if we can find even *one* valid hash */
+    do {
+	if (find_bsd_hash(buf,known_fn)) {
+	    return TYPE_BSD;
+	}
+	
+	if (find_md5deep_size_hash(buf,known_fn)) {
+	    return TYPE_MD5DEEP_SIZE;
+	}
+	
+	if (find_plain_hash(buf,known_fn)) {
+	    return TYPE_PLAIN;
+	}
+    } while ((fgets(buf,MAX_STRING_LENGTH,f)) != NULL);
+    
+    return TYPE_UNKNOWN;
 }
 
 
@@ -502,7 +497,6 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
  */
 void state::md5deep_load_match_file(const char *fn) 
 {
-#if 0
     uint64_t line_number = 0;
     char known_fn[PATH_MAX+1];
     int status;
@@ -514,11 +508,10 @@ void state::md5deep_load_match_file(const char *fn)
 	return;
     }
 
-    int file_type = hash_file_type(f,&expected_hashes);
+    int file_type = identify_hash_file_type(f,&expected_hashes);
     if (file_type == TYPE_UNKNOWN)  {
 	print_error("%s: Unable to find any hashes in file, skipped.", fn);
 	fclose(f);
-	f = 0;
 	return;
     }
 
@@ -544,25 +537,28 @@ void state::md5deep_load_match_file(const char *fn)
 	++line_number;
 	memset(known_fn,0,PATH_MAX);
 
-	if (find_hash_in_line(s,buf,file_type,known_fn) != TRUE) {
-	    if ((!opt_silent) || (s->mode & mode_warn_only)) {
+	if (!find_hash_in_line(buf,file_type,known_fn)) {
+	    if ((!opt_silent) || (mode & mode_warn_only)) {
 		fprintf(stderr,"%s: %s: No hash found in line %" PRIu64 "%s", 
 			__progname,fn,line_number,NEWLINE);
 	    }
-	} 
-	else {
+	} else {
 	    // Invalid hashes are caught above
+	    //file_data_t *fdt = new file_data_t();
+	    printf("bus=%s known_fn=%s\n",buf,known_fn);
+	    assert(0);
+
+#if 0
 	    if (hashTableAdd(s,&knownHashes,buf,known_fn)) {
 		print_error("%s: %s: Out of memory at line %" PRIu64 "%s",
 			    __progname, fn, line_number, NEWLINE);
 		fclose(f);
 		return;
 	    }
+#endif
 	}
     }
     fclose(f);
-#endif
-    assert(0);
 }
 
 

@@ -261,7 +261,7 @@ bool algorithm_t::valid_hash(hashid_t alg, const char *buf)
 {
     for (size_t pos = 0 ; pos < hashes[alg].bit_length/4 ; pos++)  {
 	if (!isxdigit(buf[pos])) return false; // invalid character
-	if (pos==hashes[alg].bit_length/4) return true; // we found them all
+	if (pos==(hashes[alg].bit_length/4)-1) return true; // we found them all
     }
     return false;				// too short or too long
 }
@@ -350,10 +350,12 @@ static int process_command_line(state *s, int argc, char **argv)
       break;
       
     case 'd': s->dfxml = new XML(stdout); break;
-    case 'M': s->mode |= mode_display_hash;	  
+    case 'M': s->mode |= mode_display_hash;
+	/* intentioanl fall through */
     case 'm': s->primary_function = primary_match;      break;
       
     case 'X': s->mode |= mode_display_hash;
+	/* intentional fall through */
     case 'x': s->primary_function = primary_match_neg;  break;
       
     case 'a': s->primary_function = primary_audit;      break;
@@ -519,17 +521,14 @@ int main(int argc, char **argv)
 	xreport.push("algorithms");
 	for(int i=0;i<NUM_ALGORITHMS;i++){
 	    xreport.make_indent();
-	    xreport.printf("<algorithm name='%s' enabled='%d'/>\n",hashes[i].name.c_str(),hashes[i].inuse);
+	    xreport.printf("<algorithm name='%s' enabled='%d'/>\n",
+			   hashes[i].name.c_str(),hashes[i].inuse);
 	}
 	xreport.pop();			// algorithms
 	xreport.pop();			// configuration
     }
 
    
-    //  if (primary_audit == s->primary_function){
-    //setup_audit(s);
-    //}
-
 #ifdef _WIN32
     if (prepare_windows_command_line(s)){
 	fatal_error("%s: Unable to process command line arguments", __progname);
@@ -573,7 +572,7 @@ int main(int argc, char **argv)
   
     /* If we were auditing, display the audit results */
     if (s->primary_function == primary_audit){
-      status = display_audit_results(s);
+	status = display_audit_results(s);
     }
   
     /* If we were generating DFXML, finish the job */
@@ -593,37 +592,26 @@ int main(int argc, char **argv)
 
 static void md5deep_check_flags_okay(state *s)
 {
-  if (NULL == s)
-    exit (STATUS_USER_ERROR);
-
-  sanity_check(
-	       ((s->mode & mode_match) || (s->mode & mode_match_neg)) &&
+  sanity_check(((s->mode & mode_match) || (s->mode & mode_match_neg)) &&
 	       s->hashes_loaded(),
 	       "Unable to load any matching files");
 
-  sanity_check(
-	       (s->mode & mode_relative) && (s->mode & mode_barename),
+  sanity_check((s->mode & mode_relative) && (s->mode & mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
-  sanity_check(
-	       (s->mode & mode_piecewise) && (s->mode & mode_display_size),
+  sanity_check((s->mode & mode_piecewise) && (s->mode & mode_display_size),
 	       "Piecewise mode and file size display is just plain silly");
 
 
   /* If we try to display non-matching files but haven't initialized the
      list of matching files in the first place, bad things will happen. */
-  sanity_check(
-	       (s->mode & mode_not_matched) && 
+  sanity_check((s->mode & mode_not_matched) && 
 	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)),
 	       "Matching or negative matching must be enabled to display non-matching files");
 
-  sanity_check(
-	       (s->mode & mode_which) && 
+  sanity_check((s->mode & mode_which) && 
 	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)), 
 	       "Matching or negative matching must be enabled to display which file matched");
- 
- 
-  // Additional sanity checks will go here as needed... 
 }
 
 
@@ -708,6 +696,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       
     case 'M':
       s->mode |= mode_display_hash;
+      /* Intentional fall through */
     case 'm':
       s->mode |= mode_match;
       md5deep_check_matching_modes(s);

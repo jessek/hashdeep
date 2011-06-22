@@ -456,7 +456,6 @@ int display_hash_simple(state *s,file_data_t *fdt);
 
 /* AUDIT MODE */
 
-//void setup_audit(state *s);
 int audit_check(state *s);		// performs an audit; return 0 if pass, -1 if fail
 int display_audit_results(state *s);
 int audit_update(state *s,file_data_t *fdt);
