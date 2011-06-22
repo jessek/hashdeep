@@ -593,7 +593,7 @@ int main(int argc, char **argv)
 static void md5deep_check_flags_okay(state *s)
 {
   sanity_check(((s->mode & mode_match) || (s->mode & mode_match_neg)) &&
-	       s->hashes_loaded(),
+	       s->hashes_loaded()==0,
 	       "Unable to load any matching files");
 
   sanity_check((s->mode & mode_relative) && (s->mode & mode_barename),

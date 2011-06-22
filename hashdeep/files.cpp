@@ -544,18 +544,10 @@ void state::md5deep_load_match_file(const char *fn)
 	    }
 	} else {
 	    // Invalid hashes are caught above
-	    //file_data_t *fdt = new file_data_t();
-	    printf("bus=%s known_fn=%s\n",buf,known_fn);
-	    assert(0);
-
-#if 0
-	    if (hashTableAdd(s,&knownHashes,buf,known_fn)) {
-		print_error("%s: %s: Out of memory at line %" PRIu64 "%s",
-			    __progname, fn, line_number, NEWLINE);
-		fclose(f);
-		return;
-	    }
-#endif
+	    file_data_t *fdt = new file_data_t();
+	    fdt->hash_hex[md5deep_mode_algorithm] = buf; // the hex hash
+	    fdt->file_name = known_fn;		    // the filename
+	    known.add_fdt(fdt);
 	}
     }
     fclose(f);
