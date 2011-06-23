@@ -105,7 +105,7 @@ public:
     static void clear_algorithms_inuse();
     static void enable_hashing_algorithms(std::string var);  // enable the algorithms in 'var'; var can be 'all'
     static hashid_t get_hashid_for_name(std::string name);   // return the hashid_t for 'name'
-    static bool valid_hash(hashid_t alg,const char *buf); // returns true if buf is a valid hash for hashid_t a
+    static bool valid_hash(hashid_t alg,const std::string &buf); // returns true if buf is a valid hash for hashid_t a
 };
 
 extern algorithm_t     hashes[NUM_ALGORITHMS];		// which hash algorithms are available and in use
@@ -288,7 +288,7 @@ public:;
      * Both of these functions take the file name and the open handle.
      * They read from the handle and just use the filename for printing error messages.
      */
-    void		enable_hashing_algorithms_from_hashdeep_file(const char *fn,const char *val);
+    void		enable_hashing_algorithms_from_hashdeep_file(std::string fn,std::string val);
     std::string		last_enabled_algorithms; // a string with the algorithms that were enabled last
     hashid_t		hash_column[NUM_ALGORITHMS]; // maps a column number to a hashid;
 						     // the order columns appear in the file being loaded.
@@ -445,13 +445,12 @@ public:;
 class files {
 };
 
-/* HASH TABLE */
-#if 0
-void hashtable_init(hashtable_t *t);
-status_t hashtable_add(state *s, hashid_t alg, file_data_t *f);
-hashtable_entry_t * hashtable_contains(state *s, hashid_t alg);
-void hashtable_destroy(hashtable_entry_t *e);
-#endif
+/* main.cpp */
+std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
+std::vector<std::string> split(const std::string &s, char delim);
+void lowercase(std::string &s);
+
+
 
 
 /* MATCHING MODES */

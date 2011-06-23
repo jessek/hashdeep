@@ -240,7 +240,7 @@ void algorithm_t::load_hashing_algorithms()
 hashid_t algorithm_t::get_hashid_for_name(string name)
 {
     /* convert name to lowercase and remove any dashes */
-    std::transform(name.begin(), name.end(), name.begin(), ::tolower); 
+    lowercase(name);
     size_t dash;
     while((dash=name.find("-")) != string::npos){ 
 	name.replace(dash,1,"");
@@ -259,7 +259,7 @@ void algorithm_t::clear_algorithms_inuse()
 }
 
 
-bool algorithm_t::valid_hash(hashid_t alg, const char *buf)
+bool algorithm_t::valid_hash(hashid_t alg, const std::string &buf)
 {
     for (size_t pos = 0 ; pos < hashes[alg].bit_length/4 ; pos++)  {
 	if (!isxdigit(buf[pos])) return false; // invalid character
@@ -284,6 +284,12 @@ std::vector<std::string> &split(const std::string &s, char delim, std::vector<st
 std::vector<std::string> split(const std::string &s, char delim) {
     std::vector<std::string> elems;
     return split(s, delim, elems);
+}
+
+
+void lowercase(std::string &s)
+{
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 }
 
 
