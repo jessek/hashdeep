@@ -11,16 +11,17 @@
 
 /**
  * Return the number of entries in the hashlist that have used==0
+ * Optionally display them, optionally with additional output.
  */
-uint64_t hashlist::count_unused()
+uint64_t hashlist::compute_unused(bool display, std::string annotation)
 {
     uint64_t count=0;
     for(std::vector<file_data_t *>::const_iterator i = this->begin(); i != this->end(); i++){
-	if((*i)->used==0){
+	if((*i)->matched_file_number==0){
 	    count++;
-	    if (opt_verbose >= MORE_VERBOSE) {
+	    if (display || opt_verbose >= MORE_VERBOSE) {
 		display_filename(stdout,*i,false);
-		print_status(": Known file not used");
+		print_status(annotation.c_str());
 	    }
 	}
     }
@@ -127,7 +128,7 @@ hashlist::searchstatus_t hashlist::search(const file_data_t *fdt) const
 int audit_check(state *s)
 {
     /* Count the number of unused */
-    s->match.unused = s->known.count_unused();
+    s->match.unused = s->known.compute_unused(false,": Known file not used");
     return (0 == s->match.unused  && 
 	    0 == s->match.unknown && 
 	    0 == s->match.moved);
@@ -178,7 +179,7 @@ int audit_update(state *s,file_data_t *fdt)
     file_data_t * moved_file = NULL, * partial_file = NULL;
     uint64_t my_round;			// don't know what the round is
   
-    my_round = s->file_number;		// count number of files
+    my_round = s->file_number;	// count number of files
     s->file_number++;
     if (my_round > s->file_number){	// check for 64-bit overflow (highly unlikely)
 	fatal_error("%s: Too many input files", __progname);
@@ -208,8 +209,7 @@ int audit_update(state *s,file_data_t *fdt)
       {
 	// print_status("Got status %d for %s", tmp->status, tmp->data->file_name);
 
-	if (tmp->data->used != s->file_number)
-	{
+	if (tmp->data->used != s->file_number)	{
 
 	  switch (tmp->status) {
 	  case status_match:

@@ -157,6 +157,7 @@ int hashTableContains(hashTable *knownHashes, const char *n, std::string *known)
 }
 
 
+#if 0
 int hashTableDisplayNotMatched(hashTable *t, int display)
 {
   int status = FALSE;
@@ -187,6 +188,6 @@ int hashTableDisplayNotMatched(hashTable *t, int display)
 
   return status;
 }  
-
+#endif
 
 

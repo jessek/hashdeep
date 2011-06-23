@@ -24,29 +24,30 @@ do
    /bin/echo -n Test $i ...
    /bin/rm -f /tmp/test$i.out
    case $i in
-     1) $BASE/md5deep -r    /tmp/test                      > /tmp/test$i.out ;; 
-     2) $BASE/md5deep -p512 /tmp/test/deadbeef.txt         > /tmp/test$i.out ;;
-     3) $BASE/md5deep -zr   /tmp/test                      > /tmp/test$i.out ;;
-     4) $BASE/md5deep -b    /tmp/test/deadbeef.txt         > /tmp/test$i.out ;;
-     5) $BASE/md5deep -m hashlist-md5deep.txt -r /tmp/test > /tmp/test$i.out ;;
-     6) $BASE/md5deep -x hashlist-md5deep.txt -r /tmp/test > /tmp/test$i.out ;;
-     7) $BASE/md5deep -M hashlist-md5deep.txt -r /tmp/test > /tmp/test$i.out ;;
-     8) $BASE/md5deep -X hashlist-md5deep.txt -r /tmp/test > /tmp/test$i.out ;;
-     9) $BASE/md5deep -m hashlist-md5deep.txt -w -r /tmp/test > /tmp/test$i.out ;;
-    10) $BASE/md5deep -m hashlist-md5deep.txt -n -r /tmp/test > /tmp/test$i.out ;;
-    11) $BASE/md5deep -w -a deadbeefb303ba89ae055ad0234eb7e8  -r /tmp/test > /tmp/test$i.out ;;
-    12) $BASE/md5deep -w -A deadbeefb303ba89ae055ad0234eb7e8  -r /tmp/test > /tmp/test$i.out ;;
-    13) $BASE/md5deep -k    /tmp/test/deadbeef.txt         > /tmp/test$i.out ;;
-    14) $BASE/md5deep -i1000 -r /tmp/test                  > /tmp/test$i.out ;;
-    15) $BASE/md5deep -I1000 -r /tmp/test                  > /tmp/test$i.out ;;
-    16) $BASE/hashdeep -r   /tmp/test                      > /tmp/test$i.out ;;
-    17) $BASE/hashdeep -p512 -r /tmp/test                    > /tmp/test$i.out ;;
-    18) $BASE/md5deep  -p512 -r /tmp/test                    > /tmp/test$i.out ;;
-    19) $BASE/sha1deep -p512 -r /tmp/test                    > /tmp/test$i.out ;;
-    20) $BASE/sha256deep -r /tmp/test                     > /tmp/test$i.out ;;
-    21) $BASE/tigerdeep  -r /tmp/test                     > /tmp/test$i.out ;;
-    22) $BASE/whirlpooldeep -r /tmp/test                  > /tmp/test$i.out ;;
+     1) cmd="$BASE/md5deep -r    /tmp/test                       " ;;
+     2) cmd="$BASE/md5deep -p512 /tmp/test/deadbeef.txt          " ;;
+     3) cmd="$BASE/md5deep -zr   /tmp/test                       " ;;
+     4) cmd="$BASE/md5deep -b    /tmp/test/deadbeef.txt          " ;;
+     5) cmd="$BASE/md5deep -m hashlist-md5deep.txt -r /tmp/test  " ;;
+     6) cmd="$BASE/md5deep -x hashlist-md5deep.txt -r /tmp/test  " ;;
+     7) cmd="$BASE/md5deep -M hashlist-md5deep.txt -r /tmp/test  " ;;
+     8) cmd="$BASE/md5deep -X hashlist-md5deep.txt -r /tmp/test  " ;;
+     9) cmd="$BASE/md5deep -m hashlist-md5deep.txt -w -r /tmp/test  " ;;
+    10) cmd="$BASE/md5deep -m hashlist-md5deep.txt -n -r /tmp/test  " ;;
+    11) cmd="$BASE/md5deep -w -a deadbeefb303ba89ae055ad0234eb7e8  -r /tmp/test  " ;;
+    12) cmd="$BASE/md5deep -w -A deadbeefb303ba89ae055ad0234eb7e8  -r /tmp/test  " ;;
+    13) cmd="$BASE/md5deep -k    /tmp/test/deadbeef.txt          " ;;
+    14) cmd="$BASE/md5deep -i1000 -r /tmp/test                   " ;;
+    15) cmd="$BASE/md5deep -I1000 -r /tmp/test                   " ;;
+    16) cmd="$BASE/hashdeep -r   /tmp/test                       " ;;
+    17) cmd="$BASE/hashdeep -p512 -r /tmp/test                     " ;;
+    18) cmd="$BASE/md5deep  -p512 -r /tmp/test                     " ;;
+    19) cmd="$BASE/sha1deep -p512 -r /tmp/test                     " ;;
+    20) cmd="$BASE/sha256deep -r /tmp/test                      " ;;
+    21) cmd="$BASE/tigerdeep  -r /tmp/test                      " ;;
+    22) cmd="$BASE/whirlpooldeep -r /tmp/test                   " ;;
    esac
+   $cmd | sed s+$BASE/++ > /tmp/test$i.out
    if [ $mode = "generate" ]
    then
      echo ""

@@ -301,7 +301,7 @@ static int hash(state *s,file_data_hasher_t *fdht)
 	  if (s->mode & mode_not_matched){
 	      file_data_t *fs = s->known.find_hash(s->md5deep_mode_algorithm,
 						   fdht->hash_hex[s->md5deep_mode_algorithm]);
-	      if(fs) fs->used = 1;	// note that it's used!
+	      if(fs) fs->matched_file_number = fdht->file_number;	// note that it's used!
 	  }
 	  else {
 	      status = md5deep_display_hash(s,fdht);

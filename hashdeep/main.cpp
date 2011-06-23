@@ -51,6 +51,8 @@ int  opt_verbose = 0;
  ** Various helper functions.
  ****************************************************************/
 
+uint64_t file_data_hasher_t::next_file_number = 0;
+
 static void sanity_check(int condition, const char *msg)
 {
     if (condition) {
@@ -575,6 +577,16 @@ int main(int argc, char **argv)
 	status = display_audit_results(s);
     }
   
+    /* We only have to worry about checking for unused hashes if one 
+     * of the matching modes was enabled. We let the display_not_matched
+     * function determine if it needs to display anything. The function
+     * also sets our return values in terms of inputs not being matched
+     * or known hashes not being used
+     */
+    if ((s->mode & mode_match) || (s->mode & mode_match_neg)){
+	status = s->finalize_matching();
+    }
+
     /* If we were generating DFXML, finish the job */
     if(s->dfxml){
 	s->dfxml->pop();		// outermost

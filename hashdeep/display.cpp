@@ -230,7 +230,7 @@ static int md5deep_display_match_result(state *s,file_data_hasher_t *fdht)
     file_data_t *fs = s->known.find_hash(s->md5deep_mode_algorithm,fdht->hash_hex[s->md5deep_mode_algorithm]);
     int known_hash = fs ? 1 : 0;
 
-    if(fs) fs->used = 1;
+    if(fs) fs->matched_file_number = fdht->file_number;
 
     if ((known_hash && (s->mode & mode_match)) ||
 	(!known_hash && (s->mode & mode_match_neg))) {

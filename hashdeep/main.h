@@ -85,15 +85,17 @@ typedef enum
  */
 class algorithm_t {
 public:
-    bool		inuse;
-    std::string		name;
+    bool		inuse;		// true if we are using this algorithm
+    std::string		name;		// name of algorithm
     size_t		bit_length;	// 128 for MD5
     hashid_t		id;		// usually the position in the array...
 
+    /* The hashing functions */
     int ( *f_init)(void *);
     int ( *f_update)(void *, unsigned char *, uint64_t );
     int ( *f_finalize)(void *, unsigned char *);
 
+    /* The methods */
     static void add_algorithm(hashid_t pos, const char *name, uint16_t bits, 
 		       int ( *func_init)(void *),
 		       int ( *func_update)(void *, unsigned char *, uint64_t ),
@@ -133,7 +135,7 @@ typedef enum   {
  */
 class file_data_t {
 public:
-    file_data_t():refcount(0),used(0),file_size(0),stat_bytes(0),stat_megs(0),actual_bytes(0) {
+    file_data_t():refcount(0),matched_file_number(0),file_size(0),stat_bytes(0),stat_megs(0),actual_bytes(0) {
     };
     // Implement a simple reference count garbage collection system
     int		   refcount;			     // reference counting
@@ -145,7 +147,7 @@ public:
     std::string	   file_name;		// just the file_name, apparently
     std::string	   file_name_annotation;// print after file name; for piecewise hashing
 
-    uint64_t       used;	 // was hash used in file system? For auditing. The round # is stored
+    uint64_t       matched_file_number;	 // file number that we matched.
 #ifdef _WIN32
     __time64_t    timestamp;
 #else
@@ -165,12 +167,15 @@ public:
  * It contains additional information necessary to actually hash a file.
  */
 class file_data_hasher_t : public file_data_t {
+private:
+    static uint64_t next_file_number;
 public:
     static const size_t MD5DEEP_IDEAL_BLOCK_SIZE = 8192;
     static const size_t MAX_ALGORITHM_CONTEXT_SIZE = 256;
     static const size_t MAX_ALGORITHM_RESIDUE_SIZE = 256;
     file_data_hasher_t():handle(0),is_stdin(0),read_start(0),read_end(0),bytes_read(0),
 			 block_size(MD5DEEP_IDEAL_BLOCK_SIZE){
+	file_number = ++next_file_number;
     };
     ~file_data_hasher_t(){
 	if(handle) fclose(handle);	// make sure that it' closed.
@@ -192,6 +197,7 @@ public:
     unsigned char  buffer[MD5DEEP_IDEAL_BLOCK_SIZE]; // next buffer to hash
     uint8_t        hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 
     std::string	   dfxml_hash;	      // the DFXML hash digest for the piece just hashed; used to build piecewise
+    uint64_t	   file_number;
 
     // Where the last read operation started and ended
     // bytes_read is a shorthand for read_end - read_start
@@ -272,9 +278,10 @@ public:;
     public:;
 	void add_file(file_data_t *fi,int alg_num);
     };
-    uint64_t		count_unused(); // count unused and optionally perform audit
+    uint64_t		compute_unused(bool display,std::string annotation);
     hashmap		hashmaps[NUM_ALGORITHMS];
     searchstatus_t	search(const file_data_t *fdt) const; // look up a fdt
+    uint64_t		total_matched;
 
     /**
      * Figure out the format of a hashlist file and load it.
@@ -359,7 +366,7 @@ public:;
 	    dfxml(0),
 	    size_threshold(0),
 	    known(),seen(),
-	    file_number(0),h_plain(0),h_bsd(0),h_md5deep_size(0),
+	    h_plain(0),h_bsd(0),h_md5deep_size(0),
 	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
 	    h_nsrl20(0), h_encase(0)
 	    {};
@@ -392,7 +399,6 @@ public:;
     /* The set of known values; typically read from the audit file */
     hashlist	    known;		// hashes read from the -k file
     hashlist	    seen;		// hashes seen on this hashing run; from the command line
-    uint64_t        file_number;	// the current file number. 
 
     // Which filetypes this algorithm supports and their position in the file
     uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
@@ -425,7 +431,7 @@ public:;
     int		find_ilook_hash(char *buf, char *known_fn);
     int		check_for_encase(FILE *f,uint32_t *expected_hashes);
     int		identify_hash_file_type(FILE *f,uint32_t *expected_hashes); // identify the hash file type
-    int		md5deep_finalize_matching();
+    int		finalize_matching();
 
     bool hashes_loaded(){
 	return known.size()>0;
