@@ -39,11 +39,6 @@ int _CRT_fmode = _O_BINARY;
 #endif
 
 
-// bring in strsep if it is needed
-#ifndef HAVE_STRSEP
-#include "lib-strsep.c"
-#endif
-
 bool opt_silent = false;
 int  opt_verbose = 0;
 

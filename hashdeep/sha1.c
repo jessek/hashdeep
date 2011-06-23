@@ -14,11 +14,7 @@
 
 /* $Id$ */
 
-//#include "main.h"
 #include "sha1.h"
-
-
-
 
 /* This implementation of SHA1-1 was written by 
    Steve Reid <steve@edmweb.com> and was included in this program on 
