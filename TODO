@@ -18,24 +18,22 @@ Below is what we've done:
 4 - Have hash() function take the file being hashed and a place to put it. 
 1 - Start replacing char * arrays with stl::string. Consider replacing TCHAR strings with vector<TCHAR>.  
 2 - remove hashtable object for the STL red-black table.
-
-Below is what's planned:
-
 1 - migrate all hash databases to a single class (hashlist.cpp)
 2 - Fix -k so that it loads into that database
 3 - Fix audit mode so that it reads from that database.
+
+Below is what's planned:
+
 4 - a file pattern that specifies what files are hashed.
 5 - migrate to multi-threaded producer/consumer architecture with the file searching (dig) being the producer and hash() being the consumer. This will require a bunch of locks added.
 6 - Add "-j" option to control how many threads; -j0 turns off threading.
 
-What's on hold (reason: why change code that currently works?)
+What's on hold 
 ================
 Test cases:
  - An audit file with the MD5 hash changed to simulate a partial hash.
  - An audit file with the length changed to simulate a partial hash.
  - An audit file with with 1 million entries.
-
-what is mode_barename? 
 
 * Loading hashes should return a string with the set of hashes that were added.
 * Use this for comparing which hashes get added.
