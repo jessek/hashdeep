@@ -51,12 +51,6 @@ void file_data_hasher_t::multihash_finalize()
     }
 
     // old code
-#if 0
-    if (s->mode & mode_piecewise)
-	this->file_size = this->bytes_read;
-    else
-	this->file_size = this->actual_bytes;
-#endif
     this->file_size = this->bytes_read;
 }
 

@@ -20,6 +20,7 @@
 /* Global Options */
 extern bool opt_silent;			// previously was mode_silent
 extern int  opt_verbose;		// can be 1, 2 or 3
+extern bool opt_zero;			// newlines are \000 
 #define VERBOSE 1
 #define MORE_VERBOSE 2
 #define INSANELY_VERBOSE 3
@@ -173,8 +174,8 @@ public:
     static const size_t MD5DEEP_IDEAL_BLOCK_SIZE = 8192;
     static const size_t MAX_ALGORITHM_CONTEXT_SIZE = 256;
     static const size_t MAX_ALGORITHM_RESIDUE_SIZE = 256;
-    file_data_hasher_t():handle(0),is_stdin(0),read_start(0),read_end(0),bytes_read(0),
-			 block_size(MD5DEEP_IDEAL_BLOCK_SIZE){
+    file_data_hasher_t(bool piecewise_):handle(0),is_stdin(0),read_start(0),read_end(0),bytes_read(0),
+					block_size(MD5DEEP_IDEAL_BLOCK_SIZE),piecewise(piecewise_){
 	file_number = ++next_file_number;
     };
     ~file_data_hasher_t(){
@@ -207,6 +208,10 @@ public:
 
     /* Size of blocks used in normal hashing */
     uint64_t        block_size;
+
+    /* Flags */
+    bool		piecewise;	// create picewise hashes
+
 };
 
 
@@ -420,8 +425,10 @@ public:;
      * Not quite sure what to do with this stuff yet...
      */
     
-    int		md5deep_is_known_hash(std::string hash_hex, std::string *known_fn); // sets known_fn to be the file
+    status_t	display_match_result(file_data_hasher_t *fdht);
     void	md5deep_load_match_file(const char *fn);
+    int		md5deep_display_match_result(file_data_hasher_t *fdht);
+    int		md5deep_display_hash(file_data_hasher_t *fdht);
     int		find_hash_in_line(char *buf, int fileType, char *filename);
     int		parse_encase_file(const char *fn,FILE *f,uint32_t num_expected_hashes);
     int		find_plain_hash(char *buf,char *known_fn); // returns FALSE if error
@@ -432,6 +439,11 @@ public:;
     int		check_for_encase(FILE *f,uint32_t *expected_hashes);
     int		identify_hash_file_type(FILE *f,uint32_t *expected_hashes); // identify the hash file type
     int		finalize_matching();
+
+    /* display.cpp */
+    void	display_banner();
+    int		display_hash(file_data_hasher_t *fdht);
+    int		display_hash_simple(file_data_hasher_t *fdt);
 
     bool hashes_loaded(){
 	return known.size()>0;
@@ -457,7 +469,6 @@ void lowercase(std::string &s);
 status_t display_match_result(state *s,file_data_hasher_t *fdht);
 
 int md5deep_display_hash(state *s,file_data_hasher_t *fdt);
-int display_hash_simple(state *s,file_data_t *fdt);
 
 /* AUDIT MODE */
 
@@ -541,7 +552,7 @@ void internal_error(const char *fmt, ... );
 
 // Display a filename, possibly including Unicode characters
 void print_debug(const char *fmt, ...);
-void make_newline(const state *s);
+void print_newline();
 void try_msg(void);
 int display_hash( state *s, file_data_hasher_t *fdht);
 

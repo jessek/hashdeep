@@ -185,7 +185,7 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
    } 
 
     // In piecewise mode we only hash one block at a time
-    if (s->mode & mode_piecewise)
+    if (fdht->piecewise)
     {
       remaining -= current_read;
       if (remaining == 0)
@@ -211,13 +211,11 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
 
 static int md5deep_hash_triage(state *s,file_data_hasher_t *fdht)
 {
-    //memset(s->md5deep_mode_hash_result,0,(2 * s->md5deep_mode_hash_length) + 1);
-    
     // We use the piecewise mode to get a partial hash of the first 
     // 512 bytes of the file. But we'll have to remove piecewise mode
     // before returning to the main hashing code
     fdht->block_size = 512;
-    s->mode |= mode_piecewise;
+    fdht->piecewise = true;
     
     fdht->multihash_initialize();
     
@@ -225,7 +223,7 @@ static int md5deep_hash_triage(state *s,file_data_hasher_t *fdht)
 	return TRUE;
     }
     
-    s->mode -= mode_piecewise;
+    fdht->piecewise = false;
     
     fdht->multihash_finalize();
     printf ("%"PRIu64"\t%s", fdht->stat_bytes, fdht->hash_hex[s->md5deep_mode_algorithm].c_str());
@@ -258,7 +256,7 @@ static int hash(state *s,file_data_hasher_t *fdht)
     fseeko(fdht->handle, 0, SEEK_SET);
   }
   
-  if ( s->mode & mode_piecewise )  {
+  if ( fdht->piecewise )  {
     fdht->block_size = s->piecewise_size;
   }
   
@@ -279,8 +277,7 @@ static int hash(state *s,file_data_hasher_t *fdht)
     // If the file is zero bytes, we won't have read anything, but
     // still need to display a hash.
     if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes)    {
-      if (s->mode & mode_piecewise)
-      {
+      if (fdht->piecewise)      {
 	uint64_t tmp_end = 0;
 	if (fdht->read_end != 0){
 	    tmp_end = fdht->read_end - 1;
@@ -312,10 +309,11 @@ static int hash(state *s,file_data_hasher_t *fdht)
     }
     
 
-    if (s->mode & mode_piecewise)
+    if (fdht->piecewise){
 	done = feof(fdht->handle);
-    else
+    } else {
 	done = TRUE;
+    }
   }
 
   /**
@@ -401,7 +399,7 @@ int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 
 int hash_stdin(state *s)
 {
-    file_data_hasher_t *fdht = new file_data_hasher_t();
+    file_data_hasher_t *fdht = new file_data_hasher_t(s->mode & mode_piecewise);
     fdht->file_name = "stdin";
     fdht->is_stdin  = TRUE;
     fdht->handle    = stdin;

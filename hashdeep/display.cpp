@@ -42,12 +42,6 @@ static std::string shorten_filename(const std::string &fn)
     return(fn.substr(0,MAX_FILENAME_LENGTH-3) + "...");
 }
 
-static char display_asterisk(state *s)
-{
-    return (s->mode & mode_asterisk) ? '*' : ' ';
-}
-
-
 /**
  * output the string, typically a fn, optionally performing unicode escaping
  */
@@ -90,10 +84,7 @@ void display_filename(FILE *out, const file_data_t &fdt, bool shorten)
 }
 
 
-
-
-
-static void display_banner(state *s)
+void state::display_banner()
 {
   print_status("%s", HASHDEEP_HEADER_10);
 
@@ -106,7 +97,7 @@ static void display_banner(state *s)
   print_status("filename");
 
   fprintf(stdout,"## Invoked from: ");
-  output_unicode(stdout,s->cwd);
+  output_unicode(stdout,this->cwd);
   fprintf(stdout,"%s",NEWLINE);
   
   // Display the command prompt as the user saw it
@@ -123,7 +114,7 @@ static void display_banner(state *s)
   // Accounts for '## ', command prompt, and space before first argument
   size_t bytes_written = 8;
 
-  for (int argc = 0 ; argc < s->argc ; ++argc)
+  for (int argc = 0 ; argc < this->argc ; ++argc)
   {
     fprintf(stdout," ");
     bytes_written++;
@@ -144,9 +135,9 @@ static void display_banner(state *s)
 }
 
 
-static void compute_dfxml(state *s,file_data_hasher_t *fdht,int known_hash)
+static void compute_dfxml(file_data_hasher_t *fdht,bool known_hash)
 {
-    if(s->mode & mode_piecewise){
+    if(fdht->piecewise){
 	uint64_t bytes = fdht->read_end - fdht->read_start;
 	fdht->dfxml_hash += string("<byte_run file_offset='") + itos(fdht->read_start)
 	    + string("' bytes='") + itos(bytes) + string("'>\n   ");
@@ -158,10 +149,10 @@ static void compute_dfxml(state *s,file_data_hasher_t *fdht,int known_hash)
 	    fdht->dfxml_hash += string("'>") + fdht->hash_hex[i] + string("</hashdigest>\n");
 	}
     }
-    if(s->mode & mode_which || known_hash){
+    if(known_hash){
 	fdht->dfxml_hash += string("<matched>1</matched>");
     }
-    if(s->mode & mode_piecewise){
+    if(fdht->piecewise){
 	fdht->dfxml_hash += "</byte_run>\n";
     }
 }
@@ -169,15 +160,15 @@ static void compute_dfxml(state *s,file_data_hasher_t *fdht,int known_hash)
 /*
  * Externally called to display a simple hash
  */
-int display_hash_simple(state *s,file_data_hasher_t *fdht)
+int state::display_hash_simple(file_data_hasher_t *fdht)
 {
-    if ( s->dfxml==0 && s->banner_displayed==0){
-	display_banner(s);
-	s->banner_displayed = 1;
+    if ( this->dfxml==0 && this->banner_displayed==0){
+	display_banner();
+	this->banner_displayed = 1;
     }
 
-    if(s->dfxml){
-	compute_dfxml(s,fdht,0);
+    if(this->dfxml){
+	compute_dfxml(fdht,this->mode & mode_which);
 	return FALSE;
     }
 
@@ -185,7 +176,7 @@ int display_hash_simple(state *s,file_data_hasher_t *fdht)
   // of the block it came from. This is important when doing an
   // audit in piecewise mode. In all other cases we use the 
   // total number of bytes from the file we *actually* read
-  if (s->mode & mode_piecewise)
+  if (fdht->piecewise)
     printf ("%"PRIu64",", fdht->bytes_read);
   else
     printf ("%"PRIu64",", fdht->actual_bytes);
@@ -201,56 +192,36 @@ int display_hash_simple(state *s,file_data_hasher_t *fdht)
   return FALSE;
 }
 
-#if 0
-int state::md5deep_is_known_hash(std::string hash_hex, std::string *known_fn) 
-{
-    
-    file_data_t *fdt = known.find_hash(md5deep_mode_algorithm,hash_hex);
-    if(
-    int status;
-
-    // We don't check if the known_fn parameter is NULL because
-    // that's a legitimate call in hash.c under mode_not_matched
-    if (!table_initialized)
-	internal_error("%s: Attempt to check hash before table was initialized",
-		       __progname);
-  
-    status = hashTableContains(&knownHashes,h,known_fn);
-    if (!status)
-	input_not_matched = TRUE;
-    return status;
-}
-#endif
-
-
-
 /* The old display_match_result from md5deep */
-static int md5deep_display_match_result(state *s,file_data_hasher_t *fdht)
+int state::md5deep_display_match_result(file_data_hasher_t *fdht)
 {  
-    file_data_t *fs = s->known.find_hash(s->md5deep_mode_algorithm,fdht->hash_hex[s->md5deep_mode_algorithm]);
+    file_data_t *fs = known.find_hash(md5deep_mode_algorithm,fdht->hash_hex[md5deep_mode_algorithm]);
     int known_hash = fs ? 1 : 0;
 
     if(fs) fs->matched_file_number = fdht->file_number;
 
-    if ((known_hash && (s->mode & mode_match)) ||
-	(!known_hash && (s->mode & mode_match_neg))) {
-	if(s->dfxml){
-	    compute_dfxml(s,fdht,known_hash);
+    if ((known_hash && (mode & mode_match)) ||
+	(!known_hash && (mode & mode_match_neg))) {
+	if(dfxml){
+	    compute_dfxml(fdht,(this->mode & mode_which) || known_hash);
 	    return FALSE;
 	}
 
-	display_size(s,fdht);
+	display_size(this,fdht);
 
-	if (s->mode & mode_display_hash)	    {
-		printf ("%s", fdht->hash_hex[s->md5deep_mode_algorithm].c_str());
-		if (s->mode & mode_csv)
-		    printf (",");
-		else
-		    printf (" %c", display_asterisk(s));
+	if (mode & mode_display_hash) {
+	    printf ("%s", fdht->hash_hex[md5deep_mode_algorithm].c_str());
+	    if (mode & mode_csv) {
+		printf (",");
+	    } else if (mode & mode_asterisk) {
+		printf(" *");
+	    } else {
+		printf("  ");
+	    }
 	}
 
-	if (s->mode & mode_which) 	    {
-		if (known_hash && (s->mode & mode_match)) {
+	if (mode & mode_which) 	    {
+		if (known_hash && (mode & mode_match)) {
 			display_filename(stdout,fdht,false);
 			printf (" matched ");
 			output_unicode(stdout,fs->file_name);
@@ -263,8 +234,7 @@ static int md5deep_display_match_result(state *s,file_data_hasher_t *fdht)
 	else{
 	    display_filename(stdout,fdht,false);
 	}
-
-	make_newline(s);
+	print_newline();
     }
     return FALSE;
 }
@@ -272,19 +242,19 @@ static int md5deep_display_match_result(state *s,file_data_hasher_t *fdht)
 /* The original display_match_result from hashdeep.
  * This should probably be merged with the function above.
  */
-status_t display_match_result(state *s,file_data_hasher_t *fdht)
+status_t state::display_match_result(file_data_hasher_t *fdht)
 {
     file_data_t *matched_fdt = NULL;
     int should_display; 
-    should_display = (primary_match_neg == s->primary_function);
+    should_display = (primary_match_neg == primary_function);
     
-    hashlist::searchstatus_t m = s->known.search(fdht,&matched_fdt);
+    hashlist::searchstatus_t m = known.search(fdht,&matched_fdt);
     switch(m){
 	// If only the name is different, it's still really a match
 	//  as far as we're concerned. 
     case hashlist::status_file_name_mismatch:
     case hashlist::status_match:
-	should_display = (primary_match_neg != s->primary_function);
+	should_display = (primary_match_neg != primary_function);
 	break;
 	  
     case hashlist::status_file_size_mismatch:
@@ -305,11 +275,11 @@ status_t display_match_result(state *s,file_data_hasher_t *fdht)
 	break;
     }
     if (should_display) {
-	if (s->mode & mode_display_hash)
-	    display_hash_simple(s,fdht);
+	if (mode & mode_display_hash)
+	    display_hash_simple(fdht);
 	else {
 	    display_filename(stdout,fdht,false);
-	    if (s->mode & mode_which && primary_match == s->primary_function) {
+	    if (mode & mode_which && primary_match == primary_function) {
 		fprintf(stdout," matches ");
 		if (NULL == matched_fdt) {
 		    fprintf(stdout,"(unknown file)");
@@ -326,40 +296,40 @@ status_t display_match_result(state *s,file_data_hasher_t *fdht)
 
 
 /* The old display_hash from the md5deep program, with a few modifications */
-int md5deep_display_hash(state *s,file_data_hasher_t *fdht)
+int state::md5deep_display_hash(file_data_hasher_t *fdht)
 {
-    if (s->mode & mode_triage) {
-	if(s->dfxml){
-	    compute_dfxml(s,fdht,1);
+    if (mode & mode_triage) {
+	if(dfxml){
+	    compute_dfxml(fdht,1);
 	    return FALSE;
 	}
-	printf ("\t%s\t", fdht->hash_hex[s->md5deep_mode_algorithm].c_str());
+	printf ("\t%s\t", fdht->hash_hex[this->md5deep_mode_algorithm].c_str());
 	display_filename(stdout,fdht,false);
-	make_newline(s);
+	print_newline();
 	return FALSE;
     }
 
     // We can't call display_size here because we don't know if we're
     // going to display *anything* yet. If we're in matching mode, we
     // have to evaluate if there was a match first. 
-    if ((s->mode & mode_match) || (s->mode & mode_match_neg)){
-	return md5deep_display_match_result(s,fdht);
+    if ((this->mode & mode_match) || (this->mode & mode_match_neg)){
+	return md5deep_display_match_result(fdht);
     }
     
-    if(s->dfxml){
-	compute_dfxml(s,fdht,0);
+    if(this->dfxml){
+	compute_dfxml(fdht,this->mode & mode_which);
 	return FALSE;
     }
 
-    display_size(s,fdht);
+    display_size(this,fdht);
 
-    printf ("%s", fdht->hash_hex[s->md5deep_mode_algorithm].c_str());
+    printf ("%s", fdht->hash_hex[this->md5deep_mode_algorithm].c_str());
 
-    if (s->mode & mode_quiet)
+    if (this->mode & mode_quiet)
 	printf ("  ");
     else  {
-	if ((s->mode & mode_piecewise) || !(fdht->is_stdin))    {
-	    if (s->mode & mode_timestamp)      {
+	if ((fdht->piecewise) || !(fdht->is_stdin))    {
+	    if (this->mode & mode_timestamp)      {
 		struct tm * my_time = _gmtime64(&(fdht->timestamp));
 		char time_str[MAX_TIME_STRING_LENGTH];
 		
@@ -367,17 +337,19 @@ int md5deep_display_hash(state *s,file_data_hasher_t *fdht)
 		// two digit hour, two digit minute, two digit second
 		strftime(time_str, sizeof(time_str), "%Y:%m:%d:%H:%M:%S", my_time);
 		
-		printf ("%c%s", (s->mode & mode_csv?',':' '), time_str);
+		printf ("%c%s", (this->mode & mode_csv?',':' '), time_str);
 	    }
-	    if (s->mode & mode_csv)
+	    if (mode & mode_csv) {
 		printf(",");
-	    else
-		printf(" %c", display_asterisk(s));      
-
+	    } else if (mode & mode_asterisk) {
+		printf(" *");
+	    } else {
+		printf("  ");
+	    }
 	    display_filename(stdout,fdht,false);
 	}
     }
-    make_newline(s);
+    print_newline();
     return FALSE;
 }
 
@@ -385,21 +357,21 @@ int md5deep_display_hash(state *s,file_data_hasher_t *fdht)
  * Called by hash() in hash.c when the hashing operation is complete.
  * Display the hash and perform any auditing steps.
  */ 
-int display_hash(state *s,file_data_hasher_t *fdht)
+int state::display_hash(file_data_hasher_t *fdht)
 {
-    if(s->md5deep_mode){
-	md5deep_display_hash(s,fdht);
+    if(md5deep_mode){
+	md5deep_display_hash(fdht);
 	return TRUE;
     }
 
-    switch (s->primary_function) {
+    switch (primary_function) {
     case primary_compute: 
-	return display_hash_simple(s,fdht);
+	return display_hash_simple(fdht);
     case primary_match: 
     case primary_match_neg: 
-	return display_match_result(s,fdht);
+	return display_match_result(fdht);
     case primary_audit: 
-	return audit_update(s,fdht);
+	return audit_update(fdht);
     }
     return FALSE;
 }

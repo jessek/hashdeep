@@ -637,7 +637,7 @@ static int should_hash(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 int process_normal(state *s, TCHAR *fn)
 {
     int ret = FALSE;
-    file_data_hasher_t *fdht = new file_data_hasher_t();
+    file_data_hasher_t *fdht = new file_data_hasher_t(s->mode & mode_piecewise);
     fdht->retain();
     clean_name(s,fn);
 

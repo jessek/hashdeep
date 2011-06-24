@@ -189,9 +189,6 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 }
 #endif
 
-
-//#define STRINGS_CASE_EQUAL(A,B)   (!strncasecmp(A,B,_MAX(strlen(A),strlen(B))))
-//#define STRINGS_EQUAL(A,B)        (!strncmp(A,B,_MAX(strlen(A),strlen(B))))
 #define WSTRINGS_EQUAL(A,B)       (!_tcsncmp(A,B,_MAX(_tcslen(A),_tcslen(B))))
 
 
@@ -200,10 +197,10 @@ extern char *__progname;
 // Set up the environment for the *nix operating systems (Mac, Linux, 
 // BSD, Solaris, and really everybody except Microsoft Windows) 
 #ifndef _WIN32
-#define CMD_PROMPT "$"
+#define CMD_PROMPT	"$"
 #define DIR_SEPARATOR   '/'
-#define NEWLINE "\n"
-#define LINE_LENGTH 74
+#define NEWLINE		"\n"
+#define LINE_LENGTH	74
 #define BLANK_LINE \
 "                                                                          "
 
@@ -211,7 +208,6 @@ extern char *__progname;
 #define fseeko fseek
 #define ftello ftell
 #endif
-
 
 #else   // ifndef _WIN32
 
@@ -234,7 +230,6 @@ extern char *__progname;
 #ifndef EALREADY
 #define EALREADY  37   // Operation already in progress
 #endif
-
 
 #define CMD_PROMPT "C:\\>"
 #define DIR_SEPARATOR   '\\'
@@ -264,7 +259,6 @@ extern char *optarg;
 extern int optind;
 int getopt(int argc, char *const argv[], const char *optstring);
 __END_DECLS
-
 #endif   /* ifndef _WIN32,#else */
 
 
@@ -287,7 +281,7 @@ __END_DECLS
 #define mode_match_neg         1<<5
 #define mode_display_hash      1<<6
 #define mode_display_size      1<<7
-#define mode_zero              1<<8
+//#define mode_zero              1<<8          // now is opt_zero
 #define mode_relative          1<<9
 #define mode_which             1<<10
 #define mode_barename          1<<11
@@ -295,6 +289,7 @@ __END_DECLS
 #define mode_not_matched       1<<13
 #define mode_quiet             1<<14
 #define mode_piecewise         1<<15
+//these were moved to opt_verbose
 //#define mode_verbose           1<<16
 //#define mode_more_verbose      1<<17
 //#define mode_insanely_verbose  1<<18

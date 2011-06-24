@@ -41,6 +41,7 @@ int _CRT_fmode = _O_BINARY;
 
 bool opt_silent = false;
 int  opt_verbose = 0;
+bool opt_zero   = false;
 
 /****************************************************************
  ** Various helper functions.
@@ -143,7 +144,6 @@ static void md5deep_usage(void)
 {
   print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
   print_status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,__progname);
-
   print_status("See the man page or README.txt file for the full list of options");
   print_status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
   print_status("-r  - recursive mode. All subdirectories are traversed");
@@ -153,14 +153,13 @@ static void md5deep_usage(void)
   print_status("-z  - display file size before hash");
   print_status("-m <file> - enables matching mode. See README/man page");
   print_status("-x <file> - enables negative matching mode. See README/man page");
-	 
   print_status("-M and -X are the same as -m and -x but also print hashes of each file");
   print_status("-w  - displays which known file generated a match");
   print_status("-n  - displays known hashes that did not match any input files");
   print_status("-a and -A add a single hash to the positive or negative matching set");
   print_status("-b  - prints only the bare name of files; all path information is omitted");
   print_status("-l  - print relative paths for filenames");
-  print_status("-k  - print asterisk before filename");
+  print_status("-k  - print asterisk before filename; -0 - use a NULL for newline.");
   print_status("-t  - print GMT timestamp");
   print_status("-i/I- only process files smaller than the given threshold");
   print_status("-o  - only process certain types of files. See README/manpage");
@@ -323,7 +322,7 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVhW:")) != -1)  {
+  while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVhW:0")) != -1)  {
     switch (i) {
     case 'o':
       s->mode |= mode_expert; 
@@ -373,13 +372,13 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
     case 'p':
       s->mode |= mode_piecewise;
       s->piecewise_size = find_block_size(s, optarg);
-      if (0 == s->piecewise_size)
+      if (s->piecewise_size==0)
 	fatal_error("%s: Piecewise blocks of zero bytes are impossible", 
 		    __progname);
       
       break;
       
-    case 'w': s->mode |= mode_which;        break;
+    case 'w': s->mode |= mode_which;        break; // displays which known hash generated a match
       
     case 'k':
       switch (s->known.load_hash_file(optarg)) {
@@ -424,6 +423,8 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
     case 'W':
 	s->outfile = optarg;
 	break;
+
+    case '0': opt_zero = true; break;
 
     case 'h':
       usage(s);
@@ -671,26 +672,17 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
     case 'p':
       s->mode |= mode_piecewise;
       s->piecewise_size = find_block_size(s, optarg);
-      if (0 == s->piecewise_size) {
+      if (s->piecewise_size==0) {
 	print_error("%s: Illegal size value for piecewise mode.", __progname);
 	exit(STATUS_USER_ERROR);
       }
 
       break;
 
-    case 'Z':
-      s->mode |= mode_triage;
-      break;
-
-    case 't':
-      s->mode |= mode_timestamp;
-      break;
-    case 'n': 
-      s->mode |= mode_not_matched; 
-      break;
-    case 'w': 
-      s->mode |= mode_which; 
-      break;
+    case 'Z': s->mode |= mode_triage; break;
+    case 't': s->mode |= mode_timestamp; break;
+    case 'n': s->mode |= mode_not_matched; break;
+    case 'w': s->mode |= mode_which;break; 		// display which known hash generated match
 
     case 'a':
       s->mode |= mode_match;
@@ -734,9 +726,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       s->mode |= mode_display_size; 
       break;
 
-    case '0': 
-      s->mode |= mode_zero; 
-      break;
+    case '0': opt_zero = true; break;
 
     case 'S': 
       s->mode |= mode_warn_only;

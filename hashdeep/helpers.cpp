@@ -185,18 +185,15 @@ int my_dirname(TCHAR *c)
 }
 
 
-void make_newline(const state *s)
+void make_newline()
 {
-  if (NULL == s)  
-    printf("%s", NEWLINE);
-  else
-  {
-    if (s->mode & mode_zero)
-      printf("%c", 0);
-    else
-      printf("%s", NEWLINE);
-  }
-  fflush(stdout);
+    if (opt_zero){
+	printf("%c", 0);
+    }
+    else {
+	printf("%s", NEWLINE);
+    }
+    fflush(stdout);
 }
 
 

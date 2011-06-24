@@ -1,3 +1,7 @@
+2011-06-24  Simson Garfinkel  <simsong@msimsonnet.local>
+
+	* hashdeep/main.h: make_newline changed to print_newline(). No longer takes state. mode_zero changed to opt_zero.
+
 2011-06-24  Simson Garfinkel  <simsong@imac3.home>
 
 	* tests/tests.sh: now passes all tests

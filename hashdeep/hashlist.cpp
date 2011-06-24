@@ -177,6 +177,7 @@ int display_audit_results(state *s)
 
 int audit_update(state *s,file_data_t *fdt)
 {
+TK
 #if 0
     bool no_match = false;
     bool exact_match = false;
