@@ -269,6 +269,61 @@ static int md5deep_display_match_result(state *s,file_data_hasher_t *fdht)
     return FALSE;
 }
 
+/* The original display_match_result from hashdeep.
+ * This should probably be merged with the function above.
+ */
+status_t display_match_result(state *s,file_data_hasher_t *fdht)
+{
+    file_data_t *matched_fdt = NULL;
+    int should_display; 
+    should_display = (primary_match_neg == s->primary_function);
+    
+    hashlist::searchstatus_t m = s->known.search(fdht,&matched_fdt);
+    switch(m){
+	// If only the name is different, it's still really a match
+	//  as far as we're concerned. 
+    case hashlist::status_file_name_mismatch:
+    case hashlist::status_match:
+	should_display = (primary_match_neg != s->primary_function);
+	break;
+	  
+    case hashlist::status_file_size_mismatch:
+	display_filename(stderr,fdht,false);
+	fprintf(stderr,": Hash collision with ");
+	display_filename(stderr,matched_fdt,false);
+	fprintf(stderr,"%s", NEWLINE);
+	break;
+	
+    case hashlist::status_partial_match:
+	display_filename(stderr,fdht,false);
+	fprintf(stderr,": partial hash match with ");
+	display_filename(stderr,matched_fdt,false);
+	fprintf(stderr,"%s", NEWLINE);
+	break;
+	
+    default:
+	break;
+    }
+    if (should_display) {
+	if (s->mode & mode_display_hash)
+	    display_hash_simple(s,fdht);
+	else {
+	    display_filename(stdout,fdht,false);
+	    if (s->mode & mode_which && primary_match == s->primary_function) {
+		fprintf(stdout," matches ");
+		if (NULL == matched_fdt) {
+		    fprintf(stdout,"(unknown file)");
+		} else {
+		    display_filename(stdout,matched_fdt,false);
+		}
+	    }
+	    print_status("");
+	}
+    }
+    return status_ok;
+}
+
+
 
 /* The old display_hash from the md5deep program, with a few modifications */
 int md5deep_display_hash(state *s,file_data_hasher_t *fdht)
@@ -284,52 +339,46 @@ int md5deep_display_hash(state *s,file_data_hasher_t *fdht)
 	return FALSE;
     }
 
-  // We can't call display_size here because we don't know if we're
-  // going to display *anything* yet. If we're in matching mode, we
-  // have to evaluate if there was a match first. 
+    // We can't call display_size here because we don't know if we're
+    // going to display *anything* yet. If we're in matching mode, we
+    // have to evaluate if there was a match first. 
     if ((s->mode & mode_match) || (s->mode & mode_match_neg)){
 	return md5deep_display_match_result(s,fdht);
     }
-
-  if(s->dfxml){
-      compute_dfxml(s,fdht,0);
-      return FALSE;
-  }
-
-  display_size(s,fdht);
-
-  printf ("%s", fdht->hash_hex[s->md5deep_mode_algorithm].c_str());
-
-  if (s->mode & mode_quiet)
-    printf ("  ");
-  else  {
-    if ((s->mode & mode_piecewise) ||
-	!(fdht->is_stdin))
-    {
-      if (s->mode & mode_timestamp)
-      {
-	struct tm * my_time = _gmtime64(&(fdht->timestamp));
-	char time_str[MAX_TIME_STRING_LENGTH];
-
-	// The format is four digit year, two digit month, 
-	// two digit hour, two digit minute, two digit second
-	strftime(time_str, sizeof(time_str), "%Y:%m:%d:%H:%M:%S", my_time);
-
-	printf ("%c%s", (s->mode & mode_csv?',':' '), time_str);
-      }
-
-      
-      if (s->mode & mode_csv)
-	printf(",");
-      else
-	printf(" %c", display_asterisk(s));      
-
-      display_filename(stdout,fdht,false);
+    
+    if(s->dfxml){
+	compute_dfxml(s,fdht,0);
+	return FALSE;
     }
-  }
 
-  make_newline(s);
-  return FALSE;
+    display_size(s,fdht);
+
+    printf ("%s", fdht->hash_hex[s->md5deep_mode_algorithm].c_str());
+
+    if (s->mode & mode_quiet)
+	printf ("  ");
+    else  {
+	if ((s->mode & mode_piecewise) || !(fdht->is_stdin))    {
+	    if (s->mode & mode_timestamp)      {
+		struct tm * my_time = _gmtime64(&(fdht->timestamp));
+		char time_str[MAX_TIME_STRING_LENGTH];
+		
+		// The format is four digit year, two digit month, 
+		// two digit hour, two digit minute, two digit second
+		strftime(time_str, sizeof(time_str), "%Y:%m:%d:%H:%M:%S", my_time);
+		
+		printf ("%c%s", (s->mode & mode_csv?',':' '), time_str);
+	    }
+	    if (s->mode & mode_csv)
+		printf(",");
+	    else
+		printf(" %c", display_asterisk(s));      
+
+	    display_filename(stdout,fdht,false);
+	}
+    }
+    make_newline(s);
+    return FALSE;
 }
 
 /**

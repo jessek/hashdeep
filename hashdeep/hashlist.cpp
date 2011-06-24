@@ -65,10 +65,11 @@ file_data_t * hashlist::find_hash(hashid_t alg,std::string &hash_hex)
 /**
  * Search for the provided fdt in the hashlist and return the status of the match.
  */
-hashlist::searchstatus_t hashlist::search(const file_data_t *fdt) const
+hashlist::searchstatus_t hashlist::search(const file_data_t *fdt,file_data_t **matched) const
 {
     bool file_size_mismatch = false;
     bool file_name_mismatch = false;
+    bool did_match = false;
   
     /* Iterate through each of the hashes in the haslist until we find a match.
      */
@@ -79,7 +80,10 @@ hashlist::searchstatus_t hashlist::search(const file_data_t *fdt) const
 	    if(it != hashmaps[i].end()){
 		/* found a match*/
 
+		did_match = true;
+
 		const file_data_t *match = it->second;
+		if(matched) (*matched)   = it->second; // make a copy
 
 		/* Verify that all of the other hash functions for *it match fdt as well. */
 		for(int j=0;j<NUM_ALGORITHMS;j++){
@@ -111,6 +115,8 @@ hashlist::searchstatus_t hashlist::search(const file_data_t *fdt) const
 	    }
 	}
     }
+    if(did_match==false) return status_no_match;
+
     /* If we get here, then all of the hash matches for all of the algorithms have been
      * checked and found to be equal if present.
      */
@@ -564,87 +570,4 @@ const char *hashlist::searchstatus_to_str(searchstatus_t val)
 
 
 
-status_t display_match_result(state *s,file_data_hasher_t *fdht)
-{
-#if 0
-    file_data_t *matched_fdt = NULL;
-    int should_display; 
-    uint64_t my_round;
-    
-    my_round = s->file_number;
-    s->file_number++;
-    if (my_round > s->file_number)
-	fatal_error("%s: Too many input files", __progname);
 
-    should_display = (primary_match_neg == s->primary_function);
-    
-    for (int i = 0 ; i < NUM_ALGORITHMS; ++i)  {
-	if (hashes[i].inuse)    {
-	hashtable_entry_t *ret = hashtable_contains(s,(hashid_t)i);
-      hashtable_entry_t *tmp = ret;
-      while (tmp != NULL)
-      {
-	switch (tmp->status) {
-
-	  // If only the name is different, it's still really a match
-	  //  as far as we're concerned. 
-	case status_file_name_mismatch:
-	case status_match:
-	    matched_fdt = tmp->data;
-	  should_display = (primary_match_neg != s->primary_function);
-	  break;
-	  
-	case status_file_size_mismatch:
-	case status_partial_match:
-
-	  // We only want to display a partial hash error once per input file 
-	  if (tmp->data->used != s->file_number)
-	  {
-	    tmp->data->used = s->file_number;
-	    display_filename(stderr,s->current_file,false);
-	    fprintf(stderr,": Hash collision with ");
-	    display_filename(stderr,tmp->data,false);
-	    fprintf(stderr,"%s", NEWLINE);
-
-	    // Technically this wasn't a match, so we're still ok
-	    // with the match result we already have
-
-	  }
-	  break;
-	
-	case status_unknown_error:
-	  return status_unknown_error;
-
-	default:
-	  break;
-	}
-      
-	tmp = tmp->next;
-      }
-
-      //hashtable_destroy(ret);
-    }
-  }
-
-  if (should_display)
-  {
-    if (s->mode & mode_display_hash)
-      display_hash_simple(s);
-    else
-    {
-	display_filename(stdout,s->current_file,false);
-      if (s->mode & mode_which && primary_match == s->primary_function)
-      {
-	fprintf(stdout," matches ");
-	if (NULL == matched_fdt)
-	  fprintf(stdout,"(unknown file)");
-	else
-	    display_filename(stdout,matched_fdt,false);
-      }
-      print_status("");
-    }
-  }
-  
-#endif
-  return status_ok;
-}

@@ -280,7 +280,7 @@ public:;
     };
     uint64_t		compute_unused(bool display,std::string annotation);
     hashmap		hashmaps[NUM_ALGORITHMS];
-    searchstatus_t	search(const file_data_t *fdt) const; // look up a fdt
+    searchstatus_t	search(const file_data_t *fdt,file_data_t **matched) const; // look up a fdt
     uint64_t		total_matched;
 
     /**
@@ -309,7 +309,7 @@ public:;
 
 /* Primary modes of operation  */
 typedef enum  { 
-  primary_compute, 
+  primary_compute=0, 
   primary_match, 
   primary_match_neg, 
   primary_audit

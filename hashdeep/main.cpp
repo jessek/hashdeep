@@ -319,7 +319,7 @@ void algorithm_t::enable_hashing_algorithms(std::string var)
 }
 
 
-static int process_command_line(state *s, int argc, char **argv)
+static int hashdeep_process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
@@ -356,11 +356,9 @@ static int process_command_line(state *s, int argc, char **argv)
     case 'M': s->mode |= mode_display_hash;
 	/* intentioanl fall through */
     case 'm': s->primary_function = primary_match;      break;
-      
     case 'X': s->mode |= mode_display_hash;
 	/* intentional fall through */
     case 'x': s->primary_function = primary_match_neg;  break;
-      
     case 'a': s->primary_function = primary_audit;      break;
       
       // TODO: Add -t mode to hashdeep
@@ -386,6 +384,10 @@ static int process_command_line(state *s, int argc, char **argv)
     case 'k':
       switch (s->known.load_hash_file(optarg)) {
       case hashlist::loadstatus_ok: 
+	  if(opt_verbose>=VERBOSE){
+	      print_error("%s: %s: Match file loaded %d known hash values.",
+			  __progname,optarg,s->known.size());
+	  }
 	  break;
 	  
       case hashlist::status_contains_no_hashes:
@@ -489,7 +491,7 @@ int main(int argc, char **argv)
     std::transform(progname.begin(), progname.end(), progname.begin(), ::tolower);
     std::string algname = progname.substr(0,progname.find("deep"));
     if(algname=="hash"){			// we are hashdeep
-	process_command_line(s,argc,argv);
+	hashdeep_process_command_line(s,argc,argv);
     } else {
 	algorithm_t::clear_algorithms_inuse();
 	char buf[256];

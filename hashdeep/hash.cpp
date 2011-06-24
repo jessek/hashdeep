@@ -333,10 +333,14 @@ static int hash(state *s,file_data_hasher_t *fdht)
 
 
 /**
- * Given a file name, has it into a fdht
+ * Given a file name, hash it into a fdht, then ask s to deal with it.
  */
 int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 {
+    if(opt_verbose>=MORE_VERBOSE){
+	print_error("hash_file(%s) mode=%x primary_function=%d",fn,s->mode,s->primary_function);
+    }
+
     int status = STATUS_OK;
     fdht->is_stdin = FALSE;
     fdht->file_name = fn;
@@ -380,7 +384,6 @@ int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 	    fdht->close();
 	    return STATUS_OK;
 	}
-
 	
 	if (s->mode & mode_estimate)    {
 	    fdht->stat_megs = fdht->stat_bytes / ONE_MEGABYTE;

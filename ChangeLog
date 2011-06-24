@@ -1,3 +1,15 @@
+2011-06-24  Simson Garfinkel  <simsong@imac3.home>
+
+	* tests/tests.sh: now passes all tests
+
+	* hashdeep/display.cpp (display_match_result): fixed so that it works now.
+
+	* hashdeep/hashlist.cpp (hashlist::search): fixed search function so that it returns status_no_match when there is no match.
+
+2011-06-22  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/main.cpp: removed strsep
+
 2011-06-21  Simson Garfinkel  <simsong@imac3.home>
 
 	* hashdeep/files.cpp (state::find_plain_hash): although this function takes the approach of hacking C strings with an axe, it seems to work.

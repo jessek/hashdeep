@@ -1,13 +1,21 @@
 #!/bin/sh
 # TEST_DIR is where the executable is that we are testing:
-TEST_DIR=../hashdeep/
+TEST_DIR=../hashdeep
 # GOOD_DIR is the executable that is known to be good
-GOOD_DIR=/opt/local/bin/
+GOOD_DIR=/opt/local/bin
 
 echo Installing test files in /tmp/test
 /bin/rm -rf /tmp/test
 mkdir /tmp/test
 cp -p ../testfiles/* /tmp/test
+
+echo Creating hashlist files if they do not exist
+
+if [ ! -r hashlist-hashdeep.txt ] ;
+then
+  hashdeep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-hashdeep.txt
+  tail -1 hashlist-hashdeep.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-hashdeep.txt
+fi
 
 for mode in generate test
 do
@@ -19,7 +27,7 @@ do
     BASE=$TEST_DIR
   fi
   fails=0
-  for ((i=1;$i<23;i++))
+  for ((i=1;$i<=27;i++))
   do 
    /bin/echo -n Test $i ...
    /bin/rm -f /tmp/test$i.out
@@ -46,6 +54,11 @@ do
     20) cmd="$BASE/sha256deep -r /tmp/test                      " ;;
     21) cmd="$BASE/tigerdeep  -r /tmp/test                      " ;;
     22) cmd="$BASE/whirlpooldeep -r /tmp/test                   " ;;
+    23) cmd="$BASE/hashdeep -m -k hashlist-hashdeep.txt /tmp/test/*.txt  " ;;
+    24) cmd="$BASE/hashdeep -M -k hashlist-hashdeep.txt /tmp/test/*.txt  " ;;
+    25) cmd="$BASE/hashdeep -w -m -k hashlist-hashdeep.txt /tmp/test/*.txt  " ;;
+    26) cmd="$BASE/hashdeep -x -k hashlist-hashdeep.txt /tmp/test/*.txt  " ;;
+    27) cmd="$BASE/hashdeep -x -w -k hashlist-hashdeep.txt /tmp/test/*.txt  " ;;
    esac
    $cmd | sed s+$BASE/++ > /tmp/test$i.out
    if [ $mode = "generate" ]
@@ -58,6 +71,7 @@ do
      if ! diff /tmp/test$i.out test$i.out ; 
      then 
        echo TEST $i FAILED.
+       echo COMMAND: $cmd
        ((fails++))
      else
        echo passes.

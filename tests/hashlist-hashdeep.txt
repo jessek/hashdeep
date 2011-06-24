@@ -1,0 +1,8 @@
+%%%% HASHDEEP-1.0
+%%%% size,md5,sha256,filename
+## Invoked from: /Users/simsong/md5deep/branches/version4/tests
+## $ hashdeep -l /tmp/test/deadbeef.txt /tmp/test/foo.txt
+## 
+12,deadbeefb303ba89ae055ad0234eb7e8,8137856d6343a6332968374b07a3ec1331b303cb96a65070d75d808a964c6f13,/tmp/test/deadbeef.txt
+44,d472f529689b334bc4896828854e84ed,f0d96b0676752c199f8c07f9b7009fdcfd56d592a26a70df7bcd0312f06bf6bd,/tmp/test/foo.txt
+66,d676f669689b666bc6896868866e86ed,f6d96b6676766c699f8c67f9b7669fdcfd66d696a66a76df7bcd6666f66bf6bd,/no/match/em
