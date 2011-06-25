@@ -35,7 +35,7 @@ static void update_display(file_data_hasher_t *fdht, time_t elapsed)
   else
     mb_read = fdht->actual_bytes / ONE_MEGABYTE;
   
-  if (fdht->stat_megs==0)  {
+  if (fdht->stat_megs()==0 || opt_estimate==false)  {
       shorten = true;
       char msg[64];
       snprintf(msg,sizeof(msg)-1,"%"PRIu64"MB done. Unable to estimate remaining time.%s",
@@ -67,7 +67,7 @@ static void update_display(file_data_hasher_t *fdht, time_t elapsed)
     snprintf(msg,sizeof(msg)-1,
 	       "%"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s",
 	       mb_read,
-	       fdht->stat_megs,
+	     fdht->stat_megs(),
 	       hour,
 	       min,
 	       seconds,
@@ -178,7 +178,7 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
     if (feof(fdht->handle))
     {	
       // If we've been printing time estimates, we now need to clear the line.
-      if (s->mode & mode_estimate)
+      if (opt_estimate)
 	fprintf(stderr,"\r%s\r",BLANK_LINE);
 
       return TRUE;
@@ -195,7 +195,7 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
 	mysize = remaining;
     }
     
-    if (s->mode & mode_estimate)    {
+    if (opt_estimate)    {
       time(&current_time);
       
       // We only update the display only if a full second has elapsed 
@@ -241,7 +241,7 @@ static int hash(state *s,file_data_hasher_t *fdht)
   
   fdht->actual_bytes = 0;
 
-  if (s->mode & mode_estimate)  {
+  if (opt_estimate)  {
     time(&(s->start_time));
     s->last_time = s->start_time;
   }
@@ -330,13 +330,24 @@ static int hash(state *s,file_data_hasher_t *fdht)
 }
 
 
+static std::string make_stars(int count)
+{
+    std::string ret;
+    for(int i=0;i<count;i++){
+	ret.push_back('*');
+    }
+    return ret;
+}
+
+
 /**
  * Given a file name, hash it into a fdht, then ask s to deal with it.
  */
 int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 {
     if(opt_verbose>=MORE_VERBOSE){
-	print_error("hash_file(%s) mode=%x primary_function=%d",fn,s->mode,s->primary_function);
+	print_error("hash_file(%s) mode=%x primary_function=%d",
+		    fn,s->mode,s->primary_function);
     }
 
     int status = STATUS_OK;
@@ -365,16 +376,15 @@ int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 	if (UNKNOWN_FILE_SIZE == fdht->stat_bytes)
 	    fdht->stat_bytes = find_file_size(fdht->handle);
 	
-	// If this file is above the size threshold set by the user, skip it
-	if ((s->mode & mode_size)
-	    && (fdht->stat_bytes > s->size_threshold)) {
+	/*
+	 * If this file is above the size threshold set by the user, skip it
+	 * and set the hash to be stars
+	 */
+	if ((s->mode & mode_size) && (fdht->stat_bytes > s->size_threshold)) {
 	    if (s->mode & mode_size_all)      {
 		for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)	{
 		    if (hashes[i].inuse){
-			fdht->hash_hex[i] = "";
-			for(size_t j=0;j<hashes[i].bit_length/4;j++){
-			    fdht->hash_hex[i].push_back('*');
-			}
+			fdht->hash_hex[i] = make_stars(hashes[i].bit_length/4);
 		    }
 		}
 		s->display_hash(fdht);
@@ -382,10 +392,6 @@ int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 	    fdht->close();
 	    return STATUS_OK;
 	}
-	
-	if (s->mode & mode_estimate)    {
-	    fdht->stat_megs = fdht->stat_bytes / ONE_MEGABYTE;
-	}    
 	
 	status = hash(s,fdht);
 	fdht->close();

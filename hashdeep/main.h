@@ -20,6 +20,8 @@
 extern bool opt_silent;			// previously was mode_silent
 extern int  opt_verbose;		// can be 1, 2 or 3
 extern bool opt_zero;			// newlines are \000 
+extern bool opt_estimate;		// print ETA
+
 #define VERBOSE 1
 #define MORE_VERBOSE 2
 #define INSANELY_VERBOSE 3
@@ -135,7 +137,7 @@ typedef enum   {
  */
 class file_data_t {
 public:
-    file_data_t():refcount(0),matched_file_number(0),file_size(0),stat_bytes(0),stat_megs(0),actual_bytes(0) {
+    file_data_t():refcount(0),matched_file_number(0),file_size(0),stat_bytes(0),actual_bytes(0) {
     };
     // Implement a simple reference count garbage collection system
     int		   refcount;			     // reference counting
@@ -158,8 +160,12 @@ public:
     // and how many bytes we've actually read in the file
     uint64_t       file_size;		// in bytes
     uint64_t       stat_bytes;		// how much stat returned
-    uint64_t       stat_megs;		// why are we keeping this?
     uint64_t       actual_bytes;	// how many we read.
+
+    uint64_t	   stat_megs(){
+	return stat_bytes / ONE_MEGABYTE;
+    }
+
 };
 
 
@@ -312,12 +318,12 @@ public:;
 
 
 
-/* Primary modes of operation  */
+/* Primary modes of operation (primary_function) */
 typedef enum  { 
   primary_compute=0, 
-  primary_match, 
-  primary_match_neg, 
-  primary_audit
+  primary_match=1, 
+  primary_match_neg=2, 
+  primary_audit=3				
 } primary_t; 
 
 

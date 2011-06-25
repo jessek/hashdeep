@@ -274,7 +274,7 @@ __END_DECLS
 
 #define mode_none              0
 #define mode_recursive         1<<0
-#define mode_estimate          1<<1
+//#define mode_estimate          1<<1          // now is opt_estimate
 //#define mode_silent            1<<2          // now is opt_silent
 #define mode_warn_only         1<<3
 #define mode_match             1<<4

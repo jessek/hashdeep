@@ -42,6 +42,7 @@ int _CRT_fmode = _O_BINARY;
 bool opt_silent = false;
 int  opt_verbose = 0;
 bool opt_zero   = false;
+bool opt_estimate = false;
 
 /****************************************************************
  ** Various helper functions.
@@ -365,7 +366,7 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
 
     case 'b': s->mode |= mode_barename;     break;
     case 'l': s->mode |= mode_relative;     break;
-    case 'e': s->mode |= mode_estimate;     break;
+    case 'e': opt_estimate = true;	    break;
     case 'r': s->mode |= mode_recursive;    break;
     case 's': opt_silent = true;	    break;
       
@@ -733,13 +734,9 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       opt_silent = true;
       break;
 
-    case 's':
-	opt_silent = true;
-      break;
+    case 's': opt_silent = true; break;
 
-    case 'e':
-      s->mode |= mode_estimate;
-      break;
+    case 'e': opt_estimate = true; break;
 
     case 'r':
       s->mode |= mode_recursive;
