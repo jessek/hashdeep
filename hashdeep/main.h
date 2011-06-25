@@ -5,7 +5,6 @@
 #define __MAIN_H
 
 #include "common.h"
-//#include "md5deep_hashtable.h"
 #include "xml.h"
 
 #include "md5.h"
@@ -302,6 +301,7 @@ public:;
     int			parse_hashing_algorithm(const char *fn,const char *val);
     loadstatus_t	load_hash_file(const char *fn);
     file_data_t		*find_hash(hashid_t alg,std::string &hash_hex); // search for hash_hex and return NULL or fdt
+    void		dump_hashlist(); // send contents to stdout
     
     /**
      * add_fdt adds a file_data_t record to the hashlist, and its hashes to the hashmaps.
@@ -445,6 +445,12 @@ public:;
     int		display_hash(file_data_hasher_t *fdht);
     int		display_hash_simple(file_data_hasher_t *fdt);
 
+    /* audit mode */
+    int		audit_update(file_data_hasher_t *fdt);
+    int		audit_check();		// performs an audit; return 0 if pass, -1 if fail
+    int		display_audit_results();
+
+
     bool hashes_loaded(){
 	return known.size()>0;
     }
@@ -466,15 +472,11 @@ void lowercase(std::string &s);
 
 
 /* MATCHING MODES */
-status_t display_match_result(state *s,file_data_hasher_t *fdht);
+//status_t display_match_result(state *s,file_data_hasher_t *fdht);
 
-int md5deep_display_hash(state *s,file_data_hasher_t *fdt);
 
 /* AUDIT MODE */
 
-int audit_check(state *s);		// performs an audit; return 0 if pass, -1 if fail
-int display_audit_results(state *s);
-int audit_update(state *s,file_data_t *fdt);
 
 /* HASHING CODE */
 
@@ -554,7 +556,7 @@ void internal_error(const char *fmt, ... );
 void print_debug(const char *fmt, ...);
 void print_newline();
 void try_msg(void);
-int display_hash( state *s, file_data_hasher_t *fdht);
+//int display_hash( state *s, file_data_hasher_t *fdht);
 
 
 

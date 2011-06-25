@@ -9,12 +9,29 @@ echo Installing test files in /tmp/test
 mkdir /tmp/test
 cp -p ../testfiles/* /tmp/test
 
-echo Creating hashlist files if they do not exist
+echo Creating hashlist files with no-match-em and two files with installed program
 
-if [ ! -r hashlist-hashdeep.txt ] ;
+if [ ! -r hashlist-hashdeep-partial.txt ] ;
 then
-  hashdeep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-hashdeep.txt
-  tail -1 hashlist-hashdeep.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-hashdeep.txt
+  hashdeep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-hashdeep-partial.txt
+  tail -1 hashlist-hashdeep-partial.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-hashdeep-partial.txt
+fi
+
+if [ ! -r hashlist-md5deep-partial.txt ] ;
+then
+  md5deep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-md5deep-partial.txt
+  tail -1 hashlist-md5deep-partial.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-md5deep-partial.txt
+fi
+
+echo creating the full list from /tmp/test
+if [ ! -r hashlist-hashdeep-full.txt ] ;
+then
+  hashdeep -l -r /tmp/test > hashlist-hashdeep-full.txt
+fi
+
+if [ ! -r hashlist-md5deep-full.txt ] ;
+then
+  md5deep -l -r /tmp/test > hashlist-md5dee-full.txt
 fi
 
 for mode in generate test
@@ -27,7 +44,8 @@ do
     BASE=$TEST_DIR
   fi
   fails=0
-  for ((i=1;$i<=27;i++))
+  done=0
+  for ((i=1;$done==0;i++))
   do 
    /bin/echo -n Test $i ...
    /bin/rm -f /tmp/test$i.out
@@ -36,12 +54,12 @@ do
      2) cmd="$BASE/md5deep -p512 /tmp/test/deadbeef.txt          " ;;
      3) cmd="$BASE/md5deep -zr   /tmp/test                       " ;;
      4) cmd="$BASE/md5deep -b    /tmp/test/deadbeef.txt          " ;;
-     5) cmd="$BASE/md5deep -m hashlist-md5deep.txt -r /tmp/test  " ;;
-     6) cmd="$BASE/md5deep -x hashlist-md5deep.txt -r /tmp/test  " ;;
-     7) cmd="$BASE/md5deep -M hashlist-md5deep.txt -r /tmp/test  " ;;
-     8) cmd="$BASE/md5deep -X hashlist-md5deep.txt -r /tmp/test  " ;;
-     9) cmd="$BASE/md5deep -m hashlist-md5deep.txt -w -r /tmp/test  " ;;
-    10) cmd="$BASE/md5deep -m hashlist-md5deep.txt -n -r /tmp/test  " ;;
+     5) cmd="$BASE/md5deep -m hashlist-md5deep-partial.txt -r /tmp/test  " ;;
+     6) cmd="$BASE/md5deep -x hashlist-md5deep-partial.txt -r /tmp/test  " ;;
+     7) cmd="$BASE/md5deep -M hashlist-md5deep-partial.txt -r /tmp/test  " ;;
+     8) cmd="$BASE/md5deep -X hashlist-md5deep-partial.txt -r /tmp/test  " ;;
+     9) cmd="$BASE/md5deep -m hashlist-md5deep-partial.txt -w -r /tmp/test  " ;;
+    10) cmd="$BASE/md5deep -m hashlist-md5deep-partial.txt -n -r /tmp/test  " ;;
     11) cmd="$BASE/md5deep -w -a deadbeefb303ba89ae055ad0234eb7e8  -r /tmp/test  " ;;
     12) cmd="$BASE/md5deep -w -A deadbeefb303ba89ae055ad0234eb7e8  -r /tmp/test  " ;;
     13) cmd="$BASE/md5deep -k    /tmp/test/deadbeef.txt          " ;;
@@ -54,11 +72,15 @@ do
     20) cmd="$BASE/sha256deep -r /tmp/test                      " ;;
     21) cmd="$BASE/tigerdeep  -r /tmp/test                      " ;;
     22) cmd="$BASE/whirlpooldeep -r /tmp/test                   " ;;
-    23) cmd="$BASE/hashdeep -m -k hashlist-hashdeep.txt /tmp/test/*.txt  " ;;
-    24) cmd="$BASE/hashdeep -M -k hashlist-hashdeep.txt /tmp/test/*.txt  " ;;
-    25) cmd="$BASE/hashdeep -w -m -k hashlist-hashdeep.txt /tmp/test/*.txt  " ;;
-    26) cmd="$BASE/hashdeep -x -k hashlist-hashdeep.txt /tmp/test/*.txt  " ;;
-    27) cmd="$BASE/hashdeep -x -w -k hashlist-hashdeep.txt /tmp/test/*.txt  " ;;
+    23) cmd="$BASE/hashdeep -m -k hashlist-hashdeep-partial.txt /tmp/test/*.txt  " ;;
+    24) cmd="$BASE/hashdeep -M -k hashlist-hashdeep-partial.txt /tmp/test/*.txt  " ;;
+    25) cmd="$BASE/hashdeep -w -m -k hashlist-hashdeep-partial.txt /tmp/test/*.txt  " ;;
+    26) cmd="$BASE/hashdeep -x -k hashlist-hashdeep-partial.txt /tmp/test/*.txt  " ;;
+    27) cmd="$BASE/hashdeep -x -w -k hashlist-hashdeep-partial.txt /tmp/test/*.txt  " ;;
+    28) cmd="$BASE/hashdeep -r -a -k hashlist-hashdeep-full.txt /tmp/test " ;;
+    29) cmd="$BASE/hashdeep -v -r -a -k hashlist-hashdeep-full.txt /tmp/test " 
+    done=1
+   ;;
    esac
    $cmd | sed s+$BASE/++ > /tmp/test$i.out
    if [ $mode = "generate" ]

@@ -301,10 +301,10 @@ static int hash(state *s,file_data_hasher_t *fdht)
 	      if(fs) fs->matched_file_number = fdht->file_number;	// note that it's used!
 	  }
 	  else {
-	      status = md5deep_display_hash(s,fdht);
+	      status = s->md5deep_display_hash(fdht);
 	  }
       } else {
-	  display_hash(s,fdht);
+	  s->display_hash(fdht);
       }
     }
     
@@ -377,7 +377,7 @@ int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 			}
 		    }
 		}
-		display_hash(s,fdht);
+		s->display_hash(fdht);
 	    }
 	    fdht->close();
 	    return STATUS_OK;

@@ -119,7 +119,7 @@ void state::display_banner()
     fprintf(stdout," ");
     bytes_written++;
 
-    size_t current_bytes = _tcslen(s->argv[argc]);
+    size_t current_bytes = _tcslen(this->argv[argc]);
 
     // The extra 32 bytes is a fudge factor
     if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
@@ -127,7 +127,7 @@ void state::display_banner()
       bytes_written = 3;
     }
 
-    output_unicode(stdout,s->argv[argc]);
+    output_unicode(stdout,this->argv[argc]);
     bytes_written += current_bytes;
   }
 
@@ -192,6 +192,34 @@ int state::display_hash_simple(file_data_hasher_t *fdht)
   return FALSE;
 }
 
+int state::display_audit_results()
+{
+    int status = EXIT_SUCCESS;
+    
+    if (audit_check()==0) {
+	print_status("%s: Audit failed", __progname);
+	status = EXIT_FAILURE;
+    }
+    else {
+	print_status("%s: Audit passed", __progname);
+    }
+  
+    if (opt_verbose)    {
+	if(opt_verbose >= MORE_VERBOSE){
+	    print_status("   Input files examined: %"PRIu64, this->match.total);
+	    print_status("  Known files expecting: %"PRIu64, this->match.expect);
+	    print_status(" ");
+	}
+	print_status("          Files matched: %"PRIu64, this->match.exact);
+	print_status("Files partially matched: %"PRIu64, this->match.partial);
+	print_status("            Files moved: %"PRIu64, this->match.moved);
+	print_status("        New files found: %"PRIu64, this->match.unknown);
+	print_status("  Known files not found: %"PRIu64, this->match.unused);
+    }
+    return status;
+}
+
+
 /* The old display_match_result from md5deep */
 int state::md5deep_display_match_result(file_data_hasher_t *fdht)
 {  
@@ -239,8 +267,9 @@ int state::md5deep_display_match_result(file_data_hasher_t *fdht)
     return FALSE;
 }
 
-/* The original display_match_result from hashdeep.
+/* The original display_match_result from md5deep.
  * This should probably be merged with the function above.
+ * This function is very similar to audit_update(), which follows
  */
 status_t state::display_match_result(file_data_hasher_t *fdht)
 {
@@ -292,6 +321,74 @@ status_t state::display_match_result(file_data_hasher_t *fdht)
     }
     return status_ok;
 }
+
+
+/**
+ * Called after every file is hashed by display_hash
+ * when s->primary_function==primary_audit
+ * Records every file seen in the 'seen' structure, referencing the 'known' structure.
+ */
+
+int state::audit_update(file_data_hasher_t *fdht)
+{
+    file_data_t *matched_fdht;
+    hashlist::searchstatus_t m = known.search(fdht,&matched_fdht);
+    switch(m){
+    case hashlist::status_match:
+    case hashlist::searchstatus_ok:
+	this->match.exact++;
+	if (opt_verbose >= INSANELY_VERBOSE) {
+	    display_filename(stdout,fdht,false);
+	    print_status(": Ok");
+	}
+	break;
+    case hashlist::status_no_match:
+	this->match.unknown++;
+	if (opt_verbose >= MORE_VERBOSE) {
+	    display_filename(stdout,fdht,false);
+	    print_status(": No match");
+	}
+	break;
+    case hashlist::status_file_name_mismatch:
+	this->match.moved++;
+	if (opt_verbose >= MORE_VERBOSE) {
+	    display_filename(stdout,fdht,false);
+	    fprintf(stdout,": Moved from ");
+	    display_filename(stdout,matched_fdht,false);
+	    print_status("");
+	}
+	break;
+    case hashlist::status_partial_match:
+    case hashlist::status_file_size_mismatch:
+	this->match.partial++;
+	// We only record the hash collision if it wasn't anything else.
+	// At the same time, however, a collision is such a significant
+	// event that we print it no matter what. 
+	display_filename(stdout,fdht,false);
+	fprintf(stdout,": Hash collision with ");
+	display_filename(stdout,matched_fdht,false);
+	print_status("");
+    }
+    return FALSE;
+}
+
+
+
+/**
+ * perform an audit
+ */
+ 
+
+int state::audit_check()
+{
+    /* Count the number of unused */
+    this->match.unused = this->known.compute_unused(false,": Known file not used");
+    return (0 == this->match.unused  && 
+	    0 == this->match.unknown && 
+	    0 == this->match.moved);
+}
+
+
 
 
 

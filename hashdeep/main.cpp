@@ -578,7 +578,7 @@ int main(int argc, char **argv)
   
     /* If we were auditing, display the audit results */
     if (s->primary_function == primary_audit){
-	status = display_audit_results(s);
+	status = s->display_audit_results();
     }
   
     /* We only have to worry about checking for unused hashes if one 

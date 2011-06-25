@@ -185,7 +185,7 @@ int my_dirname(TCHAR *c)
 }
 
 
-void make_newline()
+void print_newline()
 {
     if (opt_zero){
 	printf("%c", 0);
