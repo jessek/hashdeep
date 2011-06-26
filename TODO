@@ -24,6 +24,8 @@ Below is what we've done:
 
 Below is what's planned:
 
+1 - Go through entire program looking for dead code.
+2 - Add procesisng of all hash file formats to tests.
 4 - a file pattern that specifies what files are hashed.
 5 - migrate to multi-threaded producer/consumer architecture with the file searching (dig) being the producer and hash() being the consumer. This will require a bunch of locks added.
 6 - Add "-j" option to control how many threads; -j0 turns off threading.
