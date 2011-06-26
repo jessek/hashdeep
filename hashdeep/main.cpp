@@ -384,7 +384,7 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
     case 'k':
       switch (s->known.load_hash_file(optarg)) {
       case hashlist::loadstatus_ok: 
-	  if(opt_verbose>=VERBOSE){
+	  if(opt_verbose>=MORE_VERBOSE){
 	      print_error("%s: %s: Match file loaded %d known hash values.",
 			  __progname,optarg,s->known.size());
 	  }

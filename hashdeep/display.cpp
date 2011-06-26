@@ -223,10 +223,10 @@ int state::display_audit_results()
 /* The old display_match_result from md5deep */
 int state::md5deep_display_match_result(file_data_hasher_t *fdht)
 {  
-    file_data_t *fs = known.find_hash(md5deep_mode_algorithm,fdht->hash_hex[md5deep_mode_algorithm]);
+    file_data_t *fs = known.find_hash(md5deep_mode_algorithm,
+				      fdht->hash_hex[md5deep_mode_algorithm],
+				      fdht->file_number);
     int known_hash = fs ? 1 : 0;
-
-    if(fs) fs->matched_file_number = fdht->file_number;
 
     if ((known_hash && (mode & mode_match)) ||
 	(!known_hash && (mode & mode_match_neg))) {

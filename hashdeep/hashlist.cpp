@@ -55,10 +55,11 @@ void hashlist::add_fdt(file_data_t *fi)
 /** 
  * search for a hash
  */
-file_data_t * hashlist::find_hash(hashid_t alg,std::string &hash_hex)
+file_data_t * hashlist::find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number)
 {
     std::map<std::string,file_data_t *>::iterator it = hashmaps[alg].find(hash_hex);
     if(it==hashmaps[alg].end()) return 0;
+    (*it).second->matched_file_number = file_number;	// note that it's used!
     return (*it).second;
 }
 
@@ -66,7 +67,7 @@ file_data_t * hashlist::find_hash(hashid_t alg,std::string &hash_hex)
 /**
  * Search for the provided fdt in the hashlist and return the status of the match.
  */
-hashlist::searchstatus_t hashlist::search(const file_data_t *fdt,file_data_t **matched) const
+hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,file_data_t **matched) const
 {
     bool file_size_mismatch = false;
     bool file_name_mismatch = false;
@@ -76,20 +77,25 @@ hashlist::searchstatus_t hashlist::search(const file_data_t *fdt,file_data_t **m
      */
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
 	/* Only search hash functions that are in use and hashes that are in the fdt */
-	if (hashes[i].inuse && fdt->hash_hex[i].size()){
-	    hashmap::const_iterator it = hashmaps[i].find(fdt->hash_hex[i]);
+	if (hashes[i].inuse && fdht->hash_hex[i].size()){
+	    hashmap::const_iterator it = hashmaps[i].find(fdht->hash_hex[i]);
 	    if(it != hashmaps[i].end()){
 		/* found a match*/
 
 		did_match = true;
 
 		const file_data_t *match = it->second;
-		if(matched) (*matched)   = it->second; // make a copy
+		if(matched){
+		    (*matched)   = it->second; // make a copy
+		    it->second->matched_file_number = fdht->file_number;
+		}
 
 		/* Verify that all of the other hash functions for *it match fdt as well. */
 		for(int j=0;j<NUM_ALGORITHMS;j++){
-		    if(hashes[j].inuse && j!=i && fdt->hash_hex[i].size() && match->hash_hex[i].size()){
-			if(fdt->hash_hex[j] != match->hash_hex[j]){
+		    if(hashes[j].inuse && j!=i
+		       && fdht->hash_hex[i].size()
+		       && match->hash_hex[i].size()){
+			if(fdht->hash_hex[j] != match->hash_hex[j]){
 			    /* Amazing. We found a match on one hash a a non-match on another.
 			     * Call the newspapers! This is a newsorthy event.
 			     */
@@ -101,7 +107,7 @@ hashlist::searchstatus_t hashlist::search(const file_data_t *fdt,file_data_t **m
 		 * Which is to be expected.
 		 * Check to see if the sizes are the same.
 		 */
-		if(fdt->file_size != match->file_size){
+		if(fdht->file_size != match->file_size){
 		    /* Amazing. We found two files that have the same hash but different
 		     * file sizes. This has never happened before in the history of the world.
 		     * Call the newspapers!
@@ -110,7 +116,7 @@ hashlist::searchstatus_t hashlist::search(const file_data_t *fdt,file_data_t **m
 		}
 		/* See if the hashes are the same but the name changed.
 		 */
-		if(fdt->file_name != match->file_name){
+		if(fdht->file_name != match->file_name){
 		    file_name_mismatch = true;
 		}
 	    }

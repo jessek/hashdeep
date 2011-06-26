@@ -290,7 +290,8 @@ public:;
     };
     uint64_t		compute_unused(bool display,std::string annotation);
     hashmap		hashmaps[NUM_ALGORITHMS];
-    searchstatus_t	search(const file_data_t *fdt,file_data_t **matched) const; // look up a fdt
+    searchstatus_t	search(const file_data_hasher_t *fdht,
+			       file_data_t **matched) const; // look up a fdt
     uint64_t		total_matched;
 
     /**
@@ -306,7 +307,7 @@ public:;
     filetype_t		identify_filetype(const char *fn,FILE *handle);
     int			parse_hashing_algorithm(const char *fn,const char *val);
     loadstatus_t	load_hash_file(const char *fn);
-    file_data_t		*find_hash(hashid_t alg,std::string &hash_hex); // search for hash_hex and return NULL or fdt
+    file_data_t		*find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number); 
     void		dump_hashlist(); // send contents to stdout
     
     /**
