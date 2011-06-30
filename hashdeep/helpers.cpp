@@ -15,7 +15,6 @@
 #include "main.h"
 
 #ifdef _WIN32
-#include "ui.h"
 
 // The following is adapted from
 // http://msdn.microsoft.com/en-us/library/ms684139(v=VS.85).aspx
