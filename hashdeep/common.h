@@ -113,7 +113,11 @@ NEWLINE, NEWLINE, NEWLINE
 # include <fcntl.h>
 #endif
 
+/* If we are including inttypes.h, mmake sure __STDC_FORMAT_MACROS is defined */
 #ifdef HAVE_INTTYPES_H
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
 # include <inttypes.h>
 #else
 // This should really have been caught during configuration, but just in case...

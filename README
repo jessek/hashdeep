@@ -55,6 +55,37 @@ To perform an audit:
 Notice that the audit is performed with a standard hashdeep output
 file. (Internally, the audit is computed as part of the hashing process.)
 
+== Unicode Issues ==
+POSIX-based modern computer systems consider filenames to be a
+sequence of bytes that are rendered as the application wishes. This
+means that filenames typically contain ASCII but can contain UTF-8,
+UTF-16, latin1, or even invalid Unicode codings.
+
+Windows-based systems have one set of API calls for ASCII-based
+filenames and another set for filenames encoded as UCS-2, which
+"produces a fixed-length format by simply using the code point as the
+16-bit code unit and produces exactly the same result as UTF-16 for
+63,488 code points in the range 0-0xFFFF" according to wikipedia.
+(http://en.wikipedia.org/wiki/UTF-16/UCS-2) But wikipedia disputes the
+factual accuracy of this statement on the talk page. it's pretty clear
+that nobody is entirely sure that Windows actually does, and Windows
+itself may not be consistent.
+
+Version 3 of this program addressed this issue by using the TCHAR
+variable to hold filenames on Windowa dn by refusing to print them,
+priting a "?" instead. Version 4 of this program translates TCHAR
+strings to std::string strings at the soonest opportunity using the
+Windows function WideCharToMultiByte
+(http://msdn.microsoft.com/en-us/library/dd374130%28v=vs.85%29.aspx). Flags
+have been added escape Unicode when it is printed.
+
+COMPILING FOR WINDOWS:
+	  -D_UNICODE causes TCHAR to be defined as wchar_t.
+
+COMPILING FOR POSIX:
+	  -D_UNICODE is not defined, causing TCHAR to be defined as char.
+
+
 
 == Hash Algorithm References ==
 

@@ -18,7 +18,6 @@
 #define _SHA256_H
 
 #include "common.h"
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 typedef struct {

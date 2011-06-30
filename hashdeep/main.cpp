@@ -61,7 +61,7 @@ static void sanity_check(int condition, const char *msg)
     }
 }
 
-static int is_absolute_path(char *fn)
+static int is_absolute_path(TCHAR *fn)
 {
 #ifdef _WIN32
   return FALSE;
@@ -70,7 +70,11 @@ static int is_absolute_path(char *fn)
 }
 
 
-static void generate_filename(state *s,char *fn, std::string cwd, TCHAR *input)
+/**
+ * create the full pathname for a filename.
+ */
+ 
+static void generate_filename(state *s,TCHAR *fn, std::string cwd, TCHAR *input)
 {
     if ((s->mode & mode_relative) || is_absolute_path(input)){
 	_tcsncpy(fn,input,PATH_MAX);
@@ -457,6 +461,19 @@ static int prepare_windows_command_line(state *s)
 }
 #endif
 
+#ifdef _WIN32
+std::string to_string(TCHAR *buf)
+{
+
+}
+#endif
+
+std::string to_string(const char *buf)
+{
+    return std::string(buf);
+}
+
+
 
 int main(int argc, char **argv)
 {
@@ -547,12 +564,12 @@ int main(int argc, char **argv)
 #endif
 
     /* Get the current working directory */
-    char buf[PATH_MAX];
+    TCHAR buf[PATH_MAX];
     _tgetcwd(buf,sizeof(buf));	// try to get the cwd
     if (buf[0]==0){			// verify that we got it.
 	fatal_error("%s: %s", __progname, strerror(errno));
     }
-    s->cwd = buf;				// remember
+    s->cwd = to_string(buf);				// remember
 
     /* Anything left on the command line at this point is a file
      *  or directory we're supposed to process. If there's nothing
