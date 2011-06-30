@@ -37,7 +37,7 @@ done
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS([libgen.h fcntl.h limits.h stdlib.h string.h sys/types.h sys/ioctl.h sys/param.h wchar.h unistd.h sys/stat.h sys/disk.h])
+AC_CHECK_HEADERS([libgen.h fcntl.h limits.h stdlib.h string.h sys/cdefs.h sys/types.h sys/ioctl.h sys/param.h wchar.h unistd.h sys/stat.h sys/disk.h])
 
 AC_CHECK_HEADER([inttypes.h],,AC_MSG_ERROR([You must have inttypes.h or some other C99 equivalent]),)
 

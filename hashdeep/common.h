@@ -22,8 +22,10 @@
 #endif
 
 #ifdef _WIN32
-// Required to enable 64-bit stat functions
-# define __MSVCRT_VERSION__ 0x0601
+// Required to enable 64-bit stat functions, but defined by default on mingw
+#ifndef __MSVCRT_VERSION__ 
+#define __MSVCRT_VERSION__ 0x0601
+#endif
 #endif
 
 // The version information, VERSION, is defined in config.h 
@@ -99,6 +101,11 @@ NEWLINE, NEWLINE, NEWLINE
 #ifdef HAVE_LIBGEN_H
 # include <libgen.h>
 #endif
+
+#ifdef HAVE_SYS_CDEFS_H
+# include <sys/cdefs.h>
+#endif
+
 
 // This allows us to open standard input in binary mode by default 
 // See http://gnuwin32.sourceforge.net/compile.html for more 

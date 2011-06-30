@@ -1,11 +1,15 @@
+/**
+ *
+ * tchar-local.h provides support for tchar under windows, and mapping
+ * to standard POSIX calls under Linux and MacOS.
+ */
+
 #ifndef __TCHAR_LOCAL_H
 #define __TCHAR_LOCAL_H
 
 // $Id$
 
-#include <sys/cdefs.h>
 __BEGIN_DECLS
-
 
 // Unicode support 
 #ifdef _WIN32
@@ -26,7 +30,8 @@ __BEGIN_DECLS
 
 /* The PRINTF_S character is used in situations where we have a string
    with one TCHAR and one char argument. It's impossible to use the
-   _TEXT macro because we don't know which will be which. */
+   _TEXT macro because we don't know which will be which.
+*/
 #define  PRINTF_S   "S"
 
 #define _tmemmove      wmemmove
