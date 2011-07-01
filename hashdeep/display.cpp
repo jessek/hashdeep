@@ -13,16 +13,14 @@ using namespace std;
 
 static void display_size(const state *s,const file_data_t *fdt)
 {
-  if (NULL == s) 
-    return;
-
-  if (s->mode & mode_display_size)
-  {
+  if (s->mode & mode_display_size)  {
     // Under CSV mode we have to include a comma, otherwise two spaces
-    if (s->mode & mode_csv)
-      printf ("%"PRIu64",", fdt->actual_bytes);
-    else
-      printf ("%10"PRIu64"  ", fdt->actual_bytes);   
+      if (s->mode & mode_csv){
+	  printf ("%"PRIu64",", fdt->actual_bytes);
+      }
+      else {
+	  printf ("%10"PRIu64"  ", fdt->actual_bytes);
+      }
   }
 }
 
@@ -101,7 +99,7 @@ void state::display_banner()
   // Display the command prompt as the user saw it
   fprintf(stdout,"## ");
 #ifdef _WIN32
-  fprintf(stdout,"%c:\\>", s->cwd[0]);
+  fprintf(stdout,"%c:\\>", this->cwd[0]);
 #else
   if (0 == geteuid())
     fprintf(stdout,"#");
@@ -174,20 +172,21 @@ int state::display_hash_simple(file_data_hasher_t *fdht)
   // of the block it came from. This is important when doing an
   // audit in piecewise mode. In all other cases we use the 
   // total number of bytes from the file we *actually* read
-  if (fdht->piecewise)
-    printf ("%"PRIu64",", fdht->bytes_read);
-  else
-    printf ("%"PRIu64",", fdht->actual_bytes);
+    if (fdht->piecewise){
+	printf ("%"PRIu64",", fdht->bytes_read);
+    }
+    else {
+	printf ("%"PRIu64",", fdht->actual_bytes);
+    }
 
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
-    if (hashes[i].inuse)
-	printf("%s,", fdht->hash_hex[i].c_str());
-  }
-  
-  display_filename(stdout,fdht,false);
-  fprintf(stdout,"%s",NEWLINE);
-
-  return FALSE;
+    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
+	if (hashes[i].inuse){
+	    printf("%s,", fdht->hash_hex[i].c_str());
+	}
+    }
+    display_filename(stdout,fdht,false);
+    fprintf(stdout,"%s",NEWLINE);
+    return FALSE;
 }
 
 int state::display_audit_results()
@@ -425,12 +424,19 @@ int state::md5deep_display_hash(file_data_hasher_t *fdht)
     else  {
 	if ((fdht->piecewise) || !(fdht->is_stdin))    {
 	    if (this->mode & mode_timestamp)      {
-		struct tm * my_time = _gmtime64(&(fdht->timestamp));
+		struct tm my_time;
+
+#ifdef _WIN32
+		_gmtime64_s(&fdht->timestamp,&my_time);
+#else
+		gmtime_r(&fdht->timestamp,&my_time);
+#endif
+
 		char time_str[MAX_TIME_STRING_LENGTH];
 		
 		// The format is four digit year, two digit month, 
 		// two digit hour, two digit minute, two digit second
-		strftime(time_str, sizeof(time_str), "%Y:%m:%d:%H:%M:%S", my_time);
+		strftime(time_str, sizeof(time_str), "%Y:%m:%d:%H:%M:%S", &my_time);
 		
 		printf ("%c%s", (this->mode & mode_csv?',':' '), time_str);
 	    }

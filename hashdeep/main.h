@@ -22,6 +22,65 @@ extern int  opt_verbose;		// can be 1, 2 or 3
 extern bool opt_zero;			// newlines are \000 
 extern bool opt_estimate;		// print ETA
 
+// Return values for the program 
+// RBF - Document these return values for hashdeep 
+#define STATUS_OK                      0
+#define STATUS_UNUSED_HASHES           1
+#define STATUS_INPUT_DID_NOT_MATCH     2
+#define STATUS_USER_ERROR             64
+#define STATUS_INTERNAL_ERROR        128 
+
+#define mode_none              0
+#define mode_recursive         1<<0
+//#define mode_estimate          1<<1          // now is opt_estimate
+//#define mode_silent            1<<2          // now is opt_silent
+#define mode_warn_only         1<<3
+#define mode_match             1<<4
+#define mode_match_neg         1<<5
+#define mode_display_hash      1<<6
+#define mode_display_size      1<<7
+//#define mode_zero              1<<8          // now is opt_zero
+#define mode_relative          1<<9
+#define mode_which             1<<10
+#define mode_barename          1<<11
+#define mode_asterisk          1<<12
+#define mode_not_matched       1<<13
+#define mode_quiet             1<<14
+#define mode_piecewise         1<<15
+//these were moved to opt_verbose
+//#define mode_verbose           1<<16
+//#define mode_more_verbose      1<<17
+//#define mode_insanely_verbose  1<<18
+#define mode_size              1<<19
+#define mode_size_all          1<<20
+#define mode_timestamp         1<<21
+#define mode_csv               1<<22
+#define mode_read_from_file    1<<25
+#define mode_triage            1<<26
+
+// Modes 27-48 are reserved for future use.
+//
+// Note that the LL is required to avoid overflows of 32-bit words.
+// LL must be used for any value equal to or above 1<<31. 
+// Also note that these values can't be returned as an int type. 
+// For example, any function that returns an int can't use
+//
+// return (s->mode & mode_regular);   
+// 
+// That value is 64-bits wide and may not be returned correctly. 
+
+#define mode_expert        (1LL)<<49
+#define mode_regular       (1LL)<<50
+#define mode_directory     (1LL)<<51
+#define mode_door          (1LL)<<52
+#define mode_block         (1LL)<<53
+#define mode_character     (1LL)<<54
+#define mode_pipe          (1LL)<<55
+#define mode_socket        (1LL)<<56
+#define mode_symlink       (1LL)<<57
+
+
+
 #define VERBOSE		1
 #define MORE_VERBOSE	2
 #define INSANELY_VERBOSE 3
@@ -31,17 +90,6 @@ extern bool opt_estimate;		// print ETA
  */
 #define HASHDEEP_PREFIX     "%%%% "
 #define HASHDEEP_HEADER_10  "%%%% HASHDEEP-1.0"
-
-
-/* TCHAR:
- *
- * On POSIX systems, TCHAR is defined to be char.
- * On WIN32 systems, TCHAR is wchar_t.
- * TCHAR is used for filenames of files to hash.  We convert it to a UTF-8
- * string and store it in a std::string so that we can use the std::string
- * routines.
- */
-
 
 /* HOW TO ADD A NEW HASHING ALGORITHM
   * Add a value for the algorithm to the hashid_t enumeration
@@ -483,12 +531,10 @@ std::vector<std::string> &split(const std::string &s, char delim, std::vector<st
 std::vector<std::string> split(const std::string &s, char delim);
 void lowercase(std::string &s);
 
-
-
-
 /* HELPER FUNCTIONS */
-//void generate_filenames(state *s, TCHAR *fn, std::string cwd, TCHAR *input);
-//void sanity_check(state *s, int condition, const char *msg);
+#ifdef _WIN32
+std::string tchar_to_utf8(TCHAR *);		// returns a UTF-8 string for a TCHAR
+#endif
 
 // ----------------------------------------------------------------
 // CYCLE CHECKING

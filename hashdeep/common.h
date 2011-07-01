@@ -22,21 +22,34 @@
 #endif
 
 #ifdef _WIN32
+/*****************************************************************
+ *** Windows support.
+ *** Previously in tchar-local.h.
+ *** Moved here for simplicity
+ * TCHAR:
+ *
+ * On POSIX systems, TCHAR is defined to be char.
+ * On WIN32 systems, TCHAR is wchar_t.
+ * TCHAR is used for filenames of files to hash.  We convert it to a UTF-8
+ * string and store it in a std::string so that we can use the std::string
+ * routines.
+ */
+
 // Required to enable 64-bit stat functions, but defined by default on mingw
 #ifndef __MSVCRT_VERSION__ 
 #define __MSVCRT_VERSION__ 0x0601
 #endif
+
+#include <windows.h>
+#include <windowsx.h>
+#include <tchar.h>
+#include <wchar.h>
+#include <time.h>
+
 #endif
 
 // The version information, VERSION, is defined in config.h 
-
-#define AUTHOR      "Jesse Kornblum and Simson Garfinkel"
-#define COPYRIGHT   "This program is a work of the US Government. "\
-"In accordance with 17 USC 105,%s"\
-"copyright protection is not available for any work of the US Government.%s"\
-"This is free software; see the source for copying conditions. There is NO%s"\
-"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",\
-NEWLINE, NEWLINE, NEWLINE
+// AUTHOR and COPYRIGHT moved to main.cpp
 
 #include <stdio.h>
 #include <math.h>
@@ -133,8 +146,6 @@ NEWLINE, NEWLINE, NEWLINE
 #define PRIu64 "llu"
 #endif
 
-#include "tchar-local.h"
-
 #include "md5.h"
 #include "sha1.h"
 #include "sha256.h"
@@ -156,9 +167,6 @@ NEWLINE, NEWLINE, NEWLINE
 
 // LINE_LENGTH is different between UNIX and WIN32 and is defined below 
 #define MAX_FILENAME_LENGTH   LINE_LENGTH - 41
-
-// Note that STRINGS_EQUAL does not check if either A or B is NULL 
-//#define _MAX(A,B)             (A>B)?A:B
 
 #if defined(__cplusplus)
 #include <string>
@@ -200,8 +208,7 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 }
 #endif
 
-#define WSTRINGS_EQUAL(A,B)       (!_tcsncmp(A,B,_MAX(_tcslen(A),_tcslen(B))))
-
+//#define WSTRINGS_EQUAL(A,B)       (!_tcsncmp(A,B,_MAX(_tcslen(A),_tcslen(B))))
 
 extern char *__progname;
 
@@ -273,64 +280,6 @@ __END_DECLS
 #endif   /* ifndef _WIN32,#else */
 
 
-
-// Return values for the program 
-// RBF - Document these return values for hashdeep 
-#define STATUS_OK                      0
-#define STATUS_UNUSED_HASHES           1
-#define STATUS_INPUT_DID_NOT_MATCH     2
-#define STATUS_USER_ERROR             64
-#define STATUS_INTERNAL_ERROR        128 
-
-
-#define mode_none              0
-#define mode_recursive         1<<0
-//#define mode_estimate          1<<1          // now is opt_estimate
-//#define mode_silent            1<<2          // now is opt_silent
-#define mode_warn_only         1<<3
-#define mode_match             1<<4
-#define mode_match_neg         1<<5
-#define mode_display_hash      1<<6
-#define mode_display_size      1<<7
-//#define mode_zero              1<<8          // now is opt_zero
-#define mode_relative          1<<9
-#define mode_which             1<<10
-#define mode_barename          1<<11
-#define mode_asterisk          1<<12
-#define mode_not_matched       1<<13
-#define mode_quiet             1<<14
-#define mode_piecewise         1<<15
-//these were moved to opt_verbose
-//#define mode_verbose           1<<16
-//#define mode_more_verbose      1<<17
-//#define mode_insanely_verbose  1<<18
-#define mode_size              1<<19
-#define mode_size_all          1<<20
-#define mode_timestamp         1<<21
-#define mode_csv               1<<22
-#define mode_read_from_file    1<<25
-#define mode_triage            1<<26
-
-// Modes 27-48 are reserved for future use.
-//
-// Note that the LL is required to avoid overflows of 32-bit words.
-// LL must be used for any value equal to or above 1<<31. 
-// Also note that these values can't be returned as an int type. 
-// For example, any function that returns an int can't use
-//
-// return (s->mode & mode_regular);   
-// 
-// That value is 64-bits wide and may not be returned correctly. 
-
-#define mode_expert        (1LL)<<49
-#define mode_regular       (1LL)<<50
-#define mode_directory     (1LL)<<51
-#define mode_door          (1LL)<<52
-#define mode_block         (1LL)<<53
-#define mode_character     (1LL)<<54
-#define mode_pipe          (1LL)<<55
-#define mode_socket        (1LL)<<56
-#define mode_symlink       (1LL)<<57
 
 // Modes 58-62 are reserved for future use in expert mode
 // These are the types of files we can encounter while hashing 

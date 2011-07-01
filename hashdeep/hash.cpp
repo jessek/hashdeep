@@ -347,7 +347,7 @@ int state::hash_file(file_data_hasher_t *fdht,TCHAR *fn)
 
     int status = STATUS_OK;
     fdht->is_stdin = FALSE;
-    fdht->file_name = fn;
+    fdht->file_name = tchar_to_utf8(fn);
 
     if (this->mode & mode_barename)  {
 	/* Convert fdht->file_name to its basename */

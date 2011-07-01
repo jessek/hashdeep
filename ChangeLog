@@ -1,5 +1,7 @@
 2011-07-01  Simson Garfinkel  <simsong@imac3.home>
 
+	* hashdeep/display.cpp (state::md5deep_display_hash): now uses gmtime_r for threadsafety
+
 	* hashdeep/hash.cpp (hash::hash_stdin): hash_file() and hash_stdin() are now methods.
 
 2011-06-29  Simson Garfinkel  <simsong@Alphonse-Mucha.local>

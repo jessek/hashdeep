@@ -475,8 +475,7 @@ static int file_type(state *s,file_data_hasher_t *fdht, TCHAR *fn)
 {
   _tstat_t sb;
 
-  if (_lstat(fn,&sb))
-  {
+  if (_lstat(fn,&sb))  {
     print_error_filename(fn,"%s", strerror(errno));
     return stat_unknown;
   }
@@ -659,8 +658,9 @@ int dig_win32(state *s, TCHAR *fn)
 
   //  print_status("Called process_win32(%S)", fn);
 
-  if (is_win32_device_file(fn))
+  if (is_win32_device_file(fn)){
     return (hash_file(s,fn));
+  }
 
   // Filenames without wildcards can be processed by the
   // normal recursion code.

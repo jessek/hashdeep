@@ -30,6 +30,14 @@ extern char *__progname;
 char *__progname;
 #endif
 
+#define AUTHOR      "Jesse Kornblum and Simson Garfinkel"
+#define COPYRIGHT   "This program is a work of the US Government. "\
+"In accordance with 17 USC 105,%s"\
+"copyright protection is not available for any work of the US Government.%s"\
+"This is free software; see the source for copying conditions. There is NO%s"\
+"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",\
+NEWLINE, NEWLINE, NEWLINE
+
 
 #ifdef _WIN32 
 // This can't go in main.h or we get multiple definitions of it
@@ -464,7 +472,7 @@ static int prepare_windows_command_line(state *s)
 #ifdef _WIN32
 std::string to_string(TCHAR *buf)
 {
-
+    return "TBF";
 }
 #endif
 
