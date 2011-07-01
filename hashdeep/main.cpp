@@ -579,16 +579,16 @@ int main(int argc, char **argv)
     if (optind == argc){
 	hash_stdin(s);
     } else {
-	char fn[PATH_MAX];;
+	TCHAR fn[PATH_MAX];;
 
 	count = optind;
 	
 	while (count < s->argc) {  
 	    generate_filename(s,fn,s->cwd,s->argv[count]);
 #ifdef _WIN32
-	    status = process_win32(s,fn);
+	    status = dig_win32(s,fn);
 #else
-	    status = process_normal(s,fn);
+	    status = dig_normal(s,fn);
 #endif
 	    ++count;
 	}
@@ -670,7 +670,6 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
 
     case 'd': s->dfxml = new XML(stdout); break;
     case 'f':
-      s->input_list = strdup(optarg);
       s->mode |= mode_read_from_file;
       break;
 

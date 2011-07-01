@@ -27,48 +27,51 @@ va_end(ap); fprintf (HANDLE,"%s", NEWLINE);
 
 void print_debug(const char *fmt, ... )
 {
-  if (NULL == fmt)
-    return;
-
 #ifdef __DEBUG
-  printf ("DEBUG: ");
-  MD5DEEP_PRINT_MSG(stderr,fmt)
+    printf ("DEBUG: ");
+    MD5DEEP_PRINT_MSG(stderr,fmt)
 #endif
 }
 
 void print_status(const char *fmt, ...)
 {
-  MD5DEEP_PRINT_MSG(stdout,fmt)
+    MD5DEEP_PRINT_MSG(stdout,fmt)
 }
 
 void print_error(const char *fmt, ...)
 {
-  if (!opt_silent)
-  {
+    if (opt_silent) return;
     MD5DEEP_PRINT_MSG(stderr,fmt);
-  }
 }
 
 
-void print_error_unicode(const std::string &fn, const char *fmt, ...)
+void print_error_filename(const char *fn, const char *fmt, ...)
 {
-  if (!opt_silent)  {
-
-      output_unicode(stderr,fn);
-      fprintf(stderr,": ");
-      MD5DEEP_PRINT_MSG(stderr,fmt);
-  }
+    if (opt_silent) return;
+    output_filename(stderr,fn);
+    fprintf(stderr,": ");
+    MD5DEEP_PRINT_MSG(stderr,fmt);
 }
 
+
+#ifdef _WIN32
+/* This is where the unicode happens */
+void print_error_filename(TCHAR *fn, const char *fmt, ...)
+{
+    if (opt_silent) return;
+    output_filename(stderr,fn);
+    fprintf(stderr,": ");
+    MD5DEEP_PRINT_MSG(stderr,fmt);
+}
+#endif
 
 
 void fatal_error(const char *fmt, ...)
 {
-  if (!opt_silent)  {
-    MD5DEEP_PRINT_MSG(stderr,fmt);
-  }
-
-  exit (STATUS_USER_ERROR);
+    if(!opt_silent){
+	MD5DEEP_PRINT_MSG(stderr,fmt);
+    }
+    exit (STATUS_USER_ERROR);
 }
 
 
@@ -77,9 +80,9 @@ void fatal_error(const char *fmt, ...)
 // preferences. Besides, the program is probably crashing anyway...
 void internal_error(const char *fmt, ... )
 {
-  MD5DEEP_PRINT_MSG(stderr,fmt);  
-  print_status ("%s: Internal error. Contact developer!", __progname);  
-  exit (STATUS_INTERNAL_ERROR);
+    MD5DEEP_PRINT_MSG(stderr,fmt);  
+    print_status ("%s: Internal error. Contact developer!", __progname);  
+    exit (STATUS_INTERNAL_ERROR);
 }
 
 

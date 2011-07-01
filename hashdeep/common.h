@@ -158,7 +158,7 @@ NEWLINE, NEWLINE, NEWLINE
 #define MAX_FILENAME_LENGTH   LINE_LENGTH - 41
 
 // Note that STRINGS_EQUAL does not check if either A or B is NULL 
-#define _MAX(A,B)             (A>B)?A:B
+//#define _MAX(A,B)             (A>B)?A:B
 
 #if defined(__cplusplus)
 #include <string>

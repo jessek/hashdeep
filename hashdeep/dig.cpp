@@ -256,7 +256,7 @@ static void print_last_error(char * function_name)
   
   // Display the error message and exit the process
   fprintf(stdout,"%s failed with error %ld: ", function_name, dwLastError);
-  output_unicode(stdout,pszMessage);
+  output_filename(stdout,pszMessage);
   
   LocalFree(pszMessage);
 }
@@ -295,15 +295,15 @@ static int is_junction_point(state *s, TCHAR *fn)
 
       if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0)
       {
-	print_error_unicode(fn,"Junction point, skipping");
+	print_error_filename(fn,"Junction point, skipping");
       }
       else if (IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0)
       {
-	print_error_unicode(fn,"Symbolic link, skipping");
+	print_error_filename(fn,"Symbolic link, skipping");
       }	
       else 
       {
-	print_error_unicode(fn,"Unknown reparse point 0x%"PRIx32", skipping",
+	print_error_filename(fn,"Unknown reparse point 0x%"PRIx32", skipping",
 			    FindFileData.dwReserved0);
       }
     }
@@ -389,7 +389,7 @@ static int process_dir(state *s, TCHAR *fn)
 
   if (have_processed_dir(fn))
   {
-    print_error_unicode(fn,"symlink creates cycle");
+    print_error_filename(fn,"symlink creates cycle");
     return STATUS_OK;
   }
 
@@ -398,7 +398,7 @@ static int process_dir(state *s, TCHAR *fn)
   
   if ((current_dir = _topendir(fn)) == NULL) 
   {
-    print_error_unicode(fn,"%s", strerror(errno));
+    print_error_filename(fn,"%s", strerror(errno));
     return STATUS_OK;
   }    
 
@@ -417,7 +417,7 @@ static int process_dir(state *s, TCHAR *fn)
     if (is_junction_point(s,new_file))
       continue;
 
-    return_value = process_normal(s,new_file);
+    return_value = dig_normal(s,new_file);
 
   }
   free(new_file);
@@ -477,7 +477,7 @@ static int file_type(state *s,file_data_hasher_t *fdht, TCHAR *fn)
 
   if (_lstat(fn,&sb))
   {
-    print_error_unicode(fn,"%s", strerror(errno));
+    print_error_filename(fn,"%s", strerror(errno));
     return stat_unknown;
   }
 
@@ -513,7 +513,7 @@ static int should_hash_expert(state *s, TCHAR *fn, int type)
       process_dir(s,fn);
     else
     {
-      print_error_unicode(fn,"Is a directory");
+      print_error_filename(fn,"Is a directory");
     }
     return FALSE;
 
@@ -565,7 +565,7 @@ static int should_hash_symlink(state *s, TCHAR *fn, int *link_type)
   // we use stat to examine what this symlink points to. 
   if (_sstat(fn,&sb))
   {
-    print_error_unicode(fn,"%s",strerror(errno));
+    print_error_filename(fn,"%s",strerror(errno));
     return FALSE;
   }
 
@@ -577,7 +577,7 @@ static int should_hash_symlink(state *s, TCHAR *fn, int *link_type)
       process_dir(s,fn);
     else
     {
-      print_error_unicode(fn,"Is a directory");
+      print_error_filename(fn,"Is a directory");
     }
     return FALSE;
   }    
@@ -611,7 +611,7 @@ static int should_hash(state *s, file_data_hasher_t *fdht,TCHAR *fn)
       process_dir(s,fn);
     else 
     {
-      print_error_unicode(fn,"Is a directory");
+      print_error_filename(fn,"Is a directory");
     }
     return FALSE;
   }
@@ -634,7 +634,7 @@ static int should_hash(state *s, file_data_hasher_t *fdht,TCHAR *fn)
     // process_win32 also returns STATUS_OK. 
     // display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.
     // Pick one and stay with it!
-int process_normal(state *s, TCHAR *fn)
+int dig_normal(state *s, TCHAR *fn)
 {
     int ret = FALSE;
     file_data_hasher_t *fdht = new file_data_hasher_t(s->mode & mode_piecewise);
@@ -650,7 +650,7 @@ int process_normal(state *s, TCHAR *fn)
 
 
 #ifdef _WIN32
-int process_win32(state *s, TCHAR *fn)
+int dig_win32(state *s, TCHAR *fn)
 {
   int rc, status = STATUS_OK;
   TCHAR *asterisk, *question;
@@ -667,12 +667,12 @@ int process_win32(state *s, TCHAR *fn)
   asterisk = _tcschr(fn,L'*');
   question = _tcschr(fn,L'?');
   if (NULL == asterisk && NULL == question)
-    return (process_normal(s,fn));
+    return (dig_normal(s,fn));
   
   hFind = FindFirstFile(fn, &FindFileData);
   if (INVALID_HANDLE_VALUE == hFind)
   {
-    print_error_unicode(fn,"No such file or directory");
+    print_error_filename(fn,"No such file or directory");
     return STATUS_OK;
   }
   
@@ -713,7 +713,7 @@ int process_win32(state *s, TCHAR *fn)
       }
       
       if (!(is_junction_point(s,new_fn)))
-	process_normal(s,new_fn); 
+	dig_normal(s,new_fn); 
     }
     
     rc = FindNextFile(hFind, &FindFileData);
@@ -727,14 +727,14 @@ int process_win32(state *s, TCHAR *fn)
     // is beserk. Rather than play their silly games, we 
     // acknowledge that an unknown error occured and hope we
     // can continue.
-    print_error_unicode(fn,"Unknown error while expanding wildcard");
+    print_error_filename(fn,"Unknown error while expanding wildcard");
     return STATUS_OK;
   }
   
   rc = FindClose(hFind);
   if (0 == rc)
   {
-    print_error_unicode(
+    print_error_filename(
 			fn,
 			"Unknown error while cleaning up wildcard expansion");
   }

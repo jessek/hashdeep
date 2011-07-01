@@ -147,17 +147,13 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
     fdht->bytes_read   += current_read;
       
     // If an error occured, display a message but still add this block 
-    if (ferror(fdht->handle))
-    {
-      if ( ! opt_silent)
-	print_error_unicode(
-			    fdht->file_name,
+    if (ferror(fdht->handle)) {
+	print_error_filename(fdht->file_name.c_str(),
 			    "error at offset %"PRIu64": %s",
 			    ftello(fdht->handle),
 			    strerror(errno));
 	   
-      if (file_fatal_error())
-	return FALSE; 
+      if (file_fatal_error()) return FALSE; 
       
       fdht->multihash_update(buffer,current_read);
       
@@ -167,32 +163,30 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
       // advance it to the start of the next buffer to read. 
       fseeko(fdht->handle,SEEK_SET,this_start + mysize);
     } 
-    else
-    {
+    else    {
       // If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE
       // bytes and must reflect that in how we update the hash.
 	fdht->multihash_update(buffer,current_read);
     }
     
     // Check if we've hit the end of the file 
-    if (feof(fdht->handle))
-    {	
+    if (feof(fdht->handle))    {	
       // If we've been printing time estimates, we now need to clear the line.
-      if (opt_estimate)
-	fprintf(stderr,"\r%s\r",BLANK_LINE);
+	if (opt_estimate){
+	    fprintf(stderr,"\r%s\r",BLANK_LINE);
+	}
 
       return TRUE;
    } 
 
     // In piecewise mode we only hash one block at a time
-    if (fdht->piecewise)
-    {
+    if (fdht->piecewise)    {
       remaining -= current_read;
-      if (remaining == 0)
-	return TRUE;
+      if (remaining == 0) return TRUE;
 
-      if (remaining < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE)
+      if (remaining < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE){
 	mysize = remaining;
+      }
     }
     
     if (opt_estimate)    {
@@ -398,7 +392,7 @@ int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 	fdht->close();
     }
     else  {
-	print_error_unicode(fn,"%s", strerror(errno));
+	print_error_filename(fn,"%s", strerror(errno));
     }
     return status;
 }

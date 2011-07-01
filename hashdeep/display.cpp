@@ -46,7 +46,7 @@ static std::string shorten_filename(const std::string &fn)
  * output the string, typically a fn, optionally performing unicode escaping
  */
 
-void output_unicode(FILE *out,const std::string &utf8)
+void output_filename(FILE *out,const std::string &utf8)
 {
     fwrite(utf8.c_str(),utf8.size(),1,out);
 }
@@ -73,12 +73,12 @@ void display_filename(FILE *out, const file_data_t &fdt, bool shorten)
   
 #else
   if(shorten){
-      output_unicode(out,shorten_filename(fdt.file_name));
+      output_filename(out,shorten_filename(fdt.file_name));
   } else {
-      output_unicode(out,fdt.file_name);
+      output_filename(out,fdt.file_name);
   }
   if(fdt.file_name_annotation.size()>0){
-      output_unicode(out,fdt.file_name_annotation);
+      output_filename(out,fdt.file_name_annotation);
   }
 #endif
 }
@@ -97,7 +97,7 @@ void state::display_banner()
   print_status("filename");
 
   fprintf(stdout,"## Invoked from: ");
-  output_unicode(stdout,this->cwd);
+  output_filename(stdout,this->cwd);
   fprintf(stdout,"%s",NEWLINE);
   
   // Display the command prompt as the user saw it
@@ -127,7 +127,7 @@ void state::display_banner()
       bytes_written = 3;
     }
 
-    output_unicode(stdout,this->argv[argc]);
+    output_filename(stdout,this->argv[argc]);
     bytes_written += current_bytes;
   }
 
@@ -252,7 +252,7 @@ int state::md5deep_display_match_result(file_data_hasher_t *fdht)
 		if (known_hash && (mode & mode_match)) {
 			display_filename(stdout,fdht,false);
 			printf (" matched ");
-			output_unicode(stdout,fs->file_name);
+			output_filename(stdout,fs->file_name);
 		    }
 		else {
 			display_filename(stdout,fdht,false);

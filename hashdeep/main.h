@@ -22,8 +22,8 @@ extern int  opt_verbose;		// can be 1, 2 or 3
 extern bool opt_zero;			// newlines are \000 
 extern bool opt_estimate;		// print ETA
 
-#define VERBOSE 1
-#define MORE_VERBOSE 2
+#define VERBOSE		1
+#define MORE_VERBOSE	2
 #define INSANELY_VERBOSE 3
 
 /* These describe the version of the file format being used, not
@@ -33,22 +33,26 @@ extern bool opt_estimate;		// print ETA
 #define HASHDEEP_HEADER_10  "%%%% HASHDEEP-1.0"
 
 
+/* TCHAR:
+ *
+ * On POSIX systems, TCHAR is defined to be char.
+ * On WIN32 systems, TCHAR is wchar_t.
+ * TCHAR is used for filenames of files to hash.  We convert it to a UTF-8
+ * string and store it in a std::string so that we can use the std::string
+ * routines.
+ */
+
+
 /* HOW TO ADD A NEW HASHING ALGORITHM
-
   * Add a value for the algorithm to the hashid_t enumeration
-
   * Add the functions to compute the hashes. There should be three functions,
     an initialization route, an update routine, and a finalize routine.
     The convention, for an algorithm "foo", is 
     foo_init, foo_update, and foo_final. 
-
   * Add your new code to Makefile.am under hashdeep_SOURCES
-
   * Add a call to insert the algorithm in state::load_hashing_algorithms
-
   * See if you need to increase MAX_ALGORITHM_NAME_LENGTH or
-  MAX_ALGORITHM_CONTEXT_SIZE for your algorithm.
-
+    MAX_ALGORITHM_CONTEXT_SIZE for your algorithm.
   * Update the usage function and man page to include the function
   */
 
@@ -146,7 +150,7 @@ public:
 
     std::string    hash_hex[NUM_ALGORITHMS];	     // the hash in hex of the entire file
     std::string	   hash512_hex[NUM_ALGORITHMS];	     // hash of the first 512 bytes, for partial matching
-    std::string	   file_name;		// just the file_name, apparently
+    std::string	   file_name;		// just the file_name, apparently; native on POSIX; UTF-8 on Windows.
     std::string	   file_name_annotation;// print after file name; for piecewise hashing
 
     uint64_t       matched_file_number;	 // file number that we matched.
@@ -165,7 +169,6 @@ public:
     uint64_t	   stat_megs(){
 	return stat_bytes / ONE_MEGABYTE;
     }
-
 };
 
 
@@ -368,11 +371,12 @@ public:
  * seen  - the list of hashes that have been seen this time through.
  */
 
+
 class state {
 public:;
     state():primary_function(primary_compute),mode(mode_none),
 	    start_time(0),last_time(0),
-	    argc(0),argv(0),input_list(0),
+	    argc(0),argv(0),
 	    piecewise_size(0),
 	    banner_displayed(false),
 	    dfxml(0),
@@ -391,7 +395,6 @@ public:;
     /* Command line arguments */
     int             argc;
     TCHAR        ** argv;			// never allocated, never freed
-    char          * input_list;
     std::string     cwd;
 
     /* Configuration */
@@ -525,15 +528,21 @@ off_t find_file_size(FILE *f);
 // ------------------------------------------------------------------
 // MAIN PROCESSING
 // ------------------------------------------------------------------ 
-int process_win32(state *s, TCHAR *fn);
-int process_normal(state *s, TCHAR *fn);
+/* dig.cpp */
+int dig_win32(state *s, TCHAR *fn);
+int dig_normal(state *s, TCHAR *fn);
 int md5deep_process_command_line(state *s, int argc, char **argv);
 
 
 /* display.cpp */
 std::string itos(uint64_t i);
-void output_unicode(FILE *out,const std::string &ucs);
-void display_filename(FILE *out, const file_data_t &fdt,bool shorten);
+void  output_filename(FILE *out,const char *fn);
+#ifdef _WIN32
+void  output_filename(FILE *out,const TCHAR *fn);
+#endif
+
+
+void  display_filename(FILE *out, const file_data_t &fdt,bool shorten);
 inline void display_filename(FILE *out, const file_data_t *fdt,bool shorten){
     display_filename(out,*fdt,shorten);
 };
@@ -549,7 +558,10 @@ void print_status(const char *fmt, ...);
 void print_error(const char *fmt, ...);
 
 // Display an error message if not in silent mode with a Unicode filename
-void print_error_unicode(const std::string &fn, const char *fmt, ...);
+void print_error_filename(const char *fn, const char *fmt, ...);
+#ifdef _WIN32
+void print_error_filename(TCHAR *wfn, const char *fmt, ...);
+#endif
 
 // Display an error message, if not in silent mode,  
 // and exit with EXIT_FAILURE
