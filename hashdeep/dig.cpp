@@ -642,7 +642,7 @@ int dig_normal(state *s, TCHAR *fn)
     clean_name(s,fn);
 
     if (should_hash(s,fdht,fn)){
-	ret = hash_file(s,fdht,fn);
+	ret = s->hash_file(fdht,fn);
     }
     fdht->release();
     return ret;

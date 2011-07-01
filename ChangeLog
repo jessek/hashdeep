@@ -1,3 +1,7 @@
+2011-07-01  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/hash.cpp (hash::hash_stdin): hash_file() and hash_stdin() are now methods.
+
 2011-06-29  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* hashdeep/common.h: moved sys/cdefs.h from tchar-local.h to common.h; added #ifdef

@@ -577,7 +577,7 @@ int main(int argc, char **argv)
      */
     
     if (optind == argc){
-	hash_stdin(s);
+	s->hash_stdin();
     } else {
 	TCHAR fn[PATH_MAX];;
 

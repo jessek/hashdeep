@@ -338,18 +338,18 @@ static std::string make_stars(int count)
 /**
  * Given a file name, hash it into a fdht, then ask s to deal with it.
  */
-int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
+int state::hash_file(file_data_hasher_t *fdht,TCHAR *fn)
 {
     if(opt_verbose>=MORE_VERBOSE){
 	print_error("hash_file(%s) mode=%x primary_function=%d",
-		    fn,s->mode,s->primary_function);
+		    fn,this->mode,this->primary_function);
     }
 
     int status = STATUS_OK;
     fdht->is_stdin = FALSE;
     fdht->file_name = fn;
 
-    if (s->mode & mode_barename)  {
+    if (this->mode & mode_barename)  {
 	/* Convert fdht->file_name to its basename */
 
 	/* The basename function kept misbehaving on OS X, so Jesse rewrote it.
@@ -375,20 +375,20 @@ int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 	 * If this file is above the size threshold set by the user, skip it
 	 * and set the hash to be stars
 	 */
-	if ((s->mode & mode_size) && (fdht->stat_bytes > s->size_threshold)) {
-	    if (s->mode & mode_size_all)      {
+	if ((this->mode & mode_size) && (fdht->stat_bytes > this->size_threshold)) {
+	    if (this->mode & mode_size_all)      {
 		for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)	{
 		    if (hashes[i].inuse){
 			fdht->hash_hex[i] = make_stars(hashes[i].bit_length/4);
 		    }
 		}
-		s->display_hash(fdht);
+		this->display_hash(fdht);
 	    }
 	    fdht->close();
 	    return STATUS_OK;
 	}
 	
-	status = hash(s,fdht);
+	status = hash(this,fdht);
 	fdht->close();
     }
     else  {
@@ -398,11 +398,11 @@ int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 }
 
 
-int hash_stdin(state *s)
+int state::hash_stdin()
 {
-    file_data_hasher_t *fdht = new file_data_hasher_t(s->mode & mode_piecewise);
+    file_data_hasher_t *fdht = new file_data_hasher_t(this->mode & mode_piecewise);
     fdht->file_name = "stdin";
     fdht->is_stdin  = TRUE;
     fdht->handle    = stdin;
-    return hash(s,fdht);
+    return hash(this,fdht);
 }

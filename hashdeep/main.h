@@ -460,6 +460,11 @@ public:;
     int		audit_check();		// performs an audit; return 0 if pass, -1 if fail
     int		display_audit_results();
 
+    /* hash.cpp */
+    
+    int hash_file(file_data_hasher_t *fdht,TCHAR *file_name);
+    int hash_stdin();
+
 
     bool hashes_loaded(){
 	return known.size()>0;
@@ -478,11 +483,6 @@ std::vector<std::string> &split(const std::string &s, char delim, std::vector<st
 std::vector<std::string> split(const std::string &s, char delim);
 void lowercase(std::string &s);
 
-
-/* hash.cpp */
-
-int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *file_name);
-int hash_stdin(state *s);
 
 
 
@@ -531,12 +531,20 @@ int md5deep_process_command_line(state *s, int argc, char **argv);
 
 
 /* display.cpp */
+/* output_filename simply sends the filename to the specified output.
+ * With TCHAR it sends it out as UTF-8 unless unicode quoting is requested,
+ * in which case Unicode characters are emited as U+xxxx.
+ * For example, the Unicode smiley character ☺ is output as U+263A.
+ */
 void  output_filename(FILE *out,const char *fn);
 void  output_filename(FILE *out,const std::string &fn);
 #ifdef _WIN32
 void  output_filename(FILE *out,const TCHAR *fn);
 #endif
 
+/* display_filename is similar output_filename,
+ * except it takes a file_data_structure and optionally shortens to the line width
+ */
 
 void  display_filename(FILE *out, const file_data_t &fdt,bool shorten);
 inline void display_filename(FILE *out, const file_data_t *fdt,bool shorten){
@@ -571,23 +579,5 @@ void internal_error(const char *fmt, ... );
 void print_debug(const char *fmt, ...);
 void print_newline();
 void try_msg(void);
-//int display_hash( state *s, file_data_hasher_t *fdht);
-
-
-
-// ----------------------------------------------------------------
-// FILE MATCHING
-// ---------------------------------------------------------------- 
-
-// md5deep_match.c
-//    // This function returns FALSE. hash_file, called above, returns STATUS_OK                                             
-// process_win32 also returns STATUS_OK.                                                                               
-// display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.                                              
-// Pick one and stay with it!                                                                                          
-int was_input_not_matched(void);
-
-// Add a single hash to the matching set
-
-// Functions for file evaluation (files.c) 
 
 #endif /* ifndef __MAIN_H */
