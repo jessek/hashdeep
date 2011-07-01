@@ -95,6 +95,11 @@ COMPILING FOR WINDOWS:
 COMPILING FOR POSIX:
 	  -D_UNICODE is not defined, causing TCHAR to be defined as char.
 
+You can install mingw and then simply configure with something like this:
+$ export PATH=$PATH:/usr/local/i386-mingw32-4.3.0/bin
+$ ./configure --host=i386-mingw32
+
+
 
 
 == Hash Algorithm References ==
