@@ -14,6 +14,15 @@
 
 #include "main.h"
 
+std::string itos(uint64_t i)
+{
+    char buf[256];
+    snprintf(buf,sizeof(buf),"%"PRIu64,i);
+    return std::string(buf);
+}
+
+
+
 #ifdef _WIN32
 
 // The following is adapted from

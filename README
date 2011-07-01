@@ -79,6 +79,16 @@ Windows function WideCharToMultiByte
 (http://msdn.microsoft.com/en-us/library/dd374130%28v=vs.85%29.aspx). Flags
 have been added escape Unicode when it is printed.
 
+There is no way (apparently) on Windows to open a UTF-8 filename; it needs to be 
+converted back to a multi-byte filename with MultiByteToWideChar.
+
+Fortunately, we never really need to convert back.
+
+Notice that on Windows the files hashed can have unicode characters
+but the file with the hashes must have an ASCII name.
+
+
+
 COMPILING FOR WINDOWS:
 	  -D_UNICODE causes TCHAR to be defined as wchar_t.
 

@@ -11,13 +11,6 @@ using namespace std;
  ** These are from the original hashdeep/display.c
  ****************************************************************/
 
-std::string itos(uint64_t i)
-{
-    char buf[256];
-    snprintf(buf,sizeof(buf),"%"PRIu64,i);
-    return string(buf);
-}
-
 static void display_size(const state *s,const file_data_t *fdt)
 {
   if (NULL == s) 
@@ -46,9 +39,14 @@ static std::string shorten_filename(const std::string &fn)
  * output the string, typically a fn, optionally performing unicode escaping
  */
 
-void output_filename(FILE *out,const std::string &utf8)
+void output_filename(FILE *out,const char *fn)
 {
-    fwrite(utf8.c_str(),utf8.size(),1,out);
+    fwrite(fn,strlen(fn),1,out);
+}
+
+void output_filename(FILE *out,const std::string &fn)
+{
+    fwrite(fn.c_str(),fn.size(),1,out);
 }
 
 /* By default, we display in UTF-8.

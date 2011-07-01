@@ -479,19 +479,11 @@ std::vector<std::string> split(const std::string &s, char delim);
 void lowercase(std::string &s);
 
 
-
-
-/* MATCHING MODES */
-//status_t display_match_result(state *s,file_data_hasher_t *fdht);
-
-
-/* AUDIT MODE */
-
-
-/* HASHING CODE */
+/* hash.cpp */
 
 int hash_file(state *s, file_data_hasher_t *fdht,TCHAR *file_name);
 int hash_stdin(state *s);
+
 
 
 /* HELPER FUNCTIONS */
@@ -507,7 +499,11 @@ int done_processing_dir(TCHAR *fn);
 
 // ------------------------------------------------------------------
 // HELPER FUNCTIONS
-// ------------------------------------------------------------------ 
+//
+// helper.cpp 
+// ------------------------------------------------------------------
+
+std::string itos(uint64_t i);
 void     setup_expert_mode(state *s, char *arg);
 void     generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
 uint64_t find_block_size(state *s, char *input_str);
@@ -516,8 +512,8 @@ void     shift_string(char *fn, size_t start, size_t new_start);
 void     check_wow64(state *s);
 
 // Works like dirname(3), but accepts a TCHAR* instead of char*
-int my_dirname(TCHAR *c);
-//int my_basename(TCHAR *s);
+int	my_dirname(TCHAR *c);
+//int	my_basename(TCHAR *s);
 
 int find_comma_separated_string(char *s, unsigned int n);
 int find_quoted_string(char *buf, unsigned int n);
@@ -535,8 +531,8 @@ int md5deep_process_command_line(state *s, int argc, char **argv);
 
 
 /* display.cpp */
-std::string itos(uint64_t i);
 void  output_filename(FILE *out,const char *fn);
+void  output_filename(FILE *out,const std::string &fn);
 #ifdef _WIN32
 void  output_filename(FILE *out,const TCHAR *fn);
 #endif
