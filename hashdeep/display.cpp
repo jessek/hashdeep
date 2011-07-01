@@ -82,29 +82,32 @@ void display_filename(FILE *out, const file_data_t &fdt, bool shorten)
 
 void state::display_banner()
 {
-  print_status("%s", HASHDEEP_HEADER_10);
+    tstring cwd = main::getcwd();
+    print_status("%s", HASHDEEP_HEADER_10);
 
-  fprintf (stdout,"%ssize,",HASHDEEP_PREFIX);  
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
-      if (hashes[i].inuse){
-	  printf ("%s,", hashes[i].name.c_str());
-      }
-  }  
-  print_status("filename");
-
-  fprintf(stdout,"## Invoked from: ");
-  output_filename(stdout,this->cwd);
-  fprintf(stdout,"%s",NEWLINE);
+    fprintf (stdout,"%ssize,",HASHDEEP_PREFIX);  
+    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
+	if (hashes[i].inuse){
+	    printf ("%s,", hashes[i].name.c_str());
+	}
+    }  
+    print_status("filename");
+    
+    fprintf(stdout,"## Invoked from: ");
+    output_filename(stdout,cwd)
+    fprintf(stdout,"%s",NEWLINE);
   
-  // Display the command prompt as the user saw it
-  fprintf(stdout,"## ");
+    // Display the command prompt as we think the user saw it
+    fprintf(stdout,"## ");
 #ifdef _WIN32
-  fprintf(stdout,"%c:\\>", this->cwd[0]);
+    fprintf(stdout,"%c:\\>", (char)cwd[0]);
 #else
-  if (0 == geteuid())
-    fprintf(stdout,"#");
-  else
-    fprintf(stdout,"$");
+    if (geteuid()==0){
+	fprintf(stdout,"#");
+    }
+    else {
+	fprintf(stdout,"$");
+    }
 #endif
 
   // Accounts for '## ', command prompt, and space before first argument

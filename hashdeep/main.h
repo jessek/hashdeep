@@ -420,8 +420,16 @@ public:
  */
 
 
+class main {
+public:
+    static wstring getcwd();
+};
+
+
 class state {
 public:;
+
+
     state():primary_function(primary_compute),mode(mode_none),
 	    start_time(0),last_time(0),
 	    argc(0),argv(0),
@@ -443,7 +451,6 @@ public:;
     /* Command line arguments */
     int             argc;
     TCHAR        ** argv;			// never allocated, never freed
-    std::string     cwd;
 
     /* Configuration */
     uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */
@@ -527,6 +534,7 @@ class files {
 };
 
 /* main.cpp */
+//char *basename(char *a);
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);
 void lowercase(std::string &s);

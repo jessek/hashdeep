@@ -2,55 +2,22 @@
  * $Id$
  * 
  * This file provides common include files but no specifics for the hashdeep/md5deep system.
+ *
+ * The version information, VERSION, is defined in config.h 
+ * AUTHOR and COPYRIGHT moved to main.cpp
+ *
  */
 
 #ifndef __COMMON_H
 #define __COMMON_H
 
+#define TRUE   1
+#define FALSE  0
+#define ONE_MEGABYTE  1048576
+
 #include "config.h"
 
 #include <assert.h>
-
-#ifndef __BEGIN_DECLS
-#if defined(__cplusplus)
-#define __BEGIN_DECLS   extern "C" {
-#define __END_DECLS     }
-#else
-#define __BEGIN_DECLS
-#define __END_DECLS
-#endif
-#endif
-
-#ifdef _WIN32
-/*****************************************************************
- *** Windows support.
- *** Previously in tchar-local.h.
- *** Moved here for simplicity
- * TCHAR:
- *
- * On POSIX systems, TCHAR is defined to be char.
- * On WIN32 systems, TCHAR is wchar_t.
- * TCHAR is used for filenames of files to hash.  We convert it to a UTF-8
- * string and store it in a std::string so that we can use the std::string
- * routines.
- */
-
-// Required to enable 64-bit stat functions, but defined by default on mingw
-#ifndef __MSVCRT_VERSION__ 
-#define __MSVCRT_VERSION__ 0x0601
-#endif
-
-#include <windows.h>
-#include <windowsx.h>
-#include <tchar.h>
-#include <wchar.h>
-#include <time.h>
-
-#endif
-
-// The version information, VERSION, is defined in config.h 
-// AUTHOR and COPYRIGHT moved to main.cpp
-
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
@@ -119,7 +86,6 @@
 # include <sys/cdefs.h>
 #endif
 
-
 // This allows us to open standard input in binary mode by default 
 // See http://gnuwin32.sourceforge.net/compile.html for more 
 #ifdef HAVE_FCNTL_H
@@ -137,6 +103,10 @@
 # error Unable to work without inttypes.h!
 #endif
 
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
 // A few operating systems (e.g. versions of OpenBSD) don't meet the 
 // C99 standard and don't define the PRI??? macros we use to display 
 // large numbers. We have to do something to help those systems, so 
@@ -146,16 +116,12 @@
 #define PRIu64 "llu"
 #endif
 
-#include "md5.h"
-#include "sha1.h"
-#include "sha256.h"
-#include "tiger.h"
-#include "whirlpool.h"
+//#include "md5.h"
+//#include "sha1.h"
+//#include "sha256.h"
+//#include "tiger.h"
+//#include "whirlpool.h"
 
-#define TRUE   1
-#define FALSE  0
-
-#define ONE_MEGABYTE  1048576
 
 // Strings have to be long enough to handle inputs from matched hashing files.
 // The NSRL is already larger than 256 bytes. We go longer to be safer. 
@@ -173,6 +139,9 @@
 #include <algorithm>
 #include <iostream>
 #include <ctype.h>
+#include <vector>
+
+/* Some nice C++ manipulation routines */
 
 inline std::string makelower(const std::string &a)
 {
@@ -197,6 +166,7 @@ inline bool STRINGS_CASE_EQUAL(const std::string &a,const std::string &b)
 {
     return makelower(a)==makelower(b);
 }
+
 inline bool STRINGS_EQUAL(const char *a,const char *b)
 {
     return strcmp(a,b)==0;
@@ -208,26 +178,51 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 }
 #endif
 
-//#define WSTRINGS_EQUAL(A,B)       (!_tcsncmp(A,B,_MAX(_tcslen(A),_tcslen(B))))
 
-extern char *__progname;
+#ifdef _WIN32
+/*****************************************************************
+ *** Windows support.
+ *** Previously in tchar-local.h.
+ *** Moved here for simplicity
+ * TCHAR:
+ *
+ * On POSIX systems, TCHAR is defined to be char.
+ * On WIN32 systems, TCHAR is wchar_t.
+ *
+ * TCHAR is used for filenames of files to hash.
+ *
+ * We have a wstring derrived type which we use internally as wide-char strings.
+ *
+ * We can convert this to UTF-8 using the GNU utf8 package from sourceforce.
+ * 
+ *
+ */
 
-// Set up the environment for the *nix operating systems (Mac, Linux, 
-// BSD, Solaris, and really everybody except Microsoft Windows) 
-#ifndef _WIN32
-#define CMD_PROMPT	"$"
-#define DIR_SEPARATOR   '/'
-#define NEWLINE		"\n"
-#define LINE_LENGTH	74
-#define BLANK_LINE \
-"                                                                          "
 
-#ifndef HAVE_FSEEKO
-#define fseeko fseek
-#define ftello ftell
+
+// Required to enable 64-bit stat functions, but defined by default on mingw
+#ifndef __MSVCRT_VERSION__ 
+# define __MSVCRT_VERSION__ 0x0601
 #endif
+#include <windows.h>
+#include <windowsx.h>
+#include <tchar.h>
+#include <wchar.h>
 
-#else   // ifndef _WIN32
+#if defined(__cplusplus)
+/*
+ * C++ implementation of a wchar_t string.
+ */
+class wstring : public vector<wchar> {
+    wstring(wchar_t *buf){
+	size_t len = wcslen(buf);
+	for(size_t i = 0;i<len;i++){
+	    this->push_back(buf[i]);
+	}
+    }
+};
+typedef wstring tstring; 
+#endif
 
 // The current cross compiler for OS X->Windows does not support a few
 // critical error codes normally defined in errno.h. Because we need 
@@ -261,25 +256,8 @@ extern char *__progname;
 #define LINE_LENGTH 72
 #define BLANK_LINE \
 "                                                                        "
-
 #define ftello   ftell
 #define fseeko   fseek
-
-// We create macros for the Windows equivalent UNIX functions.
-// No worries about lstat to stat; Windows doesn't have symbolic links 
-// This function has been replaced with _lstat in the code. See tchar-local.h 
-//#define lstat(A,B)      stat(A,B)
-#define realpath(A,B)   _fullpath(B,A,PATH_MAX) 
-
-__BEGIN_DECLS
-char *basename(char *a);
-extern char *optarg;
-extern int optind;
-int getopt(int argc, char *const argv[], const char *optstring);
-__END_DECLS
-#endif   /* ifndef _WIN32,#else */
-
-
 
 // Modes 58-62 are reserved for future use in expert mode
 // These are the types of files we can encounter while hashing 
@@ -294,5 +272,29 @@ __END_DECLS
 #define stat_socket     6
 #define stat_symlink    7
 #define stat_unknown  254
+#endif
+
+// Set up the environment for the *nix operating systems (Mac, Linux, 
+// BSD, Solaris, and really everybody except Microsoft Windows) 
+#ifndef _WIN32
+typedef char TCHAR;
+
+#if defined(__cplusplus)
+typedef std::string tstring;
+#endif
+
+#  define CMD_PROMPT	"$"
+#  define DIR_SEPARATOR   '/'
+#  define NEWLINE		"\n"
+#  define LINE_LENGTH	74
+#  define BLANK_LINE \
+"                                                                          "
+
+#  ifndef HAVE_FSEEKO
+#    define fseeko fseek
+#    define ftello ftell
+#  endif
+#endif
+
 
 #endif /* ifndef __COMMON_H */
