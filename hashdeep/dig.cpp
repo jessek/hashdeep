@@ -91,52 +91,52 @@ void remove_double_dirs(tstring &fn)
 // The following turns d: into d:\ and d:\foo\ into d:\foo 
 
 #ifdef _WIN32
-static void clean_name_win32(TCHAR *fn)
+static void clean_name_win32(tstring &fn)
 {
-  size_t length = _tcslen(fn);
+    size_t length = _tcslen(fn);
 
-  if (length < 2)
-    return;
+    if (length < 2)
+	return;
 
-  if (length == 2 && fn[1] == _TEXT(':'))
-  {
-    fn[length+1] = 0;
-    fn[length]   = _TEXT(DIR_SEPARATOR);
-    return;
-  }
+    if (length == 2 && fn[1] == _TEXT(':'))
+	{
+	    fn[length+1] = 0;
+	    fn[length]   = _TEXT(DIR_SEPARATOR);
+	    return;
+	}
 
-  if (fn[length-1] == _TEXT(DIR_SEPARATOR) && length != 3)
-  {
-    fn[length - 1] = 0;
-  }
+    if (fn[length-1] == _TEXT(DIR_SEPARATOR) && length != 3)
+	{
+	    fn[length - 1] = 0;
+	}
 }
 
-static int is_win32_device_file(TCHAR *fn)
+static int is_win32_device_file(tstring &fn)
 {
-  // Specifications for device files came from
-  // http://msdn.microsoft.com/en-us/library/aa363858(VS.85).aspx
-  // Physical devices (like hard drives) are 
-  //   \\.\PhysicalDriveX where X is a digit from 0 to 9
-  // Tape devices are \\.\tapeX where X is a digit from 0 to 9
-  // Logical volumes are \\.\X: where X is a letter */
+    // Specifications for device files came from
+    // http://msdn.microsoft.com/en-us/library/aa363858(VS.85).aspx
+    // Physical devices (like hard drives) are 
+    //   \\.\PhysicalDriveX where X is a digit from 0 to 9
+    // Tape devices are \\.\tapeX where X is a digit from 0 to 9
+    // Logical volumes are \\.\X: where X is a letter */
 
-  if (!_tcsnicmp(fn, _TEXT("\\\\.\\physicaldrive"),17) &&
-      (_tcslen(fn) == 18) && 
-      isdigit(fn[17]))
-    return TRUE;
+    if (!_tcsnicmp(fn, _TEXT("\\\\.\\physicaldrive"),17) &&
+	(_tcslen(fn) == 18) && 
+	isdigit(fn[17]))
+	return TRUE;
 
-  if (!_tcsnicmp(fn, _TEXT("\\\\.\\tape"),8) &&
-      (_tcslen(fn) == 9) && 
-      isdigit(fn[8]))
-    return TRUE;
+    if (!_tcsnicmp(fn, _TEXT("\\\\.\\tape"),8) &&
+	(_tcslen(fn) == 9) && 
+	isdigit(fn[8]))
+	return TRUE;
  
-  if ((!_tcsnicmp(fn,_TEXT("\\\\.\\"),4)) &&
-      (_tcslen(fn) == 6) &&
-      (isalpha(fn[4])) &&
-      (fn[5] == ':'))
-    return TRUE;
+    if ((!_tcsnicmp(fn,_TEXT("\\\\.\\"),4)) &&
+	(_tcslen(fn) == 6) &&
+	(isalpha(fn[4])) &&
+	(fn[5] == ':'))
+	return TRUE;
 
-  return FALSE;
+    return FALSE;
 }
 
 #endif  // ifdef _WIN32 
@@ -145,23 +145,23 @@ static int is_win32_device_file(TCHAR *fn)
 static void clean_name(state *s, tstring &fn)
 {
 #ifdef _WIN32
-  clean_name_win32(fn);
+    clean_name_win32(fn);
 #else
 
-  // We don't need to call these functions when running in Windows
-  // as we've already called real_path() on them in main.c. These
-  // functions are necessary in *nix so that we can clean up the 
-  // path names without removing the names of symbolic links. They
-  // are also called when the user has specified an absolute path
-  // but has included extra double dots or such.
-  //
-  // TODO: See if Windows Vista's symbolic links create problems 
+    // We don't need to call these functions when running in Windows
+    // as we've already called real_path() on them in main.c. These
+    // functions are necessary in *nix so that we can clean up the 
+    // path names without removing the names of symbolic links. They
+    // are also called when the user has specified an absolute path
+    // but has included extra double dots or such.
+    //
+    // TODO: See if Windows Vista's symbolic links create problems 
 
-  if (!(s->mode & mode_relative))  {
-      remove_double_slash(fn);
-      remove_single_dirs(fn);
-      remove_double_dirs(fn);
-  }
+    if (!(s->mode & mode_relative))  {
+	remove_double_slash(fn);
+	remove_single_dirs(fn);
+	remove_double_dirs(fn);
+    }
 #endif
 }
 
@@ -202,7 +202,7 @@ void print_last_error(char * function_name)
 //
 // This function detects junction points and returns TRUE if the
 // given filename is a junction point. Otherwise it returns FALSE.
-static int is_junction_point(const tstring &fn)
+static bool is_junction_point(const tstring &fn)
 {
     int status = FALSE;
 
@@ -248,47 +248,47 @@ static int is_junction_point(const tstring &fn)
 /*
   #include <ddk/ntifs.h>
   
-    if (status)
-    {
-      HANDLE hFile = CreateFile(fn,
-				0,   // desired access
-				FILE_SHARE_READ,
-				NULL,  
-				OPEN_EXISTING,
-				(FILE_FLAG_OPEN_REPARSE_POINT | 
-				 FILE_FLAG_BACKUP_SEMANTICS),
-				NULL);
+  if (status)
+  {
+  HANDLE hFile = CreateFile(fn,
+  0,   // desired access
+  FILE_SHARE_READ,
+  NULL,  
+  OPEN_EXISTING,
+  (FILE_FLAG_OPEN_REPARSE_POINT | 
+  FILE_FLAG_BACKUP_SEMANTICS),
+  NULL);
 
-      if (INVALID_HANDLE_VALUE == hFile)
-      {
-	print_last_error(L"CreateFile");
-      }
-      else
-      {
-	print_status("Opened ok!");
+  if (INVALID_HANDLE_VALUE == hFile)
+  {
+  print_last_error(L"CreateFile");
+  }
+  else
+  {
+  print_status("Opened ok!");
 
-	REPARSE_DATA_BUFFER buf;
-	uint8_t bytesReturned;
-	LPOVERLAPPED ov;
+  REPARSE_DATA_BUFFER buf;
+  uint8_t bytesReturned;
+  LPOVERLAPPED ov;
 
-	int rc = DeviceIoControl(hFile,
-				 FSCTL_GET_REPARSE_POINT,
-				 NULL,
-				 0,
-				 &buf,
-				 MAXIMUM_REPARSE_DATA_BUFFER_SIZE,
-				 &bytesReturned,
-				 ov);
-	if (!rc)
-	{
-	  print_last_error(L"DeviceIoControl");
-	}
+  int rc = DeviceIoControl(hFile,
+  FSCTL_GET_REPARSE_POINT,
+  NULL,
+  0,
+  &buf,
+  MAXIMUM_REPARSE_DATA_BUFFER_SIZE,
+  &bytesReturned,
+  ov);
+  if (!rc)
+  {
+  print_last_error(L"DeviceIoControl");
+  }
 
-	CloseHandle(hFile);
-      }
-    }
+  CloseHandle(hFile);
+  }
+  }
 
-    FindClose(hFind);
+  FindClose(hFind);
 */
 
 
@@ -304,104 +304,101 @@ static bool is_special_dir(const tstring &d)
 
 static int process_dir(state *s, const tstring &fn)
 {
-  int return_value = STATUS_OK;
-  _TDIR *current_dir;
-  struct _tdirent *entry;
+    int return_value = STATUS_OK;
+    _TDIR *current_dir;
+    struct _tdirent *entry;
 
-  //  print_status (_TEXT("Called process_dir(%s)"), fn);
+    //  print_status (_TEXT("Called process_dir(%s)"), fn);
 
-  if (have_processed_dir(fn)) {
-    print_error_filename(fn,"symlink creates cycle");
-    return STATUS_OK;
-  }
-
-  if (!processing_dir(fn)){
-      internal_error("%s: Cycle checking failed to register directory.", fn.c_str());
-  }
-  
-  if ((current_dir = _topendir(fn.c_str())) == NULL)   {
-    print_error_filename(fn,"%s", strerror(errno));
-    return STATUS_OK;
-  }    
-
-  while ((entry = _treaddir(current_dir)) != NULL)   {
-    if (is_special_dir(entry->d_name))
-      continue;
-    
-    tstring new_file = fn + DIR_SEPARATOR + entry->d_name;
-    if (is_junction_point(s,new_file)){
-	continue;
+    if (have_processed_dir(fn)) {
+	print_error_filename(fn,"symlink creates cycle");
+	return STATUS_OK;
     }
-    return_value = dig_normal(s,new_file);
 
-  }
-  _tclosedir(current_dir);
+    processing_dir(fn);			// note that we are now processing a directory
   
-  if (!done_processing_dir(fn)){
-      internal_error("%s: Cycle checking failed to unregister directory.", main::make_utf8(fn).c_str());
-  }
+    if ((current_dir = _topendir(fn.c_str())) == NULL)   {
+	print_error_filename(fn,"%s", strerror(errno));
+	return STATUS_OK;
+    }    
 
-  return return_value;
+    while ((entry = _treaddir(current_dir)) != NULL)   {
+	if (is_special_dir(entry->d_name))
+	    continue;
+    
+	tstring new_file = fn + DIR_SEPARATOR + entry->d_name;
+	if (is_junction_point(new_file)){
+	    continue;
+	}
+	return_value = dig_normal(s,new_file);
+
+    }
+    _tclosedir(current_dir);
+  
+    done_processing_dir(fn);		// note that we are done with this directory
+
+    return return_value;
 }
 
 
 static file_types file_type_helper(_tstat_t sb)
 {
-  if (S_ISREG(sb.st_mode)) return stat_regular;
+    if (S_ISREG(sb.st_mode)) return stat_regular;
   
-  if (S_ISDIR(sb.st_mode)) return stat_directory;
+    if (S_ISDIR(sb.st_mode)) return stat_directory;
   
-  if (S_ISBLK(sb.st_mode)) return stat_block;
+    if (S_ISBLK(sb.st_mode)) return stat_block;
   
-  if (S_ISCHR(sb.st_mode)) return stat_character;
+    if (S_ISCHR(sb.st_mode)) return stat_character;
   
-  if (S_ISFIFO(sb.st_mode)) return stat_pipe;
+    if (S_ISFIFO(sb.st_mode)) return stat_pipe;
 
-  // These file types do not exist in Win32 
+    // These file types do not exist in Win32 
 #ifndef _WIN32
-  if (S_ISSOCK(sb.st_mode)) return stat_socket;
+    if (S_ISSOCK(sb.st_mode)) return stat_socket;
   
-  if (S_ISLNK(sb.st_mode)) return stat_symlink;  
+    if (S_ISLNK(sb.st_mode)) return stat_symlink;  
 #endif   // ifndef _WIN32 
 
-  // Used to detect Solaris doors 
+    // Used to detect Solaris doors 
 #ifdef S_IFDOOR
 #ifdef S_ISDOOR
-  if (S_ISDOOR(sb.st_mode)) return stat_door;
+    if (S_ISDOOR(sb.st_mode)) return stat_door;
 #endif
 #endif
 
-  return stat_unknown;
+    return stat_unknown;
 }
 
 
 // Use a stat function to look up while kind of file this is
 // and, if possible, it's size.
-static file_types file_type(state *s,file_data_hasher_t *fdht, TCHAR *fn)
+static file_types file_type(state *s,file_data_hasher_t *fdht, const tstring &fn)
 {
-  _tstat_t sb;
+    _tstat_t sb;
 
-  if (_lstat(fn,&sb))  {
-    print_error_filename(fn,"%s", strerror(errno));
-    return stat_unknown;
-  }
+    if (_lstat(fn.c_str(),&sb))  {
+	print_error_filename(fn,"%s", strerror(errno));
+	return stat_unknown;
+    }
 
-  fdht->stat_bytes = sb.st_size;
+    fdht->stat_bytes = sb.st_size;
 
-  // On Win32 this should be the creation time, but on all other systems
-  // it will be the change time.
-  fdht->timestamp = sb.st_ctime; 
+    // On Win32 this should be the creation time, but on all other systems
+    // it will be the change time.
+    fdht->timestamp = sb.st_ctime; 
 
-  return file_type_helper(sb);
+    return file_type_helper(sb);
 }
 
-static int should_hash_symlink(state *s, TCHAR *fn, file_types *link_type);
+static int should_hash_symlink(state *s, const tstring &fn, file_types *link_type);
 
 
 // Type should be the result of calling lstat on the file. We want to
 // know what this file is, not what it points to
-static int should_hash_expert(state *s, TCHAR *fn, int type)
+static int should_hash_expert(state *s, const tstring &fn, file_types type)
 {
+    file_types link_type=stat_unknown;
     switch(type)  {
 
     case stat_directory:
@@ -434,103 +431,101 @@ static int should_hash_expert(state *s, TCHAR *fn, int type)
 	// and gets into an infinite loop.
 
 	if (!(s->mode & mode_symlink)) return FALSE;
-
-	int link_type=0;
 	if (should_hash_symlink(s,fn,&link_type)){
 	    return should_hash_expert(s,fn,link_type);
-	} else {
-	    return FALSE;
 	}
+	return FALSE;
+    case stat_unknown:
+	print_error_filename(fn,"unknown file type");
+	return FALSE;
     }
     return FALSE;
 }
 
 
-static int should_hash_symlink(state *s, TCHAR *fn, file_types *link_type)
+static int should_hash_symlink(state *s, const tstring &fn, file_types *link_type)
 {
-  int type;
-  _tstat_t sb;
+    file_types type;
+    _tstat_t sb;
 
-  // We must look at what this symlink points to before we process it.
-  // The normal file_type function uses lstat to examine the file,
-  // we use stat to examine what this symlink points to. 
-  if (_sstat(fn,&sb))
-  {
-    print_error_filename(fn,"%s",strerror(errno));
-    return FALSE;
-  }
-
-  type = file_type_helper(sb);
-
-  if (type == stat_directory)
-  {
-    if (s->mode & mode_recursive)
-      process_dir(s,fn);
-    else
-    {
-      print_error_filename(fn,"Is a directory");
+    // We must look at what this symlink points to before we process it.
+    // The normal file_type function uses lstat to examine the file,
+    // we use stat to examine what this symlink points to. 
+    if (_sstat(fn.c_str(),&sb))  {
+	print_error_filename(fn,"%s",strerror(errno));
+	return FALSE;
     }
-    return FALSE;
-  }    
 
-  if (link_type != NULL)
-    *link_type = type;
-  return TRUE;    
+    type = file_type_helper(sb);
+
+    if (type == stat_directory)  {
+	if (s->mode & mode_recursive)
+	    process_dir(s,fn);
+	else    {
+	    print_error_filename(fn,"Is a directory");
+	}
+	return FALSE;
+    }    
+
+    if (link_type) *link_type = type;
+    return TRUE;    
 }
     
 
-static int should_hash(state *s, file_data_hasher_t *fdht,TCHAR *fn)
+static int should_hash(state *s, file_data_hasher_t *fdht,const tstring &fn)
 {
-  int type;
+    file_types type;
 
-  // We must reset the number of bytes in each file processed
-  // so that we can tell if fstat reads the number successfully
-  fdht->stat_bytes = UNKNOWN_FILE_SIZE;
-  fdht->timestamp   = 0;
+    // We must reset the number of bytes in each file processed
+    // so that we can tell if fstat reads the number successfully
+    fdht->stat_bytes = UNKNOWN_FILE_SIZE;
+    fdht->timestamp   = 0;
 
-  type = file_type(s,fdht,fn);
+    type = file_type(s,fdht,fn);
   
-  if (s->mode & mode_expert)
-    return (should_hash_expert(s,fn,type));
-
-  if (type == stat_directory)
-  {
-    if (s->mode & mode_recursive)
-      process_dir(s,fn);
-    else 
-    {
-      print_error_filename(fn,"Is a directory");
+    if (s->mode & mode_expert){
+	return (should_hash_expert(s,fn,type));
     }
-    return FALSE;
-  }
+
+    if (type == stat_directory)  {
+	if (s->mode & mode_recursive){
+	    process_dir(s,fn);
+	}    else     {
+	    print_error_filename(fn,"Is a directory");
+	}
+	return FALSE;
+    }
 
 #ifndef _WIN32
-  if (type == stat_symlink)
-    return should_hash_symlink(s,fn,NULL);
+    if (type == stat_symlink)
+	return should_hash_symlink(s,fn,NULL);
 #endif
 
-  if (type == stat_unknown)
-    return FALSE;
+    if (type == stat_unknown){
+	return FALSE;
+    }
 
-  // By default we hash anything we can't identify as a "bad thing"
-  return TRUE;
+    // By default we hash anything we can't identify as a "bad thing"
+    return TRUE;
 }
 
 
-    // RBF - Standardize return values for this function and audit functions
-    // This function returns FALSE. hash_file, called above, returns STATUS_OK
-    // process_win32 also returns STATUS_OK. 
-    // display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.
-    // Pick one and stay with it!
-int dig_normal(state *s, TCHAR *fn)
+// RBF - Standardize return values for this function and audit functions
+// This function returns FALSE. hash_file, called above, returns STATUS_OK
+// process_win32 also returns STATUS_OK. 
+// display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.
+// Pick one and stay with it!
+int dig_normal(state *s, const tstring &fn)
 {
     int ret = FALSE;
     file_data_hasher_t *fdht = new file_data_hasher_t(s->mode & mode_piecewise);
     fdht->retain();
-    clean_name(s,fn);
 
-    if (should_hash(s,fdht,fn)){
-	ret = s->hash_file(fdht,fn);
+    tstring fn2(fn);
+    clean_name(s,fn2);
+
+    if (should_hash(s,fdht,fn2)){
+	ret = s->hash_file(fdht,fn2);
     }
     fdht->release();
     return ret;
@@ -540,111 +535,105 @@ int dig_normal(state *s, TCHAR *fn)
 #ifdef _WIN32
 // extract the directory name
 // Works like dirname(3), but accepts a TCHAR* instead of char*
-int my_dirname(TCHAR *c)
+int my_dirname(const tstring &c)
 {
-  TCHAR *tmp;
+    TCHAR *tmp;
 
 
-  // If there are no DIR_SEPARATORs in the directory name, then the 
-  // directory name should be the empty string
-  tmp = _tcsrchr(c,DIR_SEPARATOR);
-  if (NULL != tmp)
-    tmp[1] = 0;
-  else
-    c[0] = 0;
+    // If there are no DIR_SEPARATORs in the directory name, then the 
+    // directory name should be the empty string
+    tmp = _tcsrchr(c,DIR_SEPARATOR);
+    if (NULL != tmp)
+	tmp[1] = 0;
+    else
+	c[0] = 0;
 
-  return FALSE;
+    return FALSE;
 }
 
 
-int dig_win32(state *s, TCHAR *fn)
+int dig_win32(state *s, const tstring &fn)
 {
-  int rc, status = STATUS_OK;
-  TCHAR *asterisk, *question;
-  WIN32_FIND_DATA FindFileData;
-  HANDLE hFind;
+    int rc, status = STATUS_OK;
+    TCHAR *asterisk, *question;
+    WIN32_FIND_DATA FindFileData;
+    HANDLE hFind;
 
-  //  print_status("Called process_win32(%S)", fn);
+    //  print_status("Called process_win32(%S)", fn);
 
-  if (is_win32_device_file(fn)){
-    return (hash_file(s,fn));
-  }
+    if (is_win32_device_file(fn)){
+	return (hash_file(s,fn));
+    }
 
-  // Filenames without wildcards can be processed by the
-  // normal recursion code.
-  asterisk = _tcschr(fn,L'*');
-  question = _tcschr(fn,L'?');
-  if (NULL == asterisk && NULL == question)
-    return (dig_normal(s,fn));
+    // Filenames without wildcards can be processed by the
+    // normal recursion code.
+    asterisk = _tcschr(fn,L'*');
+    question = _tcschr(fn,L'?');
+    if (NULL == asterisk && NULL == question)
+	return (dig_normal(s,fn));
   
-  hFind = FindFirstFile(fn, &FindFileData);
-  if (INVALID_HANDLE_VALUE == hFind)
-  {
-    print_error_filename(fn,"No such file or directory");
-    return STATUS_OK;
-  }
+    hFind = FindFirstFile(fn, &FindFileData);
+    if (INVALID_HANDLE_VALUE == hFind)  {
+	print_error_filename(fn,"No such file or directory");
+	return STATUS_OK;
+    }
   
 #define FATAL_ERROR_UNK(A) if (NULL == A) fatal_error("%s: %s", __progname, strerror(errno));
 #define FATAL_ERROR_MEM(A) if (NULL == A) fatal_error("%s: Out of memory", __progname);
   
-  TCHAR new_fn[PATH_MAX];
-  TCHAR dirname[PATH_MAX];
+    TCHAR new_fn[PATH_MAX];
+    TCHAR dirname[PATH_MAX];
   
-  _tcsncpy(dirname,fn,sizeof(dirname);
+    _tcsncpy(dirname,fn,sizeof(dirname));
   
-  my_dirname(dirname);
+    my_dirname(dirname);
   
-  rc = 1;
-  while (0 != rc)
-  {
-    if (!(is_special_dir(FindFileData.cFileName)))
-    {
-      // The filename we've found doesn't include any path information.
-      // We have to add it back in manually. Thankfully Windows doesn't
-      // allow wildcards in the early part of the path. For example,
-      // we will never see:  c:\bin\*\tools 
-      //
-      // Because the wildcard is always in the last part of the input
-      // (e.g. c:\bin\*.exe) we can use the original dirname, combined
-      // with the filename we've found, to make the new filename. 
+    rc = 1;
+    while (0 != rc)  {
+	if (!(is_special_dir(FindFileData.cFileName)))    {
+	    // The filename we've found doesn't include any path information.
+	    // We have to add it back in manually. Thankfully Windows doesn't
+	    // allow wildcards in the early part of the path. For example,
+	    // we will never see:  c:\bin\*\tools 
+	    //
+	    // Because the wildcard is always in the last part of the input
+	    // (e.g. c:\bin\*.exe) we can use the original dirname, combined
+	    // with the filename we've found, to make the new filename. 
       
-      if (s->mode & mode_relative)
-      {
-	  _sntprintf(new_fn,sizeof(new_fn),
-		     _TEXT("%s%s"), dirname, FindFileData.cFileName);
-      }
-      else
-      {	  
-	  TCHAR tmp[PATH_MAX];
-	  _sntprintf(tmp,sizeof(tmp),_TEXT("%s%s"),dirname,FindFileData.cFileName);
-	_wfullpath(new_fn,tmp,PATH_MAX);
-      }
+	    if (s->mode & mode_relative)      {
+		_sntprintf(new_fn,sizeof(new_fn),
+			   _TEXT("%s%s"), dirname, FindFileData.cFileName);
+	    }
+	    else      {	  
+		TCHAR tmp[PATH_MAX];
+		_sntprintf(tmp,sizeof(tmp),_TEXT("%s%s"),dirname,FindFileData.cFileName);
+		_wfullpath(new_fn,tmp,PATH_MAX);
+	    }
       
-      if (!(is_junction_point(s,new_fn)))
-	dig_normal(s,new_fn); 
-    }
+	    if (!(is_junction_point(new_fn))) dig_normal(s,new_fn); 
+	}
     
-    rc = FindNextFile(hFind, &FindFileData);
-  }
+	rc = FindNextFile(hFind, &FindFileData);
+    }
   
-  // rc now equals zero, we can't find the next file
+    // rc now equals zero, we can't find the next file
 
-  if (ERROR_NO_MORE_FILES != GetLastError())  {
-    // The Windows API for getting an intelligible error message
-    // is beserk. Rather than play their silly games, we 
-    // acknowledge that an unknown error occured and hope we
-    // can continue.
-    print_error_filename(fn,"Unknown error while expanding wildcard");
-    return STATUS_OK;
-  }
+    if (ERROR_NO_MORE_FILES != GetLastError())  {
+	// The Windows API for getting an intelligible error message
+	// is beserk. Rather than play their silly games, we 
+	// acknowledge that an unknown error occured and hope we
+	// can continue.
+	print_error_filename(fn,"Unknown error while expanding wildcard");
+	return STATUS_OK;
+    }
   
-  rc = FindClose(hFind);
-  if (0 == rc)  {
-    print_error_filename(
-			fn,
-			"Unknown error while cleaning up wildcard expansion");
-  }
-  return status;
+    rc = FindClose(hFind);
+    if (0 == rc)  {
+	print_error_filename(
+			     fn,
+			     "Unknown error while cleaning up wildcard expansion");
+    }
+    return status;
 }
 #endif
 

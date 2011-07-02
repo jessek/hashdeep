@@ -21,6 +21,7 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include "utf8.h"
 
 using namespace std;
 
@@ -483,6 +484,15 @@ std::string to_string(const char *buf)
     return std::string(buf);
 }
 
+#ifdef _WIN32
+std::string main::make_utf8(wstring str)
+{
+    string utf8_line;
+    utf8::utf16to8(s.begin(),s.end(),back_inserter(utf8_line));
+    return utf8_line;
+
+}
+#endif
 
 
 tstring main::getcwd()

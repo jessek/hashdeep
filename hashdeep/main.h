@@ -451,7 +451,9 @@ public:
     static tstring getcwd();			  // returns the current directory
     static tstring get_realpath(const tstring &fn); // returns the full path
     static std::string get_realpath8(const std::string &fn); // returns the full path in UTF-8
-    static std::string make_utf8(const std::string &str);
+    static std::string make_utf8(const std::string &str){
+	return str;			// it's already in utf8
+    }
 #ifdef _WIN32
     static std::string make_utf8(const wstring &wstr);
     static const char *make_array(const std::string &str){
@@ -587,8 +589,8 @@ std::string tchar_to_utf8(TCHAR *);		// returns a UTF-8 string for a TCHAR
 // CYCLE CHECKING
 // ----------------------------------------------------------------
 int have_processed_dir(const tstring &fn);
-int processing_dir(const tstring &fn);
-int done_processing_dir(const tstring &fn);
+void processing_dir(const tstring &fn);
+void done_processing_dir(const tstring &fn);
 
 // ------------------------------------------------------------------
 // HELPER FUNCTIONS
@@ -613,8 +615,8 @@ off_t find_file_size(FILE *f);
 // MAIN PROCESSING
 // ------------------------------------------------------------------ 
 /* dig.cpp */
-int dig_normal(state *s, tstring path);	// posix  & win32 
-int dig_win32(state *s, tstring path);	// win32 only; calls dig_normal
+int dig_normal(state *s, const tstring &path);	// posix  & win32 
+int dig_win32(state *s, const tstring &path);	// win32 only; calls dig_normal
 int md5deep_process_command_line(state *s, int argc, char **argv);
 
 
