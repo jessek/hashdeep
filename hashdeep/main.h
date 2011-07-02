@@ -1,5 +1,20 @@
+/*
+ * main.h:
+ *
+ * This is the main file included by all other modules in md5deep/hashdeep/etc.
+ * 
+ * It includes:
+ * common.h - the common system include files
+ * xml.h    - the C++ XML system.
+ * hash function headers
+ *
+ * C++ STL stuff.
+ *
+ * It then creates all the C++ classes and structures used.
+ *
+ * $Id: main.h,v 1.14 2007/12/28 01:49:36 jessekornblum Exp $
+ */
 
-/* $Id: main.h,v 1.14 2007/12/28 01:49:36 jessekornblum Exp $ */
 
 #ifndef __MAIN_H
 #define __MAIN_H
@@ -104,8 +119,7 @@ extern bool opt_estimate;		// print ETA
   * Update the usage function and man page to include the function
   */
 
-typedef enum
-{ 
+typedef enum{ 
   alg_md5=0, 
   alg_sha1, 
   alg_sha256, 
@@ -116,6 +130,18 @@ typedef enum
      as a loop terminator in many functions. */
   alg_unknown 
 } hashid_t;
+
+typedef enum {
+    stat_regular=0,
+    stat_directory,
+    stat_door,
+    stat_block,
+    stat_character,
+    stat_pipe,
+    stat_socket,
+    stat_symlink,
+    stat_unknown=254
+} file_types;
 
 #define NUM_ALGORITHMS  alg_unknown
 
@@ -422,7 +448,9 @@ public:
 
 class main {
 public:
-    static tstring getcwd();
+    static tstring getcwd();			  // returns the current directory
+    static tstring get_realpath(const tstring &fn); // returns the full path
+    static std::string get_realpath8(const std::string &fn); // returns the full path in UTF-8
     static std::string make_utf8(const std::string &str);
 #ifdef _WIN32
     static std::string make_utf8(const wstring &wstr);
@@ -558,9 +586,9 @@ std::string tchar_to_utf8(TCHAR *);		// returns a UTF-8 string for a TCHAR
 // ----------------------------------------------------------------
 // CYCLE CHECKING
 // ----------------------------------------------------------------
-int have_processed_dir(TCHAR *fn);
-int processing_dir(TCHAR *fn);
-int done_processing_dir(TCHAR *fn);
+int have_processed_dir(const tstring &fn);
+int processing_dir(const tstring &fn);
+int done_processing_dir(const tstring &fn);
 
 // ------------------------------------------------------------------
 // HELPER FUNCTIONS

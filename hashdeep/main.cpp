@@ -500,6 +500,30 @@ tstring main::getcwd()
 #endif    
 }
 
+/* Return the canonicalized absolute pathname in UTF-8 on Windows and POSIX systems */
+tstring main::get_realpath(const tstring &fn)
+{
+#ifdef _WIN32    
+    /*
+     * expand a relative path to the full path.
+     * http://msdn.microsoft.com/en-us/library/506720ff(v=vs.80).aspx
+     */
+    TCHAR absPath[PATH_MAX];
+    if(_fullpath(absPath,fn,PAT_HMAX)==0) return "";
+    return tstring(absPath);
+#else
+    char resolved_name[PATH_MAX];	//
+    if(realpath(fn.c_str(),resolved_name)==0) return "";
+    return tstring(resolved_name);
+#endif
+}
+
+std::string main::get_realpath8(const tstring &fn)
+{
+    return main::make_utf8(main::get_realpath(fn));
+}
+
+
 int main(int argc, char **argv)
 {
     int status = EXIT_SUCCESS;

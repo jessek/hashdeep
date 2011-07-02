@@ -16,7 +16,6 @@
 
 #include "main.h"
 
-
 /*
  * These functions have code to handle WIN32, but they are never called on WIN32 systems.
  */
@@ -168,33 +167,32 @@ static void clean_name(state *s, tstring &fn)
 
 
 //  Debugging function
-/*
 #ifdef _WIN32
-static void print_last_error(char * function_name)
+void print_last_error(char * function_name)
 {
-  // Copied from http://msdn.microsoft.com/en-us/library/ms680582(VS.85).aspx
-  // Retrieve the system error message for the last-error code
+    // Copied from http://msdn.microsoft.com/en-us/library/ms680582(VS.85).aspx
+    // Retrieve the system error message for the last-error code
 
-  LPTSTR pszMessage;
-  DWORD dwLastError = GetLastError(); 
+    LPTSTR pszMessage;
+    DWORD dwLastError = GetLastError(); 
 
-  FormatMessage((FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-		 FORMAT_MESSAGE_FROM_SYSTEM |
-		 FORMAT_MESSAGE_IGNORE_INSERTS),
-		NULL,
-		dwLastError,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPTSTR) &pszMessage,
-		0, NULL );
+    FormatMessage((FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+		   FORMAT_MESSAGE_FROM_SYSTEM |
+		   FORMAT_MESSAGE_IGNORE_INSERTS),
+		  NULL,
+		  dwLastError,
+		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		  (LPTSTR) &pszMessage,
+		  0, NULL );
   
-  // Display the error message and exit the process
-  fprintf(stdout,"%s failed with error %ld: ", function_name, dwLastError);
-  output_filename(stdout,pszMessage);
+    // Display the error message and exit the process
+    fprintf(stdout,"%s failed with error %ld: ", function_name, dwLastError);
+    output_filename(stdout,pszMessage);
   
-  LocalFree(pszMessage);
+    LocalFree(pszMessage);
 }
 #endif
-*/
+
 
 // An NTFS Junction Point is like a hard link on *nix but only works
 // on the same filesystem and only for directories. Unfortunately they
@@ -204,50 +202,44 @@ static void print_last_error(char * function_name)
 //
 // This function detects junction points and returns TRUE if the
 // given filename is a junction point. Otherwise it returns FALSE.
-static int is_junction_point(state *s, TCHAR *fn)
+static int is_junction_point(const tstring &fn)
 {
-  int status = FALSE;
-
-  if (NULL == s || NULL == fn)
-    return FALSE;
-
+    int status = FALSE;
 
 #ifdef _WIN32
-  WIN32_FIND_DATA FindFileData;
-  HANDLE hFind;
+    WIN32_FIND_DATA FindFileData;
+    HANDLE hFind;
 
-  hFind = FindFirstFile(fn, &FindFileData);
-  if (INVALID_HANDLE_VALUE != hFind)
-  {
-    if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
-    {
-      // We're going to skip this reparse point no matter what,
-      // but we may want to display a message just in case.
-      // TODO: Maybe have the option to follow symbolic links?
-      status = TRUE;
+    hFind = FindFirstFile(fn, &FindFileData);
+    if (INVALID_HANDLE_VALUE != hFind)  {
+	if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)    {
+	    // We're going to skip this reparse point no matter what,
+	    // but we may want to display a message just in case.
+	    // TODO: Maybe have the option to follow symbolic links?
+	    status = TRUE;
 
-      if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0)
-      {
-	print_error_filename(fn,"Junction point, skipping");
-      }
-      else if (IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0)
-      {
-	print_error_filename(fn,"Symbolic link, skipping");
-      }	
-      else 
-      {
-	print_error_filename(fn,"Unknown reparse point 0x%"PRIx32", skipping",
-			    FindFileData.dwReserved0);
-      }
+	    if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0)
+		{
+		    print_error_filename(fn,"Junction point, skipping");
+		}
+	    else if (IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0)
+		{
+		    print_error_filename(fn,"Symbolic link, skipping");
+		}	
+	    else 
+		{
+		    print_error_filename(fn,"Unknown reparse point 0x%"PRIx32", skipping",
+					 FindFileData.dwReserved0);
+		}
+	}
+
+	// We don't error check this call as there's nothing to do differently
+	// if it fails.
+	FindClose(hFind);
     }
-
-    // We don't error check this call as there's nothing to do differently
-    // if it fails.
-    FindClose(hFind);
-  }
 #endif
 
-  return status;
+    return status;
 }
 
 // This is experimental code for reparse point process
@@ -297,104 +289,85 @@ static int is_junction_point(state *s, TCHAR *fn)
     }
 
     FindClose(hFind);
-    */
+*/
 
 
 
 
 // Returns TRUE if the directory is '.' or '..', otherwise FALSE
-static int is_special_dir(TCHAR *d)
+static bool is_special_dir(const tstring &d)
 {
-  return ((!_tcsncmp(d,_TEXT("."),1) && (_tcslen(d) == 1)) ||
-          (!_tcsncmp(d,_TEXT(".."),2) && (_tcslen(d) == 2)));
+    return main::make_utf8(d)=="." || main::make_utf8(d)=="..";
 }
 
 
 
-static int process_dir(state *s, TCHAR *fn)
+static int process_dir(state *s, const tstring &fn)
 {
   int return_value = STATUS_OK;
-  TCHAR *new_file;
   _TDIR *current_dir;
   struct _tdirent *entry;
 
   //  print_status (_TEXT("Called process_dir(%s)"), fn);
 
-  if (have_processed_dir(fn))
-  {
+  if (have_processed_dir(fn)) {
     print_error_filename(fn,"symlink creates cycle");
     return STATUS_OK;
   }
 
-  if (!processing_dir(fn))
-    internal_error("%s: Cycle checking failed to register directory.", fn);
+  if (!processing_dir(fn)){
+      internal_error("%s: Cycle checking failed to register directory.", fn.c_str());
+  }
   
-  if ((current_dir = _topendir(fn)) == NULL) 
-  {
+  if ((current_dir = _topendir(fn.c_str())) == NULL)   {
     print_error_filename(fn,"%s", strerror(errno));
     return STATUS_OK;
   }    
 
-  new_file = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
-  if (NULL == new_file)
-    internal_error("%s: Out of memory", __progname);
-
-  while ((entry = _treaddir(current_dir)) != NULL) 
-  {
+  while ((entry = _treaddir(current_dir)) != NULL)   {
     if (is_special_dir(entry->d_name))
       continue;
     
-    _sntprintf(new_file,PATH_MAX,_TEXT("%s%c%s"),
-	       fn,DIR_SEPARATOR,entry->d_name);
-
-    if (is_junction_point(s,new_file))
-      continue;
-
+    tstring new_file = fn + DIR_SEPARATOR + entry->d_name;
+    if (is_junction_point(s,new_file)){
+	continue;
+    }
     return_value = dig_normal(s,new_file);
 
   }
-  free(new_file);
   _tclosedir(current_dir);
   
-  if (!done_processing_dir(fn))
-    internal_error("%s: Cycle checking failed to unregister directory.", fn);
+  if (!done_processing_dir(fn)){
+      internal_error("%s: Cycle checking failed to unregister directory.", main::make_utf8(fn).c_str());
+  }
 
   return return_value;
 }
 
 
-static int file_type_helper(_tstat_t sb)
+static file_types file_type_helper(_tstat_t sb)
 {
-  if (S_ISREG(sb.st_mode))
-    return stat_regular;
+  if (S_ISREG(sb.st_mode)) return stat_regular;
   
-  if (S_ISDIR(sb.st_mode))
-    return stat_directory;
+  if (S_ISDIR(sb.st_mode)) return stat_directory;
   
-  if (S_ISBLK(sb.st_mode))
-    return stat_block;
+  if (S_ISBLK(sb.st_mode)) return stat_block;
   
-  if (S_ISCHR(sb.st_mode))
-    return stat_character;
+  if (S_ISCHR(sb.st_mode)) return stat_character;
   
-  if (S_ISFIFO(sb.st_mode))
-    return stat_pipe;
+  if (S_ISFIFO(sb.st_mode)) return stat_pipe;
 
   // These file types do not exist in Win32 
 #ifndef _WIN32
+  if (S_ISSOCK(sb.st_mode)) return stat_socket;
   
-  if (S_ISSOCK(sb.st_mode))
-    return stat_socket;
-  
-  if (S_ISLNK(sb.st_mode))
-    return stat_symlink;  
+  if (S_ISLNK(sb.st_mode)) return stat_symlink;  
 #endif   // ifndef _WIN32 
 
   // Used to detect Solaris doors 
 #ifdef S_IFDOOR
 #ifdef S_ISDOOR
-  if (S_ISDOOR(sb.st_mode))
-    return stat_door;
+  if (S_ISDOOR(sb.st_mode)) return stat_door;
 #endif
 #endif
 
@@ -404,7 +377,7 @@ static int file_type_helper(_tstat_t sb)
 
 // Use a stat function to look up while kind of file this is
 // and, if possible, it's size.
-static int file_type(state *s,file_data_hasher_t *fdht, TCHAR *fn)
+static file_types file_type(state *s,file_data_hasher_t *fdht, TCHAR *fn)
 {
   _tstat_t sb;
 
@@ -422,72 +395,58 @@ static int file_type(state *s,file_data_hasher_t *fdht, TCHAR *fn)
   return file_type_helper(sb);
 }
 
-
-static int should_hash_symlink(state *s, TCHAR *fn, int *link_type);
-
-#define RETURN_IF_MODE(A) \
-if (s->mode & A) \
-  return TRUE; \
-break;
+static int should_hash_symlink(state *s, TCHAR *fn, file_types *link_type);
 
 
 // Type should be the result of calling lstat on the file. We want to
 // know what this file is, not what it points to
 static int should_hash_expert(state *s, TCHAR *fn, int type)
 {
-  int link_type;
+    switch(type)  {
 
-  switch(type)
-  {
+    case stat_directory:
+	if (s->mode & mode_recursive){
+	    process_dir(s,fn);
+	}
+	else {
+	    print_error_filename(fn,"Is a directory");
+	}
+	return FALSE;
 
-  case stat_directory:
-    if (s->mode & mode_recursive)
-      process_dir(s,fn);
-    else
-    {
-      print_error_filename(fn,"Is a directory");
+	// We can't just return s->mode & mode_X because mode_X is
+	// a 64-bit value. When that value gets converted back to int,
+	// the high part of it is lost. 
+
+#define RETURN_IF_MODE(A) if (s->mode & A) return TRUE; break;
+    case stat_regular:   RETURN_IF_MODE(mode_regular);
+    case stat_block:     RETURN_IF_MODE(mode_block);
+    case stat_character: RETURN_IF_MODE(mode_character);
+    case stat_pipe:      RETURN_IF_MODE(mode_pipe);
+    case stat_socket:    RETURN_IF_MODE(mode_socket);
+    case stat_door:      RETURN_IF_MODE(mode_door);
+    case stat_symlink: 
+
+	//  Although it might appear that we need nothing more than
+	//     return (s->mode & mode_symlink);
+	// that doesn't work. That logic gets into trouble when we're
+	// running in recursive mode on a symlink to a directory.
+	// The program attempts to open the directory entry itself
+	// and gets into an infinite loop.
+
+	if (!(s->mode & mode_symlink)) return FALSE;
+
+	int link_type=0;
+	if (should_hash_symlink(s,fn,&link_type)){
+	    return should_hash_expert(s,fn,link_type);
+	} else {
+	    return FALSE;
+	}
     }
     return FALSE;
-
-    // We can't just return s->mode & mode_X because mode_X is
-    // a 64-bit value. When that value gets converted back to int,
-    // the high part of it is lost. 
-
-  case stat_regular:   RETURN_IF_MODE(mode_regular);
-
-  case stat_block:     RETURN_IF_MODE(mode_block);
-    
-  case stat_character: RETURN_IF_MODE(mode_character);
-
-  case stat_pipe:      RETURN_IF_MODE(mode_pipe);
-
-  case stat_socket:    RETURN_IF_MODE(mode_socket);
-    
-  case stat_door:      RETURN_IF_MODE(mode_door);
-
-  case stat_symlink: 
-
-    //  Although it might appear that we need nothing more than
-    //     return (s->mode & mode_symlink);
-    // that doesn't work. That logic gets into trouble when we're
-    // running in recursive mode on a symlink to a directory.
-    // The program attempts to open the directory entry itself
-    // and gets into an infinite loop.
-
-    if (!(s->mode & mode_symlink))
-      return FALSE;
-
-    if (should_hash_symlink(s,fn,&link_type))
-      return should_hash_expert(s,fn,link_type);
-    else
-      return FALSE;
-  }
-  
-  return FALSE;
 }
 
 
-static int should_hash_symlink(state *s, TCHAR *fn, int *link_type)
+static int should_hash_symlink(state *s, TCHAR *fn, file_types *link_type)
 {
   int type;
   _tstat_t sb;
@@ -519,9 +478,6 @@ static int should_hash_symlink(state *s, TCHAR *fn, int *link_type)
   return TRUE;    
 }
     
-
-
-
 
 static int should_hash(state *s, file_data_hasher_t *fdht,TCHAR *fn)
 {
@@ -673,8 +629,7 @@ int dig_win32(state *s, TCHAR *fn)
   
   // rc now equals zero, we can't find the next file
 
-  if (ERROR_NO_MORE_FILES != GetLastError())
-  {
+  if (ERROR_NO_MORE_FILES != GetLastError())  {
     // The Windows API for getting an intelligible error message
     // is beserk. Rather than play their silly games, we 
     // acknowledge that an unknown error occured and hope we
@@ -684,8 +639,7 @@ int dig_win32(state *s, TCHAR *fn)
   }
   
   rc = FindClose(hFind);
-  if (0 == rc)
-  {
+  if (0 == rc)  {
     print_error_filename(
 			fn,
 			"Unknown error while cleaning up wildcard expansion");

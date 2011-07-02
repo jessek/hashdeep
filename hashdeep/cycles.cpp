@@ -36,29 +36,9 @@ class dir_table_t : std::set<std::string>{
 
 dir_table_t dir_table;
 
-
-/* Return the canonicalized absolute pathname in UTF-8 on Windows and POSIX systems */
-std::string get_realpath(const TCHAR *fn)
+void done_processing_dir(const tstring &fn)
 {
-#ifdef _WIN32    
-    /*
-     * expand a relative path to the full path.
-     * http://msdn.microsoft.com/en-us/library/506720ff(v=vs.80).aspx
-     */
-    TCHAR absPath[PATH_MAX];
-    if(_fullpath(absPath,fn,PAT_HMAX)==0) return "";
-    return tchar_to_utf8(absPath);
-#else
-    char resolved_name[PATH_MAX];	//
-    if(realpath(fn,resolved_name)==0) return "";
-    return std::string(resolved_name);
-#endif
-}
-
-
-void done_processing_dir(TCHAR *fn)
-{
-    std::string rp = get_realpath(fn);
+    std::string rp = main::get_realpath8(fn);
     dir_table_t::iterator pos = dir_table.find(rp);
     if(pos==dir_table.end()){
 	internal_error("%s: Directory %s not found in done_processing_dir", __progname, rp.c_str());
@@ -68,9 +48,9 @@ void done_processing_dir(TCHAR *fn)
 }
 
 
-int processing_dir(TCHAR *fn)
+int processing_dir(const string &fn)
 {
-    std::string rp = get_realpath(fn);
+    std::string rp = get_realpath8(fn);
     if(dir_table.find(rp)!=dir_table.end()){
 	internal_error("%s: Attempt to add existing %s in processing_dir", __progname, rp.c_str());
     }
@@ -81,7 +61,7 @@ int processing_dir(TCHAR *fn)
 
 int have_processed_dir(TCHAR *fn)
 {
-    return dir_table.find(get_realpath(fn))!=dir_table.end();
+    return dir_table.find(get_realpath8(fn))!=dir_table.end();
 }
 
 

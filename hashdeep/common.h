@@ -212,6 +212,8 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 #if defined(__cplusplus)
 /*
  * C++ implementation of a wchar_t string.
+ * It works like the regular string, except that it works with wide chars.
+ * Notice that .c_str() returns a wchar_t * pointer.
  */
 class wstring : public vector<wchar> {
     wstring(wchar_t *buf){
@@ -221,6 +223,12 @@ class wstring : public vector<wchar> {
 	}
     }
 };
+/* 
+ * Internally we use tstring.
+ * ON WIN32: we get a wstring.
+ * ON POSIX: we get a std::string.
+ */ 
+
 typedef wstring tstring; 
 #endif
 
@@ -258,28 +266,34 @@ typedef wstring tstring;
 "                                                                        "
 #define ftello   ftell
 #define fseeko   fseek
-
-// Modes 58-62 are reserved for future use in expert mode
-// These are the types of files we can encounter while hashing 
-// Note these will be stored in a uint8_t, so should be between
-// zero and 255.
-#define stat_regular    0
-#define stat_directory  1
-#define stat_door       2
-#define stat_block      3
-#define stat_character  4
-#define stat_pipe       5
-#define stat_socket     6
-#define stat_symlink    7
-#define stat_unknown  254
 #endif
 
 // Set up the environment for the *nix operating systems (Mac, Linux, 
 // BSD, Solaris, and really everybody except Microsoft Windows) 
+//
+// Do this by faking the wide-character functions
+
 #ifndef _WIN32
+/* The next few paragraphs are similar to tchar.h when UNICODE
+ * is not defined---that is, in the absence of a wide-char mode,
+ * all become the standard char * functions.
+ * tstring is then typedef'ed to be a std::string.
+ * This works just fine on Linux and OS X
+ */
+
 typedef char TCHAR;
+#define  _TDIR      DIR
 #define  _TEXT(A)   A
 #define  _tfopen    fopen
+
+#define  _topendir  opendir
+#define  _treaddir  readdir
+#define  _tdirent   dirent
+#define  _tclosedir closedir
+
+#define  _lstat     lstat
+#define  _sstat     stat
+#define  _tstat_t   struct stat
 
 
 #if defined(__cplusplus)
@@ -298,6 +312,5 @@ typedef std::string tstring;
 #    define ftello ftell
 #  endif
 #endif
-
 
 #endif /* ifndef __COMMON_H */
