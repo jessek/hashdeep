@@ -5,10 +5,16 @@
  *                    adds the directory to a table of directories, which is currently
  *                    a linked list but should probably be a C++ set of strings.
  * done_processing_dir() - removes a directory from the list.
- * have_processed_dir() - called in dig.cpp to determine if a directory that's being processed should still be processed.
+ *                    Generates an error if directory to be removed is not present (because
+ *                    that means we entered it twice.)
+ * have_processed_dir() - called in dig.cpp to determine if a directory that's being
+ *                       processed should still be processed.
  *
  * 
- * MD5DEEP
+ * Revision history:
+ * Version 3 - Present
+ * Version 4 - Rewritten by Simson Garfinkel to hold the full path
+ *             in a set of UTF-8 strings.
  *
  * By Jesse Kornblum
  *
@@ -23,177 +29,59 @@
  */
 
 #include "main.h"
+#include <set>
 
-typedef struct dir_table {
-  TCHAR *name;
-  struct dir_table *next;
-} dir_table;
+class dir_table_t : std::set<std::string>{
+};
 
-dir_table *my_table = NULL;
+dir_table_t dir_table;
 
 
-// Debugging code
-/*
-static void dump_table(void)
+/* Return the canonicalized absolute pathname in UTF-8 on Windows and POSIX systems */
+std::string get_realpath(const TCHAR *fn)
 {
-  struct dir_table *t = my_table;
-  printf ("\nTable contents:\n");
-  while (t != NULL)
-  {
-    display_filename(stdout,t->name,true);
-    printf ("\n");
-    t = t->next;
-  }
-  print_status ("-- end of table --\n");
-}
-*/
-
-
-
-int done_processing_dir(TCHAR *fn)
-{
-  if (NULL == fn)
-    return TRUE;
-
-  dir_table *last, *temp;
-  TCHAR *d_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
-
-#ifdef _WIN32
-  _wfullpath(d_name,fn,PATH_MAX);
+#ifdef _WIN32    
+    /*
+     * expand a relative path to the full path.
+     * http://msdn.microsoft.com/en-us/library/506720ff(v=vs.80).aspx
+     */
+    TCHAR absPath[PATH_MAX];
+    if(_fullpath(absPath,fn,PAT_HMAX)==0) return "";
+    return tchar_to_utf8(absPath);
 #else
-  if (NULL == realpath(fn,d_name))
-    return TRUE;
+    char resolved_name[PATH_MAX];	//
+    if(realpath(fn,resolved_name)==0) return "";
+    return string(resolved_name);
 #endif
-
-  if (my_table == NULL)
-  {
-    internal_error("Table is NULL in done_processing_dir");
-
-    // This code never gets executed... 
-    free(d_name);
-    return FALSE;
-  }
-
-  temp = my_table;
-
-  if (!_tcsncmp(d_name,temp->name,PATH_MAX))
-  {
-    my_table = my_table->next;
-    free(temp->name);
-    free(temp);
-    free(d_name);
-    return TRUE;
-  }
-
-  while (temp->next != NULL)
-  {
-    last = temp;
-    temp = temp->next;
-    if (!_tcsncmp(d_name,temp->name,PATH_MAX))
-    {
-      last->next = temp->next;
-      free(temp->name);
-      free(temp);
-      free(d_name);
-      return TRUE;
-    }
-  }
-
-  internal_error("%s: Directory %s not found in done_processing_dir",
-		 __progname, d_name);
-
-  // This code never gets executed... 
-  //  free (d_name);
-  return FALSE;
 }
 
 
+void done_processing_dir(TCHAR *fn)
+{
+    std::string rp = get_realpath(fn);
+    dir_table_t::iterator pos = dir_table.find(rp);
+    if(pos==dir_table.end()){
+	internal_error("%s: Directory %s not found in done_processing_dir", __progname, rp.c_str());
+	// will not be reached.
+    }
+    dir_table.erase(pos);
+}
 
 
 int processing_dir(TCHAR *fn)
 {
-  if (NULL == fn)
-    return TRUE;
-
-  dir_table *n, *temp;
-  TCHAR *d_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
-
-#ifdef _WIN32
-  _wfullpath(d_name,fn,PATH_MAX);
-#else
-  if (NULL == realpath(fn,d_name))
-    return TRUE;
-#endif
-
-  if (my_table == NULL)
-  {
-    my_table = (dir_table*)malloc(sizeof(dir_table));
-    my_table->name = _tcsdup(d_name);
-    my_table->next = NULL;
-
-    free(d_name);
-    return TRUE;
-  }
- 
-  temp = my_table;
-
-  while (temp->next != NULL)
-  {
-    // We should never be adding a directory that is already here 
-    if (!_tcsncmp(temp->name,d_name,PATH_MAX))
-    {
-      internal_error("%s: Attempt to add existing %s in processing_dir",
-		     __progname, d_name);
-      // Does not execute
-      free(d_name);
-      return FALSE;
+    std::string rp = get_realpath(fn);
+    if(dir_table.find(rp)!=dir_table.end()){
+	internal_error("%s: Attempt to add existing %s in processing_dir", __progname, rp.c_str());
     }
-    temp = temp->next;       
-  }
-
-  n = (dir_table*)malloc(sizeof(dir_table));
-  n->name = _tcsdup(d_name);
-  n->next = NULL;  
-  temp->next = n;
-
-  free(d_name);
-  return TRUE;
+    dir_table.insert(rp);
+    return TRUE;
 }
 
 
 int have_processed_dir(TCHAR *fn)
 {
-  if (NULL == fn)
-    return TRUE;
-
-  dir_table *temp;
-  TCHAR *d_name;
-
-  if (my_table == NULL)
-    return FALSE;
-
-  d_name = (TCHAR *)malloc(sizeof(TCHAR) * PATH_MAX);
-#ifdef _WIN32
-  _wfullpath(d_name,fn,PATH_MAX);
-#else
-  if (NULL == realpath(fn,d_name))
-    return TRUE;
-#endif
-
-  temp = my_table;
-  while (temp != NULL)
-  {
-    if (!_tcsncmp(temp->name,d_name,PATH_MAX))
-    {
-      free(d_name);
-      return TRUE;
-    }
-
-    temp = temp->next;       
-  }
-
-  free(d_name);
-  return FALSE;
+    return dir_table.find(get_realpath(fn))!=dir_table.end();
 }
 
 
