@@ -17,135 +17,72 @@
 #include "main.h"
 
 
-#ifndef _WIN32
-static void remove_double_slash(TCHAR *fn)
+/*
+ * These functions have code to handle WIN32, but they are never called on WIN32 systems.
+ */
+static void remove_double_slash(tstring &fn)
 {
-  size_t tsize = sizeof(TCHAR);
-  TCHAR DOUBLE_DIR[4], *tmp = fn, *n;
-  _sntprintf(DOUBLE_DIR,3,_TEXT("%c%c"),DIR_SEPARATOR,DIR_SEPARATOR);
-
-  n = _tcsstr(tmp,DOUBLE_DIR);
-  while (NULL != n)
-  {
+    tstring search;
+    search.push_back(DIR_SEPARATOR);
+    search.push_back(DIR_SEPARATOR);
 #ifdef _WIN32
     // On Windows, we have to allow the first two characters to be slashes
-    // to account for UNC paths. e.g. \\SERVER\dir\path  
-    if (tmp == fn)
-    {  
-      ++tmp;
-    } 
-    else
-    {
-#endif  // ifdef _WIN32
-    
-      _tmemmove(n,n+tsize,_tcslen(n));
+    // to account for UNC paths. e.g. \\SERVER\dir\path
+    // So on windows we ignore the first character
+    size_t start = 1;
+#else    
+    size_t start = 0;
+#endif
 
-#ifdef _WIN32
+    while(true){
+	size_t loc = fn.find(search,start);
+	if(loc==tstring::npos) break;	// no more to find
+	fn.erase(loc,2);			// erase
     }
-#endif  // ifdef _WIN32
-
-    n = _tcsstr(tmp,DOUBLE_DIR);
-
-  }
 }
 
 
-static void remove_single_dirs(TCHAR *fn)
+/*
+ * remove any /./
+ */
+static void remove_single_dirs(tstring &fn)
 {
-  unsigned int pos, chars_found = 0;
-  size_t sz = _tcslen(fn), tsize = sizeof(TCHAR);
+    tstring search;
+    search.push_back(DIR_SEPARATOR);
+    search.push_back('.');
+    search.push_back(DIR_SEPARATOR);
 
-  for (pos = 0 ; pos < sz ; pos++)
-  {
-    // Catch strings that end with /. (e.g. /foo/.)  
-    if (pos > 0 && 
-	fn[pos-1] == _TEXT(DIR_SEPARATOR) && 
-	fn[pos]   == _TEXT('.') &&
-	fn[pos+1] == 0)
-      fn[pos] = 0;
-    
-    if (fn[pos] == _TEXT('.') && fn[pos+1] == _TEXT(DIR_SEPARATOR))
-    {
-      if (chars_found && fn[pos-1] == _TEXT(DIR_SEPARATOR))
-      {
-	_tmemmove(fn+(pos*tsize),(fn+((pos+2)*tsize)),(sz-pos) * tsize);
-	
-	// In case we have ././ we shift back one! 
-	--pos;
-
-      }
+    while(true){
+	size_t loc = fn.find(search);
+	if(loc==tstring::npos) break;	// no more to find
+	fn.erase(loc,3);			// erase
     }
-    else 
-      ++chars_found;
-  }
 }
+
 
 // Removes all "../" references from the absolute path fn 
-void remove_double_dirs(TCHAR *fn)
+// If string contains f/d/e/../a replace it with f/d/a/
+
+void remove_double_dirs(tstring &fn)
 {
-  size_t pos, next_dir, sz = _tcslen(fn), tsize = sizeof(TCHAR);
+    tstring search;
+    search.push_back(DIR_SEPARATOR);
+    search.push_back('.');
+    search.push_back('.');
+    search.push_back(DIR_SEPARATOR);
 
-  for (pos = 0; pos < _tcslen(fn) ; pos++)
-  {
-    if (fn[pos] == _TEXT('.') && fn[pos+1] == _TEXT('.'))
-    {
-      if (pos > 0)
-      {
+    while(true){
+	size_t loc = fn.rfind(search);
+	if(loc==tstring::npos) break;
+	/* See if there is another dir separator */
+	size_t before = fn.rfind(DIR_SEPARATOR,loc-1);
+	if(before==tstring::npos) break;
 
-	// We have to keep this next if statement and the one above separate.
-	// If not, we can't tell later on if the pos <= 0 or
-	// that the previous character was a DIR_SEPARATOR.
-	// This matters when we're looking at ..foo/ as an input */
-	
-	if (fn[pos-1] == _TEXT(DIR_SEPARATOR))
-	{
-	  
-	  next_dir = pos + 2;
-	  
-	  // Back up to just before the previous DIR_SEPARATOR
-	  // unless we're already at the start of the string */
-	  if (pos > 1)
-	    pos -= 2;
-	  else
-	    pos = 0;
-	  
-	  while (fn[pos] != _TEXT(DIR_SEPARATOR) && pos > 0)
-	    --pos;
-	  
-	  switch(fn[next_dir])
-	  {
-	  case DIR_SEPARATOR:
-	    _tmemmove(fn+pos,fn+next_dir,((sz - next_dir) + 1) * tsize);
-	    break;
-	    
-	  case 0:
-	    // If we have /.. ending the filename 
-	    fn[pos+1] = 0;
-	    break;
-	    
-	    // If we have ..foo, we should do nothing, but skip 
-	    // over these double dots 
-	  default:
-	    pos = next_dir;
-	  }
-	}
-      }
-      
-      // If we have two dots starting off the string, we should prepend
-      // a DIR_SEPARATOR and ignore the two dots. That is:
-      // from the root directory the path ../foo is really just /foo 
-    
-      else 
-      {
-	fn[pos] = _TEXT(DIR_SEPARATOR);
-	_tmemmove(fn+pos+1,fn+pos+3,sz-(pos+3));
-
-
-      }
+	/* Now delete all between before+1 and loc+3 */
+	fn.erase(before+1,(loc+3)-(before+1));
     }
-  }
 }
-#endif  // ifndef _WIN32
+
 
 
 // On Win32 systems directories are handled... differently
@@ -206,11 +143,8 @@ static int is_win32_device_file(TCHAR *fn)
 #endif  // ifdef _WIN32 
 
 
-static void clean_name(state *s, TCHAR *fn)
+static void clean_name(state *s, tstring &fn)
 {
-  if (NULL == s)
-    return;
-
 #ifdef _WIN32
   clean_name_win32(fn);
 #else
@@ -224,11 +158,10 @@ static void clean_name(state *s, TCHAR *fn)
   //
   // TODO: See if Windows Vista's symbolic links create problems 
 
-  if (!(s->mode & mode_relative))
-  {
-    remove_double_slash(fn);
-    remove_single_dirs(fn);
-    remove_double_dirs(fn);
+  if (!(s->mode & mode_relative))  {
+      remove_double_slash(fn);
+      remove_single_dirs(fn);
+      remove_double_dirs(fn);
   }
 #endif
 }
@@ -649,6 +582,25 @@ int dig_normal(state *s, TCHAR *fn)
 
 
 #ifdef _WIN32
+// extract the directory name
+// Works like dirname(3), but accepts a TCHAR* instead of char*
+int my_dirname(TCHAR *c)
+{
+  TCHAR *tmp;
+
+
+  // If there are no DIR_SEPARATORs in the directory name, then the 
+  // directory name should be the empty string
+  tmp = _tcsrchr(c,DIR_SEPARATOR);
+  if (NULL != tmp)
+    tmp[1] = 0;
+  else
+    c[0] = 0;
+
+  return FALSE;
+}
+
+
 int dig_win32(state *s, TCHAR *fn)
 {
   int rc, status = STATUS_OK;
@@ -741,5 +693,7 @@ int dig_win32(state *s, TCHAR *fn)
   return status;
 }
 #endif
+
+
 
 

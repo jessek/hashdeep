@@ -174,25 +174,6 @@ int my_basename(TCHAR *str)
 }
 #endif
 
-int my_dirname(TCHAR *c)
-{
-  TCHAR *tmp;
-
-  if (NULL == c)
-    return TRUE;
-
-  // If there are no DIR_SEPARATORs in the directory name, then the 
-  // directory name should be the empty string
-  tmp = _tcsrchr(c,DIR_SEPARATOR);
-  if (NULL != tmp)
-    tmp[1] = 0;
-  else
-    c[0] = 0;
-
-  return FALSE;
-}
-
-
 void print_newline()
 {
     if (opt_zero){

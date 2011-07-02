@@ -138,7 +138,7 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,file_da
  * Returns the file type of a given input file.
  * fn is provided so that error messages can be printed.
  */
-hashlist::filetype_t hashlist::identify_filetype(const char *fn,FILE *handle)
+hashlist::filetype_t hashlist::identify_filetype(const tstring &fn,FILE *handle)
 {
     char buf[MAX_STRING_LENGTH];
 
@@ -176,9 +176,10 @@ hashlist::filetype_t hashlist::identify_filetype(const char *fn,FILE *handle)
     
     // If the set of hashes now in use doesn't match those previously in use,
     // give a warning.
-    if (previously_enabled_algorithms.size()>0 && previously_enabled_algorithms != last_enabled_algorithms){
+    if (previously_enabled_algorithms.size()>0
+	&& previously_enabled_algorithms != last_enabled_algorithms){
 	print_error("%s: %s: Hashes not in same format as previously loaded",
-		    __progname, fn);
+		    __progname, fn.c_str());
     }
     return file_hashdeep_10;
 }

@@ -69,7 +69,7 @@ static void sanity_check(int condition, const char *msg)
     }
 }
 
-static int is_absolute_path(TCHAR *fn)
+static int is_absolute_path(const TCHAR *fn)
 {
 #ifdef _WIN32
   return FALSE;
@@ -82,7 +82,7 @@ static int is_absolute_path(TCHAR *fn)
  * return the full pathname for a filename.
  */
  
-static tstring generate_filename(state *s,TCHAR *input)
+static tstring generate_filename(state *s,const TCHAR *input)
 {
     if ((s->mode & mode_relative) || is_absolute_path(input)){
 	return tstring(input);
@@ -459,8 +459,8 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
 #ifdef _WIN32
 static int prepare_windows_command_line(state *s)
 {
-  int argc;
-  TCHAR **argv;
+  int argc=0;
+  TCHAR **argv=0;
 
   argv = CommandLineToArgvW(GetCommandLineW(),&argc);
   
@@ -485,7 +485,7 @@ std::string to_string(const char *buf)
 
 
 
-tstring main::cwd()
+tstring main::getcwd()
 {
 #ifdef _WIN32
     wchar buf[MAX_PATH];
@@ -493,16 +493,16 @@ tstring main::cwd()
     wgetcwd(buf,MAX_PATH);
     return wstring(buf);
 #else
-    char buf[MAX_PATH];
+    char buf[PATH_MAX+1];
     memset(buf,0,sizeof(buf));
-    getcwd(buf,sizeof(buf));
+    ::getcwd(buf,sizeof(buf));
     return std::string(buf);
 #endif    
 }
 
 int main(int argc, char **argv)
 {
-    int count, status = EXIT_SUCCESS;
+    int status = EXIT_SUCCESS;
 
 
     /* Because the main() function can handle wchar_t arguments on Win32,
@@ -588,13 +588,10 @@ int main(int argc, char **argv)
     s->argv = argv;
 #endif
 
-    /* Get the current working directory */
-    TCHAR buf[PATH_MAX];
-    _tgetcwd(buf,sizeof(buf));	// try to get the cwd
-    if (buf[0]==0){			// verify that we got it.
+    /* Verify that we can get the current working directory. */
+    if(main::getcwd().size()==0){
 	fatal_error("%s: %s", __progname, strerror(errno));
     }
-    s->cwd = to_string(buf);				// remember
 
     /* Anything left on the command line at this point is a file
      *  or directory we're supposed to process. If there's nothing
@@ -604,18 +601,13 @@ int main(int argc, char **argv)
     if (optind == argc){
 	s->hash_stdin();
     } else {
-	TCHAR fn[PATH_MAX];;
-
-	count = optind;
-	
-	while (count < s->argc) {  
-	    generate_filename(s,fn,s->cwd,s->argv[count]);
+	for(int i=optind;i<s->argc;i++){
+	    tstring fn = generate_filename(s,s->argv[i]);
 #ifdef _WIN32
 	    status = dig_win32(s,fn);
 #else
 	    status = dig_normal(s,fn);
 #endif
-	    ++count;
 	}
     }
   

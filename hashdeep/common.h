@@ -278,6 +278,9 @@ typedef wstring tstring;
 // BSD, Solaris, and really everybody except Microsoft Windows) 
 #ifndef _WIN32
 typedef char TCHAR;
+#define  _TEXT(A)   A
+#define  _tfopen    fopen
+
 
 #if defined(__cplusplus)
 typedef std::string tstring;

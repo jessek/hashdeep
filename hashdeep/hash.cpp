@@ -338,16 +338,17 @@ static std::string make_stars(int count)
 /**
  * Given a file name, hash it into a fdht, then ask s to deal with it.
  */
-int state::hash_file(file_data_hasher_t *fdht,TCHAR *fn)
+int state::hash_file(file_data_hasher_t *fdht,const tstring &fn)
 {
     if(opt_verbose>=MORE_VERBOSE){
 	print_error("hash_file(%s) mode=%x primary_function=%d",
-		    fn,this->mode,this->primary_function);
+		    main::make_utf8(fn).c_str(),
+		    this->mode,this->primary_function);
     }
 
-    int status = STATUS_OK;
-    fdht->is_stdin = FALSE;
-    fdht->file_name = tchar_to_utf8(fn);
+    int status		= STATUS_OK;
+    fdht->is_stdin	= FALSE;
+    fdht->file_name	= main::make_utf8(fn);
 
     if (this->mode & mode_barename)  {
 	/* Convert fdht->file_name to its basename */
@@ -364,7 +365,7 @@ int state::hash_file(file_data_hasher_t *fdht,TCHAR *fn)
 	}
     }
 
-    if ((fdht->handle = _tfopen(fn,_TEXT("rb"))) != NULL) {
+    if ((fdht->handle = _tfopen(main::make_array(fn),_TEXT("rb"))) != NULL) {
 	// We should have the file size already from the stat functions
 	// called during digging. If for some reason that failed, we'll
 	// try some ioctl calls now to get the full size.

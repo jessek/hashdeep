@@ -355,7 +355,7 @@ public:;
     hashid_t		hash_column[NUM_ALGORITHMS]; // maps a column number to a hashid;
 						     // the order columns appear in the file being loaded.
     int			num_columns;		     // number of columns in file being loaded
-    filetype_t		identify_filetype(const char *fn,FILE *handle);
+    filetype_t		identify_filetype(const tstring &fn,FILE *handle);
     int			parse_hashing_algorithm(const char *fn,const char *val);
     loadstatus_t	load_hash_file(const char *fn);
     file_data_t		*find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number); 
@@ -422,7 +422,18 @@ public:
 
 class main {
 public:
-    static wstring getcwd();
+    static tstring getcwd();
+    static std::string make_utf8(const std::string &str);
+#ifdef _WIN32
+    static std::string make_utf8(const wstring &wstr);
+    static const char *make_array(const std::string &str){
+	return str.utf16();
+    }
+#else
+    static const char *make_array(const std::string &str){
+	return str.c_str();
+    }
+#endif
 };
 
 
@@ -517,7 +528,7 @@ public:;
 
     /* hash.cpp */
     
-    int hash_file(file_data_hasher_t *fdht,TCHAR *file_name);
+    int hash_file(file_data_hasher_t *fdht,const tstring &file_name);
     int hash_stdin();
 
 
@@ -534,10 +545,10 @@ class files {
 };
 
 /* main.cpp */
-//char *basename(char *a);
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);
 void lowercase(std::string &s);
+extern char *__progname;
 
 /* HELPER FUNCTIONS */
 #ifdef _WIN32
@@ -559,15 +570,10 @@ int done_processing_dir(TCHAR *fn);
 
 std::string itos(uint64_t i);
 void     setup_expert_mode(state *s, char *arg);
-void     generate_filename(state *s, TCHAR *fn, TCHAR *cwd, TCHAR *input);
 uint64_t find_block_size(state *s, char *input_str);
 void     chop_line(char *s);
 void     shift_string(char *fn, size_t start, size_t new_start);
 void     check_wow64(state *s);
-
-// Works like dirname(3), but accepts a TCHAR* instead of char*
-int	my_dirname(TCHAR *c);
-//int	my_basename(TCHAR *s);
 
 int find_comma_separated_string(char *s, unsigned int n);
 int find_quoted_string(char *buf, unsigned int n);
@@ -579,8 +585,8 @@ off_t find_file_size(FILE *f);
 // MAIN PROCESSING
 // ------------------------------------------------------------------ 
 /* dig.cpp */
-int dig_win32(state *s, TCHAR *fn);
-int dig_normal(state *s, TCHAR *fn);
+int dig_normal(state *s, tstring path);	// posix  & win32 
+int dig_win32(state *s, tstring path);	// win32 only; calls dig_normal
 int md5deep_process_command_line(state *s, int argc, char **argv);
 
 
@@ -593,7 +599,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv);
 void  output_filename(FILE *out,const char *fn);
 void  output_filename(FILE *out,const std::string &fn);
 #ifdef _WIN32
-void  output_filename(FILE *out,const TCHAR *fn);
+void  output_filename(FILE *out,const wstring &fn);
 #endif
 
 /* display_filename is similar output_filename,
@@ -616,9 +622,9 @@ void print_status(const char *fmt, ...);
 void print_error(const char *fmt, ...);
 
 // Display an error message if not in silent mode with a Unicode filename
-void print_error_filename(const char *fn, const char *fmt, ...);
+void print_error_filename(const std::string &fn, const char *fmt, ...);
 #ifdef _WIN32
-void print_error_filename(TCHAR *wfn, const char *fmt, ...);
+void print_error_filename(const wstring &wfn, const char *fmt, ...);
 #endif
 
 // Display an error message, if not in silent mode,  

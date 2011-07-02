@@ -3,13 +3,14 @@
 
 #include "utf8.h"
 #include <string>
-using namespace std;
 
-// $Id$
-
-/****************************************************************
- ** These are from the original hashdeep/display.c
- ****************************************************************/
+/**
+ *
+ * display.cpp:
+ * Manages user output.
+ * All output is in UTF-8.
+ * If opt_escape8 is set, then non-ASCII UTF-8 characters are turned into U+XXXX notation.
+ */
 
 static void display_size(const state *s,const file_data_t *fdt)
 {
@@ -94,7 +95,7 @@ void state::display_banner()
     print_status("filename");
     
     fprintf(stdout,"## Invoked from: ");
-    output_filename(stdout,cwd)
+    output_filename(stdout,cwd);
     fprintf(stdout,"%s",NEWLINE);
   
     // Display the command prompt as we think the user saw it
@@ -113,23 +114,25 @@ void state::display_banner()
   // Accounts for '## ', command prompt, and space before first argument
   size_t bytes_written = 8;
 
-  for (int argc = 0 ; argc < this->argc ; ++argc)
-  {
-    fprintf(stdout," ");
-    bytes_written++;
+  for (int argc = 0 ; argc < this->argc ; ++argc) {
+      fprintf(stdout," ");
+      bytes_written++;
 
-    size_t current_bytes = _tcslen(this->argv[argc]);
+      // We are going to print the string. It's either ASCII or UTF16
+      // convert it to a tstring and then to UTF8 string.
+      tstring arg_t = tstring(this->argv[argc]);
+      std::string arg_utf8 = main::make_utf8(arg_t);
+      size_t current_bytes = arg_utf8.size();
 
-    // The extra 32 bytes is a fudge factor
-    if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
-      fprintf(stdout,"%s## ", NEWLINE);
-      bytes_written = 3;
-    }
+      // The extra 32 bytes is a fudge factor
+      if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
+	  fprintf(stdout,"%s## ", NEWLINE);
+	  bytes_written = 3;
+      }
 
-    output_filename(stdout,this->argv[argc]);
-    bytes_written += current_bytes;
+      output_filename(stdout,arg_utf8);
+      bytes_written += current_bytes;
   }
-
   fprintf(stdout,"%s## %s",NEWLINE, NEWLINE);
 }
 
@@ -138,18 +141,21 @@ static void compute_dfxml(file_data_hasher_t *fdht,bool known_hash)
 {
     if(fdht->piecewise){
 	uint64_t bytes = fdht->read_end - fdht->read_start;
-	fdht->dfxml_hash += string("<byte_run file_offset='") + itos(fdht->read_start)
-	    + string("' bytes='") + itos(bytes) + string("'>\n   ");
+	fdht->dfxml_hash +=
+	    std::string("<byte_run file_offset='")
+	    + itos(fdht->read_start)
+	    + std::string("' bytes='")
+	    + itos(bytes) + std::string("'>\n   ");
     }
     for(int i=0;i<NUM_ALGORITHMS;i++){
 	if(hashes[i].inuse){
 	    fdht->dfxml_hash += "<hashdigest type='";
 	    fdht->dfxml_hash += makeupper(fdht->hash_hex[i]);
-	    fdht->dfxml_hash += string("'>") + fdht->hash_hex[i] + string("</hashdigest>\n");
+	    fdht->dfxml_hash += std::string("'>") + fdht->hash_hex[i] + std::string("</hashdigest>\n");
 	}
     }
     if(known_hash){
-	fdht->dfxml_hash += string("<matched>1</matched>");
+	fdht->dfxml_hash += std::string("<matched>1</matched>");
     }
     if(fdht->piecewise){
 	fdht->dfxml_hash += "</byte_run>\n";

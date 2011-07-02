@@ -51,7 +51,7 @@ std::string get_realpath(const TCHAR *fn)
 #else
     char resolved_name[PATH_MAX];	//
     if(realpath(fn,resolved_name)==0) return "";
-    return string(resolved_name);
+    return std::string(resolved_name);
 #endif
 }
 
