@@ -1,3 +1,9 @@
+2011-07-03  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/Makefile.am (hashdeep_SOURCES): removed cycles.cpp.
+
+	* hashdeep/dig.cpp (have_processed_dir): moved cycles.cpp into dig.cpp (because it's so much smaller now).
+
 2011-07-01  Simson Garfinkel  <simsong@imac3.home>
 
 	* hashdeep/display.cpp (state::md5deep_display_hash): now uses gmtime_r for threadsafety
