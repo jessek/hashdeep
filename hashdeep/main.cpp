@@ -48,6 +48,7 @@ int _CRT_fmode = _O_BINARY;
 #endif
 
 
+int opt_debug = 0;			// debug mode; 1 is self-test
 bool opt_silent = false;
 int  opt_verbose = 0;
 bool opt_zero   = false;
@@ -127,11 +128,12 @@ static void usage(state *s)
 	       CMD_PROMPT,__progname);
   print_status("");
 
+  /* Make a list of the hashes */
   print_status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
-  print_status("     legal values are ");
-  for (int i = 0 ; i < NUM_ALGORITHMS ; i++)
-      print_status("%s%s",hashes[i].name.c_str(),
-		   (i+1<NUM_ALGORITHMS)?",":NEWLINE);
+  fprintf(stderr,"     legal values: ");
+  for (int i = 0 ; i < NUM_ALGORITHMS ; i++){
+      fprintf(stderr,"%s%s",hashes[i].name.c_str(),(i+1<NUM_ALGORITHMS) ? "," : NEWLINE);
+  }
 
   print_status("-a - audit mode. Validates FILES against known hashes. Requires -k");
   print_status("-d - output in DFXML (Digital Forensics XML)");
@@ -524,6 +526,7 @@ tstring main::get_realpath(const tstring &fn)
 #else
     char resolved_name[PATH_MAX];	//
     if(realpath(fn.c_str(),resolved_name)==0) return "";
+    if(opt_debug) std::cout << "main::get_realpath(" << fn << ")=" << resolved_name << "\n";
     return tstring(resolved_name);
 #endif
 }
@@ -587,6 +590,11 @@ int main(int argc, char **argv)
 	    exit(1);
 	}
 	md5deep_process_command_line(s,argc,argv);
+    }
+
+    if(opt_debug==1){
+	printf("self-test...\n");
+	dig_self_test();
     }
 
     /* Set up the DFXML output if requested */
@@ -711,14 +719,12 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
 {
   int i;
 
-  if (NULL == s)
-    return TRUE;
-  
   while ((i = getopt(argc,
 		     argv,
-		     "df:I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:")) != -1) { 
+		     "df:I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:D:")) != -1) { 
     switch (i) {
 
+    case 'D': opt_debug = atoi(optarg);break;
     case 'd': s->dfxml = new XML(stdout); break;
     case 'f':
       s->mode |= mode_read_from_file;

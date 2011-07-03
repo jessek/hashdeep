@@ -15,6 +15,52 @@
 // $Id$
 
 #include "main.h"
+#include <iostream>
+
+/****************************************************************
+ *** database of directories we've seen.
+ *** originally in cycles.c.
+ *** so much smaller now, we put it here.
+ ****************************************************************/
+
+class dir_table_t : public std::set<tstring>{
+};
+
+dir_table_t dir_table;
+
+void done_processing_dir(const tstring &fn_)
+{
+    tstring fn = main::get_realpath(fn_);
+    dir_table_t::iterator pos = dir_table.find(fn);
+    if(pos==dir_table.end()){
+	internal_error("%s: Directory %s not found in done_processing_dir", __progname, fn.c_str());
+	// will not be reached.
+    }
+    dir_table.erase(pos);
+}
+
+
+void processing_dir(const tstring &fn_)
+{
+    tstring fn = main::get_realpath(fn_);
+    if(dir_table.find(fn)!=dir_table.end()){
+	internal_error("%s: Attempt to add existing %s in processing_dir", __progname, fn.c_str());
+    }
+    dir_table.insert(fn);
+}
+
+
+int have_processed_dir(const tstring &fn_)
+{
+    tstring fn = main::get_realpath(fn_);
+    return dir_table.find(fn)!=dir_table.end();
+}
+
+/****************************************************************
+ *** end of cycle processing.
+ ****************************************************************/
+
+
 
 /*
  * These functions have code to handle WIN32, but they are never called on WIN32 systems.
@@ -36,7 +82,7 @@ static void remove_double_slash(tstring &fn)
     while(true){
 	size_t loc = fn.find(search,start);
 	if(loc==tstring::npos) break;	// no more to find
-	fn.erase(loc,2);			// erase
+	fn.erase(loc,1);		// erase one of the two slashes
     }
 }
 
@@ -54,7 +100,7 @@ static void remove_single_dirs(tstring &fn)
     while(true){
 	size_t loc = fn.find(search);
 	if(loc==tstring::npos) break;	// no more to find
-	fn.erase(loc,3);			// erase
+	fn.erase(loc,2);			// erase
     }
 }
 
@@ -78,7 +124,7 @@ void remove_double_dirs(tstring &fn)
 	if(before==tstring::npos) break;
 
 	/* Now delete all between before+1 and loc+3 */
-	fn.erase(before+1,(loc+3)-(before+1));
+	fn.erase(before+1,(loc+3)-before);
     }
 }
 
@@ -147,7 +193,6 @@ static void clean_name(state *s, tstring &fn)
 #ifdef _WIN32
     clean_name_win32(fn);
 #else
-
     // We don't need to call these functions when running in Windows
     // as we've already called real_path() on them in main.c. These
     // functions are necessary in *nix so that we can clean up the 
@@ -308,6 +353,8 @@ static int process_dir(state *s, const tstring &fn)
     _TDIR *current_dir;
     struct _tdirent *entry;
 
+    if(opt_debug) std::cout << "process_dir(" << fn << ")\n";
+
     //  print_status (_TEXT("Called process_dir(%s)"), fn);
 
     if (have_processed_dir(fn)) {
@@ -334,7 +381,6 @@ static int process_dir(state *s, const tstring &fn)
 
     }
     _tclosedir(current_dir);
-  
     done_processing_dir(fn);		// note that we are done with this directory
 
     return return_value;
@@ -372,8 +418,8 @@ static file_types file_type_helper(_tstat_t sb)
 
 
 // Use a stat function to look up while kind of file this is
-// and, if possible, it's size.
-static file_types file_type(state *s,file_data_hasher_t *fdht, const tstring &fn)
+// and determine its size if possible
+static file_types file_type(file_data_hasher_t *fdht, const tstring &fn)
 {
     _tstat_t sb;
 
@@ -449,8 +495,8 @@ static int should_hash_symlink(state *s, const tstring &fn, file_types *link_typ
     _tstat_t sb;
 
     // We must look at what this symlink points to before we process it.
-    // The normal file_type function uses lstat to examine the file,
-    // we use stat to examine what this symlink points to. 
+    // The normal file_type function uses lstat to examine the file.
+    // Here we use stat to examine what this symlink points to. 
     if (_sstat(fn.c_str(),&sb))  {
 	print_error_filename(fn,"%s",strerror(errno));
 	return FALSE;
@@ -461,7 +507,7 @@ static int should_hash_symlink(state *s, const tstring &fn, file_types *link_typ
     if (type == stat_directory)  {
 	if (s->mode & mode_recursive)
 	    process_dir(s,fn);
-	else    {
+	else {
 	    print_error_filename(fn,"Is a directory");
 	}
 	return FALSE;
@@ -481,7 +527,7 @@ static int should_hash(state *s, file_data_hasher_t *fdht,const tstring &fn)
     fdht->stat_bytes = UNKNOWN_FILE_SIZE;
     fdht->timestamp   = 0;
 
-    type = file_type(s,fdht,fn);
+    type = file_type(fdht,fn);
   
     if (s->mode & mode_expert){
 	return (should_hash_expert(s,fn,type));
@@ -496,10 +542,9 @@ static int should_hash(state *s, file_data_hasher_t *fdht,const tstring &fn)
 	return FALSE;
     }
 
-#ifndef _WIN32
-    if (type == stat_symlink)
+    if (type == stat_symlink){
 	return should_hash_symlink(s,fn,NULL);
-#endif
+    }
 
     if (type == stat_unknown){
 	return FALSE;
@@ -637,6 +682,32 @@ int dig_win32(state *s, const tstring &fn)
 }
 #endif
 
+void dig_self_test()
+{
+    tstring fn = "this is//a test";
+    tstring fn2 = fn;
+    remove_double_slash(fn2);
+    std::cout << "remove_double_slash(" << fn << ")="<<fn2<<"\n";
+    
+    fn = "this is/./a test";
+    fn2 = fn;
 
+    remove_single_dirs(fn2);
+    std::cout << "remove_single_dirs(" << fn << ")="<<fn2<<"\n";
 
+    fn = "this is/a mistake/../a test";
+    fn2 = fn;
+    remove_double_dirs(fn2);
+    std::cout << "remove_single_dirs(" << fn << ")="<<fn2<<"\n";
 
+    std::cout << "is_special_dir(.)=" << is_special_dir(".") << "\n";
+    std::cout << "is_special_dir(..)=" << is_special_dir("..") << "\n";
+
+    std::string names[] = {"dig.cpp",".","/dev/null","/dev/tty","../testfiles/symlinktest/dir1/dir1",""};
+    for(int i=0;names[i].size()>0;i++){
+	file_data_hasher_t fdht(false);
+	file_types ft = file_type(&fdht,names[i]);
+	std::cout << "file_type(" << names[i] << ")=" << ft << "   size=" << fdht.stat_bytes << "  ctime=" << fdht.timestamp << "\n";
+    }
+
+}

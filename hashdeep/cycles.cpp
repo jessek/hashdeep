@@ -31,36 +31,5 @@
 #include "main.h"
 #include <set>
 
-class dir_table_t : public std::set<tstring>{
-};
-
-dir_table_t dir_table;
-
-void done_processing_dir(const tstring &fn)
-{
-    dir_table_t::iterator pos = dir_table.find(fn);
-    if(pos==dir_table.end()){
-	internal_error("%s: Directory %s not found in done_processing_dir", __progname, fn.c_str());
-	// will not be reached.
-    }
-    dir_table.erase(pos);
-}
-
-
-void processing_dir(const tstring &fn)
-{
-    if(dir_table.find(fn)!=dir_table.end()){
-	internal_error("%s: Attempt to add existing %s in processing_dir", __progname, fn.c_str());
-    }
-    dir_table.insert(fn);
-}
-
-
-int have_processed_dir(const tstring &fn)
-{
-    return dir_table.find(fn)!=dir_table.end();
-}
-
-
 
 

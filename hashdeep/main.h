@@ -36,6 +36,7 @@ extern bool opt_silent;			// previously was mode_silent
 extern int  opt_verbose;		// can be 1, 2 or 3
 extern bool opt_zero;			// newlines are \000 
 extern bool opt_estimate;		// print ETA
+extern int  opt_debug;			// for debugging
 
 // Return values for the program 
 // RBF - Document these return values for hashdeep 
@@ -618,6 +619,7 @@ off_t find_file_size(FILE *f);
 int dig_normal(state *s, const tstring &path);	// posix  & win32 
 int dig_win32(state *s, const tstring &path);	// win32 only; calls dig_normal
 int md5deep_process_command_line(state *s, int argc, char **argv);
+void dig_self_test();			// check the string-processing
 
 
 /* display.cpp */

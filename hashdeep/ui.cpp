@@ -15,10 +15,8 @@
 #include <stdarg.h>
 
 #define MD5DEEP_PRINT_MSG(HANDLE,MSG) \
-va_list(ap);  \
-va_start(ap,MSG); \
-if (vfprintf(HANDLE,MSG,ap) < 0)  \
-{ \
+va_list(ap); va_start(ap,MSG);\
+if (vfprintf(HANDLE,MSG,ap) < 0) { \
    fprintf(stderr, "%s: %s", __progname, strerror(errno)); \
    exit(EXIT_FAILURE);  \
 } \
