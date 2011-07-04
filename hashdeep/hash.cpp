@@ -365,7 +365,7 @@ int state::hash_file(file_data_hasher_t *fdht,const tstring &fn)
 	}
     }
 
-    if ((fdht->handle = _tfopen(main::make_array(fn),_TEXT("rb"))) != NULL) {
+    if ((fdht->handle = _tfopen(fn.c_str(),_TEXT("rb"))) != NULL) {
 	// We should have the file size already from the stat functions
 	// called during digging. If for some reason that failed, we'll
 	// try some ioctl calls now to get the full size.

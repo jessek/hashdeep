@@ -80,7 +80,7 @@ static void remove_double_slash(tstring &fn)
 #endif
 
     while(true){
-	size_t loc = fn.find(search,start);
+	ssize_t loc = fn.find(search,start);
 	if(loc==tstring::npos) break;	// no more to find
 	fn.erase(loc,1);		// erase one of the two slashes
     }
@@ -98,7 +98,7 @@ static void remove_single_dirs(tstring &fn)
     search.push_back(DIR_SEPARATOR);
 
     while(true){
-	size_t loc = fn.find(search);
+	ssize_t loc = fn.find(search);
 	if(loc==tstring::npos) break;	// no more to find
 	fn.erase(loc,2);			// erase
     }
@@ -117,10 +117,10 @@ void remove_double_dirs(tstring &fn)
     search.push_back(DIR_SEPARATOR);
 
     while(true){
-	size_t loc = fn.rfind(search);
+	ssize_t loc = fn.rfind(search);
 	if(loc==tstring::npos) break;
 	/* See if there is another dir separator */
-	size_t before = fn.rfind(DIR_SEPARATOR,loc-1);
+	ssize_t before = fn.rfind(DIR_SEPARATOR,loc-1);
 	if(before==tstring::npos) break;
 
 	/* Now delete all between before+1 and loc+3 */
@@ -139,22 +139,14 @@ void remove_double_dirs(tstring &fn)
 #ifdef _WIN32
 static void clean_name_win32(tstring &fn)
 {
-    size_t length = _tcslen(fn);
-
-    if (length < 2)
+    if (fn.size()<2) return;
+    if (fn.size()==2 && fn[1]==_TEXT(':')){
+	fn.push_back(_TEXT(DIR_SEPARATOR));
 	return;
-
-    if (length == 2 && fn[1] == _TEXT(':'))
-	{
-	    fn[length+1] = 0;
-	    fn[length]   = _TEXT(DIR_SEPARATOR);
-	    return;
-	}
-
-    if (fn[length-1] == _TEXT(DIR_SEPARATOR) && length != 3)
-	{
-	    fn[length - 1] = 0;
-	}
+    }
+    if (fn[fn.size()-1] == _TEXT(DIR_SEPARATOR)){
+	fn.erase(fn.size()-1);
+    }
 }
 
 static int is_win32_device_file(tstring &fn)
@@ -166,20 +158,16 @@ static int is_win32_device_file(tstring &fn)
     // Tape devices are \\.\tapeX where X is a digit from 0 to 9
     // Logical volumes are \\.\X: where X is a letter */
 
-    if (!_tcsnicmp(fn, _TEXT("\\\\.\\physicaldrive"),17) &&
-	(_tcslen(fn) == 18) && 
-	isdigit(fn[17]))
+    if (!_tcsnicmp(fn.c_str(), _TEXT("\\\\.\\physicaldrive"),17)
+	&& (fn.size() == 18) && iswdigit(fn[17]))
 	return TRUE;
 
-    if (!_tcsnicmp(fn, _TEXT("\\\\.\\tape"),8) &&
-	(_tcslen(fn) == 9) && 
-	isdigit(fn[8]))
+    if (!_tcsnicmp(fn.c_str(), _TEXT("\\\\.\\tape"),8) &&
+	(fn.size() == 9) &&  iswdigit(fn[8]))
 	return TRUE;
  
-    if ((!_tcsnicmp(fn,_TEXT("\\\\.\\"),4)) &&
-	(_tcslen(fn) == 6) &&
-	(isalpha(fn[4])) &&
-	(fn[5] == ':'))
+    if ((!_tcsnicmp(fn.c_str(),_TEXT("\\\\.\\"),4)) &&
+	(fn.size() == 6) && (iswalpha(fn[4])) && (fn[5] == ':'))
 	return TRUE;
 
     return FALSE;
@@ -255,7 +243,7 @@ static bool is_junction_point(const tstring &fn)
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind;
 
-    hFind = FindFirstFile(fn, &FindFileData);
+    hFind = FindFirstFile(fn.c_str(), &FindFileData);
     if (INVALID_HANDLE_VALUE != hFind)  {
 	if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)    {
 	    // We're going to skip this reparse point no matter what,
@@ -353,7 +341,7 @@ static int process_dir(state *s, const tstring &fn)
     _TDIR *current_dir;
     struct _tdirent *entry;
 
-    if(opt_debug) std::cout << "process_dir(" << fn << ")\n";
+    if(opt_debug) std::cout << "process_dir(" << main::make_utf8(fn) << ")\n";
 
     //  print_status (_TEXT("Called process_dir(%s)"), fn);
 
@@ -387,7 +375,7 @@ static int process_dir(state *s, const tstring &fn)
 }
 
 
-static file_types file_type_helper(_tstat_t sb)
+static file_types file_type_helper(_tstat64 sb)
 {
     if (S_ISREG(sb.st_mode)) return stat_regular;
   
@@ -421,7 +409,7 @@ static file_types file_type_helper(_tstat_t sb)
 // and determine its size if possible
 static file_types file_type(file_data_hasher_t *fdht, const tstring &fn)
 {
-    _tstat_t sb;
+    _tstat64 sb;
 
     if (_lstat(fn.c_str(),&sb))  {
 	print_error_filename(fn,"%s", strerror(errno));
@@ -492,7 +480,7 @@ static int should_hash_expert(state *s, const tstring &fn, file_types type)
 static int should_hash_symlink(state *s, const tstring &fn, file_types *link_type)
 {
     file_types type;
-    _tstat_t sb;
+    _tstat64 sb;
 
     // We must look at what this symlink points to before we process it.
     // The normal file_type function uses lstat to examine the file.

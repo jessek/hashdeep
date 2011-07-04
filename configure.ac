@@ -12,9 +12,19 @@ AC_GNU_SOURCE
 
 AC_CANONICAL_HOST
 
+# http://osdir.com/ml/gnu.mingw.devel/2003-09/msg00040.html
+# Note: Windows 95 WINVER=0x400
+# Windows 98 WINVER=0x400  _WIN32_WINDOWS=0x0410
+# Windows Me WINVER=0x400  _WIN32_WINDOWS=0x0490
+# Windows NT 4.0 WINVER=0x0400  _WIN32_WINNT=0x0400
+# Windows NT 4.0 SP3 WINVER=0x0400 _WIN32_WINNT=0x0403
+# Windows 2000 WINVER=0x500 _WIN32_WINNT=0x0500
+# Windows XP WINVER=0x501 _WIN32_WINNT=0x0501
+# Windows Server 2003 WINVER=0x502 _WIN32_WINNT=0x0502
+
 case $host in
   *-*-*linux*-*) AC_DEFINE([__LINUX__],1,[Linux operating system functions]) ;;
-  *-*-mingw32)   LIBS="-liberty $LIBS" && CPPFLAGS="-DUNICODE -D_UNICODE $CPPFLAGS"
+  *-*-mingw32)   LIBS="-liberty $LIBS" && CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 $CPPFLAGS"
 esac
 
 AC_PROG_CC
@@ -38,6 +48,9 @@ done
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h stdint.h stdlib.h string.h sys/cdefs.h sys/types.h sys/ioctl.h sys/param.h wchar.h unistd.h sys/stat.h sys/disk.h])
+
+# These functions not available everywhere
+AC_CHECK_FUNCS([_gmtime64_s])
 
 # These includes are required on FreeBSD
 AC_CHECK_HEADERS([sys/mount.h],[],[],

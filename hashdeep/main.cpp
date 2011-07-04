@@ -23,6 +23,12 @@
 #include <sstream>
 #include "utf8.h"
 
+#include "md5.h"
+#include "sha1.h"
+#include "sha256.h"
+#include "tiger.h"
+#include "whirlpool.h"
+
 using namespace std;
 
 #ifdef HAVE_EXTERN_PROGNAME
@@ -98,7 +104,7 @@ static tstring generate_filename(state *s,const TCHAR *input)
     wchar_t fn[PATH_MAX];
     memset(fn,0,sizeof(fn));
     _wfullpath(fn,input,PATH_MAX);
-    return wstring(fn);
+    return tstring(fn);
 #else	  
     char buf[PATH_MAX+1];
     std::string cwd = main::getcwd();
@@ -486,24 +492,39 @@ std::string to_string(const char *buf)
     return std::string(buf);
 }
 
-#ifdef _WIN32
-std::string main::make_utf8(wstring str)
+#include <winnls.h>
+std::string main::make_utf8(const tstring &str) 
 {
-    string utf8_line;
-    utf8::utf16to8(s.begin(),s.end(),back_inserter(utf8_line));
-    return utf8_line;
+#ifdef _WIN32
+    /* Figure out how many bytes req required */
+    size_t len = WideCharToMultiByte(CP_UTF8,WC_NO_BEST_FIT_CHARS,str.utf16(),str.size(),0,0,0,0);
+    if(len==0){
+	std::cerr << "WideCharToMultiByte failed\n";
+	return std::string("");
+    }
+    /* allocate the space we need (plus one for null-termination */
+    char *buf = new char[len+1];
 
-}
+    /* Perform the conversion */
+    WideCharToMultiByte(CP_UTF8,WC_NO_BEST_FIT_CHARS,str.utf16(),str.size(),buf,len,0,0);
+
+
+    std::string s2 = buf;			// Make a STL string 
+    delete [] buf;			// Delete the buffern
+    return s2;				// return the string
+#else
+    return str;				// it's already in UTF-8
 #endif
+}
 
 
 tstring main::getcwd()
 {
 #ifdef _WIN32
-    wchar buf[MAX_PATH];
+    wchar_t buf[MAX_PATH];
     memset(buf,0,sizeof(buf));
-    wgetcwd(buf,MAX_PATH);
-    return wstring(buf);
+    _wgetcwd(buf,MAX_PATH);
+    return tstring(buf);
 #else
     char buf[PATH_MAX+1];
     memset(buf,0,sizeof(buf));
@@ -521,7 +542,7 @@ tstring main::get_realpath(const tstring &fn)
      * http://msdn.microsoft.com/en-us/library/506720ff(v=vs.80).aspx
      */
     TCHAR absPath[PATH_MAX];
-    if(_fullpath(absPath,fn,PAT_HMAX)==0) return "";
+    if(_wfullpath(absPath,fn.utf16(),PATH_MAX)==0) tstring(_T("")); // fullpath failed...
     return tstring(absPath);
 #else
     char resolved_name[PATH_MAX];	//

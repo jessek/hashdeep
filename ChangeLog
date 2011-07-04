@@ -1,5 +1,11 @@
 2011-07-03  Simson Garfinkel  <simsong@imac3.home>
 
+	* hashdeep/dig.cpp (should_hash_symlink): changed stat structure from _tstat_t to _tstati64
+
+	* configure.ac: added -DWINVER=0x0500 to get Windows UTF-8 conversion. mingw targets for 0x0400 (
+
+	* hashdeep/main.h (std::vector): file_type_t changed to hashfile_format, since that describes what it actually is.
+
 	* hashdeep/Makefile.am (hashdeep_SOURCES): removed cycles.cpp.
 
 	* hashdeep/dig.cpp (have_processed_dir): moved cycles.cpp into dig.cpp (because it's so much smaller now).

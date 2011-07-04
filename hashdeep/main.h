@@ -22,12 +22,6 @@
 #include "common.h"
 #include "xml.h"
 
-#include "md5.h"
-#include "sha1.h"
-#include "sha256.h"
-#include "tiger.h"
-#include "whirlpool.h"
-
 #include <map>
 #include <vector>
 
@@ -360,7 +354,7 @@ public:;
 	file_md5deep_size,
 	file_hashdeep_10,
 	file_unknown
-    } filetype_t; 
+    } hashfile_format; 
 
     class hashmap : public  std::map<std::string,file_data_t *> {
     public:;
@@ -377,14 +371,14 @@ public:;
      * Both of these functions take the file name and the open handle.
      * They read from the handle and just use the filename for printing error messages.
      */
-    void		enable_hashing_algorithms_from_hashdeep_file(std::string fn,std::string val);
+    void		enable_hashing_algorithms_from_hashdeep_file(const std::string &fn,std::string val);
     std::string		last_enabled_algorithms; // a string with the algorithms that were enabled last
     hashid_t		hash_column[NUM_ALGORITHMS]; // maps a column number to a hashid;
 						     // the order columns appear in the file being loaded.
     int			num_columns;		     // number of columns in file being loaded
-    filetype_t		identify_filetype(const tstring &fn,FILE *handle);
-    int			parse_hashing_algorithm(const char *fn,const char *val);
-    loadstatus_t	load_hash_file(const char *fn);
+    hashfile_format	identify_format(const std::string &fn,FILE *handle);
+    //int			parse_hashing_algorithm(const char *fn,const char *val);
+    loadstatus_t	load_hash_file(const std::string &fn); // not tstring! always ASCII
     file_data_t		*find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number); 
     void		dump_hashlist(); // send contents to stdout
     
@@ -451,20 +445,8 @@ class main {
 public:
     static tstring getcwd();			  // returns the current directory
     static tstring get_realpath(const tstring &fn); // returns the full path
-    static std::string get_realpath8(const std::string &fn); // returns the full path in UTF-8
-    static std::string make_utf8(const std::string &str){
-	return str;			// it's already in utf8
-    }
-#ifdef _WIN32
-    static std::string make_utf8(const wstring &wstr);
-    static const char *make_array(const std::string &str){
-	return str.utf16();
-    }
-#else
-    static const char *make_array(const std::string &str){
-	return str.c_str();
-    }
-#endif
+    static std::string get_realpath8(const tstring &fn);  // returns the full path in UTF-8
+    static std::string make_utf8(const tstring &ttr) ;
 };
 
 

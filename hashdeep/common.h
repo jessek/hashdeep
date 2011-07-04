@@ -200,7 +200,16 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 
 
 
-// Required to enable 64-bit stat functions, but defined by default on mingw
+/*
+ * __MSVCRT_VERSION__ specifies which version of Microsoft's DLL we require.
+ * Mingw defines this to be 0x0600 by default.
+ * 
+ * We want version 0x0601 by default to get 64-bit stat functions and _gmtime64.
+ * This is defined in configure.ac.
+ * 
+ * If we aren't compiling under mingw, define it by hand.
+ * (Perhaps some poor soul was forced to port this project to VC++.)
+ */
 #ifndef __MSVCRT_VERSION__ 
 # define __MSVCRT_VERSION__ 0x0601
 #endif
@@ -208,20 +217,167 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 #include <windowsx.h>
 #include <tchar.h>
 #include <wchar.h>
+#include <vector>
 
 #if defined(__cplusplus)
 /*
  * C++ implementation of a wchar_t string.
  * It works like the regular string, except that it works with wide chars.
  * Notice that .c_str() returns a wchar_t * pointer.
+ *
+ * You will find a nice discussion about allocating arrays in C++ at:
+ * http://www.fredosaurus.com/notes-cpp/newdelete/50dynamalloc.html
  */
-class wstring : public vector<wchar> {
-    wstring(wchar_t *buf){
-	size_t len = wcslen(buf);
-	for(size_t i = 0;i<len;i++){
-	    this->push_back(buf[i]);
+class wstring {
+private:
+    wchar_t *buf;
+    size_t  len;			// does not include NULL character
+    
+public:
+#if 0
+    class const_iterator {
+    public:
+	const_iterator(const wstring &base_):base(base_),pos(0){}
+	const wstring &base;
+	size_t  pos;
+	bool operator== (const const_iterator &i2) const {
+	    return (this->base.buf == i2.base.buf) && (this->pos == i2.pos);
 	}
+	bool operator!= (const const_iterator &i2) const {
+	    return (this->base.buf != i2.base.buf) || (this->pos != i2.pos);
+	}
+	const_iterator &operator++() {	// prefix increment operator
+	    this->pos++;
+	    return *this;
+	}
+	const_iterator &operator++(int) {// postfix increment operator
+	    ++this->pos;
+	    return *this;
+	}
+	const wstring &operator*(){
+	    return base;
+	}
+    };
+#endif
+
+    static const ssize_t npos=-1;
+    ~wstring(){
+	free(buf);
     }
+    wstring():buf((wchar_t *)malloc(0)){}
+    wstring(const wchar_t *buf_){
+	len = wcslen(buf)+1;
+	buf = (wchar_t *)calloc(len+1,sizeof(wchar_t));
+	wcscpy(buf,buf_);
+    }
+    wstring(const wstring &w2){
+	len = w2.len;
+	buf = (wchar_t *)calloc(len+1,sizeof(wchar_t));
+	wcscpy(buf,w2.buf);
+    }
+    size_t size() const { return len;}		// in multi-bytes, not bytes.
+    wchar_t operator[] (size_t i) const{
+	if(i<0 || i>=len) return 0;
+	return buf[i];
+    }
+    wchar_t *utf16() const{		// allocate wstr if it doesn't exist and return it
+	return buf;
+    }
+    wchar_t *c_str() const{
+	return buf;			// wide c strings *are* utf16
+    }
+    std::string utf8() const;			// returns a UTF-8 representation as a string
+    ssize_t find(wchar_t ch,size_t start=0) const{
+	for(size_t i=start;i<len;i++){
+	    if((*this)[i]==ch) return i;
+	}
+	return npos;
+    }
+    ssize_t rfind(wchar_t ch,size_t start=0) const{
+	if(this->len==0) return npos;
+	if(start==0) start=this->len-1;
+	if(start>this->len) start=this->len-1;
+	for(size_t i=start;i>0;i--){
+	    if((*this)[i]==ch) return i;
+	    if(i==0) return npos;	// not found
+	}
+	return npos;			// should never reach here
+    }
+    ssize_t find(const wstring &s2,ssize_t start=0) const{
+	if(s2.len > this->len) return npos;
+	for(size_t i=start;i<len-s2.len;i++){
+	    for(size_t j=0;j<s2.len;j++){
+		if((*this)[i+j]!=s2[j]) break;
+		if(j==len-1) return i;	// found it
+	    }
+	}
+	return npos;
+    }
+    ssize_t rfind(const wstring &s2) const{
+	if((s2.len > this->len) || (this->len==0)) return npos;
+	for(size_t i=len-s2.len-1;i>=0;i--){
+	    for(size_t j=0;j<s2.len;j++){
+		if((*this)[i+j]!=s2[j]) break;
+		if(j==len-1) return i;	// found it
+	    }
+	    if(i==0)return npos;	// got to 0 and couldn't find the end
+	}
+	return npos;			// should never get here.
+    }
+    void erase(size_t  start,size_t count){
+	if(start>=len) return;		// nothing to erase
+	if(start+count > len) count = len-start; // can only erase this many
+	memmove(buf+start*2,buf+(start+count)*2,count*2);
+	len -= count;
+	buf[len*2] = 0;			// new termination
+	buf = (wchar_t *)realloc(buf,(len+1)*2);  // removed that many characters
+    }
+    void erase(size_t start){
+	erase(start,start);
+    }
+    void push_back(wchar_t ch){
+	len++;
+	buf = (wchar_t *)realloc(buf,(len+1)*2);  // removed that many characters
+	buf[len] = ch;
+    }
+    /* Concatenate a wstring */
+    wstring operator+(const wstring &s2) const {
+	wstring s1(*this);
+	s1.append(s2);
+	return s1;
+    }
+    /* Concatenate a TCHAR * string */
+    wstring operator+(const TCHAR *s2) const {
+	wstring s1(*this);
+	s1.append(s2);
+	return s1;
+    }
+    wstring operator+(TCHAR c2) const {
+	wstring s1(*this);
+	s1.push_back(c2);
+	return s1;
+    }
+    void append(const wstring &s2){
+	buf = (wchar_t *)realloc(buf,(len+s2.len+1)); // enough space for the null
+	wcscat(buf,s2.buf);
+	len += s2.len;
+    }
+    void append(const TCHAR *s2){
+	size_t l2 = wcslen(s2);
+	buf = (wchar_t *)realloc(buf,(len+l2+1)); // enough space for the null
+	wcscat(buf,s2);
+	len += l2;
+    }
+#if 0
+    const_iterator begin() const{
+	return const_iterator(*this);
+    }
+    const_iterator end() const{
+	const_iterator it(*this);
+	it.pos = len;
+	return it;
+    }
+#endif
 };
 /* 
  * Internally we use tstring.
@@ -293,7 +449,7 @@ typedef char TCHAR;
 
 #define  _lstat     lstat
 #define  _sstat     stat
-#define  _tstat_t   struct stat
+#define  _tstat64   struct stat
 
 
 #if defined(__cplusplus)
@@ -313,4 +469,14 @@ typedef std::string tstring;
 #  endif
 #endif
 
+#ifndef __BEGIN_DECLS
+#if defined(__cplusplus)
+#define __BEGIN_DECLS   extern "C" {
+#define __END_DECLS     }
+#else
+#define __BEGIN_DECLS
+#define __END_DECLS
+#endif
+#endif
+/* End Win32 */
 #endif /* ifndef __COMMON_H */

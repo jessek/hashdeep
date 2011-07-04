@@ -23,7 +23,7 @@
 
 __BEGIN_DECLS
 
-typedef struct _context_md5_t {
+typedef struct {
   uint32_t buf[4];
   uint32_t bits[2];
   unsigned char in[64];

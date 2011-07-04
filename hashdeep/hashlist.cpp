@@ -138,7 +138,7 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,file_da
  * Returns the file type of a given input file.
  * fn is provided so that error messages can be printed.
  */
-hashlist::filetype_t hashlist::identify_filetype(const tstring &fn,FILE *handle)
+hashlist::hashfile_format hashlist::identify_format(const std::string &fn,FILE *handle)
 {
     char buf[MAX_STRING_LENGTH];
 
@@ -178,8 +178,7 @@ hashlist::filetype_t hashlist::identify_filetype(const tstring &fn,FILE *handle)
     // give a warning.
     if (previously_enabled_algorithms.size()>0
 	&& previously_enabled_algorithms != last_enabled_algorithms){
-	print_error("%s: %s: Hashes not in same format as previously loaded",
-		    __progname, fn.c_str());
+	print_error("%s: %s: Hashes not in same format as previously loaded",__progname, fn.c_str());
     }
     return file_hashdeep_10;
 }
@@ -190,7 +189,7 @@ hashlist::filetype_t hashlist::identify_filetype(const tstring &fn,FILE *handle)
  * enable them and note their order. If the last algorithm is 'filename', ignore it.
  */
 
-void hashlist::enable_hashing_algorithms_from_hashdeep_file(std::string fn,std::string val)
+void hashlist::enable_hashing_algorithms_from_hashdeep_file(const std::string &fn,std::string val)
 {
     // The first position is always the file size, so we start with an 
     // the first position of one.
@@ -229,20 +228,20 @@ void hashlist::dump_hashlist()
  * Loads a file of known hashes.
  * First identifies the file type, then reads the file.
  */
-hashlist::loadstatus_t hashlist::load_hash_file(const char *fn)
+hashlist::loadstatus_t hashlist::load_hash_file(const std::string &fn)
 {
     loadstatus_t status = loadstatus_ok;
-    filetype_t type;
+    hashfile_format type;
 
-    FILE *handle = fopen(fn,"rb");
+    FILE *handle = fopen(fn.c_str(),"rb");
     if (NULL == handle) {
-	print_error("%s: %s: %s", __progname, fn, strerror(errno));
+	print_error("%s: %s: %s", __progname, fn.c_str(), strerror(errno));
 	return status_file_error;
     }
   
-    type = identify_filetype(fn,handle);
+    type = identify_format(fn,handle);
     if (file_unknown == type)  {
-	print_error("%s: %s: Unable to identify file format", __progname, fn);
+	print_error("%s: %s: Unable to identify file format", __progname, fn.c_str());
 	fclose(handle);
 	return status_unknown_filetype;
     }
@@ -271,7 +270,7 @@ hashlist::loadstatus_t hashlist::load_hash_file(const char *fn)
 	file_data_t *t = new (std::nothrow) file_data_t(); // C++ new fails with a bad_a
 	if (NULL == t){
 	    fatal_error("%s: %s: Out of memory in line %"PRIu64, 
-			__progname, fn, line_number);
+			__progname, fn.c_str(), line_number);
 	}
 
 	chop_line(line);
@@ -294,7 +293,7 @@ hashlist::loadstatus_t hashlist::load_hash_file(const char *fn)
 
 	    // All other columns should contain a valid hash in hex
 	    if ( !algorithm_t::valid_hash(hash_column[column_number],word)){
-		print_error("%s: %s: Invalid %s hash in line %"PRIu64,__progname, fn, 
+		print_error("%s: %s: Invalid %s hash in line %"PRIu64,__progname, fn.c_str(), 
 			    hashes[hash_column[column_number]].name.c_str(),
 			    line_number);
 		contains_bad_lines = TRUE;

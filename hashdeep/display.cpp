@@ -1,8 +1,5 @@
 #include "main.h"
-#include "xml.h"
-
 #include "utf8.h"
-#include <string>
 
 /**
  *
@@ -10,12 +7,16 @@
  * Manages user output.
  * All output is in UTF-8.
  * If opt_escape8 is set, then non-ASCII UTF-8 characters are turned into U+XXXX notation.
+ * 
+ * NOTE WITH MINGW GCC-4.3.0:
+ * You will get a warning from the format. IGNORE IT.
+ * See http://lists.gnu.org/archive/html/qemu-devel/2009-01/msg01979.html
  */
 
 static void display_size(const state *s,const file_data_t *fdt)
 {
   if (s->mode & mode_display_size)  {
-    // Under CSV mode we have to include a comma, otherwise two spaces
+      // Under CSV mode we have to include a comma, otherwise two spaces
       if (s->mode & mode_csv){
 	  printf ("%"PRIu64",", fdt->actual_bytes);
       }
@@ -177,10 +178,15 @@ int state::display_hash_simple(file_data_hasher_t *fdht)
 	return FALSE;
     }
 
-  // In piecewise mode the size of each 'file' is the size
-  // of the block it came from. This is important when doing an
-  // audit in piecewise mode. In all other cases we use the 
-  // total number of bytes from the file we *actually* read
+    /* In piecewise mode the size of each 'file' is the size
+     * of the block it came from. This is important when doing an
+     * audit in piecewise mode. In all other cases we use the 
+     * total number of bytes from the file we *actually* read
+     *
+     * NOTE: Ignore the warning in the format when running on mingw with GCC-4.3.0
+     * see http://lists.gnu.org/archive/html/qemu-devel/2009-01/msg01979.html
+     */
+     
     if (fdht->piecewise){
 	printf ("%"PRIu64",", fdht->bytes_read);
     }
@@ -436,7 +442,11 @@ int state::md5deep_display_hash(file_data_hasher_t *fdht)
 		struct tm my_time;
 
 #ifdef _WIN32
+# ifdef HAVE__GMTIME64_S
 		_gmtime64_s(&fdht->timestamp,&my_time);
+# else
+		my_time = *_gmtime64(&fdht->timestamp);
+# endif
 #else
 		gmtime_r(&fdht->timestamp,&my_time);
 #endif
