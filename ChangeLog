@@ -1,3 +1,9 @@
+2011-07-04 Jesse Kornblum
+
+	* Fixed minor bugs regarding wide characters in 
+	  is_device_file on Win32
+
+
 2011-06-15 Jesse Kornblum
 
 	* Added warning message for programs running under WoW64

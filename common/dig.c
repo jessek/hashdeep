@@ -186,18 +186,18 @@ static int is_win32_device_file(TCHAR *fn)
 
   if (!_tcsnicmp(fn, _TEXT("\\\\.\\physicaldrive"),17) &&
       (_tcslen(fn) == 18) && 
-      isdigit(fn[17]))
+      iswdigit(fn[17]))
     return TRUE;
 
   if (!_tcsnicmp(fn, _TEXT("\\\\.\\tape"),8) &&
       (_tcslen(fn) == 9) && 
-      isdigit(fn[8]))
+      iswdigit(fn[8]))
     return TRUE;
  
   if ((!_tcsnicmp(fn,_TEXT("\\\\.\\"),4)) &&
       (_tcslen(fn) == 6) &&
-      (isalpha(fn[4])) &&
-      (fn[5] == ':'))
+      (iswalpha(fn[4])) &&
+      (fn[5] == _TEXT(':')))
     return TRUE;
 
   return FALSE;
