@@ -518,8 +518,8 @@ std::string main::make_utf8(const tstring &str)
     if(len==0){
 	return std::string("");		// nothing to return
     }
-
-    std::string s2 = buf;		// Make a STL string 
+    buf[len] = 0;			// be sure it is null-terminated
+    std::string s2(buf);		// Make a STL string 
     delete [] buf;			// Delete the buffern
     return s2;				// return the string
 #else

@@ -67,9 +67,14 @@ int have_processed_dir(const tstring &fn_)
  */
 static void remove_double_slash(tstring &fn)
 {
+    std::cerr << "rds fn=" << fn << "\n";
+
     tstring search;
     search.push_back(DIR_SEPARATOR);
     search.push_back(DIR_SEPARATOR);
+
+    std::cerr << "rds search=" << search << "\n";
+
 #ifdef _WIN32
     // On Windows, we have to allow the first two characters to be slashes
     // to account for UNC paths. e.g. \\SERVER\dir\path
@@ -81,8 +86,10 @@ static void remove_double_slash(tstring &fn)
 
     while(true){
 	ssize_t loc = fn.find(search,start);
+	std::cerr << "loc=" << loc << "\n";
 	if(loc==tstring::npos) break;	// no more to find
-	fn.erase(loc,1);		// erase one of the two slashes
+	fn.erase(fn.begin()+loc,fn.begin()+loc+1);		// erase one of the two slashes
+	std::cerr << "after erase fn=" << fn << "\n";
     }
 }
 
@@ -100,7 +107,7 @@ static void remove_single_dirs(tstring &fn)
     while(true){
 	ssize_t loc = fn.find(search);
 	if(loc==tstring::npos) break;	// no more to find
-	fn.erase(loc,2);			// erase
+	fn.erase(fn.begin()+loc,fn.begin()+loc+2);			// erase
     }
 }
 
@@ -116,6 +123,8 @@ void remove_double_dirs(tstring &fn)
     search.push_back('.');
     search.push_back(DIR_SEPARATOR);
 
+    std::cerr << "calling...\n";
+
     while(true){
 	ssize_t loc = fn.rfind(search);
 	if(loc==tstring::npos) break;
@@ -124,7 +133,9 @@ void remove_double_dirs(tstring &fn)
 	if(before==tstring::npos) break;
 
 	/* Now delete all between before+1 and loc+3 */
-	fn.erase(before+1,(loc+3)-before);
+	std::cerr << "calling erase\n";
+	fn.erase(fn.begin()+before+1,fn.begin()+loc+3);
+	std::cerr << "done \n";
     }
 }
 
@@ -145,7 +156,7 @@ static void clean_name_win32(tstring &fn)
 	return;
     }
     if (fn[fn.size()-1] == _TEXT(DIR_SEPARATOR)){
-	fn.erase(fn.size()-1);
+	fn.erase(fn.end()-1);
     }
 }
 
@@ -341,7 +352,7 @@ int state::process_dir(const tstring &fn)
     _TDIR *current_dir;
     struct _tdirent *entry;
 
-    if(opt_debug) std::cout << "process_dir(" << main::make_utf8(fn) << ")\n";
+    if(opt_debug) std::cerr << "process_dir(" << main::make_utf8(fn) << ")\n";
 
     if (have_processed_dir(fn)) {
 	print_error_filename(fn,"symlink creates cycle");
@@ -674,30 +685,75 @@ YOU ARE HERE
 
 void state::dig_self_test()
 {
-    tstring fn = "this is//a test";
-    tstring fn2 = fn;
+    std::cerr << "dig_self_test\n";
+
+    tstring fn("this is");
+    fn.push_back(DIR_SEPARATOR);
+    fn.push_back(DIR_SEPARATOR);
+    fn += "a test";
+
+    std::cerr << "dig_self_test 2\n";
+    std::cerr << "fn=" << fn << " <done>\n";
+
+    tstring fn2(fn);
+
+    std::cerr << "dig_self_test 3\n";
+    std::cerr << "fn2= " << main::make_utf8(fn2) << "\n";
+
+    std::cerr << "calling remove_double_slash\n";
     remove_double_slash(fn2);
-    std::cout << "remove_double_slash(" << fn << ")="<<fn2<<"\n";
+    std::cerr << "remove_double_slash(" << fn << ")="<<fn2<<"\n";
     
-    fn = "this is/./a test";
+    std::cerr << "fn before=" << fn << "\n";
+    std::cerr << "fn before=" << fn << "\n";
+    std::cerr << "fn before=" << fn << "\n";
+    std::cerr << "fn before=" << fn << "\n";
+    std::cerr << "fn before=" << fn << "\n";
+    std::cerr << "fn before=" << fn << "\n";
+    std::cerr << "fn before=" << fn << "\n";
+    std::cerr << "fn before=" << fn << "\n";
+    std::cerr << "fn before=" << fn << "\n";
+    std::cerr << "fn before=" << fn << "\n";
+    std::cerr << "fn before=" << fn << "\n";
+    std::cerr << "fn before=" << fn << "\n";
+
+    std::cerr << "Call the copy constructor...\n";
+    fn = fn2;
+    std::cerr <<" now fn= " << fn << "\n";
+
+    fn = "this is";
+    std::cerr << "fn after=" << fn << "\n";
+    std::cerr << "ok\n";
+
+    fn.push_back(DIR_SEPARATOR);
+    fn.push_back('.');
+    fn.push_back(DIR_SEPARATOR);
+    fn += "a test";
     fn2 = fn;
 
     remove_single_dirs(fn2);
-    std::cout << "remove_single_dirs(" << fn << ")="<<fn2<<"\n";
+    std::cerr << "remove_single_dirs(" << fn << ")="<<fn2<<"\n";
 
-    fn = "this is/a mistake/../a test";
+    fn = "this is";
+    fn.push_back(DIR_SEPARATOR);
+    fn += "a mistake";
+    fn.push_back(DIR_SEPARATOR);
+    fn.push_back('.');
+    fn.push_back('.');
+    fn.push_back(DIR_SEPARATOR);
+    fn += "a test";
     fn2 = fn;
     remove_double_dirs(fn2);
-    std::cout << "remove_single_dirs(" << fn << ")="<<fn2<<"\n";
+    std::cerr << "remove_single_dirs(" << fn << ")="<<fn2<<"\n";
 
-    std::cout << "is_special_dir(.)=" << is_special_dir(".") << "\n";
-    std::cout << "is_special_dir(..)=" << is_special_dir("..") << "\n";
+    std::cerr << "is_special_dir(.)=" << is_special_dir(".") << "\n";
+    std::cerr << "is_special_dir(..)=" << is_special_dir("..") << "\n";
 
     tstring names[] = {"dig.cpp",".","/dev/null","/dev/tty","../testfiles/symlinktest/dir1/dir1",""};
     for(int i=0;names[i].size()>0;i++){
 	file_data_hasher_t fdht(false);
 	file_types ft = file_type(&fdht,names[i]);
-	std::cout << "file_type(" << names[i] << ")=" << ft << "   size=" << fdht.stat_bytes << "  ctime=" << fdht.timestamp << "\n";
+	std::cerr << "file_type(" << names[i] << ")=" << ft << "   size=" << fdht.stat_bytes << "  ctime=" << fdht.timestamp << "\n";
     }
 
 }
