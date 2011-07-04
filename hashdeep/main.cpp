@@ -347,7 +347,7 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVhW:0")) != -1)  {
+  while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVhW:0D:")) != -1)  {
     switch (i) {
     case 'o':
       s->mode |= mode_expert; 
@@ -455,6 +455,7 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
       usage(s);
       exit(EXIT_SUCCESS);
       
+    case 'D': opt_debug = atoi(optarg);break;
     default:
       try_msg();
       exit(EXIT_FAILURE);
@@ -498,8 +499,14 @@ std::string main::make_utf8(const tstring &str)
 {
 #ifdef _WIN32
     /* Figure out how many bytes req required */
-    size_t len = WideCharToMultiByte(CP_UTF8,WC_NO_BEST_FIT_CHARS,str.utf16(),str.size(),0,0,0,0);
+    size_t len = WideCharToMultiByte(CP_UTF8,0,str.utf16(),str.size(),0,0,0,0);
     if(len==0){
+	switch(GetLastError()){
+	case ERROR_INSUFFICIENT_BUFFER: std::cerr << "ERROR_INSUFFICIENT_BUFFER\n";break;
+	case ERROR_INVALID_FLAGS: std::cerr << "ERROR_INVALID_FLAGS\n";break;
+	case ERROR_INVALID_PARAMETER: std::cerr << "ERROR_INVALID_PARAMETER\n";break;
+	case ERROR_NO_UNICODE_TRANSLATION: std::cerr << "ERROR_NO_UNICODE_TRANSLATION\n";break;
+	}
 	std::cerr << "WideCharToMultiByte failed\n";
 	return std::string("");
     }
@@ -507,10 +514,12 @@ std::string main::make_utf8(const tstring &str)
     char *buf = new char[len+1];
 
     /* Perform the conversion */
-    WideCharToMultiByte(CP_UTF8,WC_NO_BEST_FIT_CHARS,str.utf16(),str.size(),buf,len,0,0);
+    len = WideCharToMultiByte(CP_UTF8,0,str.utf16(),str.size(),buf,len,0,0);
+    if(len==0){
+	return std::string("");		// nothing to return
+    }
 
-
-    std::string s2 = buf;			// Make a STL string 
+    std::string s2 = buf;		// Make a STL string 
     delete [] buf;			// Delete the buffern
     return s2;				// return the string
 #else
@@ -522,10 +531,12 @@ std::string main::make_utf8(const tstring &str)
 tstring main::getcwd()
 {
 #ifdef _WIN32
+    std::cout << "hi\n";
     wchar_t buf[MAX_PATH];
     memset(buf,0,sizeof(buf));
     _wgetcwd(buf,MAX_PATH);
-    return tstring(buf);
+    tstring ret = tstring(buf);
+    return ret;
 #else
     char buf[PATH_MAX+1];
     memset(buf,0,sizeof(buf));
@@ -563,19 +574,20 @@ int main(int argc, char **argv)
 {
     int status = EXIT_SUCCESS;
 
-
     /* Because the main() function can handle wchar_t arguments on Win32,
      * we need a way to reference those values. Thus we make a duplciate
      * of the argc and argv values.
      */ 
 
-#ifndef HAVE_EXTERN_PROGNAME
-#ifdef HAVE_GETPROGNAME
+#if !defined(HAVE_EXTERN_PROGNAME) || defined(_WIN32)
+#if defined(HAVE_GETPROGNAME)
     __progname  = getprogname();
 #else
     __progname  = basename(argv[0]);
 #endif
 #endif
+
+    std::cout << "__progname:" << __progname << "\n";
 
     // Initialize the plugable algorithm system and create the state object!
 
@@ -589,6 +601,9 @@ int main(int argc, char **argv)
      * which interface to use based on how we are started.
      */
     std::string progname(__progname);
+
+    std::cout << "progname:" << progname << "\n";
+
 
     /* Convert progname to lower case */
     std::transform(progname.begin(), progname.end(), progname.begin(), ::tolower);
@@ -613,6 +628,8 @@ int main(int argc, char **argv)
 	}
 	md5deep_process_command_line(s,argc,argv);
     }
+
+    std::cout << "hello\n";
 
     if(opt_debug==1){
 	printf("self-test...\n");
