@@ -31,7 +31,7 @@
 
 using namespace std;
 
-#ifdef HAVE_EXTERN_PROGNAME
+#if defined(HAVE_EXTERN_PROGNAME) && !defined(_WIN32)
 extern char *__progname;
 #else
 char *__progname;
@@ -59,6 +59,7 @@ bool opt_silent = false;
 int  opt_verbose = 0;
 bool opt_zero   = false;
 bool opt_estimate = false;
+bool opt_relative = false;
 
 /****************************************************************
  ** Various helper functions.
@@ -92,7 +93,7 @@ static int is_absolute_path(const TCHAR *fn)
  
 static tstring generate_filename(state *s,const TCHAR *input)
 {
-    if ((s->mode & mode_relative) || is_absolute_path(input)){
+    if ((opt_relative) || is_absolute_path(input)){
 	return tstring(input);
     }
     // Windows systems don't have symbolic links, so we don't
@@ -202,7 +203,7 @@ static void check_flags_okay(state *s)
 	       "Unable to load any matching files");
 
   sanity_check(
-	       (s->mode & mode_relative) && (s->mode & mode_barename),
+	       (opt_relative) && (s->mode & mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
   /* Additional sanity checks will go here as needed... */
@@ -388,7 +389,7 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
       //    case 't': s->mode |= mode_timestamp;    break;
 
     case 'b': s->mode |= mode_barename;     break;
-    case 'l': s->mode |= mode_relative;     break;
+    case 'l': opt_relative=true;     break;
     case 'e': opt_estimate = true;	    break;
     case 'r': s->mode |= mode_recursive;    break;
     case 's': opt_silent = true;	    break;
@@ -615,7 +616,7 @@ int main(int argc, char **argv)
 
     if(opt_debug==1){
 	printf("self-test...\n");
-	dig_self_test();
+	state::dig_self_test();
     }
 
     /* Set up the DFXML output if requested */
@@ -667,9 +668,9 @@ int main(int argc, char **argv)
 	for(int i=optind;i<s->argc;i++){
 	    tstring fn = generate_filename(s,s->argv[i]);
 #ifdef _WIN32
-	    status = dig_win32(s,fn);
+	    status = s->dig_win32(fn);
 #else
-	    status = dig_normal(s,fn);
+	    status = s->dig_normal(fn);
 #endif
 	}
     }
@@ -710,7 +711,7 @@ static void md5deep_check_flags_okay(state *s)
 	       s->hashes_loaded()==0,
 	       "Unable to load any matching files");
 
-  sanity_check((s->mode & mode_relative) && (s->mode & mode_barename),
+  sanity_check((opt_relative) && (s->mode & mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
   sanity_check((s->mode & mode_piecewise) && (s->mode & mode_display_size),
@@ -843,7 +844,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
     case 'b': s->mode |= mode_barename; break;
       
     case 'l': 
-      s->mode |= mode_relative; 
+	opt_relative = true;
       break;
 
     case 'q': 

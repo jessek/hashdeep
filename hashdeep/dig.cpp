@@ -149,7 +149,7 @@ static void clean_name_win32(tstring &fn)
     }
 }
 
-static int is_win32_device_file(tstring &fn)
+static int is_win32_device_file(const tstring &fn)
 {
     // Specifications for device files came from
     // http://msdn.microsoft.com/en-us/library/aa363858(VS.85).aspx
@@ -176,7 +176,7 @@ static int is_win32_device_file(tstring &fn)
 #endif  // ifdef _WIN32 
 
 
-static void clean_name(state *s, tstring &fn)
+static void clean_name(tstring &fn)
 {
 #ifdef _WIN32
     clean_name_win32(fn);
@@ -190,7 +190,7 @@ static void clean_name(state *s, tstring &fn)
     //
     // TODO: See if Windows Vista's symbolic links create problems 
 
-    if (!(s->mode & mode_relative))  {
+    if (!opt_relative)  {
 	remove_double_slash(fn);
 	remove_single_dirs(fn);
 	remove_double_dirs(fn);
@@ -201,7 +201,7 @@ static void clean_name(state *s, tstring &fn)
 
 //  Debugging function
 #ifdef _WIN32
-void print_last_error(char * function_name)
+void print_last_error(char *function_name)
 {
     // Copied from http://msdn.microsoft.com/en-us/library/ms680582(VS.85).aspx
     // Retrieve the system error message for the last-error code
@@ -335,15 +335,13 @@ static bool is_special_dir(const tstring &d)
 
 
 
-static int process_dir(state *s, const tstring &fn)
+int state::process_dir(const tstring &fn)
 {
     int return_value = STATUS_OK;
     _TDIR *current_dir;
     struct _tdirent *entry;
 
     if(opt_debug) std::cout << "process_dir(" << main::make_utf8(fn) << ")\n";
-
-    //  print_status (_TEXT("Called process_dir(%s)"), fn);
 
     if (have_processed_dir(fn)) {
 	print_error_filename(fn,"symlink creates cycle");
@@ -358,47 +356,41 @@ static int process_dir(state *s, const tstring &fn)
     }    
 
     while ((entry = _treaddir(current_dir)) != NULL)   {
-	if (is_special_dir(entry->d_name))
-	    continue;
+	if (is_special_dir(entry->d_name)) continue; // ignore . and ..
     
-	tstring new_file = fn + DIR_SEPARATOR + entry->d_name;
-	if (is_junction_point(new_file)){
+	tstring new_file = fn + DIR_SEPARATOR + entry->d_name; // compute full path
+	if (is_junction_point(new_file)){		       // whatever this is, ignore it
 	    continue;
 	}
-	return_value = dig_normal(s,new_file);
+	return_value = dig_normal(new_file);
 
     }
-    _tclosedir(current_dir);
+    _tclosedir(current_dir);		// done with this directory
     done_processing_dir(fn);		// note that we are done with this directory
-
     return return_value;
 }
 
 
-static file_types file_type_helper(struct __stat64 sb)
+static file_types decode_file_type(struct __stat64 sb)
 {
-    if (S_ISREG(sb.st_mode)) return stat_regular;
-  
-    if (S_ISDIR(sb.st_mode)) return stat_directory;
-  
-    if (S_ISBLK(sb.st_mode)) return stat_block;
-  
-    if (S_ISCHR(sb.st_mode)) return stat_character;
-  
+    if (S_ISREG(sb.st_mode))  return stat_regular;
+    if (S_ISDIR(sb.st_mode))  return stat_directory;
+    if (S_ISBLK(sb.st_mode))  return stat_block;
+    if (S_ISCHR(sb.st_mode))  return stat_character;
     if (S_ISFIFO(sb.st_mode)) return stat_pipe;
 
-    // These file types do not exist in Win32 
-#ifndef _WIN32
-    if (S_ISSOCK(sb.st_mode)) return stat_socket;
-  
-    if (S_ISLNK(sb.st_mode)) return stat_symlink;  
-#endif   // ifndef _WIN32 
-
-    // Used to detect Solaris doors 
-#ifdef S_IFDOOR
-#ifdef S_ISDOOR
-    if (S_ISDOOR(sb.st_mode)) return stat_door;
+#ifdef S_ISSOCK
+    if (S_ISSOCK(sb.st_mode)) return stat_socket; // not present on WIN32
 #endif
+
+#ifdef S_ISLNK
+    if (S_ISLNK(sb.st_mode)) return stat_symlink; // not present on WIN32
+#endif   
+
+#ifdef S_ISDOOR
+    // Solaris doors are an inter-process communications facility present in Solaris 2.6
+    // http://en.wikipedia.org/wiki/Doors_(computing)
+    if (S_ISDOOR(sb.st_mode)) return stat_door; 
 #endif
 
     return stat_unknown;
@@ -408,8 +400,8 @@ static file_types file_type_helper(struct __stat64 sb)
 // Use a stat function to look up while kind of file this is
 // and determine its size if possible
 #ifdef _WIN32
-#define TSTAT(path,buf) _wstati64(path,buf)
-#define TLSTAT(path,buf) _wstati64(path,buf) // no lstat on windows
+#define TSTAT(path,buf) _wstat64(path,buf)
+#define TLSTAT(path,buf) _wstat64(path,buf) // no lstat on windows
 #else
 #define TSTAT(path,buf) stat(path,buf)
 #define TLSTAT(path,buf) lstat(path,buf)
@@ -430,22 +422,20 @@ static file_types file_type(file_data_hasher_t *fdht, const tstring &fn)
     // it will be the change time.
     fdht->timestamp = sb.st_ctime; 
 
-    return file_type_helper(sb);
+    return decode_file_type(sb);
 }
-
-static int should_hash_symlink(state *s, const tstring &fn, file_types *link_type);
 
 
 // Type should be the result of calling lstat on the file. We want to
 // know what this file is, not what it points to
-static int should_hash_expert(state *s, const tstring &fn, file_types type)
+int state::should_hash_expert(const tstring &fn, file_types type)
 {
     file_types link_type=stat_unknown;
     switch(type)  {
 
     case stat_directory:
-	if (s->mode & mode_recursive){
-	    process_dir(s,fn);
+	if (mode & mode_recursive){
+	    process_dir(fn);
 	}
 	else {
 	    print_error_filename(fn,"Is a directory");
@@ -456,7 +446,7 @@ static int should_hash_expert(state *s, const tstring &fn, file_types type)
 	// a 64-bit value. When that value gets converted back to int,
 	// the high part of it is lost. 
 
-#define RETURN_IF_MODE(A) if (s->mode & A) return TRUE; break;
+#define RETURN_IF_MODE(A) if (mode & A) return TRUE; break;
     case stat_regular:   RETURN_IF_MODE(mode_regular);
     case stat_block:     RETURN_IF_MODE(mode_block);
     case stat_character: RETURN_IF_MODE(mode_character);
@@ -472,9 +462,9 @@ static int should_hash_expert(state *s, const tstring &fn, file_types type)
 	// The program attempts to open the directory entry itself
 	// and gets into an infinite loop.
 
-	if (!(s->mode & mode_symlink)) return FALSE;
-	if (should_hash_symlink(s,fn,&link_type)){
-	    return should_hash_expert(s,fn,link_type);
+	if (!(mode & mode_symlink)) return FALSE;
+	if (should_hash_symlink(fn,&link_type)){
+	    return should_hash_expert(fn,link_type);
 	}
 	return FALSE;
     case stat_unknown:
@@ -485,24 +475,27 @@ static int should_hash_expert(state *s, const tstring &fn, file_types type)
 }
 
 
-static int should_hash_symlink(state *s, const tstring &fn, file_types *link_type)
+int state::should_hash_symlink(const tstring &fn, file_types *link_type)
 {
     file_types type;
-    _tstat64 sb;
+    struct __stat64 sb;
 
-    // We must look at what this symlink points to before we process it.
-    // The normal file_type function uses lstat to examine the file.
-    // Here we use stat to examine what this symlink points to. 
+    /**
+     * We must look at what this symlink points to before we process it.
+     * The file_type() function uses lstat to examine the file.
+     * Here we use the normal stat to examine what this symlink points to.
+     */
     if (TSTAT(fn.c_str(),&sb))  {
 	print_error_filename(fn,"%s",strerror(errno));
 	return FALSE;
     }
 
-    type = file_type_helper(sb);
+    type = decode_file_type(sb);
 
     if (type == stat_directory)  {
-	if (s->mode & mode_recursive)
-	    process_dir(s,fn);
+	if (mode & mode_recursive){
+	    process_dir(fn);
+	}
 	else {
 	    print_error_filename(fn,"Is a directory");
 	}
@@ -514,7 +507,7 @@ static int should_hash_symlink(state *s, const tstring &fn, file_types *link_typ
 }
     
 
-static int should_hash(state *s, file_data_hasher_t *fdht,const tstring &fn)
+int state::should_hash(file_data_hasher_t *fdht,const tstring &fn)
 {
     file_types type;
 
@@ -525,13 +518,13 @@ static int should_hash(state *s, file_data_hasher_t *fdht,const tstring &fn)
 
     type = file_type(fdht,fn);
   
-    if (s->mode & mode_expert){
-	return (should_hash_expert(s,fn,type));
+    if (mode & mode_expert){
+	return (should_hash_expert(fn,type));
     }
 
     if (type == stat_directory)  {
-	if (s->mode & mode_recursive){
-	    process_dir(s,fn);
+	if (mode & mode_recursive){
+	    process_dir(fn);
 	}    else     {
 	    print_error_filename(fn,"Is a directory");
 	}
@@ -539,7 +532,7 @@ static int should_hash(state *s, file_data_hasher_t *fdht,const tstring &fn)
     }
 
     if (type == stat_symlink){
-	return should_hash_symlink(s,fn,NULL);
+	return should_hash_symlink(fn,NULL);
     }
 
     if (type == stat_unknown){
@@ -556,17 +549,17 @@ static int should_hash(state *s, file_data_hasher_t *fdht,const tstring &fn)
 // process_win32 also returns STATUS_OK. 
 // display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.
 // Pick one and stay with it!
-int dig_normal(state *s, const tstring &fn)
+int state::dig_normal(const tstring &fn)
 {
     int ret = FALSE;
-    file_data_hasher_t *fdht = new file_data_hasher_t(s->mode & mode_piecewise);
+    file_data_hasher_t *fdht = new file_data_hasher_t(mode & mode_piecewise);
     fdht->retain();
 
     tstring fn2(fn);
-    clean_name(s,fn2);
+    clean_name(fn2);
 
-    if (should_hash(s,fdht,fn2)){
-	ret = s->hash_file(fdht,fn2);
+    if (should_hash(fdht,fn2)){
+	ret = hash_file(fdht,fn2);
     }
     fdht->release();
     return ret;
@@ -574,44 +567,49 @@ int dig_normal(state *s, const tstring &fn)
 
 
 #ifdef _WIN32
-// extract the directory name
-// Works like dirname(3), but accepts a TCHAR* instead of char*
-int my_dirname(const tstring &c)
+/**
+ * Extract the directory name from a string and return it.
+ */
+tstring  my_dirname(const tstring &fn)
 {
-    TCHAR *tmp;
-
-
-    // If there are no DIR_SEPARATORs in the directory name, then the 
-    // directory name should be the empty string
-    tmp = _tcsrchr(c,DIR_SEPARATOR);
-    if (NULL != tmp)
-	tmp[1] = 0;
-    else
-	c[0] = 0;
-
-    return FALSE;
+    ssize_t loc = fn.rfind(DIR_SEPARATOR);
+    if(loc==tstring::npos) return tstring(); // return empty string
+    return fn.substr(0,loc);
 }
 
 
-int dig_win32(state *s, const tstring &fn)
+
+int state::dig_win32(const tstring &fn)
 {
+#if 0
     int rc, status = STATUS_OK;
     TCHAR *asterisk, *question;
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind;
+#endif
 
     //  print_status("Called process_win32(%S)", fn);
 
     if (is_win32_device_file(fn)){
-	return (hash_file(s,fn));
+	file_data_hasher_t *fdht = new file_data_hasher_t(mode & mode_piecewise);
+	fdht->retain();
+	int ret = hash_file(fdht,fn);
+	fdht->release();
+	return ret;
     }
+
+    /* New code - just go to dig_normal  */
+    return dig_normal(fn);
+
+#if 0
+YOU ARE HERE
 
     // Filenames without wildcards can be processed by the
     // normal recursion code.
     asterisk = _tcschr(fn,L'*');
     question = _tcschr(fn,L'?');
     if (NULL == asterisk && NULL == question)
-	return (dig_normal(s,fn));
+	return (dig_normal(this,fn));
   
     hFind = FindFirstFile(fn, &FindFileData);
     if (INVALID_HANDLE_VALUE == hFind)  {
@@ -622,12 +620,7 @@ int dig_win32(state *s, const tstring &fn)
 #define FATAL_ERROR_UNK(A) if (NULL == A) fatal_error("%s: %s", __progname, strerror(errno));
 #define FATAL_ERROR_MEM(A) if (NULL == A) fatal_error("%s: Out of memory", __progname);
   
-    TCHAR new_fn[PATH_MAX];
-    TCHAR dirname[PATH_MAX];
-  
-    _tcsncpy(dirname,fn,sizeof(dirname));
-  
-    my_dirname(dirname);
+    tstring dirname = my_dirname(fn);
   
     rc = 1;
     while (0 != rc)  {
@@ -641,7 +634,7 @@ int dig_win32(state *s, const tstring &fn)
 	    // (e.g. c:\bin\*.exe) we can use the original dirname, combined
 	    // with the filename we've found, to make the new filename. 
       
-	    if (s->mode & mode_relative)      {
+	    if (opt_relative)      {
 		_sntprintf(new_fn,sizeof(new_fn),
 			   _TEXT("%s%s"), dirname, FindFileData.cFileName);
 	    }
@@ -651,7 +644,7 @@ int dig_win32(state *s, const tstring &fn)
 		_wfullpath(new_fn,tmp,PATH_MAX);
 	    }
       
-	    if (!(is_junction_point(new_fn))) dig_normal(s,new_fn); 
+	    if (!(is_junction_point(new_fn))) dig_normal(this,new_fn); 
 	}
     
 	rc = FindNextFile(hFind, &FindFileData);
@@ -675,10 +668,11 @@ int dig_win32(state *s, const tstring &fn)
 			     "Unknown error while cleaning up wildcard expansion");
     }
     return status;
+#endif
 }
 #endif
 
-void dig_self_test()
+void state::dig_self_test()
 {
     tstring fn = "this is//a test";
     tstring fn2 = fn;
@@ -699,7 +693,7 @@ void dig_self_test()
     std::cout << "is_special_dir(.)=" << is_special_dir(".") << "\n";
     std::cout << "is_special_dir(..)=" << is_special_dir("..") << "\n";
 
-    std::string names[] = {"dig.cpp",".","/dev/null","/dev/tty","../testfiles/symlinktest/dir1/dir1",""};
+    tstring names[] = {"dig.cpp",".","/dev/null","/dev/tty","../testfiles/symlinktest/dir1/dir1",""};
     for(int i=0;names[i].size()>0;i++){
 	file_data_hasher_t fdht(false);
 	file_types ft = file_type(&fdht,names[i]);

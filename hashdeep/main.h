@@ -26,6 +26,7 @@
 #include <vector>
 
 /* Global Options */
+extern bool opt_relative;		// print relative file names
 extern bool opt_silent;			// previously was mode_silent
 extern int  opt_verbose;		// can be 1, 2 or 3
 extern bool opt_zero;			// newlines are \000 
@@ -50,7 +51,7 @@ extern int  opt_debug;			// for debugging
 #define mode_display_hash      1<<6
 #define mode_display_size      1<<7
 //#define mode_zero              1<<8          // now is opt_zero
-#define mode_relative          1<<9
+//#define mode_relative          1<<9
 #define mode_which             1<<10
 #define mode_barename          1<<11
 #define mode_asterisk          1<<12
@@ -449,6 +450,14 @@ public:
     static std::string make_utf8(const tstring &ttr) ;
 };
 
+/* On Win32, allow output of wstr's by converting them to UTF-8 */
+#ifdef _WIN32
+inline std::ostream & operator <<(std::ostream &os,const class wstring &wstr) {
+    os << main::make_utf8(wstr);
+    return os;
+}
+#endif
+
 
 class state {
 public:;
@@ -529,6 +538,17 @@ public:;
     int		identify_hash_file_type(FILE *f,uint32_t *expected_hashes); // identify the hash file type
     int		finalize_matching();
 
+    /* dig.cpp */
+    int		should_hash_symlink(const tstring &fn,file_types *link_type);
+    int		should_hash_expert(const tstring &fn, file_types type);
+    int		should_hash(file_data_hasher_t *fdht,const tstring &fn);
+
+    int		process_dir(const tstring &path);
+    int		dig_normal(const tstring &path);	// posix  & win32 
+    int		dig_win32(const tstring &path);	// win32 only; calls dig_normal
+    static	void dig_self_test();
+
+
     /* display.cpp */
     void	display_banner();
     int		display_hash(file_data_hasher_t *fdht);
@@ -563,11 +583,6 @@ std::vector<std::string> split(const std::string &s, char delim);
 void lowercase(std::string &s);
 extern char *__progname;
 
-/* HELPER FUNCTIONS */
-#ifdef _WIN32
-std::string tchar_to_utf8(TCHAR *);		// returns a UTF-8 string for a TCHAR
-#endif
-
 // ----------------------------------------------------------------
 // CYCLE CHECKING
 // ----------------------------------------------------------------
@@ -598,8 +613,6 @@ off_t find_file_size(FILE *f);
 // MAIN PROCESSING
 // ------------------------------------------------------------------ 
 /* dig.cpp */
-int dig_normal(state *s, const tstring &path);	// posix  & win32 
-int dig_win32(state *s, const tstring &path);	// win32 only; calls dig_normal
 int md5deep_process_command_line(state *s, int argc, char **argv);
 void dig_self_test();			// check the string-processing
 

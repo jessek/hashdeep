@@ -91,7 +91,8 @@ AC_TRY_COMPILE([extern char *__progname;],
 	[const char *progname = __progname;],
 	extern_progname=yes,
 	extern_progname=no)
-if test "$extern_progname" = yes; then
+if test x"${extern_progname}" = x"yes"; then
+  AC_MSG_NOTICE([__progname is external])
   AC_DEFINE(HAVE_EXTERN_PROGNAME,1,[define to 1 if __progname is available])
 fi
 

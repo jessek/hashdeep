@@ -49,6 +49,14 @@ void output_filename(FILE *out,const std::string &fn)
     fwrite(fn.c_str(),fn.size(),1,out);
 }
 
+#ifdef _WIN32
+/* NOTE - This is where to do the UTF-8 or U+ substitution */
+void output_filename(FILE *out,const wstring &fn)
+{
+    output_filename(out,main::make_utf8(fn));
+}
+#endif
+
 /* By default, we display in UTF-8.
  * We escape UTF-8 if requested.
  */

@@ -148,7 +148,7 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
       
     // If an error occured, display a message but still add this block 
     if (ferror(fdht->handle)) {
-	print_error_filename(fdht->file_name.c_str(),
+	print_error_filename(fdht->file_name,
 			    "error at offset %"PRIu64": %s",
 			    ftello(fdht->handle),
 			    strerror(errno));

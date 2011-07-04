@@ -1,3 +1,11 @@
+2011-07-04  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/main.cpp: added conditional to use built-in __progname if compiling under WIN32
+
+	* hashdeep/Makefile.am (hashdeep_SOURCES): removed tchar-local.h and added wstring.h
+
+	* hashdeep/dig.cpp (clean_name): changed mode_relative to opt_relative
+
 2011-07-03  Simson Garfinkel  <simsong@imac3.home>
 
 	* hashdeep/dig.cpp (should_hash_symlink): changed stat structure from _tstat_t to _tstati64
