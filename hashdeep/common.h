@@ -217,7 +217,6 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 #include <windowsx.h>
 #include <tchar.h>
 #include <wchar.h>
-#include <vector>
 
 #if defined(__cplusplus)
 /*
@@ -416,12 +415,13 @@ typedef wstring tstring;
 // system \n seems to work ok. Which is it? 
 // If we end up using \n, we should move it out of the conditional defines
 
-#define NEWLINE "\n"
+#define NEWLINE "\r\n"			// for Windows, make newline \r\n
 #define LINE_LENGTH 72
 #define BLANK_LINE \
 "                                                                        "
 #define ftello   ftell
 #define fseeko   fseek
+#define tlstat64(path,buf)   _wstat64(path,buf) // on windows, use _wstat64
 #endif
 
 // Set up the environment for the *nix operating systems (Mac, Linux, 
@@ -437,8 +437,8 @@ typedef wstring tstring;
  * This works just fine on Linux and OS X
  */
 
-typedef char TCHAR;
-#define  _TDIR      DIR
+typedef char TCHAR;			// no TCHAR on POSIX; use CHAR
+#define  _TDIR      DIR			// no _TDIR, use dir...
 #define  _TEXT(A)   A
 #define  _tfopen    fopen
 
@@ -448,8 +448,8 @@ typedef char TCHAR;
 #define  _tclosedir closedir
 
 #define  _lstat     lstat
-#define  _sstat     stat
-#define  _tstat64   struct stat
+#define  _wstat64(path,buf)   stat(path,buf)
+#define  __stat64   stat
 
 
 #if defined(__cplusplus)

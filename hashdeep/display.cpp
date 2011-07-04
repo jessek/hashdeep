@@ -18,10 +18,10 @@ static void display_size(const state *s,const file_data_t *fdt)
   if (s->mode & mode_display_size)  {
       // Under CSV mode we have to include a comma, otherwise two spaces
       if (s->mode & mode_csv){
-	  printf ("%"PRIu64",", fdt->actual_bytes);
+	  printf("%"PRIu64",", fdt->actual_bytes);
       }
       else {
-	  printf ("%10"PRIu64"  ", fdt->actual_bytes);
+	  printf("%10"PRIu64"  ", fdt->actual_bytes);
       }
   }
 }
@@ -188,10 +188,10 @@ int state::display_hash_simple(file_data_hasher_t *fdht)
      */
      
     if (fdht->piecewise){
-	printf ("%"PRIu64",", fdht->bytes_read);
+	printf("%"PRIu64",", fdht->bytes_read);
     }
     else {
-	printf ("%"PRIu64",", fdht->actual_bytes);
+	printf("%"PRIu64",", fdht->actual_bytes);
     }
 
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {

@@ -375,7 +375,7 @@ static int process_dir(state *s, const tstring &fn)
 }
 
 
-static file_types file_type_helper(_tstat64 sb)
+static file_types file_type_helper(struct __stat64 sb)
 {
     if (S_ISREG(sb.st_mode)) return stat_regular;
   
@@ -407,11 +407,19 @@ static file_types file_type_helper(_tstat64 sb)
 
 // Use a stat function to look up while kind of file this is
 // and determine its size if possible
+#ifdef _WIN32
+#define TSTAT(path,buf) _wstati64(path,buf)
+#define TLSTAT(path,buf) _wstati64(path,buf) // no lstat on windows
+#else
+#define TSTAT(path,buf) stat(path,buf)
+#define TLSTAT(path,buf) lstat(path,buf)
+#endif
+
 static file_types file_type(file_data_hasher_t *fdht, const tstring &fn)
 {
-    _tstat64 sb;
+    struct __stat64 sb;
 
-    if (_lstat(fn.c_str(),&sb))  {
+    if (TLSTAT(fn.c_str(),&sb))  {
 	print_error_filename(fn,"%s", strerror(errno));
 	return stat_unknown;
     }
@@ -485,7 +493,7 @@ static int should_hash_symlink(state *s, const tstring &fn, file_types *link_typ
     // We must look at what this symlink points to before we process it.
     // The normal file_type function uses lstat to examine the file.
     // Here we use stat to examine what this symlink points to. 
-    if (_sstat(fn.c_str(),&sb))  {
+    if (TSTAT(fn.c_str(),&sb))  {
 	print_error_filename(fn,"%s",strerror(errno));
 	return FALSE;
     }
