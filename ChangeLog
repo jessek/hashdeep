@@ -1,3 +1,7 @@
+2011-07-05  Simson Garfinkel  <simsong@it012176.ern.nps.edu>
+
+	* Makefile.am (SUBDIRS): hashdeep subdir renamed to be src, since it is now src for everybody.
+
 2011-07-04  Simson Garfinkel  <simsong@imac3.home>
 
 	* hashdeep/main.cpp: added conditional to use built-in __progname if compiling under WIN32

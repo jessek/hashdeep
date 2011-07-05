@@ -1,4 +1,4 @@
-SUBDIRS = hashdeep tests man
+SUBDIRS = src tests man
 
 EXTRA_DIST = FILEFORMAT config.guess config.sub  \
    testfiles/anotherfile.txt \
