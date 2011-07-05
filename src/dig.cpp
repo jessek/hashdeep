@@ -595,7 +595,6 @@ std::wstring  my_dirname(const std::wstring &fn)
 int state::dig_win32(const std::wstring &fn)
 {
     int rc, status = STATUS_OK;
-    TCHAR *asterisk, *question;
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind;
 
@@ -609,16 +608,17 @@ int state::dig_win32(const std::wstring &fn)
 	return ret;
     }
 
-    YOU ARE HERE
+    //YOU ARE HERE
 
     // Filenames without wildcards can be processed by the
     // normal recursion code.
-    asterisk = _tcschr(fn,L'*');
-    question = _tcschr(fn,L'?');
-    if (NULL == asterisk && NULL == question)
-	return (dig_normal(this,fn));
+    size_t asterisk = fn.find(L'*');
+    size_t question  = fn.find(fn,L'?');
+    if (asterisk==std::wstring::npos && question==std::wstring::npos){
+	return (dig_normal(fn));
+    }
   
-    hFind = FindFirstFile(fn, &FindFileData);
+    hFind = FindFirstFile(fn.c_str(), &FindFileData);
     if (INVALID_HANDLE_VALUE == hFind)  {
 	print_error_filename(fn,"No such file or directory");
 	return STATUS_OK;
@@ -630,7 +630,7 @@ int state::dig_win32(const std::wstring &fn)
     tstring dirname = my_dirname(fn);
   
     rc = 1;
-    while (0 != rc)  {
+    while (rc!=0)  {
 	if (!(is_special_dir(FindFileData.cFileName)))    {
 	    // The filename we've found doesn't include any path information.
 	    // We have to add it back in manually. Thankfully Windows doesn't
@@ -641,17 +641,14 @@ int state::dig_win32(const std::wstring &fn)
 	    // (e.g. c:\bin\*.exe) we can use the original dirname, combined
 	    // with the filename we've found, to make the new filename. 
       
-	    if (opt_relative)      {
-		_sntprintf(new_fn,sizeof(new_fn),
-			   _TEXT("%s%s"), dirname, FindFileData.cFileName);
-	    }
-	    else      {	  
-		TCHAR tmp[PATH_MAX];
-		_sntprintf(tmp,sizeof(tmp),_TEXT("%s%s"),dirname,FindFileData.cFileName);
-		_wfullpath(new_fn,tmp,PATH_MAX);
+	    std::wstring new_fn;
+
+	    new_fn = dirname + FindFileData.cFileName;
+	    if (!opt_relative) {
+		new_fn = main::get_realpath(new_fn);
 	    }
       
-	    if (!(is_junction_point(new_fn))) dig_normal(this,new_fn); 
+	    if (!(is_junction_point(new_fn))) dig_normal(new_fn); 
 	}
     
 	rc = FindNextFile(hFind, &FindFileData);
@@ -682,19 +679,30 @@ int state::dig_win32(const std::wstring &fn)
  * Test the string manipulation routines.
  */
 
+inline std::ostream & operator << (std::ostream &os,const struct __stat64 sb) {
+    os << "size=" << sb.st_size << " ctime=" << sb.st_ctime ;
+    return os;
+}
+
 void state::dig_self_test()
 {
+    struct __stat64 sb;
     std::cerr << "dig_self_test\n";
 
-#if 0
-
+    memset(&sb,0,sizeof(sb));
     std::cerr << "check stat 1: "
 	      << TLSTAT(_T("z:\\simsong on my mac\\md5deep\\branches\\version4\\hashdeep\\md5.cpp"),&sb)
-	      << "\n";
+	      << " " << sb << "\n";
+
+    memset(&sb,0,sizeof(sb));
     std::cerr <<  "check stat 2: "
-	      <<  TLSTAT(_T("c:\\autoexec.bat"),&sb))
-	      << "\n";
-#endif
+	      <<  TLSTAT(_T("c:\\autoexec.bat"),&sb)
+	      << " " << sb << "\n";
+
+    memset(&sb,0,sizeof(sb));
+    std::cerr <<  "check stat 3: "
+	      <<  TLSTAT(_T("/etc/resolv.conf"),&sb)
+	      << " " << sb << "\n";
 
     tstring fn(_T("this is"));
     fn.push_back(DIR_SEPARATOR);
