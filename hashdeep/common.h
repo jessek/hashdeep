@@ -196,8 +196,6 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
  *
  * TCHAR is used for filenames of files to hash.
  *
- * We have a wstring derrived type which we use internally as wide-char strings.
- *
  * We can convert this to UTF-8 using the GNU utf8 package from sourceforce.
  * 
  *
@@ -224,14 +222,14 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 #include <wchar.h>
 
 #if defined(__cplusplus)
-#include "wstring.h"
+#include <string>
 /* 
  * Internally we use tstring.
- * ON WIN32: we get a wstring.
+ * ON WIN32: we get a std::wstring.
  * ON POSIX: we get a std::string.
  */ 
 
-typedef wstring tstring; 
+typedef std::wstring tstring; 
 #endif
 
 // The current cross compiler for OS X->Windows does not support a few

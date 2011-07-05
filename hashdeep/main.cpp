@@ -499,7 +499,7 @@ std::string main::make_utf8(const tstring &str)
 {
 #ifdef _WIN32
     /* Figure out how many bytes req required */
-    size_t len = WideCharToMultiByte(CP_UTF8,0,str.utf16(),str.size(),0,0,0,0);
+    size_t len = WideCharToMultiByte(CP_UTF8,0,str.c_str(),str.size(),0,0,0,0);
     if(len==0){
 	switch(GetLastError()){
 	case ERROR_INSUFFICIENT_BUFFER: std::cerr << "ERROR_INSUFFICIENT_BUFFER\n";break;
@@ -514,7 +514,7 @@ std::string main::make_utf8(const tstring &str)
     char *buf = new char[len+1];
 
     /* Perform the conversion */
-    len = WideCharToMultiByte(CP_UTF8,0,str.utf16(),str.size(),buf,len,0,0);
+    len = WideCharToMultiByte(CP_UTF8,0,str.c_str(),str.size(),buf,len,0,0);
     if(len==0){
 	return std::string("");		// nothing to return
     }
@@ -553,7 +553,7 @@ tstring main::get_realpath(const tstring &fn)
      * http://msdn.microsoft.com/en-us/library/506720ff(v=vs.80).aspx
      */
     TCHAR absPath[PATH_MAX];
-    if(_wfullpath(absPath,fn.utf16(),PATH_MAX)==0) tstring(_T("")); // fullpath failed...
+    if(_wfullpath(absPath,fn.c_str(),PATH_MAX)==0) tstring(_T("")); // fullpath failed...
     return tstring(absPath);
 #else
     char resolved_name[PATH_MAX];	//

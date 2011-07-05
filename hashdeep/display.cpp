@@ -51,7 +51,7 @@ void output_filename(FILE *out,const std::string &fn)
 
 #ifdef _WIN32
 /* NOTE - This is where to do the UTF-8 or U+ substitution */
-void output_filename(FILE *out,const wstring &fn)
+void output_filename(FILE *out,const std::wstring &fn)
 {
     output_filename(out,main::make_utf8(fn));
 }

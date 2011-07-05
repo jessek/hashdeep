@@ -54,7 +54,7 @@ void print_error_filename(const std::string &fn, const char *fmt, ...)
 
 #ifdef _WIN32
 /* This is where the unicode happens */
-void print_error_filename(const wstring &fn, const char *fmt, ...)
+void print_error_filename(const std::wstring &fn, const char *fmt, ...)
 {
     if (opt_silent) return;
     output_filename(stderr,fn);

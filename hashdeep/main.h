@@ -447,12 +447,16 @@ public:
     static tstring getcwd();			  // returns the current directory
     static tstring get_realpath(const tstring &fn); // returns the full path
     static std::string get_realpath8(const tstring &fn);  // returns the full path in UTF-8
-    static std::string make_utf8(const tstring &ttr) ;
+#ifdef _WIN32
+    static std::string make_utf8(const std::wstring &tfn) ;
+#else
+    static std::string make_utf8(const std::string &tfn){return tfn;}
+#endif
 };
 
 /* On Win32, allow output of wstr's by converting them to UTF-8 */
 #ifdef _WIN32
-inline std::ostream & operator <<(std::ostream &os,const class wstring &wstr) {
+inline std::ostream & operator <<(std::ostream &os,const std::wstring &wstr) {
     os << main::make_utf8(wstr);
     return os;
 }
@@ -624,7 +628,7 @@ void dig_self_test();			// check the string-processing
 void  output_filename(FILE *out,const char *fn);
 void  output_filename(FILE *out,const std::string &fn);
 #ifdef _WIN32
-void  output_filename(FILE *out,const wstring &fn);
+void  output_filename(FILE *out,const std::wstring &fn);
 #endif
 
 /* display_filename is similar output_filename,
@@ -649,7 +653,7 @@ void print_error(const char *fmt, ...);
 // Display an error message if not in silent mode with a Unicode filename
 void print_error_filename(const std::string &fn, const char *fmt, ...);
 #ifdef _WIN32
-void print_error_filename(const wstring &wfn, const char *fmt, ...);
+void print_error_filename(const std::wstring &wfn, const char *fmt, ...);
 #endif
 
 // Display an error message, if not in silent mode,  
