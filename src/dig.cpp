@@ -67,13 +67,9 @@ int have_processed_dir(const tstring &fn_)
  */
 static void remove_double_slash(tstring &fn)
 {
-    std::cerr << "rds fn=" << fn << "\n";
-
     tstring search;
     search.push_back(DIR_SEPARATOR);
     search.push_back(DIR_SEPARATOR);
-
-    std::cerr << "rds search=" << search << "\n";
 
 #ifdef _WIN32
     // On Windows, we have to allow the first two characters to be slashes
@@ -86,10 +82,8 @@ static void remove_double_slash(tstring &fn)
 
     while(true){
 	size_t loc = fn.find(search,start);
-	std::cerr << "loc=" << loc << "\n";
 	if(loc==tstring::npos) break;	// no more to find
-	fn.erase(fn.begin()+loc,fn.begin()+loc+1);		// erase one of the two slashes
-	std::cerr << "after erase fn=" << fn << "\n";
+	fn.erase(loc);		// erase one of the two slashes
     }
 }
 
@@ -123,8 +117,6 @@ void remove_double_dirs(tstring &fn)
     search.push_back('.');
     search.push_back(DIR_SEPARATOR);
 
-    std::cerr << "calling...\n";
-
     while(true){
 	size_t loc = fn.rfind(search);
 	if(loc==tstring::npos) break;
@@ -133,9 +125,7 @@ void remove_double_dirs(tstring &fn)
 	if(before==tstring::npos) break;
 
 	/* Now delete all between before+1 and loc+3 */
-	std::cerr << "calling erase\n";
 	fn.erase(fn.begin()+before+1,fn.begin()+loc+3);
-	std::cerr << "done \n";
     }
 }
 

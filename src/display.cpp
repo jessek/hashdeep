@@ -437,15 +437,12 @@ int state::md5deep_display_hash(file_data_hasher_t *fdht)
 	compute_dfxml(fdht,this->mode & mode_which);
 	return FALSE;
     }
-
     display_size(this,fdht);
-
-    /* SLG */
-    printf("hash hex size=%d\n",fdht->hash_hex[this->md5deep_mode_algorithm].size());
     printf("%s", fdht->hash_hex[this->md5deep_mode_algorithm].c_str());
 
-    if (this->mode & mode_quiet)
+    if (this->mode & mode_quiet){
 	printf ("  ");
+    }
     else  {
 	if ((fdht->piecewise) || !(fdht->is_stdin))    {
 	    if (this->mode & mode_timestamp)      {

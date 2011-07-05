@@ -669,15 +669,11 @@ int main(int argc, char **argv)
      * specified, we should hash standard input
      */
     
-    /* SLG */
-    printf("s->md5deep_mode=%d\n",s->md5deep_mode);
-
     if (optind == argc){
 	s->hash_stdin();
     } else {
 	for(int i=optind;i<s->argc;i++){
 	    tstring fn = generate_filename(s,s->argv[i]);
-	    std::cerr << "calling dig(" << fn << ")\n";
 #ifdef _WIN32
 	    status = s->dig_win32(fn);
 #else

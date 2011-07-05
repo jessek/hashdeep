@@ -1,6 +1,6 @@
 #!/bin/sh
 # TEST_DIR is where the executable is that we are testing:
-TEST_DIR=../hashdeep
+TEST_DIR=../src
 # GOOD_DIR is the executable that is known to be good
 GOOD_DIR=/opt/local/bin
 
