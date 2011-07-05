@@ -473,7 +473,8 @@ public:;
 	    known(),seen(),
 	    h_plain(0),h_bsd(0),h_md5deep_size(0),
 	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
-	    h_nsrl20(0), h_encase(0)
+	    h_nsrl20(0), h_encase(0),
+	    md5deep_mode(0),md5deep_mode_algorithm(alg_unknown)
 	    {};
 
     /* Basic Program State */
@@ -492,9 +493,6 @@ public:;
     std::string		outfile;	// where output goes
     bool             banner_displayed;	// has the header been shown (text output)
     XML             *dfxml;  /* output in DFXML */
-
-    // Lists of known hashes 
-    //hashTable       known_hashes;
 
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;

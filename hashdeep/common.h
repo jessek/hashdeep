@@ -17,6 +17,11 @@
 
 #include "config.h"
 
+#ifdef _WIN32
+/* For some reason this doesn't work properly with mingw */
+#undef HAVE_EXTERN_PROGNAME
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 #include <math.h>

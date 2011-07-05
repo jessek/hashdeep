@@ -12,17 +12,18 @@
  */
 #include <vector>
 class wstring : public std::vector<wchar_t>{
+    mutable wchar_t *cstr;			// a null-terminated string
 public:
     static const ssize_t npos=-1;
-    wstring(){}
-    wstring(const wchar_t *buf){
+    wstring():cstr(0){}
+    wstring(const wchar_t *buf):cstr(0){
 	/* this is pretty inefficient */
 	while(*buf){
 	    push_back(*buf);
 	    buf++;
 	}
     }
-    wstring(const wchar_t *buf,size_t len){
+    wstring(const wchar_t *buf,size_t len):cstr(0){
 	/* This is also pretty inefficient */
 	while(len){
 	    push_back(*buf);
@@ -30,16 +31,33 @@ public:
 	    len--;
 	}
     }
-    wstring(const char *str){ /* legacy C-style strings */
+    wstring(const char *str):cstr(0){ /* legacy C-style strings */
 	while(*str){
 	    push_back(*str);
 	    str++;
 	}
     }
+    ~wstring(){
+	invalidate_cstr();
+    }
 
-    const wchar_t *utf16() const{		// strings actually store UTF-16 (well, almost)
+    void invalidate_cstr() const {
+	if(cstr){
+	    delete[] cstr;
+	    cstr = 0;
+	}
+    }
+
+    /* utf16() and c_str() return a null-terminated string.
+     * This needs to be separately tracked and freed as necessary.
+     */
+    const wchar_t *utf16() const{		
+	if(cstr) return cstr;
+	cstr = new wchar_t[size()+1];
 	/* http://www.parashift.com/c++-faq-lite/containers.html#faq-34.2 */
-	return empty() ? NULL : &(*this)[0];
+	memmove(cstr,&(*this)[0],size()*sizeof(wchar_t));
+	cstr[size()] = 0;		// null-terminate
+	return cstr;
     }
     const wchar_t *c_str() const{		// wide c strings *are* utf16
 	return utf16();
@@ -97,17 +115,20 @@ public:
 	return wstring(utf16()+pos,len);
     }
     void append(const wstring &s2){    /* Append a string */
+	invalidate_cstr();
 	for(wstring::const_iterator it = s2.begin(); it!=s2.end(); it++){
 	    push_back(*it);
 	}
     }
     void append(const TCHAR *s2){	// append a TCHAR array
+	invalidate_cstr();
 	while(*s2){
 	    push_back(*s2);
 	    s2++;
 	}
     }
     void append(const char *s2){	// append a cstring
+	invalidate_cstr();
 	while(*s2){
 	    push_back(*s2);
 	    s2++;

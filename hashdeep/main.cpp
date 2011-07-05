@@ -31,7 +31,7 @@
 
 using namespace std;
 
-#if defined(HAVE_EXTERN_PROGNAME) && !defined(_WIN32)
+#if defined(HAVE_EXTERN_PROGNAME) 
 extern char *__progname;
 #else
 char *__progname;
@@ -531,7 +531,6 @@ std::string main::make_utf8(const tstring &str)
 tstring main::getcwd()
 {
 #ifdef _WIN32
-    std::cout << "hi\n";
     wchar_t buf[MAX_PATH];
     memset(buf,0,sizeof(buf));
     _wgetcwd(buf,MAX_PATH);
@@ -579,15 +578,13 @@ int main(int argc, char **argv)
      * of the argc and argv values.
      */ 
 
-#if !defined(HAVE_EXTERN_PROGNAME) || defined(_WIN32)
+#if !defined(HAVE_EXTERN_PROGNAME)
 #if defined(HAVE_GETPROGNAME)
     __progname  = getprogname();
 #else
     __progname  = basename(argv[0]);
 #endif
 #endif
-
-    std::cout << "__progname:" << __progname << "\n";
 
     // Initialize the plugable algorithm system and create the state object!
 
@@ -601,9 +598,6 @@ int main(int argc, char **argv)
      * which interface to use based on how we are started.
      */
     std::string progname(__progname);
-
-    std::cout << "progname:" << progname << "\n";
-
 
     /* Convert progname to lower case */
     std::transform(progname.begin(), progname.end(), progname.begin(), ::tolower);
@@ -628,8 +622,6 @@ int main(int argc, char **argv)
 	}
 	md5deep_process_command_line(s,argc,argv);
     }
-
-    std::cout << "hello\n";
 
     if(opt_debug==1){
 	printf("self-test...\n");
@@ -679,11 +671,15 @@ int main(int argc, char **argv)
      * specified, we should hash standard input
      */
     
+    /* SLG */
+    printf("s->md5deep_mode=%d\n",s->md5deep_mode);
+
     if (optind == argc){
 	s->hash_stdin();
     } else {
 	for(int i=optind;i<s->argc;i++){
 	    tstring fn = generate_filename(s,s->argv[i]);
+	    std::cerr << "calling dig(" << fn << ")\n";
 #ifdef _WIN32
 	    status = s->dig_win32(fn);
 #else

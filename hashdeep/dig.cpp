@@ -422,8 +422,19 @@ static file_types file_type(file_data_hasher_t *fdht, const tstring &fn)
 {
     struct __stat64 sb;
 
+    memset(&sb,0,sizeof(sb));
+
+    const wchar_t *f2 = fn.c_str();
+    for(const wchar_t *cc = f2;*cc;cc++){
+	printf("cc = %c (%d)\n",*cc,*cc);
+    }
+    printf("check stat 1: %d\n",TLSTAT(L"z:\\simsong on my mac\\md5deep\\branches\\version4\\hashdeep\\md5.cpp",&sb));
+    printf("check stat 2: %d\n",TLSTAT(L"c:\\autoexec.bat",&sb));
+
+    wprintf(L"file_type=%s\n",f2);
+
     if (TLSTAT(fn.c_str(),&sb))  {
-	print_error_filename(fn,"%s", strerror(errno));
+	print_error_filename(fn,"%s (dig.cpp::file_type)", strerror(errno));
 	return stat_unknown;
     }
 

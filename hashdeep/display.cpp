@@ -440,7 +440,9 @@ int state::md5deep_display_hash(file_data_hasher_t *fdht)
 
     display_size(this,fdht);
 
-    printf ("%s", fdht->hash_hex[this->md5deep_mode_algorithm].c_str());
+    /* SLG */
+    printf("hash hex size=%d\n",fdht->hash_hex[this->md5deep_mode_algorithm].size());
+    printf("%s", fdht->hash_hex[this->md5deep_mode_algorithm].c_str());
 
     if (this->mode & mode_quiet)
 	printf ("  ");
