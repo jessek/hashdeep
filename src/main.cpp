@@ -483,6 +483,7 @@ static int prepare_windows_command_line(state *s)
 #endif
 
 #ifdef _WIN32
+#include <winnls.h>
 std::string to_string(TCHAR *buf)
 {
     return "TBF";
@@ -494,10 +495,9 @@ std::string to_string(const char *buf)
     return std::string(buf);
 }
 
-#include <winnls.h>
+#ifdef _WIN32
 std::string main::make_utf8(const tstring &str) 
 {
-#ifdef _WIN32
     /* Figure out how many bytes req required */
     size_t len = WideCharToMultiByte(CP_UTF8,0,str.c_str(),str.size(),0,0,0,0);
     if(len==0){
@@ -522,10 +522,8 @@ std::string main::make_utf8(const tstring &str)
     std::string s2(buf);		// Make a STL string 
     delete [] buf;			// Delete the buffern
     return s2;				// return the string
-#else
-    return str;				// it's already in UTF-8
-#endif
 }
+#endif
 
 
 tstring main::getcwd()

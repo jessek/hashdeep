@@ -285,6 +285,7 @@ typedef std::wstring tstring;
 typedef char TCHAR;			// no TCHAR on POSIX; use CHAR
 #define  _TDIR      DIR			// no _TDIR, use dir...
 #define  _TEXT(A)   A
+#define  _T(A)      A
 #define  _tfopen    fopen
 
 #define  _topendir  opendir

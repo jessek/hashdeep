@@ -428,15 +428,6 @@ static file_types file_type(file_data_hasher_t *fdht, const tstring &fn)
 
     memset(&sb,0,sizeof(sb));
 
-    const wchar_t *f2 = fn.c_str();
-    for(const wchar_t *cc = f2;*cc;cc++){
-	printf("cc = %c (%d)\n",*cc,*cc);
-    }
-    printf("check stat 1: %d\n",TLSTAT(L"z:\\simsong on my mac\\md5deep\\branches\\version4\\hashdeep\\md5.cpp",&sb));
-    printf("check stat 2: %d\n",TLSTAT(L"c:\\autoexec.bat",&sb));
-
-    wprintf(L"file_type=%s\n",f2);
-
     if (TLSTAT(fn.c_str(),&sb))  {
 	print_error_filename(fn,"%s (dig.cpp::file_type)", strerror(errno));
 	return stat_unknown;
@@ -704,6 +695,16 @@ int state::dig_win32(const std::wstring &fn)
 void state::dig_self_test()
 {
     std::cerr << "dig_self_test\n";
+
+#if 0
+
+    std::cerr << "check stat 1: "
+	      << TLSTAT(_T("z:\\simsong on my mac\\md5deep\\branches\\version4\\hashdeep\\md5.cpp"),&sb)
+	      << "\n";
+    std::cerr <<  "check stat 2: "
+	      <<  TLSTAT(_T("c:\\autoexec.bat"),&sb))
+	      << "\n";
+#endif
 
     tstring fn(_T("this is"));
     fn.push_back(DIR_SEPARATOR);
