@@ -604,15 +604,19 @@ std::wstring  my_dirname(const std::wstring &fn)
 }
 
 
+/**
+ * dig_win32 ensures the program processes files with Unicode filenames.
+ * They are not processed using the standard opendir/readdir commands.
+ * It also handles the case of asterisks on the command line being used to refer to files with
+ * Unicode filenames.
+ */
 
 int state::dig_win32(const std::wstring &fn)
 {
-#if 0
     int rc, status = STATUS_OK;
     TCHAR *asterisk, *question;
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind;
-#endif
 
     //  print_status("Called process_win32(%S)", fn);
 
@@ -624,11 +628,7 @@ int state::dig_win32(const std::wstring &fn)
 	return ret;
     }
 
-    /* New code - just go to dig_normal  */
-    return dig_normal(fn);
-
-#if 0
-YOU ARE HERE
+    YOU ARE HERE
 
     // Filenames without wildcards can be processed by the
     // normal recursion code.
@@ -694,9 +694,12 @@ YOU ARE HERE
 			     "Unknown error while cleaning up wildcard expansion");
     }
     return status;
-#endif
 }
 #endif
+
+/**
+ * Test the string manipulation routines.
+ */
 
 void state::dig_self_test()
 {
@@ -707,44 +710,16 @@ void state::dig_self_test()
     fn.push_back(DIR_SEPARATOR);
     fn += _T("a test");
 
-    std::cerr << "dig_self_test 2\n";
-    std::cerr << "fn=" << fn << " <done>\n";
-
     tstring fn2(fn);
-
-    std::cerr << "dig_self_test 3\n";
-    std::cerr << "fn2= " << main::make_utf8(fn2) << "\n";
-
-    std::cerr << "calling remove_double_slash\n";
     remove_double_slash(fn2);
-    std::cerr << "remove_double_slash(" << fn << ")="<<fn2<<"\n";
-    
-    std::cerr << "fn before=" << fn << "\n";
-    std::cerr << "fn before=" << fn << "\n";
-    std::cerr << "fn before=" << fn << "\n";
-    std::cerr << "fn before=" << fn << "\n";
-    std::cerr << "fn before=" << fn << "\n";
-    std::cerr << "fn before=" << fn << "\n";
-    std::cerr << "fn before=" << fn << "\n";
-    std::cerr << "fn before=" << fn << "\n";
-    std::cerr << "fn before=" << fn << "\n";
-    std::cerr << "fn before=" << fn << "\n";
-    std::cerr << "fn before=" << fn << "\n";
-    std::cerr << "fn before=" << fn << "\n";
 
-    std::cerr << "Call the copy constructor...\n";
-    fn = fn2;
-    std::cerr <<" now fn= " << fn << "\n";
+    std::cerr << "remove_double_slash(" << fn << ")="<<fn2<<"\n";
 
     fn = _T("this is");
-    std::cerr << "fn after=" << fn << "\n";
-    std::cerr << "ok\n";
-
     fn.push_back(DIR_SEPARATOR);
     fn.push_back('.');
     fn.push_back(DIR_SEPARATOR);
     fn += _T("a test");
-    fn2 = fn;
 
     remove_single_dirs(fn2);
     std::cerr << "remove_single_dirs(" << fn << ")="<<fn2<<"\n";
@@ -758,17 +733,20 @@ void state::dig_self_test()
     fn.push_back(DIR_SEPARATOR);
     fn += _T("a test");
     fn2 = fn;
-    remove_double_dirs(fn2);
-    std::cerr << "remove_single_dirs(" << fn << ")="<<fn2<<"\n";
 
+    remove_double_dirs(fn2);
+    std::cerr << "remove_double_dirs(" << fn << ")="<<fn2<<"\n";
     std::cerr << "is_special_dir(.)=" << is_special_dir(_T(".")) << "\n";
     std::cerr << "is_special_dir(..)=" << is_special_dir(_T("..")) << "\n";
 
-    tstring names[] = {_T("dig.cpp"),_T("."),_T("/dev/null"),_T("/dev/tty"),_T("../testfiles/symlinktest/dir1/dir1"),_T("")};
+    tstring names[] = {_T("dig.cpp"),
+		       _T("."),_T("/dev/null"),_T("/dev/tty"),
+		       _T("../testfiles/symlinktest/dir1/dir1"),_T("")};
+
     for(int i=0;names[i].size()>0;i++){
 	file_data_hasher_t fdht(false);
 	file_types ft = file_type(&fdht,names[i]);
-	std::cerr << "file_type(" << names[i] << ")=" << ft << "   size=" << fdht.stat_bytes << "  ctime=" << fdht.timestamp << "\n";
+	std::cerr << "file_type(" << names[i] << ")="
+		  << ft << " size=" << fdht.stat_bytes << " ctime=" << fdht.timestamp << "\n";
     }
-
 }
