@@ -90,11 +90,13 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,file_da
 		    it->second->matched_file_number = fdht->file_number;
 		}
 
-		/* Verify that all of the other hash functions for *it match fdt as well. */
+		/* Verify that all of the other hash functions for *it match fdt as well,
+		 * but only for the cases when we have a hash for both the master file
+		 * and the target file. */
 		for(int j=0;j<NUM_ALGORITHMS;j++){
 		    if(hashes[j].inuse && j!=i
-		       && fdht->hash_hex[i].size()
-		       && match->hash_hex[i].size()){
+		       && fdht->hash_hex[j].size()
+		       && match->hash_hex[j].size()){
 			if(fdht->hash_hex[j] != match->hash_hex[j]){
 			    /* Amazing. We found a match on one hash a a non-match on another.
 			     * Call the newspapers! This is a newsorthy event.
