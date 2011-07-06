@@ -343,6 +343,36 @@ void algorithm_t::enable_hashing_algorithms(std::string var)
 }
 
 
+static void setup_expert_mode(state *s, char *arg)
+{
+  unsigned int i = 0;
+
+  while (i < strlen(arg)) {
+    switch (*(arg+i)) {
+    case 'b': // Block Device
+      s->mode |= mode_block;     break;
+    case 'c': // Character Device
+      s->mode |= mode_character; break;
+    case 'p': // Named Pipe
+      s->mode |= mode_pipe;      break;
+    case 'f': // Regular File
+      s->mode |= mode_regular;   break;
+    case 'l': // Symbolic Link
+      s->mode |= mode_symlink;   break;
+    case 's': // Socket
+      s->mode |= mode_socket;    break;
+    case 'd': // Door (Solaris)
+      s->mode |= mode_door;      break;
+    default:
+      print_error("%s: Unrecognized file type: %c",__progname,*(arg+i));
+    }
+    ++i;
+  }
+}
+
+
+
+
 static int hashdeep_process_command_line(state *s, int argc, char **argv)
 {
   int i;
@@ -496,6 +526,10 @@ std::string to_string(const char *buf)
 }
 
 #ifdef _WIN32
+/**
+ * We only need make_utf8 on windows because on POSIX systems
+ * all filenames are assumed to be UTF8.
+ */
 std::string main::make_utf8(const tstring &str) 
 {
     /* Figure out how many bytes req required */

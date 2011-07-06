@@ -36,55 +36,23 @@ void check_wow64(state *s)
   BOOL result;
 
   fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(GetModuleHandle(TEXT("kernel32")),
-							  "IsWow64Process");
-  
+
   // If this system doesn't have the function IsWow64Process then
   // it's definitely not running under WoW64.
-  if (NULL == fnIsWow64Process)
-    return;
+  if (NULL == fnIsWow64Process) return;
 
-  if (! fnIsWow64Process(GetCurrentProcess(), &result))
-  {
+  if (! fnIsWow64Process(GetCurrentProcess(), &result))  {
     // The function failed? WTF? Well, let's not worry about it.
     return;
   }
 
-  if (result) 
-  {
+  if (result) {
     print_error("%s: WARNING: You are running a 32-bit program on a 64-bit system.", __progname);
     print_error("%s: You probably want to use the 64-bit version of this program.", __progname);
   }
 
 }
 #endif   // ifdef _WIN32
-
-
-void setup_expert_mode(state *s, char *arg)
-{
-  unsigned int i = 0;
-
-  while (i < strlen(arg)) {
-    switch (*(arg+i)) {
-    case 'b': // Block Device
-      s->mode |= mode_block;     break;
-    case 'c': // Character Device
-      s->mode |= mode_character; break;
-    case 'p': // Named Pipe
-      s->mode |= mode_pipe;      break;
-    case 'f': // Regular File
-      s->mode |= mode_regular;   break;
-    case 'l': // Symbolic Link
-      s->mode |= mode_symlink;   break;
-    case 's': // Socket
-      s->mode |= mode_socket;    break;
-    case 'd': // Door (Solaris)
-      s->mode |= mode_door;      break;
-    default:
-      print_error("%s: Unrecognized file type: %c",__progname,*(arg+i));
-    }
-    ++i;
-  }
-}
 
 
 uint64_t find_block_size(state *s, char *input_str)
@@ -95,8 +63,7 @@ uint64_t find_block_size(state *s, char *input_str)
   if (NULL == s || NULL == input_str)
     return 0;
 
-  if (isalpha(input_str[strlen(input_str) - 1]))
-    {
+  if (isalpha(input_str[strlen(input_str) - 1])) {
       c = tolower(input_str[strlen(input_str) - 1]);
       // There are deliberately no break statements in this switch
       switch (c) {
@@ -144,35 +111,6 @@ void chop_line(char *s)
 }
 
 
-
-#if 0
-// The basename function kept misbehaving on OS X, so I rewrote it.
-// This function isn't perfect, nor is it designed to be. Because
-// we're guarenteed to be working with a file here, there's no way
-// that str will end with a DIR_SEPARATOR (e.g. /foo/bar/). This function
-// will not work properly for a string that ends in a DIR_SEPARATOR 
-int my_basename(TCHAR *str)
-{
-  size_t len;
-  TCHAR *tmp;
-
-  if (NULL == str)
-    return TRUE;
-
-  // We search for the last slash in the input, if any. If there aren't
-  // any slashes in the string, we can stop now. There's nothing to do.
-  tmp  = _tcsrchr(str,DIR_SEPARATOR);
-  if (NULL == tmp)
-    return FALSE;
-
-  len = _tcslen(tmp);
-
-  // We advance tmp one character to move us past the DIR_SEPARATOR
-  _tmemmove(str,tmp+1,len);
-
-  return FALSE;
-}
-#endif
 
 void print_newline()
 {
@@ -281,13 +219,9 @@ int find_comma_separated_string(char *str, unsigned int n)
 }
 
 
-
-
-#ifndef _WIN32
-
 // Return the size, in bytes of an open file stream. On error, return 0 
+#ifndef _WIN32
 #if defined (__LINUX__)
-
 
 off_t find_file_size(FILE *f) 
 {
@@ -338,7 +272,6 @@ off_t find_file_size(FILE *f)
   }
 #endif // #ifdef HAVE_SYS_MOUNT_H
 #endif // #ifdef HAVE_SYS_IOCTL_H
-
   return 0;
 }  
 
@@ -360,8 +293,7 @@ off_t find_file_size(FILE *f)
   // follow symbolic links. That being said, all symbolic links *should*
   // have been caught before we got here. 
 
-  if (fstat(fd, &info))
-  {
+  if (fstat(fd, &info)) {
     print_status("%s: %s", __progname,strerror(errno));
     return 0;
   }

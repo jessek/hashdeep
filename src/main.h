@@ -599,7 +599,6 @@ void done_processing_dir(const tstring &fn);
 // ------------------------------------------------------------------
 
 std::string itos(uint64_t i);
-void     setup_expert_mode(state *s, char *arg);
 uint64_t find_block_size(state *s, char *input_str);
 void     chop_line(char *s);
 void     shift_string(char *fn, size_t start, size_t new_start);

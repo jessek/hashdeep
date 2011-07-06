@@ -21,6 +21,7 @@ Below is what we've done:
 1 - migrate all hash databases to a single class (hashlist.cpp)
 2 - Fix -k so that it loads into that database
 3 - Fix audit mode so that it reads from that database.
+* - Loading hashes should return a string with the set of hashes that were added.
 
 Below is what's planned:
 
@@ -37,7 +38,6 @@ Test cases:
  - An audit file with the length changed to simulate a partial hash.
  - An audit file with with 1 million entries.
 
-* Loading hashes should return a string with the set of hashes that were added.
 * Use this for comparing which hashes get added.
 
 md5deep:

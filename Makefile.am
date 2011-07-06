@@ -10,7 +10,7 @@ EXTRA_DIST = FILEFORMAT config.guess config.sub  \
 
 
 nice:
-	rm -f *~ md5deep/*~ hashdeep/*~
+	rm -f *~ man/*~ src/*~
 
 preflight:
 	grep RBF */*.{c,cpp,h,1} doc/* AUTHORS README NEWS TODO ChangeLog 
@@ -50,27 +50,27 @@ FILEFORMAT.TXT: FILEFORMAT
 	cp FILEFORMAT FILEFORMAT.TXT
 
 MD5DEEP.1: 
-	cp md5deep/md5deep.1   MD5DEEP.1
+	cp man/md5deep.1   MD5DEEP.1
 HASHDEEP.1:
-	cp hashdeep/hashdeep.1 HASHDEEP.1
+	cp man/hashdeep.1 HASHDEEP.1
 
 win64: distclean
 	./configure --host=$(CROSS64_PREFIX)
 	make
-	$(CROSS64_PREFIX)-strip md5deep/*exe hashdeep/*.exe
-	mv md5deep/md5deep.exe       md5deep/md5deep64.exe
-	mv md5deep/sha1deep.exe      md5deep/sha1deep64.exe
-	mv md5deep/sha256deep.exe    md5deep/sha256deep64.exe
-	mv md5deep/tigerdeep.exe     md5deep/tigerdeep64.exe
-	mv md5deep/whirlpooldeep.exe md5deep/whirlpooldeep64.exe
-	mv hashdeep/hashdeep.exe     hashdeep/hashdeep64.exe
-	cp md5deep/*.exe hashdeep/*.exe $(distdir)
+	$(CROSS64_PREFIX)-strip src/*exe src/*.exe
+	mv src/md5deep.exe       src/md5deep64.exe
+	mv src/sha1deep.exe      src/sha1deep64.exe
+	mv src/sha256deep.exe    src/sha256deep64.exe
+	mv src/tigerdeep.exe     src/tigerdeep64.exe
+	mv src/whirlpooldeep.exe src/whirlpooldeep64.exe
+	mv src/hashdeep.exe     src/hashdeep64.exe
+	cp src/*.exe src/*.exe $(distdir)
 
 win32: distclean
 	./configure --host=$(CROSS_PREFIX)
 	make
-	$(CROSS_PREFIX)-strip md5deep/*.exe hashdeep/*.exe
-	cp md5deep/*.exe hashdeep/*.exe $(distdir)
+	$(CROSS_PREFIX)-strip src/*.exe src/*.exe
+	cp src/*.exe src/*.exe $(distdir)
 
 
 win-docs: $(WINDOWSDOCS)
@@ -86,7 +86,7 @@ win-package: win-prep win-docs
 	cp *.TXT $(distdir)
 
 world: dist
-	rm -rf $(distdir).zip $(distdir) md5deep/*.exe hashdeep/*.exe
+	rm -rf $(distdir).zip $(distdir) src/*.exe src/*.exe
 	mkdir $(distdir)
 
 	make win32

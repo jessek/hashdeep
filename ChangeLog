@@ -1,3 +1,8 @@
+2011-07-05  Simson Garfinkel  <simsong@186.sub-75-197-238.myvzw.com>
+
+	* src/helpers.cpp: moved setup_expert_mode to main.cpp, because it's actually helping to parse the command line.
+	removed my_basename, since it is now done on strings in dig.cpp
+
 2011-07-05  Simson Garfinkel  <simsong@it012176.ern.nps.edu>
 
 	* Makefile.am (SUBDIRS): hashdeep subdir renamed to be src, since it is now src for everybody.

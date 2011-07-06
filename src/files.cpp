@@ -88,8 +88,9 @@ int state::find_plain_hash(char *buf, char *known_fn)
 	strncpy(known_fn,buf,PATH_MAX);
 	
 	// Starting at the end of the hash, find the start of the filename
-	while(p < strlen(known_fn) && isspace(known_fn[p]))
+	while(p < strlen(known_fn) && isspace(known_fn[p])){
 	    ++p;
+	}
 	shift_string(known_fn,0,p);
 	chop_line(known_fn);
     }
