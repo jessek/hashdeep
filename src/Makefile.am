@@ -6,8 +6,7 @@ ALGS=md5.c sha1.c sha256.c tiger.c whirlpool.c \
 bin_PROGRAMS = hashdeep 
 
 hashdeep_SOURCES = main.cpp hashlist.cpp multihash.cpp display.cpp \
-	hash.cpp dig.cpp ui.cpp helpers.cpp xml.cpp files.cpp common.h main.h md5deep.h \
-	xml.h  \
+	hash.cpp dig.cpp ui.cpp helpers.cpp xml.cpp xml.h files.cpp common.h main.h md5deep.h \
 	utf8.h utf8/checked.h utf8/core.h utf8/unchecked.h \
 	${ALGS}
 

@@ -2801,6 +2801,11 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 
 
 
+################################################################
+### I am a glutten for punishment and this is security-critical software
+CFLAGS="$CFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
+CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
+
 DEPDIR="${am__leading_dot}deps"
 
 ac_config_commands="$ac_config_commands depfiles"
@@ -4240,7 +4245,6 @@ $as_echo "$ac_cv_safe_to_define___extensions__" >&6; }
 
 
 
-
 # Make sure we can run config.sub.
 $SHELL "$ac_aux_dir/config.sub" sun4 >/dev/null 2>&1 ||
   as_fn_error $? "cannot run $SHELL $ac_aux_dir/config.sub" "$LINENO" 5
@@ -4330,7 +4334,7 @@ $as_echo "#define __LINUX__ 1" >>confdefs.h
   		 ;;
   *-*-mingw32)   LIBS="-liberty $LIBS"
   		 CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 $CPPFLAGS"
-		 CXXFLAGS="-Wno-format $CXXFLAGS"  # compiler mingw-4.3.0 is broken on I64u formats
+		 CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
      		 ;;
 esac
 
@@ -5754,7 +5758,6 @@ $as_echo "#define TIME_WITH_SYS_TIME 1" >>confdefs.h
 
 fi
 
-
  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether byte ordering is bigendian" >&5
 $as_echo_n "checking whether byte ordering is bigendian... " >&6; }
 if ${ac_cv_c_bigendian+:} false; then :
@@ -6784,12 +6787,6 @@ if test "${with_noopt}" = "yes" ; then
   CFLAGS=`echo "$CFLAGS" | sed s/-O[0-9]//`             # note the double quoting!
   CXXFLAGS=`echo "$CXXFLAGS" | sed s/-O[0-9]//`
 fi
-
-################################################################
-# I am a glutten for punishment and this is security-critical software
-CFLAGS="$CFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
-CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
-
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure

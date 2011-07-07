@@ -8,8 +8,12 @@ AC_INIT([MD5DEEP],[4.0.0_alpha_000],[research@jessekornblum.com])
 AC_CONFIG_FILES([Makefile src/Makefile man/Makefile tests/Makefile])
 AM_INIT_AUTOMAKE
 
-AC_GNU_SOURCE
+################################################################
+### I am a glutten for punishment and this is security-critical software
+CFLAGS="$CFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
+CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
 
+AC_GNU_SOURCE
 AC_CANONICAL_HOST
 
 # http://osdir.com/ml/gnu.mingw.devel/2003-09/msg00040.html
@@ -27,7 +31,7 @@ case $host in
   		 ;;
   *-*-mingw32)   LIBS="-liberty $LIBS" 
   		 CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 $CPPFLAGS"
-		 CXXFLAGS="-Wno-format $CXXFLAGS"  # compiler mingw-4.3.0 is broken on I64u formats
+		 CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
      		 ;;		 		     
 esac
 
@@ -66,7 +70,6 @@ AC_CHECK_HEADERS([sys/mount.h],[],[],
  #endif])                    
 
 AC_HEADER_TIME
-
 AC_C_BIGENDIAN
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -106,11 +109,5 @@ if test "${with_noopt}" = "yes" ; then
   CFLAGS=`echo "$CFLAGS" | sed s/-O[[0-9]]//`             # note the double quoting! 
   CXXFLAGS=`echo "$CXXFLAGS" | sed s/-O[[0-9]]//`
 fi
-
-################################################################
-# I am a glutten for punishment and this is security-critical software
-CFLAGS="$CFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
-CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
-
 
 AC_OUTPUT

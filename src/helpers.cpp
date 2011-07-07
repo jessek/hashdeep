@@ -36,6 +36,8 @@ void check_wow64(state *s)
   BOOL result;
 
   fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(GetModuleHandle(TEXT("kernel32")),
+							  "IsWow64Process");
+
 
   // If this system doesn't have the function IsWow64Process then
   // it's definitely not running under WoW64.
@@ -135,8 +137,7 @@ void shift_string(char *fn, size_t start, size_t new_start)
   if (start > strlen(fn) || new_start < start)
     return;
 
-  while (new_start < strlen(fn))
-    {
+  while (new_start < strlen(fn))    {
       fn[start] = fn[new_start];
       new_start++;
       start++;
@@ -157,8 +158,7 @@ int find_next_comma(char *str, unsigned int start)
   unsigned int pos = start; 
   int in_quote = FALSE;
   
-  while (pos < size)
-  {
+  while (pos < size)  {
     switch (str[pos]) {
     case '"':
       in_quote = !in_quote;
