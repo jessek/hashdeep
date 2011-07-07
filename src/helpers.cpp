@@ -25,8 +25,18 @@ std::string itos(uint64_t i)
 
 #ifdef _WIN32
 
-// The following is adapted from
-// http://msdn.microsoft.com/en-us/library/ms684139(v=VS.85).aspx
+/**
+ * Detect if we are a 32-bit program running on a 64-bit system.
+ *
+ * Running a 32-bit program on a 64-bit system is problematic because WoW64
+ * changes the program's view of critical directories. An affected
+ * program does not see the true %WINDIR%, but instead gets a mapped
+ * version. Thus the user cannot get an accurate picture of their system.
+ * See http://jessekornblum.livejournal.com/273084.html for an example.
+ *
+ * The following is adapted from
+ * http://msdn.microsoft.com/en-us/library/ms684139(v=VS.85).aspx
+ */
 
 typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
 LPFN_ISWOW64PROCESS fnIsWow64Process;
