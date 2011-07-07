@@ -22,15 +22,16 @@ fi
 
 if i586-mingw32msvc-g++ -v ;
 then 
-  echo I can run i586-mingw32msvc-g++
+  echo I can run the i586-mingw32msvc-g++ compiler
   ./configure --host=i586-mingw32msvc
   make
 fi
 
-#echo Making 32-bit version with i386-mingw32
+if i386-mingw32-g++ -v ;
+then 
+  echo I can can run i386-mingw32-g++ comipler
+  ./configure --host=i386-mingw32
+  make
+  i386-mingw32-strip src/*.exe
+fi
 
-# First make the regular version
-
-# ./configure --host=i386-mingw32 CFLAGS="-Wall -W -O2"
-# make
-# i386-mingw32-strip {hashdeep,md5deep}/*.exe

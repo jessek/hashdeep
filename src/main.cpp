@@ -514,19 +514,6 @@ static int prepare_windows_command_line(state *s)
 #endif
 
 #ifdef _WIN32
-//#include <winnls.h>
-//std::string to_string(TCHAR *buf)
-//{
-//    return "TBF";
-//}
-#endif
-
-//std::string to_string(const char *buf)
-//{
-//    return std::string(buf);
-//}
-
-#ifdef _WIN32
 /**
  * We only need make_utf8 on windows because on POSIX systems
  * all filenames are assumed to be UTF8.
@@ -586,7 +573,7 @@ tstring main::get_realpath(const tstring &fn)
      * http://msdn.microsoft.com/en-us/library/506720ff(v=vs.80).aspx
      */
     wchar_t absPath[PATH_MAX];
-    if(_wfullpath(absPath,(const wchar_t *)fn.c_str(),PATH_MAX)==0) tstring(); // fullpath failed...
+    if(_wfullpath(absPath,fn.c_str(),PATH_MAX)==0) tstring(); // fullpath failed...
     return tstring(absPath);
 #else
     char resolved_name[PATH_MAX];	//
