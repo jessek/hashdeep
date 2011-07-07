@@ -94,7 +94,11 @@ static int is_absolute_path(const TCHAR *fn)
 static tstring generate_filename(state *s,const TCHAR *input)
 {
     if ((opt_relative) || is_absolute_path(input)){
+#ifdef _WIN32
+	return tstring((const wchar_t *)input);
+#else
 	return tstring(input);
+#endif
     }
     // Windows systems don't have symbolic links, so we don't
     // have to worry about carefully preserving the paths
@@ -104,7 +108,7 @@ static tstring generate_filename(state *s,const TCHAR *input)
 #ifdef _WIN32
     wchar_t fn[PATH_MAX];
     memset(fn,0,sizeof(fn));
-    _wfullpath(fn,input,PATH_MAX);
+    _wfullpath(fn,(const wchar_t *)input,PATH_MAX);
     return tstring(fn);
 #else	  
     char buf[PATH_MAX+1];
@@ -498,32 +502,29 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
 }
 
 #ifdef _WIN32
+/**
+ * WIN32 requires the argv in wchar_t format to allow the program to get UTF16
+ * filenames resulting from star expansion.
+ */
 static int prepare_windows_command_line(state *s)
 {
-  int argc=0;
-  TCHAR **argv=0;
-
-  argv = CommandLineToArgvW(GetCommandLineW(),&argc);
-  
-  s->argc = argc;
-  s->argv = argv;
-
+    s->argv = CommandLineToArgvW(GetCommandLineW(),&s->argc);
   return FALSE;
 }
 #endif
 
 #ifdef _WIN32
-#include <winnls.h>
-std::string to_string(TCHAR *buf)
-{
-    return "TBF";
-}
+//#include <winnls.h>
+//std::string to_string(TCHAR *buf)
+//{
+//    return "TBF";
+//}
 #endif
 
-std::string to_string(const char *buf)
-{
-    return std::string(buf);
-}
+//std::string to_string(const char *buf)
+//{
+//    return std::string(buf);
+//}
 
 #ifdef _WIN32
 /**
@@ -584,8 +585,8 @@ tstring main::get_realpath(const tstring &fn)
      * expand a relative path to the full path.
      * http://msdn.microsoft.com/en-us/library/506720ff(v=vs.80).aspx
      */
-    TCHAR absPath[PATH_MAX];
-    if(_wfullpath(absPath,fn.c_str(),PATH_MAX)==0) tstring(_T("")); // fullpath failed...
+    wchar_t absPath[PATH_MAX];
+    if(_wfullpath(absPath,(const wchar_t *)fn.c_str(),PATH_MAX)==0) tstring(); // fullpath failed...
     return tstring(absPath);
 #else
     char resolved_name[PATH_MAX];	//

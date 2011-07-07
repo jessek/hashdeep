@@ -447,14 +447,14 @@ int state::md5deep_display_hash(file_data_hasher_t *fdht)
 	if ((fdht->piecewise) || !(fdht->is_stdin))    {
 	    if (this->mode & mode_timestamp)      {
 		struct tm my_time;
-
-#ifdef _WIN32
-# ifdef HAVE__GMTIME64_S
+		memset(&my_time,0,sizeof(my_time)); // clear it out
+#ifdef HAVE__GMTIME64_S		
 		_gmtime64_s(&fdht->timestamp,&my_time);
-# else
+#endif
+#ifdef HAVE__GMTIME64
 		my_time = *_gmtime64(&fdht->timestamp);
-# endif
-#else
+#endif
+#ifdef HAVE_GMTIME_R		
 		gmtime_r(&fdht->timestamp,&my_time);
 #endif
 

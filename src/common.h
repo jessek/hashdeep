@@ -48,16 +48,25 @@
 # include <unistd.h>
 #endif 
 
-#ifdef TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
 #endif
+
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+
+/* this creates problems on some kinds of mingw */
+//#ifdef TIME_WITH_SYS_TIME
+//# include <sys/time.h>
+//# include <time.h>
+//#else
+//# ifdef HAVE_SYS_TIME_H
+//#  include <sys/time.h>
+//# else
+//#  include <time.h>
+//# endif
+//#endif
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -120,13 +129,6 @@
 #ifndef PRIu64 
 #define PRIu64 "llu"
 #endif
-
-//#include "md5.h"
-//#include "sha1.h"
-//#include "sha256.h"
-//#include "tiger.h"
-//#include "whirlpool.h"
-
 
 // Strings have to be long enough to handle inputs from matched hashing files.
 // The NSRL is already larger than 256 bytes. We go longer to be safer. 
@@ -216,6 +218,18 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 #ifndef __MSVCRT_VERSION__ 
 # define __MSVCRT_VERSION__ 0x0601
 #endif
+
+/* For reasons I don't understand we typedef wchar_t TCHAR doesn't
+ * work for some reasons for mingw, so we use this.
+ */
+#ifndef _TCHAR_DEFINED
+#define TCHAR wchar_t
+#define _TCHAR wchar_t
+#define _TCHAR_DEFINED
+#endif
+
+
+
 #include <windows.h>
 #include <windowsx.h>
 #include <tchar.h>
@@ -229,7 +243,8 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
  * ON POSIX: we get a std::string.
  */ 
 
-typedef std::wstring tstring; 
+//typedef std::wstring tstring; 
+#define tstring std::wstring 
 #endif
 
 // The current cross compiler for OS X->Windows does not support a few

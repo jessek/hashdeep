@@ -131,14 +131,19 @@ void remove_double_dirs(tstring &fn)
 
 
 
+#ifdef _WIN32
+/****************************************************************
+ *** WIN32 specific code follows.
+ ****************************************************************/
+
+
 // On Win32 systems directories are handled... differently
 // Attempting to process d: causes an error, but d:\ does not.
 // Conversely, if you have a directory "foo",
 // attempting to process d:\foo\ causes an error, but d:\foo does not.
 // The following turns d: into d:\ and d:\foo\ into d:\foo 
 
-#ifdef _WIN32
-static void clean_name_win32(tstring &fn)
+static void clean_name_win32(std::wstring &fn)
 {
     if (fn.size()<2) return;
     if (fn.size()==2 && fn[1]==_TEXT(':')){
@@ -150,7 +155,7 @@ static void clean_name_win32(tstring &fn)
     }
 }
 
-static int is_win32_device_file(const tstring &fn)
+static int is_win32_device_file(const std::wstring &fn)
 {
     // Specifications for device files came from
     // http://msdn.microsoft.com/en-us/library/aa363858(VS.85).aspx
@@ -159,49 +164,22 @@ static int is_win32_device_file(const tstring &fn)
     // Tape devices are \\.\tapeX where X is a digit from 0 to 9
     // Logical volumes are \\.\X: where X is a letter */
 
-    if (!_tcsnicmp(fn.c_str(), _TEXT("\\\\.\\physicaldrive"),17)
+    if (!_wcsnicmp(fn.c_str(), _TEXT("\\\\.\\physicaldrive"),17)
 	&& (fn.size() == 18) && iswdigit(fn[17]))
 	return TRUE;
 
-    if (!_tcsnicmp(fn.c_str(), _TEXT("\\\\.\\tape"),8) &&
+    if (!_wcsnicmp(fn.c_str(), _TEXT("\\\\.\\tape"),8) &&
 	(fn.size() == 9) &&  iswdigit(fn[8]))
 	return TRUE;
  
-    if ((!_tcsnicmp(fn.c_str(),_TEXT("\\\\.\\"),4)) &&
+    if ((!_wcsnicmp(fn.c_str(),_TEXT("\\\\.\\"),4)) &&
 	(fn.size() == 6) && (iswalpha(fn[4])) && (fn[5] == ':'))
 	return TRUE;
 
     return FALSE;
 }
 
-#endif  // ifdef _WIN32 
-
-
-static void clean_name(tstring &fn)
-{
-#ifdef _WIN32
-    clean_name_win32(fn);
-#else
-    // We don't need to call these functions when running in Windows
-    // as we've already called real_path() on them in main.c. These
-    // functions are necessary in *nix so that we can clean up the 
-    // path names without removing the names of symbolic links. They
-    // are also called when the user has specified an absolute path
-    // but has included extra double dots or such.
-    //
-    // TODO: See if Windows Vista's symbolic links create problems 
-
-    if (!opt_relative)  {
-	remove_double_slash(fn);
-	remove_single_dirs(fn);
-	remove_double_dirs(fn);
-    }
-#endif
-}
-
-
 //  Debugging function
-#ifdef _WIN32
 void print_last_error(char *function_name)
 {
     // Copied from http://msdn.microsoft.com/en-us/library/ms680582(VS.85).aspx
@@ -225,9 +203,6 @@ void print_last_error(char *function_name)
   
     LocalFree(pszMessage);
 }
-#endif
-
-
 // An NTFS Junction Point is like a hard link on *nix but only works
 // on the same filesystem and only for directories. Unfortunately they
 // can also create infinite loops for programs that recurse filesystems.
@@ -236,11 +211,10 @@ void print_last_error(char *function_name)
 //
 // This function detects junction points and returns TRUE if the
 // given filename is a junction point. Otherwise it returns FALSE.
-static bool is_junction_point(const tstring &fn)
+static bool is_junction_point(const std::wstring &fn)
 {
     int status = FALSE;
 
-#ifdef _WIN32
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind;
 
@@ -271,11 +245,8 @@ static bool is_junction_point(const tstring &fn)
 	// if it fails.
 	FindClose(hFind);
     }
-#endif
-
     return status;
 }
-
 // This is experimental code for reparse point process
 // We don't use it yet, but I don't want to delete it
 // until I know what I'm doing. (jk 1 Mar 2009)
@@ -328,6 +299,35 @@ static bool is_junction_point(const tstring &fn)
 
 
 
+
+
+#endif
+
+
+
+#ifndef _WIN32
+/* POSIX version of clean_name */
+static void clean_name_posix(std::string &fn)
+{
+    // We don't need to call these functions when running in Windows
+    // as we've already called real_path() on them in main.c. These
+    // functions are necessary in *nix so that we can clean up the 
+    // path names without removing the names of symbolic links. They
+    // are also called when the user has specified an absolute path
+    // but has included extra double dots or such.
+    //
+    // TODO: See if Windows Vista's symbolic links create problems 
+
+    if (!opt_relative)  {
+	remove_double_slash(fn);
+	remove_single_dirs(fn);
+	remove_double_dirs(fn);
+    }
+}
+#endif
+
+
+
 // Returns TRUE if the directory is '.' or '..', otherwise FALSE
 static bool is_special_dir(const tstring &d)
 {
@@ -364,9 +364,11 @@ int state::process_dir(const tstring &fn)
 	new_file.push_back(DIR_SEPARATOR);
 	new_file.append(entry->d_name); 
 
+#ifdef _WIN32
 	if (is_junction_point(new_file)){		       // whatever this is, ignore it
 	    continue;
 	}
+#endif
 	return_value = dig_normal(new_file);
 
     }
@@ -563,7 +565,11 @@ int state::dig_normal(const tstring &fn)
     fdht->retain();
 
     tstring fn2(fn);
-    clean_name(fn2);
+#ifdef _WIN32
+    clean_name_win32(fn2);
+#else
+    clean_name_posix(fn2);
+#endif
 
     if (should_hash(fdht,fn2)){
 	ret = hash_file(fdht,fn2);

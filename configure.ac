@@ -1,4 +1,4 @@
-#
+
 # configure.ac script for md5deep/hashdeep family of programs.
 #
 
@@ -29,7 +29,13 @@ AC_CANONICAL_HOST
 case $host in
   *-*-*linux*-*) AC_DEFINE([__LINUX__],1,[Linux operating system functions])
   		 ;;
-  *-*-mingw32)   LIBS="-liberty $LIBS" 
+  *-*-mingw32)   
+                 LIBS="-liberty $LIBS" 
+  		 CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 $CPPFLAGS"
+		 CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
+     		 ;;		 		     
+  *-*-mingw32msvc)
+                 LIBS="-liberty $LIBS" 
   		 CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 $CPPFLAGS"
 		 CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
      		 ;;		 		     
@@ -58,7 +64,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h stdint.h stdlib.h string.h sys/cdefs.h sys/types.h sys/ioctl.h sys/param.h wchar.h unistd.h sys/stat.h sys/disk.h])
 
 # These functions not available everywhere
-AC_CHECK_FUNCS([_gmtime64_s])
+AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r])
 
 # These includes are required on FreeBSD
 AC_CHECK_HEADERS([sys/mount.h],[],[],
@@ -69,7 +75,20 @@ AC_CHECK_HEADERS([sys/mount.h],[],[],
  # include <sys/param.h>                           
  #endif])                    
 
+# http://www.gnu.org/s/hello/manual/autoconf/Particular-Headers.html
+#
+# If a program may include both time.h and sys/time.h, define
+# TIME_WITH_SYS_TIME. On some ancient systems, sys/time.h included
+# time.h, but time.h was not protected against multiple inclusion, so
+# programs could not explicitly include both files. This macro is
+# useful in programs that use, for example, struct timeval as well as
+# struct tm. It is best used in conjunction with HAVE_SYS_TIME_H,
+# which can be checked for using AC_CHECK_HEADERS([sys/time.h]).
+
+AC_CHECK_HEADERS([time.h sys/time.h])
 AC_HEADER_TIME
+
+
 AC_C_BIGENDIAN
 
 # Checks for typedefs, structures, and compiler characteristics.

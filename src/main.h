@@ -488,7 +488,11 @@ public:;
 
     /* Command line arguments */
     int             argc;
-    TCHAR        ** argv;			// never allocated, never freed
+#ifdef _WIN32
+    wchar_t        **argv;			// never allocated, never freed
+#else
+    char	   **argv;
+#endif
 
     /* Configuration */
     uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */

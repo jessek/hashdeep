@@ -1,3 +1,7 @@
+2011-07-07  Simson Garfinkel  <simsong@t.nitroba.org>
+
+	* src/dig.cpp (process_dir): modified conditional compilation for WIN32
+
 2011-07-05  Simson Garfinkel  <simsong@186.sub-75-197-238.myvzw.com>
 
 	* src/helpers.cpp: moved setup_expert_mode to main.cpp, because it's actually helping to parse the command line.
