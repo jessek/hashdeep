@@ -5,8 +5,16 @@
 # win.sh    - cross-compile for windows using i386-ming32 and mingw-w64
 # world.sh  - same as "normal.sh"
 
-# On Linux, you need to have the following packages installed:
-# apt-get install mingw32
+# I haven't been able to find a 64-bit cross-compiler for Mac.
+
+# On Ubuntu, you need to have the following packages installed:
+# apt-get install mingw32. But that just gives you 32-bit.
+
+# Best bet for cross-compiling seems to be Fedora, which gives you
+# both mingw32 and mingw64:
+# http://fedoraproject.org/wiki/MinGW/CrossCompilerFramework
+#
+# sudo yum install mingw32-gcc-c++
 
 if [ ! -r configure ];
 then
