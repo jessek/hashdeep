@@ -7,6 +7,14 @@
 
 # I haven't been able to find a 64-bit cross-compiler for Mac.
 
+# On Fedora, you can install mingw32 using standard yum.
+# To install mingw64, follow the instructions at:
+# https://fedoraproject.org/wiki/Features/Mingw-w64_cross_compiler
+# http://www.advancedhpc.com/tower_servers/tower_server_products.html
+# $ cd /etc/yum.repos.d
+# $ sudo wget http://build1.openftd.org/mingw-w64/mingw-w64.repo
+# $ sudo yum install mingw64-runtime mingw64-zlib
+
 # On Ubuntu, you need to have the following packages installed:
 # apt-get install mingw32. But that just gives you 32-bit.
 
