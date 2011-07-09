@@ -5,7 +5,25 @@
 # win.sh    - cross-compile for windows using i386-ming32 and mingw-w64
 # world.sh  - same as "normal.sh"
 
+# On Ubuntu, you can get going in many cases with "apt-get install gcc-mingw32"
+#
+# If you need to install both the 64-bit and 32-bit mingw compilers, try this:
+#
+# (from http://sourceforge.net/tracker/?func=detail&aid=3258887&group_id=67079&atid=516781)
+# For 64-bit build systems:
+# apt-get install libmpfr1ldbl
+# wget http://ppa.launchpad.net/mingw-packages/ppa/ubuntu/pool/main/w/w64-toolchain/x86-64-w64-mingw32-toolchain_1.0b+201011211643-0w2273g93970b22426p16~karmic1_amd64.deb
+# dpkg -i x86-64-w64-mingw32-toolchain_1.0b+201011211643-0w2273g93970b22426p16~karmic1_amd64.deb
+
+# For 32-bit build systems:
+# wget http://ppa.launchpad.net/mingw-packages/ppa/ubuntu/pool/main/w/w64-toolchain/i686-w64-mingw32-toolchain_1.0b+201011211643-0w2273g93970b22426p16~karmic1_amd64.deb
+# dpkg -i i686-w64-mingw32-toolchain_1.0b+201011211643-0w2273g93970b22426p16~karmic1_amd64.deb
+#
+# Source for this tip: http://ubuntuforums.org/showthread.php?t=1705566
+
 # I haven't been able to find a 64-bit cross-compiler for Mac.
+
+
 
 # On Fedora, you can install mingw32 using standard yum.
 # To install mingw64, follow the instructions at:
@@ -15,8 +33,6 @@
 # $ sudo wget http://build1.openftd.org/mingw-w64/mingw-w64.repo
 # $ sudo yum install mingw64-runtime mingw64-zlib
 
-# On Ubuntu, you need to have the following packages installed:
-# apt-get install mingw32. But that just gives you 32-bit.
 
 # Best bet for cross-compiling seems to be Fedora, which gives you
 # both mingw32 and mingw64:
