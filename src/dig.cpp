@@ -83,7 +83,7 @@ static void remove_double_slash(tstring &fn)
     while(true){
 	size_t loc = fn.find(search,start);
 	if(loc==tstring::npos) break;	// no more to find
-	fn.erase(loc);		// erase one of the two slashes
+	fn.erase(loc,1);		// erase one of the two slashes
     }
 }
 
@@ -125,7 +125,7 @@ void remove_double_dirs(tstring &fn)
 	if(before==tstring::npos) break;
 
 	/* Now delete all between before+1 and loc+3 */
-	fn.erase(fn.begin()+before+1,fn.begin()+loc+3);
+	fn.erase(fn.begin()+before+1,fn.begin()+loc+4);
     }
 }
 

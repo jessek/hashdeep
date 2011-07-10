@@ -32,6 +32,7 @@ extern int  opt_verbose;		// can be 1, 2 or 3
 extern bool opt_zero;			// newlines are \000 
 extern bool opt_estimate;		// print ETA
 extern int  opt_debug;			// for debugging
+extern bool opt_unicode_escape;
 
 // Return values for the program 
 // RBF - Document these return values for hashdeep 
@@ -447,6 +448,7 @@ public:
     static tstring getcwd();			  // returns the current directory
     static tstring get_realpath(const tstring &fn); // returns the full path
     static std::string get_realpath8(const tstring &fn);  // returns the full path in UTF-8
+    static std::string escape_utf8(const std::string &fn); // turns "⦿" to "U+29BF"
 #ifdef _WIN32
     static std::string make_utf8(const std::wstring &tfn) ;
 #else

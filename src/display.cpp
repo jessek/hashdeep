@@ -39,14 +39,19 @@ static std::string shorten_filename(const std::string &fn)
  * output the string, typically a fn, optionally performing unicode escaping
  */
 
-void output_filename(FILE *out,const char *fn)
-{
-    fwrite(fn,strlen(fn),1,out);
-}
-
 void output_filename(FILE *out,const std::string &fn)
 {
-    fwrite(fn.c_str(),fn.size(),1,out);
+    if(opt_unicode_escape){
+	std::string f2 = main::escape_utf8(fn);
+	fwrite(f2.c_str(),f2.size(),1,out);
+    } else {
+	fwrite(fn.c_str(),fn.size(),1,out);
+    }
+}
+
+void output_filename(FILE *out,const char *fn)
+{
+    output_filename(out,std::string(fn));
 }
 
 #ifdef _WIN32
