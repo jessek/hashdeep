@@ -21,8 +21,11 @@ void file_data_hasher_t::multihash_update(const unsigned char *buf, size_t len)
   // routine modifies it.
   for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
     if (hashes[i].inuse)    {
-	memcpy(this->buffer,buf,len);
-	hashes[i].f_update(this->hash_context[i],this->buffer,len);
+	//	memcpy(this->buffer,buf,len);
+	//hashes[i].f_update(this->hash_context[i],this->buffer,len);
+
+	// new LTC implementation means no need to copy
+	hashes[i].f_update(this->hash_context[i],buf,len);
     }
   }
 }

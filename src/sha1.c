@@ -15,6 +15,8 @@
 /* $Id$ */
 
 #include "sha1.h"
+#include <stdlib.h>
+#include <string.h>
 
 /* This implementation of SHA1-1 was written by 
    Steve Reid <steve@edmweb.com> and was included in this program on 
@@ -59,7 +61,7 @@ int hash_init_sha1(void *ctx)
   return FALSE;
 }
 
-int hash_update_sha1(void * ctx, unsigned char *buf, uint64_t len)
+int hash_update_sha1(void * ctx, const unsigned char *buf, size_t len)
 {
   SHA1Update(ctx, buf, len);
   return FALSE;
@@ -75,7 +77,7 @@ int hash_final_sha1(void * ctx, unsigned char *digest)
 
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 
-void SHA1Transform(uint32_t state[5], unsigned char buffer[64])
+void SHA1Transform(uint32_t state[5], const unsigned char buffer[64])
 {
   uint32_t a, b, c, d, e;
   typedef union {
@@ -142,10 +144,17 @@ void SHA1Init(SHA1_CTX* context)
 }
 
 
-/* Run your data through this. */
-void SHA1Update(SHA1_CTX* context, unsigned char * data, unsigned int len)
+/*
+ * Run your data through this.
+ *
+ * For reasons we do not understand, this function corrupts data.
+ * We deal with that by making a local copy.
+ */
+void SHA1Update(SHA1_CTX* context, const unsigned char * _data, size_t len)
 {
-  unsigned int i, j;
+    unsigned int i, j;
+    unsigned char *data = alloca(len);
+    memcpy(data,_data,len);
 
   j = (context->count[0] >> 3) & 63;
 

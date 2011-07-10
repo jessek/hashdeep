@@ -51,7 +51,7 @@ int hash_init_md5(void * ctx)
   return FALSE;
 }
 
-int hash_update_md5(void *ctx, unsigned char *buf, uint64_t len)
+int hash_update_md5(void *ctx, const unsigned char *buf, size_t len)
 {
   MD5Update(ctx,buf,len);
   return FALSE;
@@ -85,7 +85,7 @@ void MD5Init(context_md5_t *ctx)
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
-void MD5Update(context_md5_t *ctx, unsigned char *buf, unsigned len)
+void MD5Update(context_md5_t *ctx, const unsigned char *buf, size_t len)
 {
     uint32_t t;
 

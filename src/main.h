@@ -168,16 +168,16 @@ public:
     hashid_t		id;		// usually the position in the array...
 
     /* The hashing functions */
-    int ( *f_init)(void *);
-    int ( *f_update)(void *, unsigned char *, uint64_t );
-    int ( *f_finalize)(void *, unsigned char *);
+    int ( *f_init)(void *ctx);
+    int ( *f_update)(void *ctx, const unsigned char *buf, size_t len );
+    int ( *f_finalize)(void *ctx, unsigned char *);
 
     /* The methods */
     static void add_algorithm(hashid_t pos, const char *name, uint16_t bits, 
-		       int ( *func_init)(void *),
-		       int ( *func_update)(void *, unsigned char *, uint64_t ),
-		       int ( *func_finalize)(void *, unsigned char *),
-		       int inuse);
+			      int ( *func_init)(void *ctx),
+			      int ( *func_update)(void *ctx, const unsigned char *buf, size_t len ),
+			      int ( *func_finalize)(void *ctx, unsigned char *),
+			      int inuse);
     static void load_hashing_algorithms();
     static void clear_algorithms_inuse();
     static void enable_hashing_algorithms(std::string var);  // enable the algorithms in 'var'; var can be 'all'
@@ -274,7 +274,6 @@ public:
 
     FILE           *handle;		// the file we are reading
     bool           is_stdin;		// flag if the file is stdin
-    unsigned char  buffer[MD5DEEP_IDEAL_BLOCK_SIZE]; // next buffer to hash
     uint8_t        hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 
     std::string	   dfxml_hash;	      // the DFXML hash digest for the piece just hashed; used to build piecewise
     uint64_t	   file_number;

@@ -27,12 +27,11 @@
 
 # On Fedora, you can install mingw32 using standard yum.
 # To install mingw64, follow the instructions at:
-# https://fedoraproject.org/wiki/Features/Mingw-w64_cross_compiler
-# http://www.advancedhpc.com/tower_servers/tower_server_products.html
+# http://fedoraproject.org/wiki/MinGW/CrossCompilerFramework
 # $ cd /etc/yum.repos.d
-# $ sudo wget http://build1.openftd.org/mingw-w64/mingw-w64.repo
-# $ sudo yum install mingw64-runtime mingw64-zlib
-
+# $  sudo wget http://fedoraproject.org/wiki/MinGW/CrossCompilerFramework#Development_and_testing_repository
+# $ yum update
+# $ yum install mingw64-gcc mingw64-g++ mingw64-zlib
 
 # Best bet for cross-compiling seems to be Fedora, which gives you
 # both mingw32 and mingw64:

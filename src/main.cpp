@@ -245,9 +245,9 @@ void algorithm_t::add_algorithm(
 	      hashid_t pos,
 	      const char *name, 
 	      uint16_t bits, 
-	      int ( *func_init)(void *),
-	      int ( *func_update)(void *, unsigned char *, uint64_t ),
-	      int ( *func_finalize)(void *, unsigned char *),
+	      int ( *func_init)(void *ctx),
+	      int ( *func_update)(void *ctx, const unsigned char *buf, size_t buflen),
+	      int ( *func_finalize)(void *ctx, unsigned char *),
 	      int inuse)
 {
     hashes[pos].name		= name;
@@ -258,6 +258,13 @@ void algorithm_t::add_algorithm(
     hashes[pos].inuse       = inuse;
     hashes[pos].id          = pos;
 }
+
+
+extern "C" {
+int sha1_init(void * md);
+    int sha1_process(void *md, const unsigned char *buf,uint64_t);
+    int sha1_done(void * md, unsigned char *out);
+    };
 
 /*
  * Load the hashing algorithms array.

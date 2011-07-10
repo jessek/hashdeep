@@ -49,7 +49,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__objects_1 = md5.$(OBJEXT) sha1.$(OBJEXT) sha256.$(OBJEXT) \
-	tiger.$(OBJEXT) whirlpool.$(OBJEXT)
+	whirlpool.$(OBJEXT) tiger.$(OBJEXT)
 am_hashdeep_OBJECTS = main.$(OBJEXT) hashlist.$(OBJEXT) \
 	multihash.$(OBJEXT) display.$(OBJEXT) hash.$(OBJEXT) \
 	dig.$(OBJEXT) ui.$(OBJEXT) helpers.$(OBJEXT) xml.$(OBJEXT) \
@@ -176,9 +176,7 @@ OTHERS = md5deep$(EXEEXT) sha1deep$(EXEEXT) sha256deep$(EXEEXT) tigerdeep$(EXEEX
 
 # These are for the 64-bit versions:
 OTHERS64_EXE = md5deep64.exe sha1deep64.exe sha256deep64.exe tigerdeep64.exe whirlpooldeep64.exe
-ALGS = md5.c sha1.c sha256.c tiger.c whirlpool.c\
-     md5.h sha1.h sha256.h tiger.h whirlpool.h 
-
+ALGS = md5.c md5.h sha1.c sha1.h sha256.c sha256.h whirlpool.c whirlpool.h tiger.c tiger.h
 bin_PROGRAMS = hashdeep$(EXEEXT)
 hashdeep_SOURCES = main.cpp hashlist.cpp multihash.cpp display.cpp \
 	hash.cpp dig.cpp ui.cpp helpers.cpp xml.cpp xml.h files.cpp common.h main.h md5deep.h \

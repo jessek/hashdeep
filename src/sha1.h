@@ -31,16 +31,14 @@ typedef struct SHA1_Context SHA1_CTX;
 
 typedef SHA1_CTX context_sha1_t;
 
-void SHA1Transform(uint32_t state[5], unsigned char buffer[64]);
+void SHA1Transform(uint32_t state[5], const unsigned char buffer[64]);
 void SHA1Init(SHA1_CTX* context);
 
-//void SHA1Update(SHA1_CTX* context, unsigned char * data, uint64_t len);
-void SHA1Update(SHA1_CTX* context, unsigned char * data, unsigned int len);
-
+void SHA1Update(SHA1_CTX* context, const unsigned char * data, size_t len);
 void SHA1Final(unsigned char digest[20], SHA1_CTX* context);
 
 int hash_init_sha1(void *ctx);
-int hash_update_sha1(void *ctx, unsigned char *buf, uint64_t len);
+int hash_update_sha1(void *ctx, const unsigned char *buf, size_t len);
 int hash_final_sha1(void *ctx, unsigned char *digest);
 
 

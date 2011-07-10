@@ -6,8 +6,8 @@ OTHERS=md5deep$(EXEEXT) sha1deep$(EXEEXT) sha256deep$(EXEEXT) tigerdeep$(EXEEXT)
 
 OTHERS64_EXE=md5deep64.exe sha1deep64.exe sha256deep64.exe tigerdeep64.exe whirlpooldeep64.exe
 
-ALGS=md5.c sha1.c sha256.c tiger.c whirlpool.c\
-     md5.h sha1.h sha256.h tiger.h whirlpool.h 
+ALGS=md5.c md5.h sha1.c sha1.h sha256.c sha256.h whirlpool.c whirlpool.h tiger.c tiger.h
+
 
 bin_PROGRAMS = hashdeep$(EXEEXT)
 

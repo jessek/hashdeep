@@ -68,7 +68,7 @@ int hash_init_whirlpool(void * ctx)
   return FALSE;
 }
 
-int hash_update_whirlpool(void * ctx, unsigned char *buf, uint64_t len)
+int hash_update_whirlpool(void * ctx, const unsigned char *buf, size_t len)
 {
   NESSIEadd(buf,len * 8,ctx);
   return FALSE;

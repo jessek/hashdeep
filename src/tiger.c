@@ -62,7 +62,7 @@ int hash_init_tiger(void * ctx)
   return FALSE;
 }
 
-int hash_update_tiger(void * ctx, unsigned char *buf, uint64_t len)
+int hash_update_tiger(void * ctx, const unsigned char *buf, size_t len)
 {
   tiger_update(ctx,buf,(size_t)len);
   return FALSE;
@@ -672,7 +672,7 @@ key_schedule( uint64_t *x )
  * Transform the message DATA which consists of 512 bytes (8 words)
  */
 static void
-transform( TIGER_CONTEXT *hd, unsigned char *data )
+transform( TIGER_CONTEXT *hd, const unsigned char *data )
 {
     uint64_t a,b,c,aa,bb,cc;
     uint64_t x[8];
@@ -730,7 +730,7 @@ tiger_init( TIGER_CONTEXT *hd )
 /* Update the message digest with the contents
  * of INBUF with length INLEN. */
 void
-tiger_update(TIGER_CONTEXT *hd, unsigned char *inbuf, size_t inlen)
+tiger_update(TIGER_CONTEXT *hd, const unsigned char *inbuf, size_t inlen)
 {
     if( hd->count == 64 ) { /* flush the buffer */
 	transform( hd, hd->buf );

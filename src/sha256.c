@@ -23,7 +23,7 @@ int hash_init_sha256(void * ctx)
   return FALSE;
 }
 
-int hash_update_sha256(void * ctx, unsigned char *buf, uint64_t len)
+int hash_update_sha256(void * ctx, const unsigned char *buf, size_t len)
 {
   sha256_update(ctx,buf,(uint32_t) len);
   return FALSE;
@@ -199,7 +199,7 @@ void sha256_process( context_sha256_t *ctx, uint8_t data[64] )
   ctx->state[7] += H;
 }
 
-void sha256_update( context_sha256_t *ctx, uint8_t *input, uint32_t length )
+void sha256_update( context_sha256_t *ctx, const uint8_t *input, uint32_t length )
 {
   uint32_t left, fill;
 
