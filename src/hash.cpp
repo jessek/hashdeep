@@ -106,10 +106,6 @@ static int file_fatal_error(void)
 }
 
 
-/**
- * compute the hash. return FALSE if error, TRUE if success
- */
-
 static int compute_hash(state *s,file_data_hasher_t *fdht)
 {
   time_t current_time;
@@ -203,125 +199,131 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
 }
 
 
-static int md5deep_hash_triage(state *s,file_data_hasher_t *fdht)
-{
-    // We use the piecewise mode to get a partial hash of the first 
-    // 512 bytes of the file. But we'll have to remove piecewise mode
-    // before returning to the main hashing code
-    fdht->block_size = 512;
-    fdht->piecewise = true;
-    
-    fdht->multihash_initialize();
-    
-    if (!compute_hash(s,fdht))  {
-	return TRUE;
-    }
-    
-    fdht->piecewise = false;
-    
-    fdht->multihash_finalize();
-    printf ("%"PRIu64"\t%s", fdht->stat_bytes, fdht->hash_hex[s->md5deep_mode_algorithm].c_str());
-    return FALSE;
-}
-
 
 /**
+ *
+ * THIS IS IT!!!!
+ *
+ * hash(state *s,file_data_hasher_t *fdht)
+ * 
  * This function is called to hash each file.
+ *
  * Called by: hash_stdin and hash_file.
+ * 
+ * Result is stored in the fdht structure.
+ * This routine is made multi-threaded to make the system run faster.
  */
 static int hash(state *s,file_data_hasher_t *fdht)
 {
-  int done = FALSE, status = FALSE;
+    int done = FALSE, status = FALSE;
   
-  fdht->actual_bytes = 0;
-
-  if (opt_estimate)  {
-    time(&(s->start_time));
-    s->last_time = s->start_time;
-  }
-
-  if (s->mode & mode_triage)  {
-    // Hash and display the first 512 bytes of this file
-      md5deep_hash_triage(s,fdht);
-
-    // Rather than muck about with updating the state of the input
-    // file, just reset everything and process it normally.
     fdht->actual_bytes = 0;
-    fseeko(fdht->handle, 0, SEEK_SET);
-  }
-  
-  if ( fdht->piecewise )  {
-    fdht->block_size = s->piecewise_size;
-  }
-  
-  while (!done)  {
-      fdht->multihash_initialize();
-      fdht->read_start = fdht->actual_bytes;
 
-    /**
-     * call compute_hash(), which computes the hash of the full file,
-     * or all of the piecewise hashes.
-     */
-    if (!compute_hash(s,fdht)) {
-      return TRUE;
-    }
-
-    // We should only display a hash if we've processed some
-    // data during this read OR if the whole file is zero bytes long.
-    // If the file is zero bytes, we won't have read anything, but
-    // still need to display a hash.
-    if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes)    {
-      if (fdht->piecewise)      {
-	uint64_t tmp_end = 0;
-	if (fdht->read_end != 0){
-	    tmp_end = fdht->read_end - 1;
-	}
-	fdht->file_name_annotation =
-	    std::string(" offset ")
-	    + itos(fdht->read_start)
-	    + std::string("-")
-	    + itos(tmp_end);
-      }
-      
-      fdht->multihash_finalize();
-
-      if(s->md5deep_mode){
-	  // Under not matched mode, we only display those known hashes that
-	  // didn't match any input files. Thus, we don't display anything now.
-	  // The lookup is to mark those known hashes that we do encounter.
-	  // searching for the hash will cause matched_file_number to be set
-	  if (s->mode & mode_not_matched){
-	      s->known.find_hash(s->md5deep_mode_algorithm,
-				 fdht->hash_hex[s->md5deep_mode_algorithm],
-				 fdht->file_number);
-	  }
-	  else {
-	      status = s->md5deep_display_hash(fdht);
-	  }
-      } else {
-	  s->display_hash(fdht);
-      }
+    if (opt_estimate)  {
+	time(&(s->start_time));
+	s->last_time = s->start_time;
     }
     
+    if (s->mode & mode_triage)  {
+	/*
+	 * Triage mode:
+	 * We use the piecewise mode to get a partial hash of the first 
+	 * 512 bytes of the file. But we'll have to remove piecewise mode
+	 * before returning to the main hashing code
+	 */
 
-    if (fdht->piecewise){
-	done = feof(fdht->handle);
-    } else {
-	done = TRUE;
+	fdht->block_size = 512;
+	fdht->piecewise = true;
+	fdht->multihash_initialize();
+    
+	int success = compute_hash(s,fdht);
+	fdht->piecewise = false;
+	fdht->multihash_finalize();
+	if(success){
+	    printf ("%"PRIu64"\t%s", fdht->stat_bytes, fdht->hash_hex[s->md5deep_mode_algorithm].c_str());
+	}
+
+	/*
+	 * Rather than muck about with updating the state of the input
+	 * file, just reset everything and process it normally.
+	 */
+	fdht->actual_bytes = 0;
+	fseeko(fdht->handle, 0, SEEK_SET);
     }
-  }
+  
+    if ( fdht->piecewise )  {
+	fdht->block_size = s->piecewise_size;
+    }
+  
+    while (!done)  {
+	fdht->multihash_initialize();
+	fdht->read_start = fdht->actual_bytes;
 
-  /**
-   * If we are in dfxml mode, output the DFXML, which may optionally include
-   * all of the piecewise information.
-   */
-  if(s->dfxml){
-      s->dfxml->push("fileobject");
-      s->dfxml->xmlout("filename",fdht->file_name);
-      s->dfxml->writexml(fdht->dfxml_hash);
-      s->dfxml->pop();
-  }
-  return status;
+	/**
+	 * call compute_hash(), which computes the hash of the full file,
+	 * or all of the piecewise hashes.
+	 * It returns FALSE if there is a failure.
+	 */
+	if (!compute_hash(s,fdht)) {
+	    return TRUE;
+	}
+
+	// We should only display a hash if we've processed some
+	// data during this read OR if the whole file is zero bytes long.
+	// If the file is zero bytes, we won't have read anything, but
+	// still need to display a hash.
+	if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes)    {
+	    if (fdht->piecewise)      {
+		uint64_t tmp_end = 0;
+		if (fdht->read_end != 0){
+		    tmp_end = fdht->read_end - 1;
+		}
+		fdht->file_name_annotation =
+		    std::string(" offset ")
+		    + itos(fdht->read_start)
+		    + std::string("-")
+		    + itos(tmp_end);
+	    }
+      
+	    fdht->multihash_finalize();
+
+	    if(s->md5deep_mode){
+		// Under not matched mode, we only display those known hashes that
+		// didn't match any input files. Thus, we don't display anything now.
+		// The lookup is to mark those known hashes that we do encounter.
+		// searching for the hash will cause matched_file_number to be set
+		if (s->mode & mode_not_matched){
+		    s->known.find_hash(s->md5deep_mode_algorithm,
+				       fdht->hash_hex[s->md5deep_mode_algorithm],
+				       fdht->file_number);
+		}
+		else {
+		    status = s->md5deep_display_hash(fdht);
+		}
+	    } else {
+		s->display_hash(fdht);
+	    }
+	}
+    
+
+	if (fdht->piecewise){
+	    done = feof(fdht->handle);
+	} else {
+	    done = TRUE;
+	}
+    }
+
+    /**
+     * If we are in dfxml mode, output the DFXML, which may optionally include
+     * all of the piecewise information.
+     */
+    if(s->dfxml){
+	s->dfxml->push("fileobject");
+	s->dfxml->xmlout("filename",fdht->file_name);
+	s->dfxml->writexml(fdht->dfxml_hash);
+	s->dfxml->pop();
+    }
+    return status;
 }
 
 

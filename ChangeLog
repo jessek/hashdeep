@@ -1,5 +1,8 @@
 2011-07-10  Simson Garfinkel  <simsong@imac3.home>
 
+	* src/sha1.c: removed copy on all algorithms except sha1; that copy is now done within the sha1 update function, where it should be.
+	
+
 	* src/md5.h: all update functions modified to take size_t as the length, becuase you can't pass a size larger than size_t.
 
 2011-07-07  Simson Garfinkel  <simsong@t.nitroba.org>
