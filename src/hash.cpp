@@ -17,121 +17,140 @@
 #include "main.h"
 
 
+/****************************************************************
+ *** Service routines
+ ****************************************************************/
+
 // Returns TRUE if errno is currently set to a fatal error. That is,
 // an error that can't possibly be fixed while trying to read this file
 static int file_fatal_error(void)
 {
-  switch(errno) 
-    {
+    switch(errno) {
     case EINVAL:   // Invalid argument (happens on Windows)
     case EACCES:   // Permission denied
     case ENODEV:   // Operation not supported (e.g. trying to read 
-                   //   a write only device such as a printer)
+	//   a write only device such as a printer)
     case EBADF:    // Bad file descriptor
     case EFBIG:    // File too big
     case ETXTBSY:  // Text file busy
-      // The file is being written to by another process.
-      // This happens with Windows system files 
+	// The file is being written to by another process.
+	// This happens with Windows system files 
     case EIO:      // Input/Output error
-      // Added 22 Nov 2010 in response to user email
-
-      return TRUE;  
+	// Added 22 Nov 2010 in response to user email
+	
+	return TRUE;  
     }
-  
-  return FALSE;
+    return FALSE;
+}
+
+static std::string make_stars(int count)
+{
+    std::string ret;
+    for(int i=0;i<count;i++){
+	ret.push_back('*');
+    }
+    return ret;
 }
 
 
-static int compute_hash(state *s,file_data_hasher_t *fdht)
+/*
+ * Compute the hash on fdht and store the results in fdht. 
+ */
+
+
+static int compute_hash(file_data_hasher_t *fdht)
 {
-  time_t current_time;
-  uint64_t current_read, mysize, remaining, this_start;
-  unsigned char buffer[file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE];
+    time_t current_time;
+    uint64_t current_read, mysize, remaining, this_start;
+    unsigned char buffer[file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE];
 
-  // Although we need to read MD5DEEP_BLOCK_SIZE bytes before
-  // we exit this function, we may not be able to do that in 
-  // one read operation. Instead we read in blocks of 8192 bytes 
-  // (or as needed) to get the number of bytes we need. 
+    // Although we need to read MD5DEEP_BLOCK_SIZE bytes before
+    // we exit this function, we may not be able to do that in 
+    // one read operation. Instead we read in blocks of 8192 bytes 
+    // (or as needed) to get the number of bytes we need. 
 
-  if (fdht->block_size < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE)
-    mysize = fdht->block_size;
-  else
-      mysize = file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE;
+    if (fdht->block_size < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE){
+	mysize = fdht->block_size;
+    }
+    else {
+	mysize = file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE;
+    }
 
-  remaining = fdht->block_size;
+    remaining = fdht->block_size;
 
-  // We get weird results calling ftell on stdin!
-  if (!(fdht->is_stdin))
-    fdht->read_start = ftello(fdht->handle);
-  fdht->read_end   = fdht->read_start;
-  fdht->bytes_read = 0;
+    // We get weird results calling ftell on stdin!
+    if (!(fdht->is_stdin)) {
+	fdht->read_start = ftello(fdht->handle);
+    }
+    fdht->read_end   = fdht->read_start;
+    fdht->bytes_read = 0;
 
-  while (TRUE)   {    
-    // Clear the buffer in case we hit an error and need to pad the hash 
-    memset(buffer,0,mysize);
+    while (TRUE)   {    
+	// Clear the buffer in case we hit an error and need to pad the hash 
+	memset(buffer,0,mysize);
 
-    this_start = fdht->read_end;
+	this_start = fdht->read_end;
 
-    current_read = fread(buffer, 1, mysize, fdht->handle);
+	current_read = fread(buffer, 1, mysize, fdht->handle);
     
-    fdht->actual_bytes += current_read;
-    fdht->read_end     += current_read;
-    fdht->bytes_read   += current_read;
+	fdht->actual_bytes += current_read;
+	fdht->read_end     += current_read;
+	fdht->bytes_read   += current_read;
       
-    // If an error occured, display a message but still add this block 
-    if (ferror(fdht->handle)) {
-	print_error_filename(fdht->file_name,
-			    "error at offset %"PRIu64": %s",
-			    ftello(fdht->handle),
-			    strerror(errno));
+	// If an error occured, display a message but still add this block 
+	if (ferror(fdht->handle)) {
+	    print_error_filename(fdht->file_name,
+				 "error at offset %"PRIu64": %s",
+				 ftello(fdht->handle),
+				 strerror(errno));
 	   
-      if (file_fatal_error()) return FALSE; 
+	    if (file_fatal_error()) return FALSE; 
       
-      fdht->multihash_update(buffer,current_read);
+	    fdht->multihash_update(buffer,current_read);
       
-      clearerr(fdht->handle);
+	    clearerr(fdht->handle);
       
-      // The file pointer's position is now undefined. We have to manually
-      // advance it to the start of the next buffer to read. 
-      fseeko(fdht->handle,SEEK_SET,this_start + mysize);
-    } 
-    else    {
-      // If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE
-      // bytes and must reflect that in how we update the hash.
-	fdht->multihash_update(buffer,current_read);
-    }
-    
-    // Check if we've hit the end of the file 
-    if (feof(fdht->handle))    {	
-      // If we've been printing time estimates, we now need to clear the line.
-	if (opt_estimate){
-	    fprintf(stderr,"\r%s\r",BLANK_LINE);
+	    // The file pointer's position is now undefined. We have to manually
+	    // advance it to the start of the next buffer to read. 
+	    fseeko(fdht->handle,SEEK_SET,this_start + mysize);
+	} 
+	else    {
+	    // If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE
+	    // bytes and must reflect that in how we update the hash.
+	    fdht->multihash_update(buffer,current_read);
 	}
-
-      return TRUE;
-   } 
-
-    // In piecewise mode we only hash one block at a time
-    if (fdht->piecewise)    {
-      remaining -= current_read;
-      if (remaining == 0) return TRUE;
-
-      if (remaining < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE){
-	mysize = remaining;
-      }
-    }
     
-    if (opt_estimate)    {
-      time(&current_time);
+	// Check if we've hit the end of the file 
+	if (feof(fdht->handle))    {	
+	    // If we've been printing time estimates, we now need to clear the line.
+	    if (opt_estimate){
+		fprintf(stderr,"\r%s\r",BLANK_LINE);
+	    }
+
+	    return TRUE;
+	} 
+
+	// In piecewise mode we only hash one block at a time
+	if (fdht->piecewise)    {
+	    remaining -= current_read;
+	    if (remaining == 0) return TRUE;
+
+	    if (remaining < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE){
+		mysize = remaining;
+	    }
+	}
+    
+	if (opt_estimate)    {
+	    time(&current_time);
       
-      // We only update the display only if a full second has elapsed 
-      if (s->last_time != current_time) {
-	s->last_time = current_time;
-	display_realtime_stats(fdht,current_time - s->start_time);
-      }
-    }
-  }      
-  return TRUE;
+	    // We only update the display only if a full second has elapsed 
+	    if (fdht->last_time != current_time) {
+		fdht->last_time = current_time;
+		display_realtime_stats(fdht,current_time - fdht->start_time);
+	    }
+	}
+    }      
+    return TRUE;
 }
 
 
@@ -156,8 +175,8 @@ static int hash(state *s,file_data_hasher_t *fdht)
     fdht->actual_bytes = 0;
 
     if (opt_estimate)  {
-	time(&(s->start_time));
-	s->last_time = s->start_time;
+	time(&(fdht->start_time));
+	fdht->last_time = fdht->start_time;
     }
     
     if (s->mode & mode_triage)  {
@@ -172,7 +191,7 @@ static int hash(state *s,file_data_hasher_t *fdht)
 	fdht->piecewise = true;
 	fdht->multihash_initialize();
     
-	int success = compute_hash(s,fdht);
+	int success = compute_hash(fdht);
 	fdht->piecewise = false;
 	fdht->multihash_finalize();
 	if(success){
@@ -200,7 +219,7 @@ static int hash(state *s,file_data_hasher_t *fdht)
 	 * or all of the piecewise hashes.
 	 * It returns FALSE if there is a failure.
 	 */
-	if (!compute_hash(s,fdht)) {
+	if (!compute_hash(fdht)) {
 	    return TRUE;
 	}
 
@@ -257,16 +276,6 @@ static int hash(state *s,file_data_hasher_t *fdht)
 	s->dfxml->pop();
     }
     return status;
-}
-
-
-static std::string make_stars(int count)
-{
-    std::string ret;
-    for(int i=0;i<count;i++){
-	ret.push_back('*');
-    }
-    return ret;
 }
 
 

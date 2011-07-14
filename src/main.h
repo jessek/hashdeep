@@ -254,7 +254,9 @@ public:
     static const size_t MAX_ALGORITHM_CONTEXT_SIZE = 256;
     static const size_t MAX_ALGORITHM_RESIDUE_SIZE = 256;
     file_data_hasher_t(bool piecewise_):handle(0),is_stdin(0),read_start(0),read_end(0),bytes_read(0),
-					block_size(MD5DEEP_IDEAL_BLOCK_SIZE),piecewise(piecewise_){
+					block_size(MD5DEEP_IDEAL_BLOCK_SIZE),
+					start_time(0),last_time(0),
+					piecewise(piecewise_){
 	file_number = ++next_file_number;
     };
     ~file_data_hasher_t(){
@@ -286,6 +288,10 @@ public:
 
     /* Size of blocks used in normal hashing */
     uint64_t        block_size;
+
+    /* When do we start the hashing, and when was the last time a display was printed? */
+    time_t          start_time, last_time;
+
 
     /* Flags */
     bool		piecewise;	// create picewise hashes
@@ -469,7 +475,6 @@ public:;
 
 
     state():primary_function(primary_compute),mode(mode_none),
-	    start_time(0),last_time(0),
 	    argc(0),argv(0),
 	    piecewise_size(0),
 	    banner_displayed(false),
@@ -485,7 +490,6 @@ public:;
     /* Basic Program State */
     primary_t       primary_function;
     uint64_t        mode;
-    time_t          start_time, last_time;
 
     /* Command line arguments */
     int             argc;

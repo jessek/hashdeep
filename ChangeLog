@@ -1,5 +1,7 @@
 2011-07-13  Simson Garfinkel  <simsong@imac3.home>
 
+	* src/hash.cpp (hash): successfully removed the state variable from compute_hash.
+
 	* src/display.cpp (display_realtime_stats): moved output of realtime_stats from file_name_annotation to a seperate output, so that display_realtime_stats can now take a const file_data_hasher.
 
 	* src/hash.cpp: changed update_display to display_realtime_stats() and moved to display.cpp
