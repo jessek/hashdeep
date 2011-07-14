@@ -16,70 +16,6 @@
 // Code for hashdeep 
 #include "main.h"
 
-// At least one user has suggested changing update_display() to 
-// use human readable units (e.g. GB) when displaying the updates.
-// The problem is that once the display goes above 1024MB, there
-// won't be many updates. The counter doesn't change often enough
-// to indicate progress. Using MB is a reasonable compromise. 
-
-static void update_display(file_data_hasher_t *fdht, time_t elapsed)
-{
-  uint64_t hour, min, seconds, mb_read;
-  bool shorten = false;
-
-  // If we've read less than one MB, then the computed value for mb_read 
-  // will be zero. Later on we may need to divide the total file size, 
-  // total_megs, by mb_read. Dividing by zero can create... problems 
-  if (fdht->bytes_read < ONE_MEGABYTE)
-    mb_read = 1;
-  else
-    mb_read = fdht->actual_bytes / ONE_MEGABYTE;
-  
-  if (fdht->stat_megs()==0 || opt_estimate==false)  {
-      shorten = true;
-      char msg[64];
-      snprintf(msg,sizeof(msg)-1,"%"PRIu64"MB done. Unable to estimate remaining time.%s",
-	       mb_read,BLANK_LINE);
-      fdht->file_name_annotation = msg;
-  }
-  else {
-    // Estimate the number of seconds using only integer math.
-    //
-    // We now compute the number of bytes read per second and then
-    // use that to determine how long the whole file should take. 
-    // By subtracting the number of elapsed seconds from that, we should
-    // get a good estimate of how many seconds remain.
-
-    seconds = (fdht->stat_bytes / (fdht->actual_bytes / elapsed)) - elapsed;
-
-    // We don't care if the remaining time is more than one day.
-    // If you're hashing something that big, to quote the movie Jaws:
-    //        
-    //            "We're gonna need a bigger boat."            
-    hour = seconds / 3600;
-    seconds -= (hour * 3600);
-    
-    min = seconds/60;
-    seconds -= min * 60;
-
-    shorten = 1;
-      char msg[64];
-    snprintf(msg,sizeof(msg)-1,
-	       "%"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s",
-	       mb_read,
-	     fdht->stat_megs(),
-	       hour,
-	       min,
-	       seconds,
-	     BLANK_LINE);
-    fdht->file_name_annotation = msg;
-  }
-
-  fprintf(stderr,"\r");
-  display_filename(stderr,fdht,shorten);
-}
-
-
 
 // Returns TRUE if errno is currently set to a fatal error. That is,
 // an error that can't possibly be fixed while trying to read this file
@@ -189,9 +125,9 @@ static int compute_hash(state *s,file_data_hasher_t *fdht)
       time(&current_time);
       
       // We only update the display only if a full second has elapsed 
-      if (s->last_time != current_time)       {
+      if (s->last_time != current_time) {
 	s->last_time = current_time;
-	update_display(fdht,current_time - s->start_time);
+	display_realtime_stats(fdht,current_time - s->start_time);
       }
     }
   }      
@@ -278,11 +214,8 @@ static int hash(state *s,file_data_hasher_t *fdht)
 		if (fdht->read_end != 0){
 		    tmp_end = fdht->read_end - 1;
 		}
-		fdht->file_name_annotation =
-		    std::string(" offset ")
-		    + itos(fdht->read_start)
-		    + std::string("-")
-		    + itos(tmp_end);
+		fdht->file_name_annotation = std::string(" offset ") + itos(fdht->read_start)
+		    + std::string("-") + itos(tmp_end);
 	    }
       
 	    fdht->multihash_finalize();

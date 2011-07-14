@@ -67,22 +67,6 @@ void output_filename(FILE *out,const std::wstring &fn)
  */
 void display_filename(FILE *out, const file_data_t &fdt, bool shorten)
 {
-#if 0
-    /* old windows code */
-  size_t pos,len;
-
-  len = _tcslen(fn);
-
-  for (pos = 0 ; pos < len ; ++pos)
-  {
-    // We can only display the English (00) code page
-    if (0 == (fn[pos] & 0xff00))
-      fprintf (out,"%c", (char)(fn[pos]));
-    else
-      fprintf (out,"?");
-  }
-  
-#else
   if(shorten){
       output_filename(out,shorten_filename(fdt.file_name));
   } else {
@@ -91,7 +75,67 @@ void display_filename(FILE *out, const file_data_t &fdt, bool shorten)
   if(fdt.file_name_annotation.size()>0){
       output_filename(out,fdt.file_name_annotation);
   }
-#endif
+}
+
+
+// At least one user has suggested changing update_display() to 
+// use human readable units (e.g. GB) when displaying the updates.
+// The problem is that once the display goes above 1024MB, there
+// won't be many updates. The counter doesn't change often enough
+// to indicate progress. Using MB is a reasonable compromise. 
+
+void display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed)
+{
+    uint64_t mb_read=0;
+    bool shorten = false;
+
+    // If we've read less than one MB, then the computed value for mb_read 
+    // will be zero. Later on we may need to divide the total file size, 
+    // total_megs, by mb_read. Dividing by zero can create... problems 
+    if (fdht->bytes_read < ONE_MEGABYTE){
+	mb_read = 1;
+    }
+    else {
+	mb_read = fdht->actual_bytes / ONE_MEGABYTE;
+    }
+  
+    char msg[64];
+    memset(msg,0,sizeof(msg));
+
+    if (fdht->stat_megs()==0 || opt_estimate==false)  {
+	shorten = true;
+	snprintf(msg,sizeof(msg)-1,"%"PRIu64"MB done. Unable to estimate remaining time.%s",
+		 mb_read,BLANK_LINE);
+    }
+    else {
+	// Estimate the number of seconds using only integer math.
+	//
+	// We now compute the number of bytes read per second and then
+	// use that to determine how long the whole file should take. 
+	// By subtracting the number of elapsed seconds from that, we should
+	// get a good estimate of how many seconds remain.
+
+	uint64_t seconds = (fdht->stat_bytes / (fdht->actual_bytes / elapsed)) - elapsed;
+
+	// We don't care if the remaining time is more than one day.
+	// If you're hashing something that big, to quote the movie Jaws:
+	//        
+	//            "We're gonna need a bigger boat."            
+	uint64_t hour = seconds / 3600;
+	seconds -= (hour * 3600);
+    
+	uint64_t min = seconds/60;
+	seconds -= min * 60;
+
+	shorten = 1;
+	char msg[64];
+	snprintf(msg,sizeof(msg),"%"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s",
+		 mb_read, fdht->stat_megs(), hour, min, seconds, BLANK_LINE);
+    }
+
+    fprintf(stderr,"\r");
+    display_filename(stderr,fdht,shorten);
+    output_filename(stderr,msg);	// was previously put in the anotation
 }
 
 
@@ -507,3 +551,6 @@ int state::display_hash(file_data_hasher_t *fdht)
     }
     return FALSE;
 }
+
+
+

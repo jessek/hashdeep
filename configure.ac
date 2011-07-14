@@ -89,7 +89,8 @@ AC_CHECK_HEADERS([time.h sys/time.h])
 AC_HEADER_TIME
 
 
-AC_C_BIGENDIAN
+# Don't think we need this anymore.
+# AC_C_BIGENDIAN
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -117,6 +118,16 @@ if test x"${extern_progname}" = x"yes"; then
   AC_MSG_NOTICE([__progname is external])
   AC_DEFINE(HAVE_EXTERN_PROGNAME,1,[define to 1 if __progname is available])
 fi
+
+# PTHREAD support
+AC_CHECK_HEADERS([pthread.h])
+m4_include([ax_pthread.m4])
+AX_PTHREAD()
+LIBS="$PTHREAD_LIBS $LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
+CC="$PTHREAD_CC"
+
 
 # This allows us to easily disable optimizations for debugging
 AC_ARG_WITH([noopt], AC_HELP_STRING([--with-noopt],[Drop -O C flags]))

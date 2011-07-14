@@ -237,7 +237,7 @@ public:
     uint64_t       stat_bytes;		// how much stat returned
     uint64_t       actual_bytes;	// how many we read.
 
-    uint64_t	   stat_megs(){
+    uint64_t	   stat_megs() const{
 	return stat_bytes / ONE_MEGABYTE;
     }
 };
@@ -643,6 +643,8 @@ void  display_filename(FILE *out, const file_data_t &fdt,bool shorten);
 inline void display_filename(FILE *out, const file_data_t *fdt,bool shorten){
     display_filename(out,*fdt,shorten);
 };
+void display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed);
+
 
 
 /* ui.c */
