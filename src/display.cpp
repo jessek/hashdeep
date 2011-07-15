@@ -5,12 +5,16 @@
  *
  * display.cpp:
  * Manages user output.
+ *
  * All output is in UTF-8.
+ *
  * If opt_escape8 is set, then non-ASCII UTF-8 characters are turned into U+XXXX notation.
  * 
  * NOTE WITH MINGW GCC-4.3.0:
  * You will get a warning from the format. IGNORE IT.
  * See http://lists.gnu.org/archive/html/qemu-devel/2009-01/msg01979.html
+ *
+ * All output is threadsafe.
  */
 
 static void display_size(const state *s,const file_data_t *fdt)

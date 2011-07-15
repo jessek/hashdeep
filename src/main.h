@@ -204,6 +204,74 @@ typedef enum   {
 } status_t;
 
 
+/** output_control_block describes how information is output.
+ * There is only one OCB (it is a singleton).
+ * It needs to be mutex protected.
+ *
+ * The hashing happens in lots of threads and then calls the output
+ * classes in output_control_block to actually do the outputing. The
+ * problem here is that one of the things that is done is looking up,
+ * so the searches into "known" and "seen" also need to be
+ * protected. Hence "known" and "seen" appear in the
+ * output_control_block, and not elsewhere, and all of the access to
+ * them needs to be mediated.
+ *
+ * It is a class because it is protected and is passed around.
+ */
+class output_control_block {
+private:
+#ifdef HAVE_PTHREAD
+    pthread_mutex_t	lock;	// lock for anything in output section
+#endif    
+    FILE		*outfile;	// where things get sent
+    bool		banner_displayed;	// has the header been shown (text output)
+    XML			*dfxml;			/* output in DFXML */
+
+    /* The set of known values; typically read from the audit file */
+    hashlist	    known;		// hashes read from the -k file
+    hashlist	    seen;		// hashes seen on this hashing run; from the command line
+
+public:
+    output_control_block(){
+#ifdef HAVE_PTHREAD
+	pthread_mutex_init(&lock,NULL);
+#endif	
+    }
+    ~output_control_block(){
+#ifdef HAVE_PTHREAD
+	pthread_mutex_destroy(&lock);
+#endif	
+    }
+    void	open(std::string &outfilename); // open outfilename; error if can't.
+
+    /* display.cpp */
+    void	display_banner();
+    int		display_hash(file_data_hasher_t *fdht);
+    int		display_hash_simple(file_data_hasher_t *fdt);
+
+    /* output_filename simply sends the filename to the specified output.
+     * With TCHAR it sends it out as UTF-8 unless unicode quoting is requested,
+     * in which case Unicode characters are emited as U+xxxx.
+     * For example, the Unicode smiley character ☺ is output as U+263A.
+     */
+    void  output_filename(FILE *out,const char *fn);
+    void  output_filename(FILE *out,const std::string &fn);
+#ifdef _WIN32
+    void  output_filename(FILE *out,const std::wstring &fn);
+#endif
+
+    /* display_filename is similar output_filename,
+     * except it takes a file_data_structure and optionally shortens to the line width
+     */
+    
+    void  display_filename(FILE *out, const file_data_t &fdt,bool shorten);
+    inline void display_filename(FILE *out, const file_data_t *fdt,bool shorten){
+	display_filename(out,*fdt,shorten);
+    };
+    void display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed);
+};
+
+
 /** file_data_t contains information about a file.
  * It can be created by hashing an actual file, or by reading a hash file a file of hashes. 
  * Pointers to these objects are stored in a single vector and in a map for each algorithm.
@@ -478,7 +546,6 @@ public:;
 	    banner_displayed(false),
 	    dfxml(0),
 	    size_threshold(0),
-	    known(),seen(),
 	    h_plain(0),h_bsd(0),h_md5deep_size(0),
 	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
 	    h_nsrl20(0), h_encase(0),
@@ -501,20 +568,11 @@ public:;
     uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */
 
     /* output */
-    FILE		*outfile;		// default is stdout
-    bool		banner_displayed;	// has the header been shown (text output)
-    XML			*dfxml;			/* output in DFXML */
-#ifdef HAVE_PTHREAD
-    pthread_mutex_t output_lock;	// lock for anything in output section
-#endif    
+    output_control_block ocb;
 
 
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;
-
-    /* The set of known values; typically read from the audit file */
-    hashlist	    known;		// hashes read from the -k file
-    hashlist	    seen;		// hashes seen on this hashing run; from the command line
 
     // Which filetypes this algorithm supports and their position in the file
     uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
@@ -561,11 +619,6 @@ public:;
     int		dig_win32(const tstring &path);	// win32 only; calls dig_normal
     static	void dig_self_test();
 
-
-    /* display.cpp */
-    void	display_banner();
-    int		display_hash(file_data_hasher_t *fdht);
-    int		display_hash_simple(file_data_hasher_t *fdt);
 
     /* audit mode */
     int		audit_update(file_data_hasher_t *fdt);
@@ -629,27 +682,6 @@ int md5deep_process_command_line(state *s, int argc, char **argv);
 void dig_self_test();			// check the string-processing
 
 
-/* display.cpp */
-/* output_filename simply sends the filename to the specified output.
- * With TCHAR it sends it out as UTF-8 unless unicode quoting is requested,
- * in which case Unicode characters are emited as U+xxxx.
- * For example, the Unicode smiley character ☺ is output as U+263A.
- */
-void  output_filename(FILE *out,const char *fn);
-void  output_filename(FILE *out,const std::string &fn);
-#ifdef _WIN32
-void  output_filename(FILE *out,const std::wstring &fn);
-#endif
-
-/* display_filename is similar output_filename,
- * except it takes a file_data_structure and optionally shortens to the line width
- */
-
-void  display_filename(FILE *out, const file_data_t &fdt,bool shorten);
-inline void display_filename(FILE *out, const file_data_t *fdt,bool shorten){
-    display_filename(out,*fdt,shorten);
-};
-void display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed);
 
 
 
