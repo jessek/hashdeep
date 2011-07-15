@@ -292,7 +292,6 @@ public:
     /* When do we start the hashing, and when was the last time a display was printed? */
     time_t          start_time, last_time;
 
-
     /* Flags */
     bool		piecewise;	// create picewise hashes
 
@@ -472,11 +471,10 @@ inline std::ostream & operator <<(std::ostream &os,const std::wstring &wstr) {
 
 class state {
 public:;
-
-
     state():primary_function(primary_compute),mode(mode_none),
 	    argc(0),argv(0),
 	    piecewise_size(0),
+	    outfile(stdout),
 	    banner_displayed(false),
 	    dfxml(0),
 	    size_threshold(0),
@@ -503,9 +501,13 @@ public:;
     uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */
 
     /* output */
-    std::string		outfile;	// where output goes
-    bool             banner_displayed;	// has the header been shown (text output)
-    XML             *dfxml;  /* output in DFXML */
+    FILE		*outfile;		// default is stdout
+    bool		banner_displayed;	// has the header been shown (text output)
+    XML			*dfxml;			/* output in DFXML */
+#ifdef HAVE_PTHREAD
+    pthread_mutex_t output_lock;	// lock for anything in output section
+#endif    
+
 
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;

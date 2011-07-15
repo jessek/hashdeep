@@ -505,7 +505,11 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
       exit(EXIT_SUCCESS);
 	  
     case 'W':
-	s->outfile = optarg;
+	s->outfile = fopen(optarg.c_str(),"wb");
+	if(!s->outfile){
+	    perror(optarg.c_str());
+	    exit(1);
+	}
 	break;
 
     case '0': opt_zero = true; break;

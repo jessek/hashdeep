@@ -1,3 +1,8 @@
+2011-07-14  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/common.h: removed STRINGS_CASE_EQUAL.
+
+
 2011-07-13  Simson Garfinkel  <simsong@imac3.home>
 
 	* src/hash.cpp (hash): successfully removed the state variable from compute_hash.

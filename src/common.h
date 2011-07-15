@@ -100,6 +100,10 @@
 # include <sys/cdefs.h>
 #endif
 
+#ifdef HAVE_PTHREAD_H
+# include <pthread.h>
+#endif
+
 // This allows us to open standard input in binary mode by default 
 // See http://gnuwin32.sourceforge.net/compile.html for more 
 #ifdef HAVE_FCNTL_H
@@ -162,16 +166,6 @@ inline std::string makeupper(const std::string &a)
     std::string ret(a);
     std::transform(ret.begin(), ret.end(), ret.begin(), ::toupper);
     return ret;
-}
-
-inline bool STRINGS_CASE_EQUAL(const char *a,const char *b)
-{
-    return strcasecmp(a,b)==0;
-}
-
-inline bool STRINGS_CASE_EQUAL(const std::string &a,const std::string &b)
-{
-    return makelower(a)==makelower(b);
 }
 
 inline bool STRINGS_EQUAL(const char *a,const char *b)
