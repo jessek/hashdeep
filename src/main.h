@@ -194,13 +194,10 @@ extern algorithm_t     hashes[NUM_ALGORITHMS];		// which hash algorithms are ava
  */
 typedef enum   {
     status_ok = 0,
-
-    /* General errors */
     status_out_of_memory,
     status_invalid_hash,  
     status_unknown_error,
     status_omg_ponies
-
 } status_t;
 
 
@@ -230,7 +227,6 @@ private:
     /* The set of known values; typically read from the audit file */
     hashlist	    known;		// hashes read from the -k file
     hashlist	    seen;		// hashes seen on this hashing run; from the command line
-
 public:
     output_control_block(){
 #ifdef HAVE_PTHREAD

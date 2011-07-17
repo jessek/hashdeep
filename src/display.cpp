@@ -30,7 +30,6 @@ static void display_size(const state *s,const file_data_t *fdt)
   }
 }
 
-
 static std::string shorten_filename(const std::string &fn)
 {
     if (fn.size() < MAX_FILENAME_LENGTH){
