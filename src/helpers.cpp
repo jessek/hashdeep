@@ -124,18 +124,6 @@ void chop_line(char *s)
 
 
 
-void print_newline()
-{
-    if (opt_zero){
-	printf("%c", 0);
-    }
-    else {
-	printf("%s", NEWLINE);
-    }
-    fflush(stdout);
-}
-
-
 // Shift the contents of a string so that the values after 'new_start'
 // will now begin at location 'start' 
 void shift_string(char *fn, size_t start, size_t new_start)

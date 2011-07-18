@@ -198,9 +198,8 @@ void print_last_error(char *function_name)
 		  0, NULL );
   
     // Display the error message and exit the process
-    fprintf(stdout,"%s failed with error %ld: ", function_name, dwLastError);
-    output_filename(stdout,pszMessage);
-  
+    fprintf(stderr,"%s failed with error %ld: ", function_name, dwLastError);
+    fprintf(stderr,"%s",pszMessage);
     LocalFree(pszMessage);
 }
 // An NTFS Junction Point is like a hard link on *nix but only works

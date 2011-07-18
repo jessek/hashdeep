@@ -68,7 +68,7 @@ void sha256_starts( context_sha256_t *ctx )
   ctx->state[7] = 0x5BE0CD19;
 }
 
-void sha256_process( context_sha256_t *ctx, uint8_t data[64] )
+void sha256_process( context_sha256_t *ctx, const uint8_t data[64] )
 {
   uint32_t temp1, temp2, W[64];
   uint32_t A, B, C, D, E, F, G, H;

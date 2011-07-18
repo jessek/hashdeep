@@ -1,5 +1,6 @@
 #include "main.h"
 #include "utf8.h"
+#include <stdarg.h>
 
 /**
  *
@@ -17,19 +18,9 @@
  * All output is threadsafe.
  */
 
-static void display_size(const state *s,const file_data_t *fdt)
-{
-  if (s->mode & mode_display_size)  {
-      // Under CSV mode we have to include a comma, otherwise two spaces
-      if (s->mode & mode_csv){
-	  printf("%"PRIu64",", fdt->actual_bytes);
-      }
-      else {
-	  printf("%10"PRIu64"  ", fdt->actual_bytes);
-      }
-  }
-}
-
+/****************************************************************
+ ** Support routines
+ ****************************************************************/
 static std::string shorten_filename(const std::string &fn)
 {
     if (fn.size() < MAX_FILENAME_LENGTH){
@@ -38,46 +29,94 @@ static std::string shorten_filename(const std::string &fn)
     return(fn.substr(0,MAX_FILENAME_LENGTH-3) + "...");
 }
 
+
+/* Does not lock */
+void display::newline()
+{
+    if (opt_zero){
+	printf("%c", 0);
+    }
+    else {
+	printf("%s", NEWLINE);
+    }
+    fflush(stdout);
+}
+
+
+
+
+/****************************************************************
+ ** Display Routines
+ ****************************************************************/
+
+void display::status(const char *fmt,...)
+{
+    lock();
+    va_list(ap); 
+    va_start(ap,MSG); 
+    if (vfprintf(outfile,MSG,ap) < 0) { 
+	fprintf(stderr, "%s: %s", __progname, strerror(errno)); 
+	exit(EXIT_FAILURE);
+    }
+    va_end(ap);
+    fprintf(outfile,"%s", NEWLINE);
+    unlock();
+}
+
+void display::error(const char *fmt,...)
+{
+    lock();
+    va_list(ap); 
+    va_start(ap,MSG); 
+    if (vfprintf(stderr,MSG,ap) < 0) { 
+	fprintf(stderr, "%s: %s", __progname, strerror(errno)); 
+	exit(EXIT_FAILURE);
+    }
+    va_end(ap);
+    fprintf(stderr,"%s", NEWLINE);
+    unlock();
+}
+
 /**
  * output the string, typically a fn, optionally performing unicode escaping
  */
 
-void output_filename(FILE *out,const std::string &fn)
+void display::output_filename(const std::string &fn)
 {
     if(opt_unicode_escape){
 	std::string f2 = main::escape_utf8(fn);
-	fwrite(f2.c_str(),f2.size(),1,out);
+	fwrite(f2.c_str(),f2.size(),1,outfile);
     } else {
-	fwrite(fn.c_str(),fn.size(),1,out);
+	fwrite(fn.c_str(),fn.size(),1,outfile);
     }
 }
 
-void output_filename(FILE *out,const char *fn)
+void display::output_filename(const char *fn)
 {
-    output_filename(out,std::string(fn));
+    output_filename(std::string(fn));
 }
 
 #ifdef _WIN32
 /* NOTE - This is where to do the UTF-8 or U+ substitution */
-void output_filename(FILE *out,const std::wstring &fn)
+void output_filename(const std::wstring &fn)
 {
-    output_filename(out,main::make_utf8(fn));
+    output_filename(main::make_utf8(fn));
 }
 #endif
 
 /* By default, we display in UTF-8.
  * We escape UTF-8 if requested.
  */
-void display_filename(FILE *out, const file_data_t &fdt, bool shorten)
+void display::display_filename(const file_data_t &fdt, bool shorten)
 {
-  if(shorten){
-      output_filename(out,shorten_filename(fdt.file_name));
-  } else {
-      output_filename(out,fdt.file_name);
-  }
-  if(fdt.file_name_annotation.size()>0){
-      output_filename(out,fdt.file_name_annotation);
-  }
+    if(shorten){
+	output_filename(shorten_filename(fdt.file_name));
+    } else {
+	output_filename(fdt.file_name);
+    }
+    if(fdt.file_name_annotation.size()>0){
+	output_filename(fdt.file_name_annotation);
+    }
 }
 
 
@@ -136,105 +175,109 @@ void display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed)
 		 mb_read, fdht->stat_megs(), hour, min, seconds, BLANK_LINE);
     }
 
+    lock();
     fprintf(stderr,"\r");
     display_filename(stderr,fdht,shorten);
     output_filename(stderr,msg);	// was previously put in the anotation
+    fflush(stderr);
+    unlock();
 }
 
 
-void state::display_banner()
+void display::display_banner()
 {
-    tstring cwd = main::getcwd();
-    print_status("%s", HASHDEEP_HEADER_10);
-
-    fprintf (stdout,"%ssize,",HASHDEEP_PREFIX);  
-    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
-	if (hashes[i].inuse){
-	    printf ("%s,", hashes[i].name.c_str());
-	}
-    }  
-    print_status("filename");
-    
-    fprintf(stdout,"## Invoked from: ");
-    output_filename(stdout,cwd);
-    fprintf(stdout,"%s",NEWLINE);
-  
-    // Display the command prompt as we think the user saw it
-    fprintf(stdout,"## ");
+    if(this->dfxml!=0) return;		// output is in DFXML; no banner
+    lock();
+    if(banner_displayed==false){
+	tstring cwd = main::getcwd();
+	status("%s", HASHDEEP_HEADER_10);
+	fprintf(outfile,"%ssize,",HASHDEEP_PREFIX);  
+	for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
+	    if (hashes[i].inuse){
+		fprintf(outfile,"%s,", hashes[i].name.c_str());
+	    }
+	}  
+	status("filename");
+	
+	fprintf(outfile,"## Invoked from: ");
+	output_filename(cwd);
+	fprintf(outfile,"%s",NEWLINE);
+	
+	// Display the command prompt as we think the user saw it
+	fprintf(outfile,"## ");
 #ifdef _WIN32
-    fprintf(stdout,"%c:\\>", (char)cwd[0]);
+	fprintf(outfile,"%c:\\>", (char)cwd[0]);
 #else
-    if (geteuid()==0){
-	fprintf(stdout,"#");
-    }
-    else {
-	fprintf(stdout,"$");
-    }
+	if (geteuid()==0){
+	    fprintf(outfile,"#");
+	}
+	else {
+	    fprintf(outfile,"$");
+	}
 #endif
-
-  // Accounts for '## ', command prompt, and space before first argument
-  size_t bytes_written = 8;
-
-  for (int argc = 0 ; argc < this->argc ; ++argc) {
-      fprintf(stdout," ");
-      bytes_written++;
-
-      // We are going to print the string. It's either ASCII or UTF16
-      // convert it to a tstring and then to UTF8 string.
-      tstring arg_t = tstring(this->argv[argc]);
-      std::string arg_utf8 = main::make_utf8(arg_t);
-      size_t current_bytes = arg_utf8.size();
-
-      // The extra 32 bytes is a fudge factor
-      if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
-	  fprintf(stdout,"%s## ", NEWLINE);
-	  bytes_written = 3;
-      }
-
-      output_filename(stdout,arg_utf8);
-      bytes_written += current_bytes;
-  }
-  fprintf(stdout,"%s## %s",NEWLINE, NEWLINE);
+	
+	// Accounts for '## ', command prompt, and space before first argument
+	size_t bytes_written = 8;
+	
+	for (int argc = 0 ; argc < this->argc ; ++argc) {
+	    fprintf(outfile," ");
+	    bytes_written++;
+	    
+	    // We are going to print the string. It's either ASCII or UTF16
+	    // convert it to a tstring and then to UTF8 string.
+	    tstring arg_t = tstring(this->argv[argc]);
+	    std::string arg_utf8 = main::make_utf8(arg_t);
+	    size_t current_bytes = arg_utf8.size();
+	    
+	    // The extra 32 bytes is a fudge factor
+	    if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
+		fprintf(outfile,"%s## ", NEWLINE);
+		bytes_written = 3;
+	    }
+	    
+	    output_filename(outfile,arg_utf8);
+	    bytes_written += current_bytes;
+	}
+	fprintf(outfile,"%s## %s",NEWLINE, NEWLINE);
+	banner_displayed=true;
+    }
+    unlock();
 }
 
 
-static void compute_dfxml(file_data_hasher_t *fdht,bool known_hash)
+/* No locks, so do not call on the same FDHT in different threads */
+void file_data_hasher_t::compute_dfxml(bool known_hash)
 {
-    if(fdht->piecewise){
-	uint64_t bytes = fdht->read_end - fdht->read_start;
-	fdht->dfxml_hash +=
+    if(this->piecewise){
+	uint64_t bytes = this->read_end - this->read_start;
+	this->dfxml_hash +=
 	    std::string("<byte_run file_offset='")
-	    + itos(fdht->read_start)
+	    + itos(this->read_start)
 	    + std::string("' bytes='")
 	    + itos(bytes) + std::string("'>\n   ");
     }
     for(int i=0;i<NUM_ALGORITHMS;i++){
 	if(hashes[i].inuse){
-	    fdht->dfxml_hash += "<hashdigest type='";
-	    fdht->dfxml_hash += makeupper(fdht->hash_hex[i]);
-	    fdht->dfxml_hash += std::string("'>") + fdht->hash_hex[i] + std::string("</hashdigest>\n");
+	    this->dfxml_hash += "<hashdigest type='";
+	    this->dfxml_hash += makeupper(this->hash_hex[i]);
+	    this->dfxml_hash += std::string("'>") + this->hash_hex[i] + std::string("</hashdigest>\n");
 	}
     }
     if(known_hash){
-	fdht->dfxml_hash += std::string("<matched>1</matched>");
+	this->dfxml_hash += std::string("<matched>1</matched>");
     }
-    if(fdht->piecewise){
-	fdht->dfxml_hash += "</byte_run>\n";
+    if(this->piecewise){
+	this->dfxml_hash += "</byte_run>\n";
     }
 }
 
 /*
  * Externally called to display a simple hash
  */
-int state::display_hash_simple(file_data_hasher_t *fdht)
+int display::display_hash_simple(file_data_hasher_t *fdht)
 {
-    if ( this->dfxml==0 && this->banner_displayed==0){
-	display_banner();
-	this->banner_displayed = 1;
-    }
-
     if(this->dfxml){
-	compute_dfxml(fdht,this->mode & mode_which);
+	fdht->compute_dfxml(this->mode & mode_which);
 	return FALSE;
     }
 
@@ -247,53 +290,73 @@ int state::display_hash_simple(file_data_hasher_t *fdht)
      * see http://lists.gnu.org/archive/html/qemu-devel/2009-01/msg01979.html
      */
      
+    display_banner_if_needed();
+    lock();
     if (fdht->piecewise){
-	printf("%"PRIu64",", fdht->bytes_read);
+	fprintf(outfile,"%"PRIu64",", fdht->bytes_read);
     }
     else {
-	printf("%"PRIu64",", fdht->actual_bytes);
+	fprintf(outfile,"%"PRIu64",", fdht->actual_bytes);
     }
 
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
 	if (hashes[i].inuse){
-	    printf("%s,", fdht->hash_hex[i].c_str());
+	    fprintf(outfile,"%s,", fdht->hash_hex[i].c_str());
 	}
     }
-    display_filename(stdout,fdht,false);
-    fprintf(stdout,"%s",NEWLINE);
+    display_filename(fdht,false);
+    fprintf(outfile,"%s",NEWLINE);
+    unlock();
     return FALSE;
 }
 
-int state::display_audit_results()
+int display::display_audit_results()
 {
     int status = EXIT_SUCCESS;
     
+    lock();
     if (audit_check()==0) {
-	print_status("%s: Audit failed", __progname);
+	status("%s: Audit failed", __progname);
 	status = EXIT_FAILURE;
     }
     else {
-	print_status("%s: Audit passed", __progname);
+	status("%s: Audit passed", __progname);
     }
   
     if (opt_verbose)    {
 	if(opt_verbose >= MORE_VERBOSE){
-	    print_status("   Input files examined: %"PRIu64, this->match.total);
-	    print_status("  Known files expecting: %"PRIu64, this->match.expect);
-	    print_status(" ");
+	    status("   Input files examined: %"PRIu64, this->match.total);
+	    status("  Known files expecting: %"PRIu64, this->match.expect);
+	    status(" ");
 	}
-	print_status("          Files matched: %"PRIu64, this->match.exact);
-	print_status("Files partially matched: %"PRIu64, this->match.partial);
-	print_status("            Files moved: %"PRIu64, this->match.moved);
-	print_status("        New files found: %"PRIu64, this->match.unknown);
-	print_status("  Known files not found: %"PRIu64, this->match.unused);
+	status("          Files matched: %"PRIu64, this->match.exact);
+	status("Files partially matched: %"PRIu64, this->match.partial);
+	status("            Files moved: %"PRIu64, this->match.moved);
+	status("        New files found: %"PRIu64, this->match.unknown);
+	status("  Known files not found: %"PRIu64, this->match.unused);
     }
+    unlock();
     return status;
 }
 
 
+/* This doesn't lock/unlock because we should already be locked or unlocked */
+void display::display_size(const state *s,const file_data_t *fdt)
+{
+    if (s->mode & mode_display_size)  {
+	// Under CSV mode we have to include a comma, otherwise two spaces
+	if (opt_csv){
+	    fprintf(outfile,"%"PRIu64",", fdt->actual_bytes);
+	}
+	else {
+	    fprintf(outfile,"%10"PRIu64"  ", fdt->actual_bytes);
+	}
+    }
+}
+
+
 /* The old display_match_result from md5deep */
-int state::md5deep_display_match_result(file_data_hasher_t *fdht)
+int display::md5deep_display_match_result(file_data_hasher_t *fdht)
 {  
     file_data_t *fs = known.find_hash(md5deep_mode_algorithm,
 				      fdht->hash_hex[md5deep_mode_algorithm],
@@ -306,35 +369,38 @@ int state::md5deep_display_match_result(file_data_hasher_t *fdht)
 	    compute_dfxml(fdht,(this->mode & mode_which) || known_hash);
 	    return FALSE;
 	}
-
-	display_size(this,fdht);
-
-	if (mode & mode_display_hash) {
-	    printf ("%s", fdht->hash_hex[md5deep_mode_algorithm].c_str());
-	    if (mode & mode_csv) {
-		printf (",");
-	    } else if (mode & mode_asterisk) {
-		printf(" *");
-	    } else {
-		printf("  ");
+	{
+	    lock();
+	    
+	    display_size(this,fdht);
+	    if (mode & mode_display_hash) {
+		fprintf(outfile,"%s", fdht->hash_hex[md5deep_mode_algorithm].c_str());
+		if (opt_csv) {
+		    fprintf(outfile,",");
+		} else if (mode & mode_asterisk) {
+		    fprintf(outfile," *");
+		} else {
+		    fprintf(outfile,"  ");
+		}
 	    }
-	}
-
-	if (mode & mode_which) 	    {
+	    
+	    if (mode & mode_which) 	    {
 		if (known_hash && (mode & mode_match)) {
-			display_filename(stdout,fdht,false);
-			printf (" matched ");
-			output_filename(stdout,fs->file_name);
-		    }
+		    display_filename(outfile,fdht,false);
+		    fprintf(outfile," matched ");
+		    output_filename(outfile,fs->file_name);
+		}
 		else {
-			display_filename(stdout,fdht,false);
-			printf (" does NOT match");
-		    }
+		    display_filename(outfile,fdht,false);
+		    fprintf(outfile," does NOT match");
+		}
+	    }
+	    else{
+		display_filename(stdout,fdht,false);
+	    }
+	    newline();
+	    unlock();
 	}
-	else{
-	    display_filename(stdout,fdht,false);
-	}
-	print_newline();
     }
     return FALSE;
 }
@@ -343,12 +409,14 @@ int state::md5deep_display_match_result(file_data_hasher_t *fdht)
  * This should probably be merged with the function above.
  * This function is very similar to audit_update(), which follows
  */
-status_t state::display_match_result(file_data_hasher_t *fdht)
+status_t display::display_match_result(file_data_hasher_t *fdht)
 {
     file_data_t *matched_fdt = NULL;
     int should_display; 
     should_display = (primary_match_neg == primary_function);
     
+    lock();				// protects the search and the printing
+
     hashlist::searchstatus_t m = known.search(fdht,&matched_fdt);
     switch(m){
 	// If only the name is different, it's still really a match
@@ -388,9 +456,10 @@ status_t state::display_match_result(file_data_hasher_t *fdht)
 		    display_filename(stdout,matched_fdt,false);
 		}
 	    }
-	    print_status("");
+	    status("");			// generates a newline
 	}
     }
+    unlock();
     return status_ok;
 }
 
@@ -401,9 +470,10 @@ status_t state::display_match_result(file_data_hasher_t *fdht)
  * Records every file seen in the 'seen' structure, referencing the 'known' structure.
  */
 
-int state::audit_update(file_data_hasher_t *fdht)
+int display::audit_update(file_data_hasher_t *fdht)
 {
-    file_data_t *matched_fdht;
+    lock();				// protects the search and the printing
+    file_data_t *matched_fdht=0;
     hashlist::searchstatus_t m = known.search(fdht,&matched_fdht);
     switch(m){
     case hashlist::status_match:
@@ -411,14 +481,14 @@ int state::audit_update(file_data_hasher_t *fdht)
 	this->match.exact++;
 	if (opt_verbose >= INSANELY_VERBOSE) {
 	    display_filename(stdout,fdht,false);
-	    print_status(": Ok");
+	    status(": Ok");
 	}
 	break;
     case hashlist::status_no_match:
 	this->match.unknown++;
 	if (opt_verbose >= MORE_VERBOSE) {
 	    display_filename(stdout,fdht,false);
-	    print_status(": No match");
+	    status(": No match");
 	}
 	break;
     case hashlist::status_file_name_mismatch:
@@ -427,7 +497,7 @@ int state::audit_update(file_data_hasher_t *fdht)
 	    display_filename(stdout,fdht,false);
 	    fprintf(stdout,": Moved from ");
 	    display_filename(stdout,matched_fdht,false);
-	    print_status("");
+	    status("");
 	}
 	break;
     case hashlist::status_partial_match:
@@ -439,8 +509,9 @@ int state::audit_update(file_data_hasher_t *fdht)
 	display_filename(stdout,fdht,false);
 	fprintf(stdout,": Hash collision with ");
 	display_filename(stdout,matched_fdht,false);
-	print_status("");
+	status("");
     }
+    unlock();
     return FALSE;
 }
 
@@ -451,10 +522,12 @@ int state::audit_update(file_data_hasher_t *fdht)
  */
  
 
-int state::audit_check()
+int display::audit_check()
 {
     /* Count the number of unused */
+    lock();
     this->match.unused = this->known.compute_unused(false,": Known file not used");
+    unlock();
     return (0 == this->match.unused  && 
 	    0 == this->match.unknown && 
 	    0 == this->match.moved);
@@ -465,16 +538,18 @@ int state::audit_check()
 
 
 /* The old display_hash from the md5deep program, with a few modifications */
-int state::md5deep_display_hash(file_data_hasher_t *fdht)
+int display::md5deep_display_hash(file_data_hasher_t *fdht)
 {
     if (mode & mode_triage) {
 	if(dfxml){
-	    compute_dfxml(fdht,1);
+	    compute_dfxml(fdht,1);	// no lock required here
 	    return FALSE;
 	}
-	printf ("\t%s\t", fdht->hash_hex[this->md5deep_mode_algorithm].c_str());
+	lock();
+	fprintf(outfile,"\t%s\t", fdht->hash_hex[this->md5deep_mode_algorithm].c_str());
 	display_filename(stdout,fdht,false);
-	print_newline();
+	newline();
+	unlock();
 	return FALSE;
     }
 
@@ -489,11 +564,13 @@ int state::md5deep_display_hash(file_data_hasher_t *fdht)
 	compute_dfxml(fdht,this->mode & mode_which);
 	return FALSE;
     }
+
+    lock();
     display_size(this,fdht);
-    printf("%s", fdht->hash_hex[this->md5deep_mode_algorithm].c_str());
+    fprintf(outfile,"%s", fdht->hash_hex[this->md5deep_mode_algorithm].c_str());
 
     if (this->mode & mode_quiet){
-	printf ("  ");
+	fprintf(outfile,"  ");
     }
     else  {
 	if ((fdht->piecewise) || !(fdht->is_stdin))    {
@@ -516,19 +593,20 @@ int state::md5deep_display_hash(file_data_hasher_t *fdht)
 		// two digit hour, two digit minute, two digit second
 		strftime(time_str, sizeof(time_str), "%Y:%m:%d:%H:%M:%S", &my_time);
 		
-		printf ("%c%s", (this->mode & mode_csv?',':' '), time_str);
+		fprintf(outfile,"%c%s", (opt_csv ?',':' '), time_str);
 	    }
-	    if (mode & mode_csv) {
-		printf(",");
+	    if (opt_csv) {
+		fprintf(outfile,",");
 	    } else if (mode & mode_asterisk) {
-		printf(" *");
+		fprintf(outfile," *");
 	    } else {
-		printf("  ");
+		fprintf(outfile,"  ");
 	    }
 	    display_filename(stdout,fdht,false);
 	}
     }
-    print_newline();
+    newline();
+    unlock();
     return FALSE;
 }
 
@@ -536,7 +614,7 @@ int state::md5deep_display_hash(file_data_hasher_t *fdht)
  * Called by hash() in hash.c when the hashing operation is complete.
  * Display the hash and perform any auditing steps.
  */ 
-int state::display_hash(file_data_hasher_t *fdht)
+int display::display_hash(file_data_hasher_t *fdht)
 {
     if(md5deep_mode){
 	md5deep_display_hash(fdht);

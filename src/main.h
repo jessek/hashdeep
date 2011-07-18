@@ -34,6 +34,9 @@ extern bool opt_estimate;		// print ETA
 extern int  opt_debug;			// for debugging
 extern bool opt_unicode_escape;
 
+/* Output Options */
+extern bool opt_csv;
+
 // Return values for the program 
 // RBF - Document these return values for hashdeep 
 #define STATUS_OK                      0
@@ -66,7 +69,7 @@ extern bool opt_unicode_escape;
 #define mode_size              1<<19
 #define mode_size_all          1<<20
 #define mode_timestamp         1<<21
-#define mode_csv               1<<22
+//#define mode_csv               1<<22
 #define mode_read_from_file    1<<25
 #define mode_triage            1<<26
 
@@ -149,6 +152,12 @@ typedef enum {
 #define DEFAULT_ENABLE_TIGER       FALSE
 #define DEFAULT_ENABLE_WHIRLPOOL   FALSE
 
+/* these cannot be used for normal printing once we are running */
+void print_status(const char *fmt, ...);// Display an ordinary message with newline added
+void print_error(const char *fmt, ...);// Display an error message if not in silent mode
+
+
+
 /* This class holds the information known about each hash algorithm.
  * It's sort of like the EVP system in OpenSSL.
  *
@@ -199,73 +208,6 @@ typedef enum   {
     status_unknown_error,
     status_omg_ponies
 } status_t;
-
-
-/** output_control_block describes how information is output.
- * There is only one OCB (it is a singleton).
- * It needs to be mutex protected.
- *
- * The hashing happens in lots of threads and then calls the output
- * classes in output_control_block to actually do the outputing. The
- * problem here is that one of the things that is done is looking up,
- * so the searches into "known" and "seen" also need to be
- * protected. Hence "known" and "seen" appear in the
- * output_control_block, and not elsewhere, and all of the access to
- * them needs to be mediated.
- *
- * It is a class because it is protected and is passed around.
- */
-class output_control_block {
-private:
-#ifdef HAVE_PTHREAD
-    pthread_mutex_t	lock;	// lock for anything in output section
-#endif    
-    FILE		*outfile;	// where things get sent
-    bool		banner_displayed;	// has the header been shown (text output)
-    XML			*dfxml;			/* output in DFXML */
-
-    /* The set of known values; typically read from the audit file */
-    hashlist	    known;		// hashes read from the -k file
-    hashlist	    seen;		// hashes seen on this hashing run; from the command line
-public:
-    output_control_block(){
-#ifdef HAVE_PTHREAD
-	pthread_mutex_init(&lock,NULL);
-#endif	
-    }
-    ~output_control_block(){
-#ifdef HAVE_PTHREAD
-	pthread_mutex_destroy(&lock);
-#endif	
-    }
-    void	open(std::string &outfilename); // open outfilename; error if can't.
-
-    /* display.cpp */
-    void	display_banner();
-    int		display_hash(file_data_hasher_t *fdht);
-    int		display_hash_simple(file_data_hasher_t *fdt);
-
-    /* output_filename simply sends the filename to the specified output.
-     * With TCHAR it sends it out as UTF-8 unless unicode quoting is requested,
-     * in which case Unicode characters are emited as U+xxxx.
-     * For example, the Unicode smiley character ☺ is output as U+263A.
-     */
-    void  output_filename(FILE *out,const char *fn);
-    void  output_filename(FILE *out,const std::string &fn);
-#ifdef _WIN32
-    void  output_filename(FILE *out,const std::wstring &fn);
-#endif
-
-    /* display_filename is similar output_filename,
-     * except it takes a file_data_structure and optionally shortens to the line width
-     */
-    
-    void  display_filename(FILE *out, const file_data_t &fdt,bool shorten);
-    inline void display_filename(FILE *out, const file_data_t *fdt,bool shorten){
-	display_filename(out,*fdt,shorten);
-    };
-    void display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed);
-};
 
 
 /** file_data_t contains information about a file.
@@ -343,6 +285,8 @@ public:
     uint8_t        hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 
     std::string	   dfxml_hash;	      // the DFXML hash digest for the piece just hashed; used to build piecewise
     uint64_t	   file_number;
+
+    void append_dfxml_for_byterun();
 
     // Where the last read operation started and ended
     // bytes_read is a shorthand for read_end - read_start
@@ -502,6 +446,110 @@ public:
     }
 };
 
+/** display describes how information is output.
+ * There is only one OCB (it is a singleton).
+ * It needs to be mutex protected.
+ *
+ * The hashing happens in lots of threads and then calls the output
+ * classes in output_control_block to actually do the outputing. The
+ * problem here is that one of the things that is done is looking up,
+ * so the searches into "known" and "seen" also need to be
+ * protected. Hence "known" and "seen" appear in the
+ * output_control_block, and not elsewhere, and all of the access to
+ * them needs to be mediated.
+ *
+ * It also needs to maintain all of the stuff for audit mode.
+ *
+ * It is a class because it is protected and is passed around.
+ */
+class display {
+private:
+#ifdef HAVE_PTHREAD
+    pthread_mutex_t	M;	// lock for anything in output section
+#endif    
+    FILE		*outfile;	// where things get sent
+    bool		banner_displayed;	// has the header been shown (text output)
+    XML			*dfxml;			/* output in DFXML */
+
+    /* The set of known values; typically read from the audit file */
+    hashlist	    known;		// hashes read from the -k file
+    hashlist	    seen;		// hashes seen on this hashing run; from the command line
+    class audit_stats match;		// for the audit mode
+  
+
+private:
+    void lock(){
+	if(pthread_mutex_lock(&M)){
+	    perror("pthread_mutex_lock failed");
+	    exit(1);
+	}
+    }
+    void unlock(){
+	if(pthread_mutex_unlock(&M)){
+	    perror("pthread_mutex_unlock failed");
+	    exit(1);
+	}
+    }
+public:
+    display():outfile(0),banner_displayed(0),dfxml(0){
+#ifdef HAVE_PTHREAD
+	pthread_mutex_init(&M,NULL);
+#endif	
+    }
+    ~display(){
+#ifdef HAVE_PTHREAD
+	pthread_mutex_destroy(&M);
+#endif	
+    }
+    void	open(std::string &outfilename); // open outfilename; error if can't.
+    void	xml_open(FILE *out){
+	lock();
+	dfxml = new XML(out);
+	unlock();
+    }
+
+    void newline();			// outputs a \n or a 0
+    void status(const char *fmt, ...);// Display an ordinary message with newline added
+    void error(const char *fmt, ...);// Display an error message if not in silent mode
+
+
+    void	display_banner_if_needed();
+    int		display_hash(file_data_hasher_t *fdht);
+    int		display_hash_simple(file_data_hasher_t *fdt);
+
+    /* output_filename simply sends the filename to the specified output.
+     * With TCHAR it sends it out as UTF-8 unless unicode quoting is requested,
+     * in which case Unicode characters are emited as U+xxxx.
+     * For example, the Unicode smiley character ☺ is output as U+263A.
+     */
+    void  output_filename(FILE *out,const char *fn);
+    void  output_filename(FILE *out,const std::string &fn);
+#ifdef _WIN32
+    void  output_filename(FILE *out,const std::wstring &fn);
+#endif
+
+    /* display_filename is similar output_filename,
+     * except it takes a file_data_structure and optionally shortens to the line width
+     */
+    
+    void  display_filename(const file_data_t &fdt,bool shorten);
+    inline void display_filename(const file_data_t *fdt,bool shorten){
+	display_filename(outfile,*fdt,shorten);
+    };
+    void display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed);
+    bool hashes_loaded(){
+	return known.size()>0;
+    }
+
+    /* audit mode */
+    int		audit_update(file_data_hasher_t *fdt);
+    int		audit_check();		// performs an audit; return 0 if pass, -1 if fail
+    int		display_audit_results();
+};
+
+
+
+
 /**
  * The 'state' class holds the state of the hashdeep/md5deep program.
  * This includes:
@@ -538,9 +586,6 @@ public:;
     state():primary_function(primary_compute),mode(mode_none),
 	    argc(0),argv(0),
 	    piecewise_size(0),
-	    outfile(stdout),
-	    banner_displayed(false),
-	    dfxml(0),
 	    size_threshold(0),
 	    h_plain(0),h_bsd(0),h_md5deep_size(0),
 	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
@@ -564,7 +609,7 @@ public:;
     uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */
 
     /* output */
-    output_control_block ocb;
+    display	    ocb;		// output control block
 
 
     // When only hashing files larger/smaller than a given threshold
@@ -574,8 +619,6 @@ public:;
     uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
     uint8_t      h_ilook, h_ilook3, h_ilook4, h_nsrl15, h_nsrl20, h_encase;
 
-    class audit_stats match;		// for the audit mode
-  
     /* Due to an inadvertant code fork several years ago, this program has different usage
      * and output when run as 'md5deep' then when run as 'hashdeep'. We call this the
      * 'md5deep_mode' and track it with the variables below.
@@ -616,19 +659,12 @@ public:;
     static	void dig_self_test();
 
 
-    /* audit mode */
-    int		audit_update(file_data_hasher_t *fdt);
-    int		audit_check();		// performs an audit; return 0 if pass, -1 if fail
-    int		display_audit_results();
-
     /* hash.cpp */
     
     int hash_file(file_data_hasher_t *fdht,const tstring &file_name);
     int hash_stdin();
-
-
     bool hashes_loaded(){
-	return known.size()>0;
+	return ocb.hashes_loaded();
     }
 };
 
@@ -684,12 +720,6 @@ void dig_self_test();			// check the string-processing
 /* ui.c */
 /* User Interface Functions */
 
-// Display an ordinary message with newline added
-void print_status(const char *fmt, ...);
-
-// Display an error message if not in silent mode
-void print_error(const char *fmt, ...);
-
 // Display an error message if not in silent mode with a Unicode filename
 void print_error_filename(const std::string &fn, const char *fmt, ...);
 #ifdef _WIN32
@@ -706,7 +736,6 @@ void internal_error(const char *fmt, ... );
 
 // Display a filename, possibly including Unicode characters
 void print_debug(const char *fmt, ...);
-void print_newline();
 void try_msg(void);
 
 #endif /* ifndef __MAIN_H */

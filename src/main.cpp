@@ -61,6 +61,9 @@ bool opt_zero   = false;
 bool opt_estimate = false;
 bool opt_relative = false;
 bool opt_unicode_escape = false;
+/* output options */
+bool opt_csv = false;
+
 
 /****************************************************************
  ** Various helper functions.
@@ -435,7 +438,7 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
       algorithm_t::enable_hashing_algorithms(optarg);
       break;
       
-    case 'd': s->dfxml = new XML(stdout); break;
+    case 'd': s->ocb.xml_open(stdout); break;
     case 'M': s->mode |= mode_display_hash;
 	/* intentioanl fall through */
     case 'm': s->primary_function = primary_match;      break;
@@ -894,7 +897,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       break;
 
     case 'c':
-      s->mode |= mode_csv;
+	opt_csv = true;
       break;
 
     case 'z': 
