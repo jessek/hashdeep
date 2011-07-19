@@ -58,7 +58,7 @@ static std::string make_stars(int count)
  */
 
 
-static int compute_hash(file_data_hasher_t *fdht)
+int compute_hash(file_data_hasher_t *fdht)
 {
     time_t current_time;
     uint64_t current_read, mysize, remaining, this_start;
@@ -168,7 +168,7 @@ static int compute_hash(file_data_hasher_t *fdht)
  * Result is stored in the fdht structure.
  * This routine is made multi-threaded to make the system run faster.
  */
-static int hash(state *s,file_data_hasher_t *fdht)
+int hash(display *ocb,file_data_hasher_t *fdht)
 {
     int done = FALSE, status = FALSE;
   

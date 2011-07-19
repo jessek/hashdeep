@@ -476,10 +476,10 @@ private:
     XML			*dfxml;			/* output in DFXML */
 
     /* The set of known values; typically read from the audit file */
-    hashlist	    known;		// hashes read from the -k file
-    hashlist	    seen;		// hashes seen on this hashing run; from the command line
-    class audit_stats match;		// for the audit mode
-  
+    hashlist		known;		// hashes read from the -k file
+    hashlist		seen;		// hashes seen on this hashing run; from the command line
+    class audit_stats	match;		// for the audit mode
+    status_t		return_code;	// prevously returned by hash() and dig().
 
 private:
     void lock(){
@@ -495,7 +495,7 @@ private:
 	}
     }
 public:
-    display():outfile(0),banner_displayed(0),dfxml(0){
+    display():outfile(0),banner_displayed(0),dfxml(0),return_code(status_ok){
 #ifdef HAVE_PTHREAD
 	pthread_mutex_init(&M,NULL);
 #endif	
@@ -506,6 +506,10 @@ public:
 #endif	
     }
     void	open(const std::string &outfilename); // open outfilename; error if can't.
+
+    /* Return code support */
+    void	set_return_code(int code){ lock(); return_code = code; unlock(); }
+    int		get_return_code(){ lock(); int ret = return_code; unlock(); return ret; }
 
     /* DFXML support */
 
@@ -538,21 +542,28 @@ public:
     int		display_hash(file_data_hasher_t *fdht);
     int		display_hash_simple(file_data_hasher_t *fdt);
 
-    /* output_filename simply sends the filename to the specified output.
-     * With TCHAR it sends it out as UTF-8 unless unicode quoting is requested,
+    /* The following routines are for printing and outputing filenames.
+     * 
+     * output_filename simply sends the filename to the specified output.
+     * The wstring version outputs as UTF-8 unless unicode quoting is requested,
      * in which case Unicode characters are emited as U+xxxx.
      * For example, the Unicode smiley character ☺ is output as U+263A.
+     *
+     * Locking is used to assure that different threads do not intermix output
+     * and because the STDIO system is not threadsafe.
      */
-    void  output_filename(const std::string &fn);
+    void	output_filename(FILE *out,const std::string &fn);
 #ifdef _WIN32
-    void  output_filename(const std::wstring &fn);
+    void	output_filename(FILE *out,const std::wstring &fn);
 #endif
 
-    /* display_filename is similar output_filename,
-     * except it takes a file_data_structure and optionally shortens to the line width
+    /* these versions extract the filename and the annotation if it is present.
      */
     
-    void	display_filename(const file_data_t &fdt,bool shorten);
+    void	output_filename(FILE *out,const file_data_t &fdt);
+
+    /* realtime_stats is the amount of data hashed and what's left */
+
     void	display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed);
     bool	hashes_loaded() const{
 	return known.size()>0;
@@ -572,6 +583,14 @@ public:
     int		display_audit_results();
     int		finalize_matching();
 };
+
+/* multithreaded hash implementation is these functions in hash.cpp.
+ * hash() is called to hash each file and record the results.
+ * It previously returned the result code. We can't do that in a multi-threaded environment,
+ * so the status is instead stored in ocb->status if there is an error.
+ */
+void hash(display *ocb,file_data_hasher_t *fdht); // called to hash each file and record results
+
 
 
 
@@ -684,9 +703,9 @@ public:;
     int		should_hash_expert(const tstring &fn, file_types type);
     int		should_hash(file_data_hasher_t *fdht,const tstring &fn);
 
-    int		process_dir(const tstring &path);
-    int		dig_normal(const tstring &path);	// posix  & win32 
-    int		dig_win32(const tstring &path);	// win32 only; calls dig_normal
+    void	process_dir(const tstring &path);
+    void	dig_normal(const tstring &path);	// posix  & win32 
+    void	dig_win32(const tstring &path);	// win32 only; calls dig_normal
     static	void dig_self_test();
 
 

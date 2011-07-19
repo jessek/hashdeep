@@ -335,9 +335,8 @@ static bool is_special_dir(const tstring &d)
 
 
 
-int state::process_dir(const tstring &fn)
+void state::process_dir(const tstring &fn)
 {
-    int return_value = STATUS_OK;
     _TDIR *current_dir;
     struct _tdirent *entry;
 
@@ -557,7 +556,7 @@ int state::should_hash(file_data_hasher_t *fdht,const tstring &fn)
 // process_win32 also returns STATUS_OK. 
 // display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.
 // Pick one and stay with it!
-int state::dig_normal(const tstring &fn)
+void state::dig_normal(const tstring &fn)
 {
     int ret = FALSE;
     file_data_hasher_t *fdht = new file_data_hasher_t(s->utf8_banner,mode & mode_piecewise);
@@ -597,7 +596,7 @@ std::wstring  my_dirname(const std::wstring &fn)
  * Unicode filenames.
  */
 
-int state::dig_win32(const std::wstring &fn)
+void state::dig_win32(const std::wstring &fn)
 {
     int rc, status = STATUS_OK;
     WIN32_FIND_DATA FindFileData;

@@ -82,37 +82,39 @@ void display::error(const char *fmt,...)
  * output the string, typically a fn, optionally performing unicode escaping
  */
 
-void display::output_filename(const std::string &fn)
+void display::output_filename(FILE *out,const std::string &fn)
 {
     if(opt_unicode_escape){
 	std::string f2 = main::escape_utf8(fn);
-	fwrite(f2.c_str(),f2.size(),1,outfile);
+	lock();
+	fwrite(f2.c_str(),f2.size(),1,out);
+	unlock();
     } else {
-	fwrite(fn.c_str(),fn.size(),1,outfile);
+	lock();
+	fwrite(fn.c_str(),fn.size(),1,out);
+	unlock();
     }
 }
 
 #ifdef _WIN32
 /* NOTE - This is where to do the UTF-8 or U+ substitution */
-void output_filename(const std::wstring &fn)
+void output_filename(FILE *out,const std::wstring &fn)
 {
-    output_filename(main::make_utf8(fn));
+    output_filename(out,main::make_utf8(fn));
 }
 #endif
 
 /* By default, we display in UTF-8.
  * We escape UTF-8 if requested.
  */
-void display::display_filename(const file_data_t &fdt, bool shorten)
+void display::output_filename(FILE *out,const file_data_t &fdt)
 {
-    if(shorten){
-	output_filename(shorten_filename(fdt.file_name));
-    } else {
-	output_filename(fdt.file_name);
-    }
+    lock();
+    output_filename(out,fdt.file_name);
     if(fdt.file_name_annotation.size()>0){
 	output_filename(fdt.file_name_annotation);
     }
+    unlock();
 }
 
 
@@ -174,16 +176,22 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
     lock();
     fprintf(stderr,"\r");
     
-    THIS IS THE ONLY PLACE WHERE FILENAMES ARE SHORTENED. SO DO IT EXPLICITLY HERE AND REMOVE EVERYWHEREELSE. BUT IT LOOKS LIKE DISPLAY_FILENAME WILL NEED TO TAKE THE FILE TO DIPLSAY TO BECAUSE SOMETIMES WE WANT TO ERROR
+    /*
+     * This is the only place where filenames are shortened.
+     * So do it explicitly here.
+     *
+     */
+    
 
-	tstring fn = fdht->filename;
-    /* This is the only place that shorter filenames are used */
+    tstring fn = fdht->filename;
 
     if (fn.size() < MAX_FILENAME_LENGTH){
-	fn = fn.substr(0,MAX_FILENAME_LENGTH-3) + T("...");
+	/* Shorten from the middle */
+	size_t half = MAX_FILENAME_LENGTH/2;
+	fn = fn.substr(0,half) + T("...") + fn.substr(fn.size()-half,half);
     }
-    display_filename(fn);
-    output_filename(msg);	// was previously put in the anotation
+    output_filename(stderr,fn);
+    output_filename(stderr,msg);	// was previously put in the anotation
     fflush(stderr);
     unlock();
 }
@@ -260,7 +268,7 @@ int display::display_hash_simple(file_data_hasher_t *fdht)
 	    fprintf(outfile,"%s,", fdht->hash_hex[i].c_str());
 	}
     }
-    display_filename(*fdht,false);
+    output_filename(outfile,*fdht);
     fprintf(outfile,"%s",NEWLINE);
     unlock();
     return FALSE;
@@ -344,17 +352,17 @@ int display::md5deep_display_match_result(file_data_hasher_t *fdht)
 	    
 	    if (opt_show_matched) 	    {
 		if (known_hash && (mode & mode_match)) {
-		    display_filename(fdht,false);
+		    output_filename(outfile,fdht);
 		    fprintf(outfile," matched ");
-		    output_filename(fs->file_name);
+		    output_filename(outfile,fs->file_name);
 		}
 		else {
-		    display_filename(fdht,false);
+		    output_filename(outfile,fdht);
 		    fprintf(outfile," does NOT match");
 		}
 	    }
 	    else{
-		display_filename(fdht,false);
+		output_filename(outfile,fdht);
 	    }
 	    newline();
 	    unlock();
@@ -385,16 +393,16 @@ status_t display::display_match_result(file_data_hasher_t *fdht)
 	break;
 	  
     case hashlist::status_file_size_mismatch:
-	display_filename(stderr,fdht,false);
+	output_filename(stderr,fdht);
 	fprintf(stderr,": Hash collision with ");
-	display_filename(stderr,matched_fdt,false);
+	output_filename(stderr,matched_fdt);
 	fprintf(stderr,"%s", NEWLINE);
 	break;
 	
     case hashlist::status_partial_match:
-	display_filename(stderr,fdht,false);
+	output_filename(stderr,fdht);
 	fprintf(stderr,": partial hash match with ");
-	display_filename(stderr,matched_fdt,false);
+	output_filename(stderr,matched_fdt);
 	fprintf(stderr,"%s", NEWLINE);
 	break;
 	
@@ -405,13 +413,13 @@ status_t display::display_match_result(file_data_hasher_t *fdht)
 	if (mode & mode_display_hash)
 	    display_hash_simple(fdht);
 	else {
-	    display_filename(stdout,fdht,false);
+	    output_filename(stdout,fdht);
 	    if (opt_show_matched && primary_match == primary_function) {
 		fprintf(stdout," matches ");
 		if (NULL == matched_fdt) {
 		    fprintf(stdout,"(unknown file)");
 		} else {
-		    display_filename(stdout,matched_fdt,false);
+		    output_filename(stdout,matched_fdt);
 		}
 	    }
 	    status("");			// generates a newline
@@ -438,23 +446,23 @@ int display::audit_update(file_data_hasher_t *fdht)
     case hashlist::searchstatus_ok:
 	this->match.exact++;
 	if (opt_verbose >= INSANELY_VERBOSE) {
-	    display_filename(stdout,fdht,false);
+	    output_filename(stdout,fdht);
 	    status(": Ok");
 	}
 	break;
     case hashlist::status_no_match:
 	this->match.unknown++;
 	if (opt_verbose >= MORE_VERBOSE) {
-	    display_filename(stdout,fdht,false);
+	    output_filename(stdout,fdht);
 	    status(": No match");
 	}
 	break;
     case hashlist::status_file_name_mismatch:
 	this->match.moved++;
 	if (opt_verbose >= MORE_VERBOSE) {
-	    display_filename(stdout,fdht,false);
+	    output_filename(stdout,fdht);
 	    fprintf(stdout,": Moved from ");
-	    display_filename(stdout,matched_fdht,false);
+	    output_filename(stdout,matched_fdht);
 	    status("");
 	}
 	break;
@@ -464,9 +472,9 @@ int display::audit_update(file_data_hasher_t *fdht)
 	// We only record the hash collision if it wasn't anything else.
 	// At the same time, however, a collision is such a significant
 	// event that we print it no matter what. 
-	display_filename(stdout,fdht,false);
+	output_filename(stdout,fdht);
 	fprintf(stdout,": Hash collision with ");
-	display_filename(stdout,matched_fdht,false);
+	output_filename(stdout,matched_fdht);
 	status("");
     }
     unlock();
@@ -505,7 +513,7 @@ int display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher beca
 	}
 	lock();
 	fprintf(outfile,"\t%s\t", fdht->hash_hex[this->md5deep_mode_algorithm].c_str());
-	display_filename(stdout,fdht,false);
+	output_filename(stdout,fdht);
 	newline();
 	unlock();
 	return FALSE;
@@ -560,7 +568,7 @@ int display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher beca
 	    } else {
 		fprintf(outfile,"  ");
 	    }
-	    display_filename(stdout,fdht,false);
+	    output_filename(stdout,fdht);
 	}
     }
     newline();
@@ -598,7 +606,7 @@ uint64_t display::compute_unused(bool display, std::string annotation)
 	if((*i)->matched_file_number==0){
 	    count++;
 	    if (display || opt_verbose >= MORE_VERBOSE) {
-		display_filename(*i,false);
+		output_filename(*i);
 		print_status(annotation.c_str());
 	    }
 	}
