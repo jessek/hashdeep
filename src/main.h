@@ -555,7 +555,7 @@ public:
     bool hashes_loaded() const{
 	return known.size()>0;
     }
-    void add_fdt(const file_data_t *fdt){
+    void add_fdt(file_data_t *fdt){
 	lock();
 	known.add_fdt(fdt);
 	unlock();

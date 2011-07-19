@@ -243,7 +243,7 @@ int display::display_hash_simple(file_data_hasher_t *fdht)
      * see http://lists.gnu.org/archive/html/qemu-devel/2009-01/msg01979.html
      */
      
-    display_banner_if_needed(s->utf8_banner);
+    display_banner_if_needed(this->utf8_banner);
     lock();
     if (fdht->piecewise){
 	fprintf(outfile,"%"PRIu64",", fdht->bytes_read);
