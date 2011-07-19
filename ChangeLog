@@ -1,3 +1,7 @@
+2011-07-19  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/display.cpp: the only place that filename shortening was done was in display_realtime_stats, so all of the filename shortening logic was moved there and it was moved out of display_filename everywhere else. The passage of the FILE * to display to was put back in, becuase display_filename was also being used to display error messages.
+
 2011-07-18  Simson Garfinkel  <simsong@imac3.home>
 
 	* src/main.h (mode_which): changed mode_which to opt_show_matched (which is the default)

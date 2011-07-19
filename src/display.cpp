@@ -21,13 +21,7 @@
 /****************************************************************
  ** Support routines
  ****************************************************************/
-static std::string shorten_filename(const std::string &fn)
-{
-    if (fn.size() < MAX_FILENAME_LENGTH){
-	return fn;
-    }
-    return(fn.substr(0,MAX_FILENAME_LENGTH-3) + "...");
-}
+
 
 
 /* Does not lock */
@@ -182,7 +176,13 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
     
     THIS IS THE ONLY PLACE WHERE FILENAMES ARE SHORTENED. SO DO IT EXPLICITLY HERE AND REMOVE EVERYWHEREELSE. BUT IT LOOKS LIKE DISPLAY_FILENAME WILL NEED TO TAKE THE FILE TO DIPLSAY TO BECAUSE SOMETIMES WE WANT TO ERROR
 
-    display_filename(*fdht,shorten);
+	tstring fn = fdht->filename;
+    /* This is the only place that shorter filenames are used */
+
+    if (fn.size() < MAX_FILENAME_LENGTH){
+	fn = fn.substr(0,MAX_FILENAME_LENGTH-3) + T("...");
+    }
+    display_filename(fn);
     output_filename(msg);	// was previously put in the anotation
     fflush(stderr);
     unlock();
