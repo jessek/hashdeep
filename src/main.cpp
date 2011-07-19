@@ -62,6 +62,7 @@ bool opt_estimate = false;
 bool opt_relative = false;
 bool opt_unicode_escape = false;
 bool opt_show_matched = false;
+bool opt_display_size = false;
 /* output options */
 bool opt_csv = false;
 
@@ -787,7 +788,7 @@ int main(int argc, char **argv)
      * or known hashes not being used
      */
     if ((s->mode & mode_match) || (s->mode & mode_match_neg)){
-	status = s->finalize_matching();
+	status = s->ocb.finalize_matching();
     }
 
     /* If we were generating DFXML, finish the job */
@@ -810,7 +811,7 @@ static void md5deep_check_flags_okay(state *s)
   sanity_check((opt_relative) && (s->mode & mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
-  sanity_check((s->mode & mode_piecewise) && (s->mode & mode_display_size),
+  sanity_check((s->mode & mode_piecewise) && (opt_display_size),
 	       "Piecewise mode and file size display is just plain silly");
 
 
@@ -910,15 +911,9 @@ int state::md5deep_process_command_line(int argc, char **argv)
       this->md5deep_load_match_file(optarg);
       break;
 
-    case 'c':
-	opt_csv = true;
-      break;
-
-    case 'z': 
-      this->mode |= mode_display_size; 
-      break;
-
-    case '0': opt_zero = true; break;
+    case 'c': opt_csv = true;		break;
+    case 'z': opt_display_size = true;	break;
+    case '0': opt_zero = true;		break;
 
     case 'S': 
       this->mode |= mode_warn_only;

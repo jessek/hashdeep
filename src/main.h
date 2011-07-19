@@ -34,6 +34,7 @@ extern bool opt_estimate;		// print ETA
 extern int  opt_debug;			// for debugging
 extern bool opt_unicode_escape;
 extern bool opt_show_matched;
+extern bool opt_display_size;
 
 /* Output Options */
 extern bool opt_csv;
@@ -54,7 +55,7 @@ extern bool opt_csv;
 #define mode_match             1<<4
 #define mode_match_neg         1<<5
 #define mode_display_hash      1<<6
-#define mode_display_size      1<<7
+//#define mode_display_size      1<<7          // now opt_display_size
 //#define mode_zero              1<<8          // now is opt_zero
 //#define mode_relative          1<<9
 //#define mode_which             1<<10         // now opt_show_matched
@@ -532,6 +533,7 @@ public:
     uint64_t	compute_unused(bool display,std::string annotation);
     
 
+    void	display_size(const file_data_t *fdh);
     void	display_banner_if_needed(const std::string &utf8_banner);
     int		display_hash(file_data_hasher_t *fdht);
     int		display_hash_simple(file_data_hasher_t *fdt);
@@ -550,9 +552,9 @@ public:
      * except it takes a file_data_structure and optionally shortens to the line width
      */
     
-    void display_filename(const file_data_t &fdt,bool shorten);
-    void display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed);
-    bool hashes_loaded() const{
+    void	display_filename(const file_data_t &fdt,bool shorten);
+    void	display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed);
+    bool	hashes_loaded() const{
 	return known.size()>0;
     }
     void add_fdt(file_data_t *fdt){
@@ -561,10 +563,14 @@ public:
 	unlock();
     }
 
+    status_t	display_match_result(file_data_hasher_t *fdht);
+    int		md5deep_display_match_result(file_data_hasher_t *fdht);
+
     /* audit mode */
     int		audit_update(file_data_hasher_t *fdt);
     int		audit_check();		// performs an audit; return 0 if pass, -1 if fail
     int		display_audit_results();
+    int		finalize_matching();
 };
 
 
@@ -632,7 +638,6 @@ public:;
     /* output */
     display	    ocb;		// output control block
 
-
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;
 
@@ -662,9 +667,7 @@ public:;
      * Not quite sure what to do with this stuff yet...
      */
     
-    status_t	display_match_result(file_data_hasher_t *fdht);
     void	md5deep_load_match_file(const char *fn);
-    int		md5deep_display_match_result(file_data_hasher_t *fdht);
     int		md5deep_display_hash(file_data_hasher_t *fdht);
     int		find_hash_in_line(char *buf, int fileType, char *filename);
     int		parse_encase_file(const char *fn,FILE *f,uint32_t num_expected_hashes);
@@ -675,7 +678,6 @@ public:;
     int		find_ilook_hash(char *buf, char *known_fn);
     int		check_for_encase(FILE *f,uint32_t *expected_hashes);
     int		identify_hash_file_type(FILE *f,uint32_t *expected_hashes); // identify the hash file type
-    int		finalize_matching();
 
     /* dig.cpp */
     int		should_hash_symlink(const tstring &fn,file_types *link_type);

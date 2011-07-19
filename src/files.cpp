@@ -395,22 +395,6 @@ void state::md5deep_add_hash(char *h, char *fn)
 
 /* from md5deep_match.cpp */
 
-/**
- * Examines the hash table and determines if any known hashes have not
- * been used or if any input files did not match the known hashes. If
- * requested, displays any unused known hashes. Returns a status variable
- */
-int state::finalize_matching()
-{
-  int status = STATUS_OK;
-
-  if (known.total_matched!=known.size()) status |= STATUS_UNUSED_HASHES; // were there any unmatched?
-  if (known.total_matched==0) status |= STATUS_INPUT_DID_NOT_MATCH; // were they all unmatched?
-  if (mode & mode_not_matched){	// should we display those that were not matched?
-      ocb.compute_unused(true,"");
-  }
-  return status;
-}
 
 
 int input_not_matched = FALSE;

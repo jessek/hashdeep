@@ -179,6 +179,9 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
 
     lock();
     fprintf(stderr,"\r");
+    
+    THIS IS THE ONLY PLACE WHERE FILENAMES ARE SHORTENED. SO DO IT EXPLICITLY HERE AND REMOVE EVERYWHEREELSE. BUT IT LOOKS LIKE DISPLAY_FILENAME WILL NEED TO TAKE THE FILE TO DIPLSAY TO BECAUSE SOMETIMES WE WANT TO ERROR
+
     display_filename(*fdht,shorten);
     output_filename(msg);	// was previously put in the anotation
     fflush(stderr);
@@ -243,7 +246,7 @@ int display::display_hash_simple(file_data_hasher_t *fdht)
      * see http://lists.gnu.org/archive/html/qemu-devel/2009-01/msg01979.html
      */
      
-    display_banner_if_needed(this->utf8_banner);
+    display_banner_if_needed(fdht->banner);
     lock();
     if (fdht->piecewise){
 	fprintf(outfile,"%"PRIu64",", fdht->bytes_read);
@@ -294,9 +297,10 @@ int display::display_audit_results()
 
 
 /* This doesn't lock/unlock because we should already be locked or unlocked */
-void display::display_size(const state *s,const file_data_t *fdt)
+void display::display_size(const file_data_t *fdt)
 {
-    if (s->mode & mode_display_size)  {
+    lock();
+    if (opt_display_size)  {
 	// Under CSV mode we have to include a comma, otherwise two spaces
 	if (opt_csv){
 	    fprintf(outfile,"%"PRIu64",", fdt->actual_bytes);
@@ -305,6 +309,7 @@ void display::display_size(const state *s,const file_data_t *fdt)
 	    fprintf(outfile,"%10"PRIu64"  ", fdt->actual_bytes);
 	}
     }
+    unlock();
 }
 
 
@@ -339,17 +344,17 @@ int display::md5deep_display_match_result(file_data_hasher_t *fdht)
 	    
 	    if (opt_show_matched) 	    {
 		if (known_hash && (mode & mode_match)) {
-		    display_filename(outfile,fdht,false);
+		    display_filename(fdht,false);
 		    fprintf(outfile," matched ");
-		    output_filename(outfile,fs->file_name);
+		    output_filename(fs->file_name);
 		}
 		else {
-		    display_filename(outfile,fdht,false);
+		    display_filename(fdht,false);
 		    fprintf(outfile," does NOT match");
 		}
 	    }
 	    else{
-		display_filename(stdout,fdht,false);
+		display_filename(fdht,false);
 	    }
 	    newline();
 	    unlock();
@@ -491,7 +496,7 @@ int display::audit_check()
 
 
 /* The old display_hash from the md5deep program, with a few modifications */
-int display::md5deep_display_hash(file_data_hasher_t *fdht)
+int display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher because of triage
 {
     if (mode & mode_triage) {
 	if(dfxml){
@@ -562,6 +567,24 @@ int display::md5deep_display_hash(file_data_hasher_t *fdht)
     unlock();
     return FALSE;
 }
+
+/**
+ * Examines the hash table and determines if any known hashes have not
+ * been used or if any input files did not match the known hashes. If
+ * requested, displays any unused known hashes. Returns a status variable
+ */
+int display::finalize_matching()
+{
+  int status = STATUS_OK;
+
+  if (known.total_matched!=known.size()) status |= STATUS_UNUSED_HASHES; // were there any unmatched?
+  if (known.total_matched==0) status |= STATUS_INPUT_DID_NOT_MATCH; // were they all unmatched?
+  if (mode & mode_not_matched){	// should we display those that were not matched?
+      ocb.compute_unused(true,"");
+  }
+  return status;
+}
+
 
 /**
  * Return the number of entries in the hashlist that have used==0
