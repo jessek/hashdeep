@@ -21,7 +21,7 @@ uint64_t hashlist::compute_unused(bool display, std::string annotation)
 	if((*i)->matched_file_number==0){
 	    count++;
 	    if (display || opt_verbose >= MORE_VERBOSE) {
-		display_filename(stdout,*i,false);
+		display_filename(*i,false);
 		print_status(annotation.c_str());
 	    }
 	}

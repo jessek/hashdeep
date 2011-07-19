@@ -501,17 +501,31 @@ public:
 	pthread_mutex_destroy(&M);
 #endif	
     }
-    void	open(std::string &outfilename); // open outfilename; error if can't.
+    void	open(const std::string &outfilename); // open outfilename; error if can't.
+
+    /* DFXML support */
+
     void	xml_open(FILE *out){
 	lock();
 	dfxml = new XML(out);
 	unlock();
     }
+    void dfxml_startup();
+    void dfxml_shutdown();
 
     void newline();			// outputs a \n or a 0
     void status(const char *fmt, ...);// Display an ordinary message with newline added
     void error(const char *fmt, ...);// Display an error message if not in silent mode
 
+
+    /* Known hash database */
+    hashlist::loadstatus_t load_hash_file(const std::string &fn){
+	return known.load_hash_file(fn);
+    }
+    uint64_t known_size() const{
+	return known.size();
+    }
+    
 
     void	display_banner_if_needed();
     int		display_hash(file_data_hasher_t *fdht);
@@ -522,22 +536,18 @@ public:
      * in which case Unicode characters are emited as U+xxxx.
      * For example, the Unicode smiley character ☺ is output as U+263A.
      */
-    void  output_filename(FILE *out,const char *fn);
-    void  output_filename(FILE *out,const std::string &fn);
+    void  output_filename(const std::string &fn);
 #ifdef _WIN32
-    void  output_filename(FILE *out,const std::wstring &fn);
+    void  output_filename(const std::wstring &fn);
 #endif
 
     /* display_filename is similar output_filename,
      * except it takes a file_data_structure and optionally shortens to the line width
      */
     
-    void  display_filename(const file_data_t &fdt,bool shorten);
-    inline void display_filename(const file_data_t *fdt,bool shorten){
-	display_filename(outfile,*fdt,shorten);
-    };
+    void display_filename(const file_data_t &fdt,bool shorten);
     void display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed);
-    bool hashes_loaded(){
+    bool hashes_loaded() const{
 	return known.size()>0;
     }
 
@@ -629,6 +639,14 @@ public:;
     void	md5deep_add_hash(char *h, char *fn); // explicitly add a hash
 
 
+    /* main.cpp */
+    int hashdeep_process_command_line(int argc,char **argv);
+    int md5deep_process_command_line(int argc,char **argv);
+#ifdef _WIN32
+    int prepare_windows_command_line();
+#endif    
+
+
     /* files.cpp
      * Not quite sure what to do with this stuff yet...
      */
@@ -710,7 +728,6 @@ off_t find_file_size(FILE *f);
 // MAIN PROCESSING
 // ------------------------------------------------------------------ 
 /* dig.cpp */
-int md5deep_process_command_line(state *s, int argc, char **argv);
 void dig_self_test();			// check the string-processing
 
 

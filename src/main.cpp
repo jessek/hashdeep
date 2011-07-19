@@ -405,24 +405,24 @@ static void setup_expert_mode(state *s, char *arg)
 
 
 
-static int hashdeep_process_command_line(state *s, int argc, char **argv)
+int state::hashdeep_process_command_line(int argc, char **argv)
 {
   int i;
   
   while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVhW:0D:u")) != -1)  {
     switch (i) {
     case 'o':
-      s->mode |= mode_expert; 
-      setup_expert_mode(s,optarg);
+      this->mode |= mode_expert; 
+      setup_expert_mode(this,optarg);
       break;
 
     case 'I': 
-      s->mode |= mode_size_all;
+      this->mode |= mode_size_all;
       // Note no break here;
     case 'i':
-      s->mode |= mode_size;
-      s->size_threshold = find_block_size(s,optarg);
-      if (0 == s->size_threshold) {
+      this->mode |= mode_size;
+      this->size_threshold = find_block_size(this,optarg);
+      if (0 == this->size_threshold) {
 	print_error("%s: Requested size threshold implies not hashing anything",
 		    __progname);
 	exit(STATUS_USER_ERROR);
@@ -430,7 +430,7 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
       break;
 
     case 'c': 
-      s->primary_function = primary_compute;
+      this->primary_function = primary_compute;
       /* Before we parse which algorithms we're using now, we have 
        * to erase the default (or previously entered) values
        */
@@ -438,43 +438,43 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
       algorithm_t::enable_hashing_algorithms(optarg);
       break;
       
-    case 'd': s->ocb.xml_open(stdout); break;
-    case 'M': s->mode |= mode_display_hash;
+    case 'd': this->ocb.xml_open(stdout); break;
+    case 'M': this->mode |= mode_display_hash;
 	/* intentioanl fall through */
-    case 'm': s->primary_function = primary_match;      break;
-    case 'X': s->mode |= mode_display_hash;
+    case 'm': this->primary_function = primary_match;      break;
+    case 'X': this->mode |= mode_display_hash;
 	/* intentional fall through */
-    case 'x': s->primary_function = primary_match_neg;  break;
-    case 'a': s->primary_function = primary_audit;      break;
+    case 'x': this->primary_function = primary_match_neg;  break;
+    case 'a': this->primary_function = primary_audit;      break;
       
       // TODO: Add -t mode to hashdeep
-      //    case 't': s->mode |= mode_timestamp;    break;
+      //    case 't': this->mode |= mode_timestamp;    break;
 
-    case 'b': s->mode |= mode_barename;     break;
+    case 'b': this->mode |= mode_barename;     break;
     case 'l': opt_relative=true;     break;
     case 'e': opt_estimate = true;	    break;
-    case 'r': s->mode |= mode_recursive;    break;
+    case 'r': this->mode |= mode_recursive;    break;
     case 's': opt_silent = true;	    break;
       
     case 'p':
-      s->mode |= mode_piecewise;
-      s->piecewise_size = find_block_size(s, optarg);
-      if (s->piecewise_size==0)
+      this->mode |= mode_piecewise;
+      this->piecewise_size = find_block_size(this, optarg);
+      if (this->piecewise_size==0)
 	fatal_error("%s: Piecewise blocks of zero bytes are impossible", 
 		    __progname);
       
       break;
       
-    case 'w': s->mode |= mode_which;        break; // displays which known hash generated a match
+    case 'w': this->mode |= mode_which;        break; // displays which known hash generated a match
       
     case 'k':
-      switch (s->known.load_hash_file(optarg)) {
-      case hashlist::loadstatus_ok: 
-	  if(opt_verbose>=MORE_VERBOSE){
-	      print_error("%s: %s: Match file loaded %d known hash values.",
-			  __progname,optarg,s->known.size());
-	  }
-	  break;
+	switch (this->ocb.load_hash_file(optarg)) {
+	case hashlist::loadstatus_ok: 
+	    if(opt_verbose>=MORE_VERBOSE){
+		print_error("%s: %s: Match file loaded %d known hash values.",
+			    __progname,optarg,ocb.known_size());
+	    }
+	    break;
 	  
       case hashlist::status_contains_no_hashes:
 	  /* Trying to load an empty file is fine, but we shouldn't
@@ -507,20 +507,12 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
       print_status("%s", VERSION);
       exit(EXIT_SUCCESS);
 	  
-    case 'W':
-	s->outfile = fopen(optarg.c_str(),"wb");
-	if(!s->outfile){
-	    perror(optarg.c_str());
-	    exit(1);
-	}
-	break;
-
+    case 'W': ocb.open(optarg); break;
     case '0': opt_zero = true; break;
-
     case 'u': opt_unicode_escape = true;break;
 
     case 'h':
-      usage(s);
+      usage(this);
       exit(EXIT_SUCCESS);
       
     case 'D': opt_debug = atoi(optarg);break;
@@ -530,8 +522,7 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
     }            
   }
   
-  check_flags_okay(s);
-
+  check_flags_okay(this);
   return FALSE;
 }
 
@@ -540,10 +531,10 @@ static int hashdeep_process_command_line(state *s, int argc, char **argv)
  * WIN32 requires the argv in wchar_t format to allow the program to get UTF16
  * filenames resulting from star expansion.
  */
-static int prepare_windows_command_line(state *s)
+int state::prepare_windows_command_line()
 {
-    s->argv = CommandLineToArgvW(GetCommandLineW(),&s->argc);
-  return FALSE;
+    this->argv = CommandLineToArgvW(GetCommandLineW(),&this->argc);
+    return FALSE;
 }
 #endif
 
@@ -676,7 +667,7 @@ int main(int argc, char **argv)
     std::transform(progname.begin(), progname.end(), progname.begin(), ::tolower);
     std::string algname = progname.substr(0,progname.find("deep"));
     if(algname=="hash"){			// we are hashdeep
-	hashdeep_process_command_line(s,argc,argv);
+	s->hashdeep_process_command_line(argc,argv);
     } else {
 	algorithm_t::clear_algorithms_inuse();
 	char buf[256];
@@ -693,7 +684,7 @@ int main(int argc, char **argv)
 	    cerr << progname << ": unknown hash: " <<algname << "\n";
 	    exit(1);
 	}
-	md5deep_process_command_line(s,argc,argv);
+	s->md5deep_process_command_line(argc,argv);
     }
 
     if(opt_debug==1){
@@ -702,26 +693,7 @@ int main(int argc, char **argv)
     }
 
     /* Set up the DFXML output if requested */
-    if(s->dfxml){
-	XML &xreport = *s->dfxml;
-	xreport.push("dfxml","xmloutputversion='1.0'");
-	xreport.push("metadata",
-		       "\n  xmlns='http://md5deep.sourceforge.net/md5deep/' "
-		       "\n  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
-		       "\n  xmlns:dc='http://purl.org/dc/elements/1.1/'" );
-	xreport.xmlout("dc:type","Hash List","",false);
-	xreport.pop();
-	xreport.add_DFXML_creator(PACKAGE_NAME,PACKAGE_VERSION,XML::make_command_line(argc,argv));
-	xreport.push("configuration");
-	xreport.push("algorithms");
-	for(int i=0;i<NUM_ALGORITHMS;i++){
-	    xreport.make_indent();
-	    xreport.printf("<algorithm name='%s' enabled='%d'/>\n",
-			   hashes[i].name.c_str(),hashes[i].inuse);
-	}
-	xreport.pop();			// algorithms
-	xreport.pop();			// configuration
-    }
+    s->ocb.dfxml_startup();
 
    
 #ifdef _WIN32
@@ -759,7 +731,7 @@ int main(int argc, char **argv)
   
     /* If we were auditing, display the audit results */
     if (s->primary_function == primary_audit){
-	status = s->display_audit_results();
+	status = s->ocb.display_audit_results();
     }
   
     /* We only have to worry about checking for unused hashes if one 
@@ -773,11 +745,7 @@ int main(int argc, char **argv)
     }
 
     /* If we were generating DFXML, finish the job */
-    if(s->dfxml){
-	s->dfxml->pop();		// outermost
-	s->dfxml->close();
-	delete s->dfxml;
-    }
+    s->ocb.dfxml_shutdown();
     return status;
 }
 
@@ -819,7 +787,7 @@ static void md5deep_check_matching_modes(state *s)
 }
 
 
-int md5deep_process_command_line(state *s, int argc, char **argv)
+int state::md5deep_process_command_line(int argc, char **argv)
 {
   int i;
 
@@ -829,18 +797,18 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
     switch (i) {
 
     case 'D': opt_debug = atoi(optarg);break;
-    case 'd': s->dfxml = new XML(stdout); break;
+    case 'd': this->ocb.xml_open(stdout); break;
     case 'f':
-      s->mode |= mode_read_from_file;
+      this->mode |= mode_read_from_file;
       break;
 
     case 'I':
-      s->mode |= mode_size_all;
+      this->mode |= mode_size_all;
       // Note that there is no break here
     case 'i':
-      s->mode |= mode_size;
-      s->size_threshold = find_block_size(s,optarg);
-      if (0 == s->size_threshold) {
+      this->mode |= mode_size;
+      this->size_threshold = find_block_size(this,optarg);
+      if (0 == this->size_threshold) {
 	print_error("%s: Requested size threshold implies not hashing anything",
 		    __progname);
 	exit(STATUS_USER_ERROR);
@@ -848,52 +816,52 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       break;
 
     case 'p':
-      s->mode |= mode_piecewise;
-      s->piecewise_size = find_block_size(s, optarg);
-      if (s->piecewise_size==0) {
+      this->mode |= mode_piecewise;
+      this->piecewise_size = find_block_size(this, optarg);
+      if (this->piecewise_size==0) {
 	print_error("%s: Illegal size value for piecewise mode.", __progname);
 	exit(STATUS_USER_ERROR);
       }
 
       break;
 
-    case 'Z': s->mode |= mode_triage; break;
-    case 't': s->mode |= mode_timestamp; break;
-    case 'n': s->mode |= mode_not_matched; break;
-    case 'w': s->mode |= mode_which;break; 		// display which known hash generated match
+    case 'Z': this->mode |= mode_triage; break;
+    case 't': this->mode |= mode_timestamp; break;
+    case 'n': this->mode |= mode_not_matched; break;
+    case 'w': this->mode |= mode_which;break; 		// display which known hash generated match
 
     case 'a':
-      s->mode |= mode_match;
+      this->mode |= mode_match;
       md5deep_check_matching_modes(s);
-      s->md5deep_add_hash(optarg,optarg);
+      this->md5deep_add_hash(optarg,optarg);
       break;
 
     case 'A':
-      s->mode |= mode_match_neg;
+      this->mode |= mode_match_neg;
       md5deep_check_matching_modes(s);
-      s->md5deep_add_hash(optarg,optarg);
+      this->md5deep_add_hash(optarg,optarg);
       break;
 
     case 'o': 
-      s->mode |= mode_expert; 
+      this->mode |= mode_expert; 
       setup_expert_mode(s,optarg);
       break;
       
     case 'M':
-      s->mode |= mode_display_hash;
+      this->mode |= mode_display_hash;
       /* Intentional fall through */
     case 'm':
-      s->mode |= mode_match;
+      this->mode |= mode_match;
       md5deep_check_matching_modes(s);
-      s->md5deep_load_match_file(optarg);
+      this->md5deep_load_match_file(optarg);
       break;
 
     case 'X':
-      s->mode |= mode_display_hash;
+      this->mode |= mode_display_hash;
     case 'x':
-      s->mode |= mode_match_neg;
+      this->mode |= mode_match_neg;
       md5deep_check_matching_modes(s);
-      s->md5deep_load_match_file(optarg);
+      this->md5deep_load_match_file(optarg);
       break;
 
     case 'c':
@@ -901,13 +869,13 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       break;
 
     case 'z': 
-      s->mode |= mode_display_size; 
+      this->mode |= mode_display_size; 
       break;
 
     case '0': opt_zero = true; break;
 
     case 'S': 
-      s->mode |= mode_warn_only;
+      this->mode |= mode_warn_only;
       opt_silent = true;
       break;
 
@@ -916,21 +884,21 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
     case 'e': opt_estimate = true; break;
 
     case 'r':
-      s->mode |= mode_recursive;
+      this->mode |= mode_recursive;
       break;
 
     case 'k':
-      s->mode |= mode_asterisk;
+      this->mode |= mode_asterisk;
       break;
 
-    case 'b': s->mode |= mode_barename; break;
+    case 'b': this->mode |= mode_barename; break;
       
     case 'l': 
 	opt_relative = true;
       break;
 
     case 'q': 
-      s->mode |= mode_quiet; 
+      this->mode |= mode_quiet; 
       break;
 
     case 'h':
@@ -946,7 +914,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
       print_status(COPYRIGHT);
       exit (STATUS_OK);
 
-    case 'W':	s->outfile = optarg;	break;
+    case 'W':	ocb.open(optarg);	break;
     case 'u':	opt_unicode_escape = 1;	break;
 
     default:
@@ -956,7 +924,7 @@ int md5deep_process_command_line(state *s, int argc, char **argv)
     }
   }
 
-  md5deep_check_flags_okay(s);
+  md5deep_check_flags_okay(this);
   return STATUS_OK;
 }
 

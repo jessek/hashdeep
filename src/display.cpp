@@ -43,18 +43,25 @@ void display::newline()
 }
 
 
-
-
 /****************************************************************
  ** Display Routines
  ****************************************************************/
+
+void display::open(const std::string &fn)
+{
+    outfile = fopen(fn.c_str(),"wb");
+    if(!outfile){
+	perror(fn.c_str());
+	exit(1);
+    }
+}
 
 void display::status(const char *fmt,...)
 {
     lock();
     va_list(ap); 
-    va_start(ap,MSG); 
-    if (vfprintf(outfile,MSG,ap) < 0) { 
+    va_start(ap,fmt); 
+    if (vfprintf(outfile,fmt,ap) < 0) { 
 	fprintf(stderr, "%s: %s", __progname, strerror(errno)); 
 	exit(EXIT_FAILURE);
     }
@@ -67,8 +74,8 @@ void display::error(const char *fmt,...)
 {
     lock();
     va_list(ap); 
-    va_start(ap,MSG); 
-    if (vfprintf(stderr,MSG,ap) < 0) { 
+    va_start(ap,fmt); 
+    if (vfprintf(stderr,fmt,ap) < 0) { 
 	fprintf(stderr, "%s: %s", __progname, strerror(errno)); 
 	exit(EXIT_FAILURE);
     }
@@ -89,11 +96,6 @@ void display::output_filename(const std::string &fn)
     } else {
 	fwrite(fn.c_str(),fn.size(),1,outfile);
     }
-}
-
-void display::output_filename(const char *fn)
-{
-    output_filename(std::string(fn));
 }
 
 #ifdef _WIN32
@@ -635,3 +637,39 @@ int display::display_hash(file_data_hasher_t *fdht)
 
 
 
+void display::dfxml_setup()
+{
+    lock();
+    if(dfxml){
+	dfxml->push("dfxml","xmloutputversion='1.0'");
+	dfxml->push("metadata",
+		       "\n  xmlns='http://md5deep.sourceforge.net/md5deep/' "
+		       "\n  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
+		       "\n  xmlns:dc='http://purl.org/dc/elements/1.1/'" );
+	dfxml->xmlout("dc:type","Hash List","",false);
+	dfxml->pop();
+	dfxml->add_DFXML_creator(PACKAGE_NAME,PACKAGE_VERSION,XML::make_command_line(argc,argv));
+	dfxml->push("configuration");
+	dfxml->push("algorithms");
+	for(int i=0;i<NUM_ALGORITHMS;i++){
+	    dfxml->make_indent();
+	    dfxml->printf("<algorithm name='%s' enabled='%d'/>\n",
+			   hashes[i].name.c_str(),hashes[i].inuse);
+	}
+	dfxml->pop();			// algorithms
+	dfxml->pop();			// configuration
+    }
+    unlock();
+}
+
+void display::dfxml_shutdown()
+{
+    lock();
+    if(s->dfxml){
+	s->dfxml->pop();		// outermost
+	s->dfxml->close();
+	delete s->dfxml;
+	s->dfxml = 0;
+    }
+    unlock();
+}
