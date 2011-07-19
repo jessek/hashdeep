@@ -33,6 +33,7 @@ extern bool opt_zero;			// newlines are \000
 extern bool opt_estimate;		// print ETA
 extern int  opt_debug;			// for debugging
 extern bool opt_unicode_escape;
+extern bool opt_show_matched;
 
 /* Output Options */
 extern bool opt_csv;
@@ -56,7 +57,7 @@ extern bool opt_csv;
 #define mode_display_size      1<<7
 //#define mode_zero              1<<8          // now is opt_zero
 //#define mode_relative          1<<9
-#define mode_which             1<<10
+//#define mode_which             1<<10         // now opt_show_matched
 #define mode_barename          1<<11
 #define mode_asterisk          1<<12
 #define mode_not_matched       1<<13
@@ -259,10 +260,12 @@ public:
     static const size_t MD5DEEP_IDEAL_BLOCK_SIZE = 8192;
     static const size_t MAX_ALGORITHM_CONTEXT_SIZE = 256;
     static const size_t MAX_ALGORITHM_RESIDUE_SIZE = 256;
-    file_data_hasher_t(bool piecewise_):handle(0),is_stdin(0),read_start(0),read_end(0),bytes_read(0),
-					block_size(MD5DEEP_IDEAL_BLOCK_SIZE),
-					start_time(0),last_time(0),
-					piecewise(piecewise_){
+    file_data_hasher_t(const std::string &banner_,bool piecewise_):
+	banner(banner_),handle(0),is_stdin(0),
+	read_start(0),read_end(0),bytes_read(0),
+	block_size(MD5DEEP_IDEAL_BLOCK_SIZE),
+	start_time(0),last_time(0),
+	piecewise(piecewise_){
 	file_number = ++next_file_number;
     };
     ~file_data_hasher_t(){
@@ -279,14 +282,15 @@ public:
     void multihash_update(const unsigned char *buffer,size_t bufsize);
     void multihash_finalize();
 
-
+    const std::string &banner;		// banner to display if we need to display one
     FILE           *handle;		// the file we are reading
     bool           is_stdin;		// flag if the file is stdin
     uint8_t        hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 
     std::string	   dfxml_hash;	      // the DFXML hash digest for the piece just hashed; used to build piecewise
     uint64_t	   file_number;
+    void		append_dfxml_for_byterun();
+    void		compute_dfxml(bool known_hash);
 
-    void append_dfxml_for_byterun();
 
     // Where the last read operation started and ended
     // bytes_read is a shorthand for read_end - read_start
@@ -374,7 +378,6 @@ public:;
     public:;
 	void add_file(file_data_t *fi,int alg_num);
     };
-    uint64_t		compute_unused(bool display,std::string annotation);
     hashmap		hashmaps[NUM_ALGORITHMS];
     searchstatus_t	search(const file_data_hasher_t *fdht,
 			       file_data_t **matched) const; // look up a fdt
@@ -525,9 +528,11 @@ public:
     uint64_t known_size() const{
 	return known.size();
     }
+    /* Display the unused files and return the count */
+    uint64_t	compute_unused(bool display,std::string annotation);
     
 
-    void	display_banner_if_needed();
+    void	display_banner_if_needed(const std::string &utf8_banner);
     int		display_hash(file_data_hasher_t *fdht);
     int		display_hash_simple(file_data_hasher_t *fdt);
 
@@ -549,6 +554,11 @@ public:
     void display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed);
     bool hashes_loaded() const{
 	return known.size()>0;
+    }
+    void add_fdt(const file_data_t *fdt){
+	lock();
+	known.add_fdt(fdt);
+	unlock();
     }
 
     /* audit mode */
@@ -614,6 +624,7 @@ public:;
 #else
     char	   **argv;
 #endif
+    std::string		utf8_banner;
 
     /* Configuration */
     uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */

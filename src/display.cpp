@@ -128,7 +128,7 @@ void display::display_filename(const file_data_t &fdt, bool shorten)
 // won't be many updates. The counter doesn't change often enough
 // to indicate progress. Using MB is a reasonable compromise. 
 
-void display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed)
+void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed)
 {
     uint64_t mb_read=0;
     bool shorten = false;
@@ -179,68 +179,19 @@ void display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed)
 
     lock();
     fprintf(stderr,"\r");
-    display_filename(stderr,fdht,shorten);
-    output_filename(stderr,msg);	// was previously put in the anotation
+    display_filename(*fdht,shorten);
+    output_filename(msg);	// was previously put in the anotation
     fflush(stderr);
     unlock();
 }
 
 
-void display::display_banner()
+void display::display_banner_if_needed(const std::string &utf8_banner)
 {
     if(this->dfxml!=0) return;		// output is in DFXML; no banner
     lock();
     if(banner_displayed==false){
-	tstring cwd = main::getcwd();
-	status("%s", HASHDEEP_HEADER_10);
-	fprintf(outfile,"%ssize,",HASHDEEP_PREFIX);  
-	for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
-	    if (hashes[i].inuse){
-		fprintf(outfile,"%s,", hashes[i].name.c_str());
-	    }
-	}  
-	status("filename");
-	
-	fprintf(outfile,"## Invoked from: ");
-	output_filename(cwd);
-	fprintf(outfile,"%s",NEWLINE);
-	
-	// Display the command prompt as we think the user saw it
-	fprintf(outfile,"## ");
-#ifdef _WIN32
-	fprintf(outfile,"%c:\\>", (char)cwd[0]);
-#else
-	if (geteuid()==0){
-	    fprintf(outfile,"#");
-	}
-	else {
-	    fprintf(outfile,"$");
-	}
-#endif
-	
-	// Accounts for '## ', command prompt, and space before first argument
-	size_t bytes_written = 8;
-	
-	for (int argc = 0 ; argc < this->argc ; ++argc) {
-	    fprintf(outfile," ");
-	    bytes_written++;
-	    
-	    // We are going to print the string. It's either ASCII or UTF16
-	    // convert it to a tstring and then to UTF8 string.
-	    tstring arg_t = tstring(this->argv[argc]);
-	    std::string arg_utf8 = main::make_utf8(arg_t);
-	    size_t current_bytes = arg_utf8.size();
-	    
-	    // The extra 32 bytes is a fudge factor
-	    if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
-		fprintf(outfile,"%s## ", NEWLINE);
-		bytes_written = 3;
-	    }
-	    
-	    output_filename(outfile,arg_utf8);
-	    bytes_written += current_bytes;
-	}
-	fprintf(outfile,"%s## %s",NEWLINE, NEWLINE);
+	fprintf(outfile,"%s",utf8_banner.c_str());
 	banner_displayed=true;
     }
     unlock();
@@ -279,7 +230,7 @@ void file_data_hasher_t::compute_dfxml(bool known_hash)
 int display::display_hash_simple(file_data_hasher_t *fdht)
 {
     if(this->dfxml){
-	fdht->compute_dfxml(this->mode & mode_which);
+	fdht->compute_dfxml(opt_show_matched);
 	return FALSE;
     }
 
@@ -292,7 +243,7 @@ int display::display_hash_simple(file_data_hasher_t *fdht)
      * see http://lists.gnu.org/archive/html/qemu-devel/2009-01/msg01979.html
      */
      
-    display_banner_if_needed();
+    display_banner_if_needed(s->utf8_banner);
     lock();
     if (fdht->piecewise){
 	fprintf(outfile,"%"PRIu64",", fdht->bytes_read);
@@ -306,7 +257,7 @@ int display::display_hash_simple(file_data_hasher_t *fdht)
 	    fprintf(outfile,"%s,", fdht->hash_hex[i].c_str());
 	}
     }
-    display_filename(fdht,false);
+    display_filename(*fdht,false);
     fprintf(outfile,"%s",NEWLINE);
     unlock();
     return FALSE;
@@ -314,12 +265,12 @@ int display::display_hash_simple(file_data_hasher_t *fdht)
 
 int display::display_audit_results()
 {
-    int status = EXIT_SUCCESS;
+    int ret = EXIT_SUCCESS;
     
     lock();
     if (audit_check()==0) {
 	status("%s: Audit failed", __progname);
-	status = EXIT_FAILURE;
+	ret = EXIT_FAILURE;
     }
     else {
 	status("%s: Audit passed", __progname);
@@ -338,7 +289,7 @@ int display::display_audit_results()
 	status("  Known files not found: %"PRIu64, this->match.unused);
     }
     unlock();
-    return status;
+    return ret;
 }
 
 
@@ -368,7 +319,7 @@ int display::md5deep_display_match_result(file_data_hasher_t *fdht)
     if ((known_hash && (mode & mode_match)) ||
 	(!known_hash && (mode & mode_match_neg))) {
 	if(dfxml){
-	    compute_dfxml(fdht,(this->mode & mode_which) || known_hash);
+	    compute_dfxml(fdht,(opt_show_matched || known_hash);
 	    return FALSE;
 	}
 	{
@@ -386,7 +337,7 @@ int display::md5deep_display_match_result(file_data_hasher_t *fdht)
 		}
 	    }
 	    
-	    if (mode & mode_which) 	    {
+	    if (opt_show_matched) 	    {
 		if (known_hash && (mode & mode_match)) {
 		    display_filename(outfile,fdht,false);
 		    fprintf(outfile," matched ");
@@ -450,7 +401,7 @@ status_t display::display_match_result(file_data_hasher_t *fdht)
 	    display_hash_simple(fdht);
 	else {
 	    display_filename(stdout,fdht,false);
-	    if (mode & mode_which && primary_match == primary_function) {
+	    if (opt_show_matched && primary_match == primary_function) {
 		fprintf(stdout," matches ");
 		if (NULL == matched_fdt) {
 		    fprintf(stdout,"(unknown file)");
@@ -528,7 +479,7 @@ int display::audit_check()
 {
     /* Count the number of unused */
     lock();
-    this->match.unused = this->known.compute_unused(false,": Known file not used");
+    this->match.unused = this->compute_unused(false,": Known file not used");
     unlock();
     return (0 == this->match.unused  && 
 	    0 == this->match.unknown && 
@@ -563,7 +514,7 @@ int display::md5deep_display_hash(file_data_hasher_t *fdht)
     }
     
     if(this->dfxml){
-	compute_dfxml(fdht,this->mode & mode_which);
+	compute_dfxml(fdht,opt_show_matched);
 	return FALSE;
     }
 
@@ -611,6 +562,29 @@ int display::md5deep_display_hash(file_data_hasher_t *fdht)
     unlock();
     return FALSE;
 }
+
+/**
+ * Return the number of entries in the hashlist that have used==0
+ * Optionally display them, optionally with additional output.
+ */
+uint64_t display::compute_unused(bool display, std::string annotation)
+{
+    lock();
+    uint64_t count=0;
+    for(hashlist::const_iterator i = known->begin(); i != known->end(); i++){
+	if((*i)->matched_file_number==0){
+	    count++;
+	    if (display || opt_verbose >= MORE_VERBOSE) {
+		display_filename(*i,false);
+		print_status(annotation.c_str());
+	    }
+	}
+    }
+    unlock();
+    return count;
+}
+
+
 
 /**
  * Called by hash() in hash.c when the hashing operation is complete.

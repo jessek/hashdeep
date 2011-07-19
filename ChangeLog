@@ -1,3 +1,7 @@
+2011-07-18  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/main.h (mode_which): changed mode_which to opt_show_matched (which is the default)
+
 2011-07-18  Simson Garfinkel  <simsong@mncrnpsedu.local>
 
 	* src/display.cpp (display_size): changed mode_csv to opt_csv

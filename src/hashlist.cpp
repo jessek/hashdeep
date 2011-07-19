@@ -10,25 +10,6 @@
 #include <new>
 #include <iostream>
 
-/**
- * Return the number of entries in the hashlist that have used==0
- * Optionally display them, optionally with additional output.
- */
-uint64_t hashlist::compute_unused(bool display, std::string annotation)
-{
-    uint64_t count=0;
-    for(std::vector<file_data_t *>::const_iterator i = this->begin(); i != this->end(); i++){
-	if((*i)->matched_file_number==0){
-	    count++;
-	    if (display || opt_verbose >= MORE_VERBOSE) {
-		display_filename(*i,false);
-		print_status(annotation.c_str());
-	    }
-	}
-    }
-    return count;
-}
-
 void hashlist::hashmap::add_file(file_data_t *fi,int alg_num)
 {
     if(fi->hash_hex[alg_num].size()){

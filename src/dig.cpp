@@ -560,7 +560,7 @@ int state::should_hash(file_data_hasher_t *fdht,const tstring &fn)
 int state::dig_normal(const tstring &fn)
 {
     int ret = FALSE;
-    file_data_hasher_t *fdht = new file_data_hasher_t(mode & mode_piecewise);
+    file_data_hasher_t *fdht = new file_data_hasher_t(s->utf8_banner,mode & mode_piecewise);
     fdht->retain();
 
     tstring fn2(fn);

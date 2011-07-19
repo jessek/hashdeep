@@ -61,6 +61,7 @@ bool opt_zero   = false;
 bool opt_estimate = false;
 bool opt_relative = false;
 bool opt_unicode_escape = false;
+bool opt_show_matched = false;
 /* output options */
 bool opt_csv = false;
 
@@ -465,7 +466,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       
       break;
       
-    case 'w': this->mode |= mode_which;        break; // displays which known hash generated a match
+    case 'w': opt_show_matched = true;        break; // displays which known hash generated a match
       
     case 'k':
 	switch (this->ocb.load_hash_file(optarg)) {
@@ -711,6 +712,51 @@ int main(int argc, char **argv)
 	fatal_error("%s: %s", __progname, strerror(errno));
     }
 
+    /****************************************************************/
+    /* Make the UTF8 banner in case we need it */
+    /* PROBLEM: THIS IS ONLY MAKING HASHDEEP HEADER; WHAT IS MD5DEEP HEADER??? */
+    s->utf8_banner = HASHDEEP_HEADER_10;
+    s->utf8_banner += HASHDEEP_PREFIX;  
+    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
+	if (hashes[i].inuse){
+	    s->utf8_banner += hashes[i].name + std::string(",");
+	}
+    }  
+    s->utf8_banner += std::string("filename") + NEWLINE;
+    s->utf8_banner += "## Invoked from: " + main::make_utf8(main::getcwd()) + NEWLINE;
+    s->utf8_banner += "## ";
+#ifdef _WIN32
+    s->utf8_banner += cwd[0] + ":\\>";
+#else
+    s->utf8_banner += (geteuid()==0) ? "#" : "$";
+#endif
+    // Accounts for '## ', command prompt, and space before first argument
+    size_t bytes_written = 8;
+	
+    for (int largc = 0 ; largc < s->argc ; ++largc) {
+	s->utf8_banner += " ";
+	bytes_written++;
+	
+	// We are going to print the string. It's either ASCII or UTF16
+	// convert it to a tstring and then to UTF8 string.
+	tstring arg_t = tstring(s->argv[largc]);
+	std::string arg_utf8 = main::make_utf8(arg_t);
+	size_t current_bytes = arg_utf8.size();
+    
+    // The extra 32 bytes is a fudge factor
+	if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
+	    s->utf8_banner += std::string(NEWLINE) + "##";
+	    bytes_written = 3;
+	}
+	    
+	s->utf8_banner += arg_utf8;
+	bytes_written += current_bytes;
+    }
+    s->utf8_banner += std::string(NEWLINE) + "##" + NEWLINE;
+    /****************************************************************/
+
+
+
     /* Anything left on the command line at this point is a file
      *  or directory we're supposed to process. If there's nothing
      * specified, we should hash standard input
@@ -774,7 +820,7 @@ static void md5deep_check_flags_okay(state *s)
 	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)),
 	       "Matching or negative matching must be enabled to display non-matching files");
 
-  sanity_check((s->mode & mode_which) && 
+  sanity_check((opt_show_matched) && 
 	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)), 
 	       "Matching or negative matching must be enabled to display which file matched");
 }
@@ -828,23 +874,23 @@ int state::md5deep_process_command_line(int argc, char **argv)
     case 'Z': this->mode |= mode_triage; break;
     case 't': this->mode |= mode_timestamp; break;
     case 'n': this->mode |= mode_not_matched; break;
-    case 'w': this->mode |= mode_which;break; 		// display which known hash generated match
+    case 'w': opt_show_matched = true;break; 		// display which known hash generated match
 
     case 'a':
       this->mode |= mode_match;
-      md5deep_check_matching_modes(s);
+      md5deep_check_matching_modes(this);
       this->md5deep_add_hash(optarg,optarg);
       break;
 
     case 'A':
       this->mode |= mode_match_neg;
-      md5deep_check_matching_modes(s);
+      md5deep_check_matching_modes(this);
       this->md5deep_add_hash(optarg,optarg);
       break;
 
     case 'o': 
       this->mode |= mode_expert; 
-      setup_expert_mode(s,optarg);
+      setup_expert_mode(this,optarg);
       break;
       
     case 'M':
@@ -852,7 +898,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
       /* Intentional fall through */
     case 'm':
       this->mode |= mode_match;
-      md5deep_check_matching_modes(s);
+      md5deep_check_matching_modes(this);
       this->md5deep_load_match_file(optarg);
       break;
 
@@ -860,7 +906,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
       this->mode |= mode_display_hash;
     case 'x':
       this->mode |= mode_match_neg;
-      md5deep_check_matching_modes(s);
+      md5deep_check_matching_modes(this);
       this->md5deep_load_match_file(optarg);
       break;
 
