@@ -69,7 +69,7 @@ typedef struct _ENCASE_HASH_HEADER {
 "\"file_id\",\"hashset_id\",\"file_name\",\"directory\",\"hash\",\"file_size\",\"date_modified\",\"time_modified\",\"time_zone\",\"comments\",\"date_accessed\",\"time_accessed\""
 
 
-#define HASH_STRING_LENGTH   (hashes[md5deep_mode_algorithm].bit_length/4)
+#define HASH_STRING_LENGTH   (hashes[opt_md5deep_mode_algorithm].bit_length/4)
 
 /**
  * looks for a valid hash in the provided buffer.
@@ -99,7 +99,7 @@ int state::find_plain_hash(char *buf, char *known_fn)
 
     /* We have to include a validity check here so that we don't
        mistake SHA-1 hashes for MD5 hashes, among other things */
-    return algorithm_t::valid_hash(md5deep_mode_algorithm,buf);
+    return algorithm_t::valid_hash(opt_md5deep_mode_algorithm,buf);
 }  
 
 /**
@@ -386,7 +386,7 @@ int state::find_hash_in_line(char *buf, int fileType, char *fn)
 void state::md5deep_add_hash(char *h, char *fn)
 {
     class file_data_t *fdt = new file_data_t();
-    fdt->hash_hex[md5deep_mode_algorithm] = h; 
+    fdt->hash_hex[opt_md5deep_mode_algorithm] = h; 
     fdt->file_name = fn;
     ocb.add_fdt(fdt);
 }
@@ -422,7 +422,7 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
 
     if (fseeko(handle,ENCASE_START_HASHES,SEEK_SET))  {
 	print_error("%s: Unable to seek to start of hashes", fn);
-	return STATUS_USER_ERROR;
+	return status_t::STATUS_USER_ERROR;
     }
         
     while (!feof(handle)){		// 
@@ -434,7 +434,7 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
 	    if ((!opt_silent) || (mode & mode_warn_only)) {
 		print_error("%s: No hash found in line %"PRIu32, fn, count + 1);
 		print_error("%s: %s", fn, strerror(errno));
-		return STATUS_USER_ERROR;
+		return status_t::STATUS_USER_ERROR;
 	    }
 	}
 	++count;        
@@ -459,7 +459,7 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
 		 buffer[15]);
 
 	class file_data_t *fdt = new file_data_t();
-	fdt->hash_hex[md5deep_mode_algorithm] = result; 
+	fdt->hash_hex[opt_md5deep_mode_algorithm] = result; 
 	fdt->file_name = fn;
 	ocb.add_fdt(fdt);
     }
@@ -469,7 +469,7 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
 		    "%s: Expecting %"PRIu32" hashes, found %"PRIu32"\n", 
 		    fn, expected_hashes, count);
     }
-    return STATUS_OK;
+    return status_t::status_ok;
 }
 
 
@@ -529,7 +529,7 @@ void state::md5deep_load_match_file(const char *fn)
 	} else {
 	    // Invalid hashes are caught above
 	    file_data_t *fdt = new file_data_t();
-	    fdt->hash_hex[md5deep_mode_algorithm] = buf; // the hex hash
+	    fdt->hash_hex[opt_md5deep_mode_algorithm] = buf; // the hex hash
 	    fdt->file_name = known_fn;		    // the filename
 	    ocb.add_fdt(fdt);
 	}

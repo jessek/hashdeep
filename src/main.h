@@ -25,36 +25,14 @@
 #include <map>
 #include <vector>
 
-/* Global Options */
-extern bool opt_relative;		// print relative file names
-extern bool opt_silent;			// previously was mode_silent
-extern int  opt_verbose;		// can be 1, 2 or 3
-extern bool opt_zero;			// newlines are \000 
-extern bool opt_estimate;		// print ETA
-extern int  opt_debug;			// for debugging
-extern bool opt_unicode_escape;
-extern bool opt_show_matched;
-extern bool opt_display_size;
-
-/* Output Options */
-extern bool opt_csv;
-
-// Return values for the program 
-// RBF - Document these return values for hashdeep 
-#define STATUS_OK                      0
-#define STATUS_UNUSED_HASHES           1
-#define STATUS_INPUT_DID_NOT_MATCH     2
-#define STATUS_USER_ERROR             64
-#define STATUS_INTERNAL_ERROR        128 
-
 #define mode_none              0
 #define mode_recursive         1<<0
 //#define mode_estimate          1<<1          // now is opt_estimate
 //#define mode_silent            1<<2          // now is opt_silent
 #define mode_warn_only         1<<3
-#define mode_match             1<<4
-#define mode_match_neg         1<<5
-#define mode_display_hash      1<<6
+//#define mode_match             1<<4          // now is opt_mode_match
+//#define mode_match_neg         1<<5          // now is opt_mode_match_neg
+//#define mode_display_hash      1<<6	// now opt_display_hash
 //#define mode_display_size      1<<7          // now opt_display_size
 //#define mode_zero              1<<8          // now is opt_zero
 //#define mode_relative          1<<9
@@ -95,8 +73,6 @@ extern bool opt_csv;
 #define mode_pipe          (1LL)<<55
 #define mode_socket        (1LL)<<56
 #define mode_symlink       (1LL)<<57
-
-
 
 #define VERBOSE		1
 #define MORE_VERBOSE	2
@@ -200,16 +176,34 @@ extern algorithm_t     hashes[NUM_ALGORITHMS];		// which hash algorithms are ava
 
 
 
-/** status_t describes general kinds of errors.
+/** status_t describes exit codes for the program
  * 
  */
-typedef enum   {
-    status_ok = 0,
-    status_out_of_memory,
-    status_invalid_hash,  
-    status_unknown_error,
-    status_omg_ponies
-} status_t;
+class status_t  {
+private:
+    int32_t code;
+public:;
+    status_t():code(0){};
+    static const int32_t status_ok = EXIT_SUCCESS; // 0
+    static const int32_t status_EXIT_FAILURE = EXIT_FAILURE;
+    static const int32_t status_out_of_memory = -2;
+    static const int32_t status_invalid_hash = -3;
+    static const int32_t status_unknown_error = -4;
+    static const int32_t status_omg_ponies = -5;
+
+    // Return values for the program 
+    // RBF - Document these return values for hashdeep
+    // A successful run has these or'ed together
+    static const int32_t STATUS_UNUSED_HASHES = 1;
+    static const int32_t STATUS_INPUT_DID_NOT_MATCH = 2;
+    static const int32_t STATUS_USER_ERROR = 64;
+    static const int32_t STATUS_INTERNAL_ERROR = 128;
+    void add(int32_t val){ code |= val; }
+    void set(int32_t val){ code = val; }
+    int32_t get_status(){ return code; }
+    bool operator==(int32_t v){ return this->code==v; }
+    bool operator!=(int32_t v){ return this->code!=v; }
+};
 
 
 /** file_data_t contains information about a file.
@@ -495,7 +489,7 @@ private:
 	}
     }
 public:
-    display():outfile(0),banner_displayed(0),dfxml(0),return_code(status_ok){
+    display():outfile(0),banner_displayed(0),dfxml(0){
 #ifdef HAVE_PTHREAD
 	pthread_mutex_init(&M,NULL);
 #endif	
@@ -508,8 +502,14 @@ public:
     void	open(const std::string &outfilename); // open outfilename; error if can't.
 
     /* Return code support */
-    void	set_return_code(int code){ lock(); return_code = code; unlock(); }
-    int		get_return_code(){ lock(); int ret = return_code; unlock(); return ret; }
+    int32_t	get_return_code(){ lock(); int ret = return_code.get_status(); unlock(); return ret; }
+    void	set_return_code(status_t code){ lock(); return_code = code; unlock(); }
+    void	set_return_code(int32_t code){ lock(); return_code.set(code); unlock(); }
+    void	set_return_code_if_not_ok(status_t code){
+	lock();
+	if(code!=status_t::status_ok) return_code = code;
+	unlock();
+    }
 
     /* DFXML support */
 
@@ -539,8 +539,8 @@ public:
 
     void	display_size(const file_data_t *fdh);
     void	display_banner_if_needed(const std::string &utf8_banner);
-    int		display_hash(file_data_hasher_t *fdht);
-    int		display_hash_simple(file_data_hasher_t *fdt);
+    void	display_hash(file_data_hasher_t *fdht);
+    void	display_hash_simple(file_data_hasher_t *fdt);
 
     /* The following routines are for printing and outputing filenames.
      * 
@@ -561,10 +561,14 @@ public:
      */
     
     void	output_filename(FILE *out,const file_data_t &fdt);
+    void	output_filename(FILE *out,const file_data_t *fdt){
+	output_filename(out,*fdt);
+    };
 
     /* realtime_stats is the amount of data hashed and what's left */
 
-    void	display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed);
+    void	clear_realtime_stats();
+    void	display_realtime_stats(const file_data_hasher_t *fdht,time_t elapsed);
     bool	hashes_loaded() const{
 	return known.size()>0;
     }
@@ -575,21 +579,24 @@ public:
     }
 
     status_t	display_match_result(file_data_hasher_t *fdht);
-    int		md5deep_display_match_result(file_data_hasher_t *fdht);
+    void	md5deep_display_match_result(file_data_hasher_t *fdht);
 
     /* audit mode */
     int		audit_update(file_data_hasher_t *fdt);
     int		audit_check();		// performs an audit; return 0 if pass, -1 if fail
-    int		display_audit_results();
-    int		finalize_matching();
+    void	display_audit_results(); // sets return code if fails
+    void	finalize_matching();
+
+    /* multithreaded hash implementation is these functions in hash.cpp.
+     * hash() is called to hash each file and record the results.
+     * It previously returned the result code. We can't do that in a multi-threaded environment,
+     * so the status is instead stored in ocb->status if there is an error.
+     */
+    void hash(file_data_hasher_t *fdht); // called to hash each file and record results
+    void compute_hash(file_data_hasher_t *fdht);
+
 };
 
-/* multithreaded hash implementation is these functions in hash.cpp.
- * hash() is called to hash each file and record the results.
- * It previously returned the result code. We can't do that in a multi-threaded environment,
- * so the status is instead stored in ocb->status if there is an error.
- */
-void hash(display *ocb,file_data_hasher_t *fdht); // called to hash each file and record results
 
 
 
@@ -635,8 +642,7 @@ public:;
 	    h_plain(0),h_bsd(0),h_md5deep_size(0),
 	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
 	    h_nsrl20(0), h_encase(0),
-	    md5deep_mode(0),md5deep_mode_algorithm(alg_unknown)
-	    {};
+	    md5deep_mode(0)	    {};
 
     /* Basic Program State */
     primary_t       primary_function;
@@ -669,8 +675,6 @@ public:;
      * 'md5deep_mode' and track it with the variables below.
      */
     bool	md5deep_mode;		// if true, then we were run as md5deep, sha1deep, etc.
-    hashid_t	md5deep_mode_algorithm;	// which algorithm number we are using, derrived from argv[0]
-
     void	md5deep_add_hash(char *h, char *fn); // explicitly add a hash
 
 
@@ -687,7 +691,7 @@ public:;
      */
     
     void	md5deep_load_match_file(const char *fn);
-    int		md5deep_display_hash(file_data_hasher_t *fdht);
+    void	md5deep_display_hash(file_data_hasher_t *fdht);
     int		find_hash_in_line(char *buf, int fileType, char *filename);
     int		parse_encase_file(const char *fn,FILE *f,uint32_t num_expected_hashes);
     int		find_plain_hash(char *buf,char *known_fn); // returns FALSE if error
@@ -726,6 +730,21 @@ class files {
 };
 
 /* main.cpp */
+extern bool opt_relative;		// print relative file names
+extern bool opt_silent;			// previously was mode_silent
+extern int  opt_verbose;		// can be 1, 2 or 3
+extern bool opt_zero;			// newlines are \000 
+extern bool opt_estimate;		// print ETA
+extern int  opt_debug;			// for debugging
+extern bool opt_unicode_escape;
+extern bool opt_show_matched;
+extern bool opt_display_size;
+extern bool opt_mode_match;
+extern bool opt_display_hash;
+extern bool opt_mode_match_neg;
+extern hashid_t opt_md5deep_mode_algorithm;	// for when we are in MD5DEEP mode
+extern bool opt_csv;
+
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);
 void lowercase(std::string &s);

@@ -112,11 +112,18 @@ void display::output_filename(FILE *out,const file_data_t &fdt)
     lock();
     output_filename(out,fdt.file_name);
     if(fdt.file_name_annotation.size()>0){
-	output_filename(fdt.file_name_annotation);
+	output_filename(out,fdt.file_name_annotation);
     }
     unlock();
 }
 
+
+void display::clear_realtime_stats()
+{
+    lock();
+    fprintf(stderr,"\r%s\r",BLANK_LINE);
+    unlock();
+}
 
 // At least one user has suggested changing update_display() to 
 // use human readable units (e.g. GB) when displaying the updates.
@@ -183,12 +190,12 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
      */
     
 
-    tstring fn = fdht->filename;
+    tstring fn = fdht->file_name;
 
     if (fn.size() < MAX_FILENAME_LENGTH){
 	/* Shorten from the middle */
 	size_t half = MAX_FILENAME_LENGTH/2;
-	fn = fn.substr(0,half) + T("...") + fn.substr(fn.size()-half,half);
+	fn = fn.substr(0,half) + _T("...") + fn.substr(fn.size()-half,half);
     }
     output_filename(stderr,fn);
     output_filename(stderr,msg);	// was previously put in the anotation
@@ -238,11 +245,11 @@ void file_data_hasher_t::compute_dfxml(bool known_hash)
 /*
  * Externally called to display a simple hash
  */
-int display::display_hash_simple(file_data_hasher_t *fdht)
+void display::display_hash_simple(file_data_hasher_t *fdht)
 {
     if(this->dfxml){
 	fdht->compute_dfxml(opt_show_matched);
-	return FALSE;
+	return;
     }
 
     /* In piecewise mode the size of each 'file' is the size
@@ -274,14 +281,12 @@ int display::display_hash_simple(file_data_hasher_t *fdht)
     return FALSE;
 }
 
-int display::display_audit_results()
+void display::display_audit_results()
 {
-    int ret = EXIT_SUCCESS;
-    
     lock();
     if (audit_check()==0) {
 	status("%s: Audit failed", __progname);
-	ret = EXIT_FAILURE;
+	set_return_code(status_t::status_EXIT_FAILURE);
     }
     else {
 	status("%s: Audit passed", __progname);
@@ -300,7 +305,6 @@ int display::display_audit_results()
 	status("  Known files not found: %"PRIu64, this->match.unused);
     }
     unlock();
-    return ret;
 }
 
 
@@ -322,53 +326,50 @@ void display::display_size(const file_data_t *fdt)
 
 
 /* The old display_match_result from md5deep */
-int display::md5deep_display_match_result(file_data_hasher_t *fdht)
+void display::md5deep_display_match_result(file_data_hasher_t *fdht)
 {  
-    file_data_t *fs = known.find_hash(md5deep_mode_algorithm,
-				      fdht->hash_hex[md5deep_mode_algorithm],
+    file_data_t *fs = known.find_hash(opt_md5deep_mode_algorithm,
+				      fdht->hash_hex[opt_md5deep_mode_algorithm],
 				      fdht->file_number);
     int known_hash = fs ? 1 : 0;
 
-    if ((known_hash && (mode & mode_match)) ||
-	(!known_hash && (mode & mode_match_neg))) {
+    if ((known_hash && (opt_mode_match)) ||
+	(!known_hash && (opt_mode_match_neg))) {
 	if(dfxml){
-	    compute_dfxml(fdht,(opt_show_matched || known_hash);
-	    return FALSE;
+	    fdht->compute_dfxml(opt_show_matched || known_hash);
+	    return ;
 	}
-	{
-	    lock();
+	lock();
 	    
-	    display_size(this,fdht);
-	    if (mode & mode_display_hash) {
-		fprintf(outfile,"%s", fdht->hash_hex[md5deep_mode_algorithm].c_str());
-		if (opt_csv) {
-		    fprintf(outfile,",");
-		} else if (mode & mode_asterisk) {
-		    fprintf(outfile," *");
-		} else {
-		    fprintf(outfile,"  ");
-		}
+	display_size(fdht);
+	if (mode & mode_display_hash) {
+	    fprintf(outfile,"%s", fdht->hash_hex[opt_md5deep_mode_algorithm].c_str());
+	    if (opt_csv) {
+		fprintf(outfile,",");
+	    } else if (mode & mode_asterisk) {
+		fprintf(outfile," *");
+	    } else {
+		fprintf(outfile,"  ");
 	    }
-	    
-	    if (opt_show_matched) 	    {
-		if (known_hash && (mode & mode_match)) {
-		    output_filename(outfile,fdht);
-		    fprintf(outfile," matched ");
-		    output_filename(outfile,fs->file_name);
-		}
-		else {
-		    output_filename(outfile,fdht);
-		    fprintf(outfile," does NOT match");
-		}
-	    }
-	    else{
-		output_filename(outfile,fdht);
-	    }
-	    newline();
-	    unlock();
 	}
+	    
+	if (opt_show_matched) 	    {
+	    if (known_hash && (opt_mode_match)) {
+		output_filename(outfile,*fdht);
+		fprintf(outfile," matched ");
+		output_filename(outfile,fs->file_name);
+	    }
+	    else {
+		output_filename(outfile,*fdht);
+		fprintf(outfile," does NOT match");
+	    }
+	}
+	else{
+	    output_filename(outfile,*fdht);
+	}
+	newline();
+	unlock();
     }
-    return FALSE;
 }
 
 /* The original display_match_result from md5deep.
@@ -504,36 +505,37 @@ int display::audit_check()
 
 
 /* The old display_hash from the md5deep program, with a few modifications */
-int display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher because of triage
+void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher because of triage
 {
     if (mode & mode_triage) {
 	if(dfxml){
 	    compute_dfxml(fdht,1);	// no lock required here
-	    return FALSE;
+	    return;
 	}
 	lock();
-	fprintf(outfile,"\t%s\t", fdht->hash_hex[this->md5deep_mode_algorithm].c_str());
+	fprintf(outfile,"\t%s\t", fdht->hash_hex[opt_md5deep_mode_algorithm].c_str());
 	output_filename(stdout,fdht);
 	newline();
 	unlock();
-	return FALSE;
+	return;
     }
 
     // We can't call display_size here because we don't know if we're
     // going to display *anything* yet. If we're in matching mode, we
     // have to evaluate if there was a match first. 
-    if ((this->mode & mode_match) || (this->mode & mode_match_neg)){
-	return md5deep_display_match_result(fdht);
+    if ((opt_mode_match) || (opt_mode_match_neg)){
+	md5deep_display_match_result(fdht);
+	return;
     }
     
     if(this->dfxml){
 	compute_dfxml(fdht,opt_show_matched);
-	return FALSE;
+	return;
     }
 
     lock();
     display_size(this,fdht);
-    fprintf(outfile,"%s", fdht->hash_hex[this->md5deep_mode_algorithm].c_str());
+    fprintf(outfile,"%s", fdht->hash_hex[opt_md5deep_mode_algorithm].c_str());
 
     if (this->mode & mode_quiet){
 	fprintf(outfile,"  ");
@@ -573,7 +575,6 @@ int display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher beca
     }
     newline();
     unlock();
-    return FALSE;
 }
 
 /**
@@ -581,16 +582,17 @@ int display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher beca
  * been used or if any input files did not match the known hashes. If
  * requested, displays any unused known hashes. Returns a status variable
  */
-int display::finalize_matching()
+void display::finalize_matching()
 {
-  int status = STATUS_OK;
-
-  if (known.total_matched!=known.size()) status |= STATUS_UNUSED_HASHES; // were there any unmatched?
-  if (known.total_matched==0) status |= STATUS_INPUT_DID_NOT_MATCH; // were they all unmatched?
-  if (mode & mode_not_matched){	// should we display those that were not matched?
-      ocb.compute_unused(true,"");
-  }
-  return status;
+    if (known.total_matched!=known.size()){
+	status.add(status_t::STATUS_UNUSED_HASHES); // were there any unmatched?
+    }
+    if (known.total_matched==0){
+	status.add(status_t::STATUS_INPUT_DID_NOT_MATCH); // were they all unmatched?
+    }
+    if (mode & mode_not_matched){	// should we display those that were not matched?
+	ocb.compute_unused(true,"");
+    }
 }
 
 
@@ -602,11 +604,11 @@ uint64_t display::compute_unused(bool display, std::string annotation)
 {
     lock();
     uint64_t count=0;
-    for(hashlist::const_iterator i = known->begin(); i != known->end(); i++){
+    for(hashlist::const_iterator i = known.begin(); i != known.end(); i++){
 	if((*i)->matched_file_number==0){
 	    count++;
 	    if (display || opt_verbose >= MORE_VERBOSE) {
-		output_filename(*i);
+		output_filename(stdout,*i);
 		print_status(annotation.c_str());
 	    }
 	}
@@ -670,11 +672,11 @@ void display::dfxml_setup()
 void display::dfxml_shutdown()
 {
     lock();
-    if(s->dfxml){
-	s->dfxml->pop();		// outermost
-	s->dfxml->close();
-	delete s->dfxml;
-	s->dfxml = 0;
+    if(dfxml){
+	dfxml->pop();		// outermost
+	dfxml->close();
+	delete dfxml;
+	dfxml = 0;
     }
     unlock();
 }

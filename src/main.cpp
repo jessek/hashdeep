@@ -63,6 +63,10 @@ bool opt_relative = false;
 bool opt_unicode_escape = false;
 bool opt_show_matched = false;
 bool opt_display_size = false;
+bool opt_mode_match = false;
+bool opt_mode_match_neg = false;
+
+hashid_t  opt_md5deep_mode_algorithm = alg_unknown;
 /* output options */
 bool opt_csv = false;
 
@@ -80,7 +84,7 @@ static void sanity_check(int condition, const char *msg)
 	    print_status("%s: %s", __progname, msg);
 	    try_msg();
 	}
-	exit (STATUS_USER_ERROR);
+	exit (status_t::STATUS_USER_ERROR);
     }
 }
 
@@ -427,7 +431,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       if (0 == this->size_threshold) {
 	print_error("%s: Requested size threshold implies not hashing anything",
 		    __progname);
-	exit(STATUS_USER_ERROR);
+	exit(status_t::STATUS_USER_ERROR);
       }
       break;
 
@@ -635,10 +639,182 @@ std::string main::get_realpath8(const tstring &fn)
 }
 
 
+/****************************************************************
+ * Legacy code from md5deep follows....
+ *
+ ****************************************************************/
+
+
+static void md5deep_check_flags_okay(state *s)
+{
+  sanity_check(((opt_mode_match) || (opt_mode_match_neg)) &&
+	       s->hashes_loaded()==0,
+	       "Unable to load any matching files");
+
+  sanity_check((opt_relative) && (s->mode & mode_barename),
+	       "Relative paths and bare filenames are mutally exclusive");
+  
+  sanity_check((s->mode & mode_piecewise) && (opt_display_size),
+	       "Piecewise mode and file size display is just plain silly");
+
+
+  /* If we try to display non-matching files but haven't initialized the
+     list of matching files in the first place, bad things will happen. */
+  sanity_check((s->mode & mode_not_matched) && 
+	       ! ((opt_mode_match) || (opt_mode_match_neg)),
+	       "Matching or negative matching must be enabled to display non-matching files");
+
+  sanity_check((opt_show_matched) && 
+	       ! ((opt_mode_match) || (opt_mode_match_neg)), 
+	       "Matching or negative matching must be enabled to display which file matched");
+}
+
+
+static void md5deep_check_matching_modes(state *s)
+{
+    sanity_check((opt_mode_match) && (opt_mode_match_neg),
+		 "Regular and negative matching are mutually exclusive.");
+}
+
+
+int state::md5deep_process_command_line(int argc, char **argv)
+{
+  int i;
+
+  while ((i = getopt(argc,
+		     argv,
+		     "df:I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:D:u")) != -1) { 
+    switch (i) {
+
+    case 'D': opt_debug = atoi(optarg);break;
+    case 'd': this->ocb.xml_open(stdout); break;
+    case 'f':
+      this->mode |= mode_read_from_file;
+      break;
+
+    case 'I':
+      this->mode |= mode_size_all;
+      // Note that there is no break here
+    case 'i':
+      this->mode |= mode_size;
+      this->size_threshold = find_block_size(this,optarg);
+      if (0 == this->size_threshold) {
+	print_error("%s: Requested size threshold implies not hashing anything",
+		    __progname);
+	exit(status_t::STATUS_USER_ERROR);
+      }
+      break;
+
+    case 'p':
+      this->mode |= mode_piecewise;
+      this->piecewise_size = find_block_size(this, optarg);
+      if (this->piecewise_size==0) {
+	print_error("%s: Illegal size value for piecewise mode.", __progname);
+	exit(status_t::STATUS_USER_ERROR);
+      }
+
+      break;
+
+    case 'Z': this->mode |= mode_triage; break;
+    case 't': this->mode |= mode_timestamp; break;
+    case 'n': this->mode |= mode_not_matched; break;
+    case 'w': opt_show_matched = true;break; 		// display which known hash generated match
+
+    case 'a':
+	opt_mode_match=true;
+      md5deep_check_matching_modes(this);
+      this->md5deep_add_hash(optarg,optarg);
+      break;
+
+    case 'A':
+	opt_mode_match_neg=true;
+      md5deep_check_matching_modes(this);
+      this->md5deep_add_hash(optarg,optarg);
+      break;
+
+    case 'o': 
+      this->mode |= mode_expert; 
+      setup_expert_mode(this,optarg);
+      break;
+      
+    case 'M':
+      this->mode |= mode_display_hash;
+      /* Intentional fall through */
+    case 'm':
+	opt_mode_match=true;
+      md5deep_check_matching_modes(this);
+      this->md5deep_load_match_file(optarg);
+      break;
+
+    case 'X':
+      this->mode |= mode_display_hash;
+    case 'x':
+	opt_mode_match_neg=true;
+      md5deep_check_matching_modes(this);
+      this->md5deep_load_match_file(optarg);
+      break;
+
+    case 'c': opt_csv = true;		break;
+    case 'z': opt_display_size = true;	break;
+    case '0': opt_zero = true;		break;
+
+    case 'S': 
+      this->mode |= mode_warn_only;
+      opt_silent = true;
+      break;
+
+    case 's': opt_silent = true; break;
+
+    case 'e': opt_estimate = true; break;
+
+    case 'r':
+      this->mode |= mode_recursive;
+      break;
+
+    case 'k':
+      this->mode |= mode_asterisk;
+      break;
+
+    case 'b': this->mode |= mode_barename; break;
+      
+    case 'l': 
+	opt_relative = true;
+      break;
+
+    case 'q': 
+      this->mode |= mode_quiet; 
+      break;
+
+    case 'h':
+	md5deep_usage();
+      exit (EXIT_SUCCESS);
+
+    case 'v':
+      print_status("%s",VERSION);
+      exit (EXIT_SUCCESS);
+
+    case 'V':
+      // COPYRIGHT is a format string, complete with newlines
+      print_status(COPYRIGHT);
+      exit (EXIT_SUCCESS);
+
+    case 'W':	ocb.open(optarg);	break;
+    case 'u':	opt_unicode_escape = 1;	break;
+
+    default:
+      try_msg();
+      exit (status_t::STATUS_USER_ERROR);
+
+    }
+  }
+
+  md5deep_check_flags_okay(this);
+  return EXIT_SUCCESS;
+}
+
+
 int main(int argc, char **argv)
 {
-    int status = EXIT_SUCCESS;
-
     /* Because the main() function can handle wchar_t arguments on Win32,
      * we need a way to reference those values. Thus we make a duplciate
      * of the argc and argv values.
@@ -678,7 +854,7 @@ int main(int argc, char **argv)
 	for(int i=0;i<NUM_ALGORITHMS;++i){
 	    if(hashes[i].inuse){
 		s->md5deep_mode = 1;
-		s->md5deep_mode_algorithm = hashes[i].id;
+		opt_md5deep_mode_algorithm = hashes[i].id;
 		break;
 	    }
 	}
@@ -769,16 +945,16 @@ int main(int argc, char **argv)
 	for(int i=optind;i<s->argc;i++){
 	    tstring fn = generate_filename(s,s->argv[i]);
 #ifdef _WIN32
-	    status = s->dig_win32(fn);
+	    s->dig_win32(fn);
 #else
-	    status = s->dig_normal(fn);
+	    s->dig_normal(fn);
 #endif
 	}
     }
   
     /* If we were auditing, display the audit results */
     if (s->primary_function == primary_audit){
-	status = s->ocb.display_audit_results();
+	s->ocb.display_audit_results();
     }
   
     /* We only have to worry about checking for unused hashes if one 
@@ -787,186 +963,12 @@ int main(int argc, char **argv)
      * also sets our return values in terms of inputs not being matched
      * or known hashes not being used
      */
-    if ((s->mode & mode_match) || (s->mode & mode_match_neg)){
-	status = s->ocb.finalize_matching();
+    if ((opt_mode_match) || (opt_mode_match_neg)){
+	s->ocb.finalize_matching();
     }
 
     /* If we were generating DFXML, finish the job */
     s->ocb.dfxml_shutdown();
-    return status;
+    return s->ocb.get_return_code();
 }
-
-/****************************************************************
- * Legacy code from md5deep follows....
- *
- ****************************************************************/
-
-
-static void md5deep_check_flags_okay(state *s)
-{
-  sanity_check(((s->mode & mode_match) || (s->mode & mode_match_neg)) &&
-	       s->hashes_loaded()==0,
-	       "Unable to load any matching files");
-
-  sanity_check((opt_relative) && (s->mode & mode_barename),
-	       "Relative paths and bare filenames are mutally exclusive");
-  
-  sanity_check((s->mode & mode_piecewise) && (opt_display_size),
-	       "Piecewise mode and file size display is just plain silly");
-
-
-  /* If we try to display non-matching files but haven't initialized the
-     list of matching files in the first place, bad things will happen. */
-  sanity_check((s->mode & mode_not_matched) && 
-	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)),
-	       "Matching or negative matching must be enabled to display non-matching files");
-
-  sanity_check((opt_show_matched) && 
-	       ! ((s->mode & mode_match) || (s->mode & mode_match_neg)), 
-	       "Matching or negative matching must be enabled to display which file matched");
-}
-
-
-static void md5deep_check_matching_modes(state *s)
-{
-    sanity_check((s->mode & mode_match) && (s->mode & mode_match_neg),
-		 "Regular and negative matching are mutually exclusive.");
-}
-
-
-int state::md5deep_process_command_line(int argc, char **argv)
-{
-  int i;
-
-  while ((i = getopt(argc,
-		     argv,
-		     "df:I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:D:u")) != -1) { 
-    switch (i) {
-
-    case 'D': opt_debug = atoi(optarg);break;
-    case 'd': this->ocb.xml_open(stdout); break;
-    case 'f':
-      this->mode |= mode_read_from_file;
-      break;
-
-    case 'I':
-      this->mode |= mode_size_all;
-      // Note that there is no break here
-    case 'i':
-      this->mode |= mode_size;
-      this->size_threshold = find_block_size(this,optarg);
-      if (0 == this->size_threshold) {
-	print_error("%s: Requested size threshold implies not hashing anything",
-		    __progname);
-	exit(STATUS_USER_ERROR);
-      }
-      break;
-
-    case 'p':
-      this->mode |= mode_piecewise;
-      this->piecewise_size = find_block_size(this, optarg);
-      if (this->piecewise_size==0) {
-	print_error("%s: Illegal size value for piecewise mode.", __progname);
-	exit(STATUS_USER_ERROR);
-      }
-
-      break;
-
-    case 'Z': this->mode |= mode_triage; break;
-    case 't': this->mode |= mode_timestamp; break;
-    case 'n': this->mode |= mode_not_matched; break;
-    case 'w': opt_show_matched = true;break; 		// display which known hash generated match
-
-    case 'a':
-      this->mode |= mode_match;
-      md5deep_check_matching_modes(this);
-      this->md5deep_add_hash(optarg,optarg);
-      break;
-
-    case 'A':
-      this->mode |= mode_match_neg;
-      md5deep_check_matching_modes(this);
-      this->md5deep_add_hash(optarg,optarg);
-      break;
-
-    case 'o': 
-      this->mode |= mode_expert; 
-      setup_expert_mode(this,optarg);
-      break;
-      
-    case 'M':
-      this->mode |= mode_display_hash;
-      /* Intentional fall through */
-    case 'm':
-      this->mode |= mode_match;
-      md5deep_check_matching_modes(this);
-      this->md5deep_load_match_file(optarg);
-      break;
-
-    case 'X':
-      this->mode |= mode_display_hash;
-    case 'x':
-      this->mode |= mode_match_neg;
-      md5deep_check_matching_modes(this);
-      this->md5deep_load_match_file(optarg);
-      break;
-
-    case 'c': opt_csv = true;		break;
-    case 'z': opt_display_size = true;	break;
-    case '0': opt_zero = true;		break;
-
-    case 'S': 
-      this->mode |= mode_warn_only;
-      opt_silent = true;
-      break;
-
-    case 's': opt_silent = true; break;
-
-    case 'e': opt_estimate = true; break;
-
-    case 'r':
-      this->mode |= mode_recursive;
-      break;
-
-    case 'k':
-      this->mode |= mode_asterisk;
-      break;
-
-    case 'b': this->mode |= mode_barename; break;
-      
-    case 'l': 
-	opt_relative = true;
-      break;
-
-    case 'q': 
-      this->mode |= mode_quiet; 
-      break;
-
-    case 'h':
-	md5deep_usage();
-      exit (STATUS_OK);
-
-    case 'v':
-      print_status("%s",VERSION);
-      exit (STATUS_OK);
-
-    case 'V':
-      // COPYRIGHT is a format string, complete with newlines
-      print_status(COPYRIGHT);
-      exit (STATUS_OK);
-
-    case 'W':	ocb.open(optarg);	break;
-    case 'u':	opt_unicode_escape = 1;	break;
-
-    default:
-      try_msg();
-      exit (STATUS_USER_ERROR);
-
-    }
-  }
-
-  md5deep_check_flags_okay(this);
-  return STATUS_OK;
-}
-
 

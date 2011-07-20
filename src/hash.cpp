@@ -58,7 +58,7 @@ static std::string make_stars(int count)
  */
 
 
-int compute_hash(file_data_hasher_t *fdht)
+void display::compute_hash(file_data_hasher_t *fdht)
 {
     time_t current_time;
     uint64_t current_read, mysize, remaining, this_start;
@@ -104,7 +104,10 @@ int compute_hash(file_data_hasher_t *fdht)
 				 ftello(fdht->handle),
 				 strerror(errno));
 	   
-	    if (file_fatal_error()) return FALSE; 
+	    if (file_fatal_error()){
+		set_return_code(status_t::status_EXIT_FAILURE);
+		return;
+	    }
       
 	    fdht->multihash_update(buffer,current_read);
       
@@ -124,10 +127,9 @@ int compute_hash(file_data_hasher_t *fdht)
 	if (feof(fdht->handle))    {	
 	    // If we've been printing time estimates, we now need to clear the line.
 	    if (opt_estimate){
-		fprintf(stderr,"\r%s\r",BLANK_LINE);
+		clear_realtime_stats();
 	    }
-
-	    return TRUE;
+	    return;			// done hashing!
 	} 
 
 	// In piecewise mode we only hash one block at a time
@@ -150,7 +152,6 @@ int compute_hash(file_data_hasher_t *fdht)
 	    }
 	}
     }      
-    return TRUE;
 }
 
 
@@ -168,9 +169,9 @@ int compute_hash(file_data_hasher_t *fdht)
  * Result is stored in the fdht structure.
  * This routine is made multi-threaded to make the system run faster.
  */
-int hash(display *ocb,file_data_hasher_t *fdht)
+void display::hash(file_data_hasher_t *fdht)
 {
-    int done = FALSE, status = FALSE;
+    int done = FALSE;
   
     fdht->actual_bytes = 0;
 
@@ -195,7 +196,8 @@ int hash(display *ocb,file_data_hasher_t *fdht)
 	fdht->piecewise = false;
 	fdht->multihash_finalize();
 	if(success){
-	    printf ("%"PRIu64"\t%s", fdht->stat_bytes, fdht->hash_hex[s->md5deep_mode_algorithm].c_str());
+	    printf ("%"PRIu64"\t%s", fdht->stat_bytes,
+		    fdht->hash_hex[opt_md5deep_mode_algorithm].c_str());
 	}
 
 	/*
@@ -245,12 +247,12 @@ int hash(display *ocb,file_data_hasher_t *fdht)
 		// The lookup is to mark those known hashes that we do encounter.
 		// searching for the hash will cause matched_file_number to be set
 		if (s->mode & mode_not_matched){
-		    s->known.find_hash(s->md5deep_mode_algorithm,
-				       fdht->hash_hex[s->md5deep_mode_algorithm],
+		    s->known.find_hash(opt_md5deep_mode_algorithm,
+				       fdht->hash_hex[opt_md5deep_mode_algorithm],
 				       fdht->file_number);
 		}
 		else {
-		    status = s->md5deep_display_hash(fdht);
+		    md5deep_display_hash(fdht);
 		}
 	    } else {
 		s->display_hash(fdht);

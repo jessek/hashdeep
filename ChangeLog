@@ -1,3 +1,7 @@
+2011-07-19  Simson Garfinkel  <simsong@184.sub-75-243-240.myvzw.com>
+
+	* src/main.h (enum): added status_EXIT_FAILURE to status_t as status_t is now returned.
+
 2011-07-19  Simson Garfinkel  <simsong@imac3.home>
 
 	* src/display.cpp: the only place that filename shortening was done was in display_realtime_stats, so all of the filename shortening logic was moved there and it was moved out of display_filename everywhere else. The passage of the FILE * to display to was put back in, becuase display_filename was also being used to display error messages.
