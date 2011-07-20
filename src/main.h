@@ -518,7 +518,7 @@ public:
 	dfxml = new XML(out);
 	unlock();
     }
-    void dfxml_startup();
+    void dfxml_startup(int argc,char **argv);
     void dfxml_shutdown();
 
     void newline();			// outputs a \n or a 0
@@ -589,11 +589,11 @@ public:
 
     /* multithreaded hash implementation is these functions in hash.cpp.
      * hash() is called to hash each file and record the results.
-     * It previously returned the result code. We can't do that in a multi-threaded environment,
-     * so the status is instead stored in ocb->status if there is an error.
+     * Return codes are now both stored in display return_code and returned
+     * 0 - for success, -1 for error
      */
-    void hash(file_data_hasher_t *fdht); // called to hash each file and record results
-    void compute_hash(file_data_hasher_t *fdht);
+    int hash(file_data_hasher_t *fdht); // called to hash each file and record results
+    int compute_hash(file_data_hasher_t *fdht);
 
 };
 

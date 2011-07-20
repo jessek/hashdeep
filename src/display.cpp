@@ -278,7 +278,7 @@ void display::display_hash_simple(file_data_hasher_t *fdht)
     output_filename(outfile,*fdht);
     fprintf(outfile,"%s",NEWLINE);
     unlock();
-    return FALSE;
+    return;
 }
 
 void display::display_audit_results()
@@ -342,7 +342,7 @@ void display::md5deep_display_match_result(file_data_hasher_t *fdht)
 	lock();
 	    
 	display_size(fdht);
-	if (mode & mode_display_hash) {
+	if (opt_display_hash) {
 	    fprintf(outfile,"%s", fdht->hash_hex[opt_md5deep_mode_algorithm].c_str());
 	    if (opt_csv) {
 		fprintf(outfile,",");
@@ -411,7 +411,7 @@ status_t display::display_match_result(file_data_hasher_t *fdht)
 	break;
     }
     if (should_display) {
-	if (mode & mode_display_hash)
+	if (opt_display_hash)
 	    display_hash_simple(fdht);
 	else {
 	    output_filename(stdout,fdht);
@@ -427,7 +427,6 @@ status_t display::display_match_result(file_data_hasher_t *fdht)
 	}
     }
     unlock();
-    return status_ok;
 }
 
 
@@ -509,7 +508,7 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 {
     if (mode & mode_triage) {
 	if(dfxml){
-	    compute_dfxml(fdht,1);	// no lock required here
+	    fdht->compute_dfxml(1);	// no lock required here
 	    return;
 	}
 	lock();
@@ -529,12 +528,12 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
     }
     
     if(this->dfxml){
-	compute_dfxml(fdht,opt_show_matched);
+	fdht->compute_dfxml(opt_show_matched);
 	return;
     }
 
     lock();
-    display_size(this,fdht);
+    display_size(fdht);
     fprintf(outfile,"%s", fdht->hash_hex[opt_md5deep_mode_algorithm].c_str());
 
     if (this->mode & mode_quiet){
@@ -623,7 +622,7 @@ uint64_t display::compute_unused(bool display, std::string annotation)
  * Called by hash() in hash.c when the hashing operation is complete.
  * Display the hash and perform any auditing steps.
  */ 
-int display::display_hash(file_data_hasher_t *fdht)
+void display::display_hash(file_data_hasher_t *fdht)
 {
     if(md5deep_mode){
 	md5deep_display_hash(fdht);
@@ -644,7 +643,7 @@ int display::display_hash(file_data_hasher_t *fdht)
 
 
 
-void display::dfxml_setup()
+void display::dfxml_startup(int argc,char **argv)
 {
     lock();
     if(dfxml){

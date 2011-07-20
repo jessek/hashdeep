@@ -55,10 +55,11 @@ static std::string make_stars(int count)
 
 /*
  * Compute the hash on fdht and store the results in fdht. 
+ * returns 0 if success, -1 if failure.
  */
 
 
-void display::compute_hash(file_data_hasher_t *fdht)
+int display::compute_hash(file_data_hasher_t *fdht)
 {
     time_t current_time;
     uint64_t current_read, mysize, remaining, this_start;
@@ -106,7 +107,7 @@ void display::compute_hash(file_data_hasher_t *fdht)
 	   
 	    if (file_fatal_error()){
 		set_return_code(status_t::status_EXIT_FAILURE);
-		return;
+		return -1;		// error
 	    }
       
 	    fdht->multihash_update(buffer,current_read);
@@ -129,13 +130,13 @@ void display::compute_hash(file_data_hasher_t *fdht)
 	    if (opt_estimate){
 		clear_realtime_stats();
 	    }
-	    return;			// done hashing!
+	    return 0;			// done hashing!
 	} 
 
 	// In piecewise mode we only hash one block at a time
 	if (fdht->piecewise)    {
 	    remaining -= current_read;
-	    if (remaining == 0) return TRUE;
+	    if (remaining == 0) return;
 
 	    if (remaining < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE){
 		mysize = remaining;
@@ -152,6 +153,7 @@ void display::compute_hash(file_data_hasher_t *fdht)
 	    }
 	}
     }      
+    return 0;
 }
 
 
@@ -169,7 +171,7 @@ void display::compute_hash(file_data_hasher_t *fdht)
  * Result is stored in the fdht structure.
  * This routine is made multi-threaded to make the system run faster.
  */
-void display::hash(file_data_hasher_t *fdht)
+int display::hash(file_data_hasher_t *fdht)
 {
     int done = FALSE;
   
@@ -221,8 +223,8 @@ void display::hash(file_data_hasher_t *fdht)
 	 * or all of the piecewise hashes.
 	 * It returns FALSE if there is a failure.
 	 */
-	if (!compute_hash(fdht)) {
-	    return TRUE;
+	if (compute_hash(fdht)) {
+	    return -1;
 	}
 
 	// We should only display a hash if we've processed some
@@ -258,8 +260,6 @@ void display::hash(file_data_hasher_t *fdht)
 		s->display_hash(fdht);
 	    }
 	}
-    
-
 	if (fdht->piecewise){
 	    done = feof(fdht->handle);
 	} else {
@@ -277,7 +277,7 @@ void display::hash(file_data_hasher_t *fdht)
 	s->dfxml->writexml(fdht->dfxml_hash);
 	s->dfxml->pop();
     }
-    return status;
+    return 0;
 }
 
 

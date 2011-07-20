@@ -65,6 +65,7 @@ bool opt_show_matched = false;
 bool opt_display_size = false;
 bool opt_mode_match = false;
 bool opt_mode_match_neg = false;
+bool opt_display_hash = false;
 
 hashid_t  opt_md5deep_mode_algorithm = alg_unknown;
 /* output options */
@@ -445,10 +446,10 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       break;
       
     case 'd': this->ocb.xml_open(stdout); break;
-    case 'M': this->mode |= mode_display_hash;
-	/* intentioanl fall through */
+    case 'M': opt_display_hash=true;
+	/* intentional fall through */
     case 'm': this->primary_function = primary_match;      break;
-    case 'X': this->mode |= mode_display_hash;
+    case 'X': opt_display_hash=true;
 	/* intentional fall through */
     case 'x': this->primary_function = primary_match_neg;  break;
     case 'a': this->primary_function = primary_audit;      break;
@@ -738,7 +739,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
       break;
       
     case 'M':
-      this->mode |= mode_display_hash;
+	opt_display_hash=true;
       /* Intentional fall through */
     case 'm':
 	opt_mode_match=true;
@@ -747,7 +748,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
       break;
 
     case 'X':
-      this->mode |= mode_display_hash;
+	opt_display_hash=true;
     case 'x':
 	opt_mode_match_neg=true;
       md5deep_check_matching_modes(this);
