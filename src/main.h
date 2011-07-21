@@ -43,7 +43,7 @@
 //#define mode_zero              1<<8          // now is opt_zero
 //#define mode_relative          1<<9
 //#define mode_which             1<<10         // now opt_show_matched
-#define mode_barename          1<<11
+//#define mode_barename          1<<11         // now mode_barename in display
 //#define mode_asterisk          1<<12	// now opt_asterisk
 //#define mode_not_matched       1<<13  // now mode_not_matched in display
 //#define mode_quiet             1<<14   // now mode_quiet in display
@@ -52,8 +52,8 @@
 //#define mode_verbose           1<<16
 //#define mode_more_verbose      1<<17
 //#define mode_insanely_verbose  1<<18
-#define mode_size              1<<19
-#define mode_size_all          1<<20
+//#define mode_size              1<<19
+//#define mode_size_all          1<<20
 //#define mode_timestamp         1<<21 // now in display
 //#define mode_csv               1<<22
 #define mode_read_from_file    1<<25
@@ -212,6 +212,13 @@ public:;
 };
 
 
+#ifdef _WIN32
+typedef __time64_t    timestamp_t;
+#else
+typedef time_t        timestamp_t;
+#endif
+
+
 /** file_data_t contains information about a file.
  * It can be created by hashing an actual file, or by reading a hash file a file of hashes. 
  * Pointers to these objects are stored in a single vector and in a map for each algorithm.
@@ -225,7 +232,11 @@ public:
     // Implement a simple reference count garbage collection system
     int		   refcount;			     // reference counting
     void retain() { refcount++;}
-    void release() { if(--refcount==0) delete this; }
+    void release() {
+	if(--refcount==0){
+	    delete this;
+	}
+    }
 
     std::string    hash_hex[NUM_ALGORITHMS];	     // the hash in hex of the entire file
     std::string	   hash512_hex[NUM_ALGORITHMS];	     // hash of the first 512 bytes, for partial matching
@@ -233,11 +244,7 @@ public:
     std::string	   file_name_annotation;// print after file name; for piecewise hashing
 
     uint64_t       matched_file_number;	 // file number that we matched.
-#ifdef _WIN32
-    __time64_t    timestamp;
-#else
-    time_t        timestamp;
-#endif
+    timestamp_t	   timestamp;
 
     // How many bytes (and megs) we think are in the file, via stat(2)
     // and how many bytes we've actually read in the file
@@ -261,36 +268,34 @@ public:
     static const size_t MD5DEEP_IDEAL_BLOCK_SIZE = 8192;
     static const size_t MAX_ALGORITHM_CONTEXT_SIZE = 256;
     static const size_t MAX_ALGORITHM_RESIDUE_SIZE = 256;
-    file_data_hasher_t(const std::string &banner_,uint64_t piecewise_size_):
-	banner(banner_),handle(0),is_stdin(0),
+    file_data_hasher_t(class display *ocb_):
+	ocb(ocb_),			// where we put results
+	handle(0),is_stdin(false),
 	read_start(0),read_end(0),bytes_read(0),
 	block_size(MD5DEEP_IDEAL_BLOCK_SIZE),
-	start_time(0),last_time(0),
-	piecewise_size(piecewise_size_){
+	start_time(0),last_time(0){
 	file_number = ++next_file_number;
     };
     ~file_data_hasher_t(){
 	if(handle) fclose(handle);	// make sure that it' closed.
     }
-    void close(){
-	if(handle){
-	    fclose(handle);
-	    handle = 0;
-	}
-    }
+    /* Where the results go */
+    class display *ocb;
+    
     /* The actual hashing */
     void multihash_initialize();
     void multihash_update(const unsigned char *buffer,size_t bufsize);
     void multihash_finalize();
 
-    const std::string &banner;		// banner to display if we need to display one
-    FILE           *handle;		// the file we are reading
-    bool           is_stdin;		// flag if the file is stdin
-    uint8_t        hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 
-    std::string	   dfxml_hash;	      // the DFXML hash digest for the piece just hashed; used to build piecewise
-    uint64_t	   file_number;
-    void		append_dfxml_for_byterun();
-    void		compute_dfxml(bool known_hash);
+    FILE        *handle;		// the file we are reading
+    bool        is_stdin;		// flag if the file is stdin
+    uint8_t     hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 
+    std::string	triage_info;		// if true, must print on output
+    std::string	dfxml_hash;          // the DFXML hash digest for the piece just hashed;
+					// used to build piecewise
+    uint64_t	file_number;
+    void	append_dfxml_for_byterun();
+    void	compute_dfxml(bool known_hash);
 
 
     // Where the last read operation started and ended
@@ -306,7 +311,15 @@ public:
     time_t          start_time, last_time;
 
     /* Flags */
-    uint64_t		piecewise_size;	// non-zero means create picewise hashes 
+    uint64_t	    piecewise_size;	// non-zero means create picewise hashes 
+
+    /* multithreaded hash implementation is these functions in hash.cpp.
+     * hash() is called to hash each file and record the results.
+     * Return codes are now both stored in display return_code and returned
+     * 0 - for success, -1 for error
+     */
+    bool compute_hash();// called to actually do the computation; returns true if successful
+    void hash();	// called to hash each file and record results
 };
 
 
@@ -394,7 +407,6 @@ public:;
 						     // the order columns appear in the file being loaded.
     int			num_columns;		     // number of columns in file being loaded
     hashfile_format	identify_format(const std::string &fn,FILE *handle);
-    //int			parse_hashing_algorithm(const char *fn,const char *val);
     loadstatus_t	load_hash_file(const std::string &fn); // not tstring! always ASCII
     file_data_t		*find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number); 
     void		dump_hashlist(); // send contents to stdout
@@ -468,9 +480,10 @@ public:
 class display {
  private:
 #ifdef HAVE_PTHREAD
-    pthread_mutex_t	M;	// lock for anything in output section
+    mutable pthread_mutex_t	M;	// lock for anything in output section
 #endif    
     FILE		*outfile;	// where things get sent
+    std::string		utf8_banner;	// banner to be displayed
     bool		banner_displayed;	// has the header been shown (text output)
     XML			*dfxml;			/* output in DFXML */
 
@@ -480,13 +493,13 @@ class display {
     class audit_stats	match;		// for the audit mode
     status_t		return_code;	// prevously returned by hash() and dig().
 
-    void lock(){
+    void lock() const{
 	if(pthread_mutex_lock(&M)){
 	    perror("pthread_mutex_lock failed");
 	    exit(1);
 	}
     }
-    void unlock(){
+    void unlock() const{
 	if(pthread_mutex_unlock(&M)){
 	    perror("pthread_mutex_unlock failed");
 	    exit(1);
@@ -496,6 +509,10 @@ public:
     display():outfile(stdout),banner_displayed(0),dfxml(0),
 	      mode_triage(false),
 	      mode_not_matched(false),mode_quiet(false),mode_timestamp(false),
+	      mode_barename(false),
+	      mode_size(false),mode_size_all(false),
+	      size_threshold(0),
+	      piecewise_size(0),
 	      primary_function(primary_compute) {
 
 #ifdef HAVE_PTHREAD
@@ -511,7 +528,14 @@ public:
     bool	mode_not_matched;
     bool	mode_quiet;
     bool	mode_timestamp;
+    bool	mode_barename;
+    bool	mode_size;
+    bool	mode_size_all;
 
+    // When only hashing files larger/smaller than a given threshold
+    uint64_t        size_threshold;
+
+    uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */
     primary_t       primary_function;    /* what do we want to do? */
     void	open(const std::string &outfilename); // open outfilename; error if can't.
 
@@ -534,25 +558,43 @@ public:
     }
     void dfxml_startup(int argc,char **argv);
     void dfxml_shutdown();
+    void dfxml_write(file_data_hasher_t *fdht);
 
     void newline();			// outputs a \n or a 0
     void status(const char *fmt, ...);// Display an ordinary message with newline added
     void error(const char *fmt, ...);// Display an error message if not in silent mode
 
-
-    /* Known hash database */
+    /* Known hash database interface */
     hashlist::loadstatus_t load_hash_file(const std::string &fn){
-	return known.load_hash_file(fn);
+	lock();
+	hashlist::loadstatus_t ret = known.load_hash_file(fn);
+	unlock();
+	return ret;
     }
-    uint64_t known_size() const{
-	return known.size();
+    uint64_t known_size() const {
+	lock();
+	uint64_t ret= known.size();
+	unlock();
+	return ret;
     }
+    file_data_t *find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number){
+	lock();
+	file_data_t *ret = known.find_hash(alg,hash_hex,file_number);
+	unlock();
+	return ret;
+    }
+
+
     /* Display the unused files and return the count */
     uint64_t	compute_unused(bool display,std::string annotation);
     
 
+    void	set_utf8_banner(std::string utf8_banner_){
+	utf8_banner = utf8_banner_;
+    }
+
     void	display_size(const file_data_t *fdh);
-    void	display_banner_if_needed(const std::string &utf8_banner);
+    void	display_banner_if_needed();
     void	display_hash(file_data_hasher_t *fdht);
     void	display_hash_simple(file_data_hasher_t *fdt);
 
@@ -602,13 +644,9 @@ public:
     void	display_audit_results(); // sets return code if fails
     void	finalize_matching();
 
-    /* multithreaded hash implementation is these functions in hash.cpp.
-     * hash() is called to hash each file and record the results.
-     * Return codes are now both stored in display return_code and returned
-     * 0 - for success, -1 for error
-     */
-    int hash(file_data_hasher_t *fdht); // called to hash each file and record results
-    int compute_hash(file_data_hasher_t *fdht);
+    /* hash.cpp: Actually trigger the hashing. */
+    void	hash_file(const tstring &file_name);
+    void	hash_stdin();
 
 };
 
@@ -652,8 +690,6 @@ class state {
 public:;
     state():mode(mode_none),
 	    argc(0),argv(0),
-	    piecewise_size(0),
-	    size_threshold(0),
 	    h_plain(0),h_bsd(0),h_md5deep_size(0),
 	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
 	    h_nsrl20(0), h_encase(0)
@@ -668,16 +704,10 @@ public:;
 #else
     char	   **argv;
 #endif
-    std::string		utf8_banner;
 
-    /* Configuration */
-    uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */
-
-    /* output */
+    /* configuration and output */
     display	    ocb;		// output control block
 
-    // When only hashing files larger/smaller than a given threshold
-    uint64_t        size_threshold;
 
     // Which filetypes this algorithm supports and their position in the file
     uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
@@ -710,20 +740,17 @@ public:;
     int		identify_hash_file_type(FILE *f,uint32_t *expected_hashes); // identify the hash file type
 
     /* dig.cpp */
-    int		should_hash_symlink(const tstring &fn,file_types *link_type);
-    int		should_hash_expert(const tstring &fn, file_types type);
-    int		should_hash(file_data_hasher_t *fdht,const tstring &fn);
+    bool	should_hash_symlink(const tstring &fn,file_types *link_type);
+    bool	should_hash_expert(const tstring &fn, file_types type);
+    bool	should_hash(const tstring &fn);
 
+    static file_types file_type(const tstring &fn,uint64_t *filesize,timestamp_t *timestamp);
     void	process_dir(const tstring &path);
     void	dig_normal(const tstring &path);	// posix  & win32 
     void	dig_win32(const tstring &path);	// win32 only; calls dig_normal
     static	void dig_self_test();
 
 
-    /* hash.cpp */
-    
-    int hash_file(file_data_hasher_t *fdht,const tstring &file_name);
-    int hash_stdin();
     bool hashes_loaded(){
 	return ocb.hashes_loaded();
     }

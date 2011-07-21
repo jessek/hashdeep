@@ -202,7 +202,7 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
 }
 
 
-void display::display_banner_if_needed(const std::string &utf8_banner)
+void display::display_banner_if_needed()
 {
     if(this->dfxml!=0) return;		// output is in DFXML; no banner
     lock();
@@ -259,7 +259,7 @@ void display::display_hash_simple(file_data_hasher_t *fdht)
      * see http://lists.gnu.org/archive/html/qemu-devel/2009-01/msg01979.html
      */
      
-    display_banner_if_needed(fdht->banner);
+    display_banner_if_needed();
     lock();
     if (fdht->piecewise_size){
 	fprintf(outfile,"%"PRIu64",", fdht->bytes_read);
@@ -701,6 +701,18 @@ void display::dfxml_shutdown()
 	dfxml->close();
 	delete dfxml;
 	dfxml = 0;
+    }
+    unlock();
+}
+
+void display::dfxml_write(file_data_hasher_t *fdht)
+{
+    lock();
+    if(dfxml){
+	dfxml->push("fileobject");
+	dfxml->xmlout("filename",fdht->file_name);
+	dfxml->writexml(fdht->dfxml_hash);
+	dfxml->pop();
     }
     unlock();
 }

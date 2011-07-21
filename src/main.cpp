@@ -238,7 +238,7 @@ static void check_flags_okay(state *s)
 	       "Unable to load any matching files");
 
   sanity_check(
-	       (opt_relative) && (s->mode & mode_barename),
+	       (opt_relative) && (s->ocb.mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
   /* Additional sanity checks will go here as needed... */
@@ -427,17 +427,17 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       break;
 
     case 'I': 
-      this->mode |= mode_size_all;
+	this->ocb.mode_size_all=true;
       // Note no break here;
     case 'i':
-      this->mode |= mode_size;
-      this->size_threshold = find_block_size(this,optarg);
-      if (0 == this->size_threshold) {
-	print_error("%s: Requested size threshold implies not hashing anything",
-		    __progname);
-	exit(status_t::STATUS_USER_ERROR);
-      }
-      break;
+	this->ocb.mode_size = true;
+	this->ocb.size_threshold = find_block_size(this,optarg);
+	if (0 == this->ocb.size_threshold) {
+	    print_error("%s: Requested size threshold implies not hashing anything",
+			__progname);
+	    exit(status_t::STATUS_USER_ERROR);
+	}
+	break;
 
     case 'c': 
       this->ocb.primary_function = primary_compute;
@@ -460,15 +460,15 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       // TODO: Add -t mode to hashdeep
       //    case 't': this->mode |= mode_timestamp;    break;
 
-    case 'b': this->mode |= mode_barename;     break;
+    case 'b': this->ocb.mode_barename=true;     break;
     case 'l': opt_relative=true;     break;
     case 'e': opt_estimate = true;	    break;
     case 'r': this->mode |= mode_recursive;    break;
     case 's': opt_silent = true;	    break;
       
     case 'p':
-      this->piecewise_size = find_block_size(this, optarg);
-      if (this->piecewise_size==0)
+	this->ocb.piecewise_size = find_block_size(this, optarg);
+      if (this->ocb.piecewise_size==0)
 	fatal_error("%s: Piecewise blocks of zero bytes are impossible", 
 		    __progname);
       
@@ -654,10 +654,10 @@ static void md5deep_check_flags_okay(state *s)
 	       s->hashes_loaded()==0,
 	       "Unable to load any matching files");
 
-  sanity_check((opt_relative) && (s->mode & mode_barename),
+  sanity_check((opt_relative) && (s->ocb.mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
-  sanity_check((s->piecewise_size>0) && (opt_display_size),
+  sanity_check((s->ocb.piecewise_size>0) && (opt_display_size),
 	       "Piecewise mode and file size display is just plain silly");
 
 
@@ -696,12 +696,12 @@ int state::md5deep_process_command_line(int argc, char **argv)
       break;
 
     case 'I':
-      this->mode |= mode_size_all;
+      this->ocb.mode_size_all=true;
       // Note that there is no break here
     case 'i':
-      this->mode |= mode_size;
-      this->size_threshold = find_block_size(this,optarg);
-      if (0 == this->size_threshold) {
+      this->ocb.mode_size=true;
+      this->ocb.size_threshold = find_block_size(this,optarg);
+      if (this->ocb.size_threshold==0) {
 	print_error("%s: Requested size threshold implies not hashing anything",
 		    __progname);
 	exit(status_t::STATUS_USER_ERROR);
@@ -709,8 +709,8 @@ int state::md5deep_process_command_line(int argc, char **argv)
       break;
 
     case 'p':
-      this->piecewise_size = find_block_size(this, optarg);
-      if (this->piecewise_size==0) {
+      this->ocb.piecewise_size = find_block_size(this, optarg);
+      if (this->ocb.piecewise_size==0) {
 	print_error("%s: Illegal size value for piecewise mode.", __progname);
 	exit(status_t::STATUS_USER_ERROR);
       }
@@ -769,13 +769,9 @@ int state::md5deep_process_command_line(int argc, char **argv)
 
     case 'e': opt_estimate = true; break;
 
-    case 'r':
-      this->mode |= mode_recursive;
-      break;
-
-    case 'k':	opt_asterisk = true;      break;
-
-    case 'b': this->mode |= mode_barename; break;
+    case 'r': this->mode |= mode_recursive; break;
+    case 'k': opt_asterisk = true;      break;
+    case 'b': this->ocb.mode_barename=true; break;
       
     case 'l': 
 	opt_relative = true;
@@ -892,27 +888,28 @@ int main(int argc, char **argv)
     /****************************************************************/
     /* Make the UTF8 banner in case we need it */
     /* PROBLEM: THIS IS ONLY MAKING HASHDEEP HEADER; WHAT IS MD5DEEP HEADER??? */
-    s->utf8_banner = HASHDEEP_HEADER_10 + std::string(NEWLINE);
-    s->utf8_banner += HASHDEEP_PREFIX;
-    s->utf8_banner += "size,";
+    std::string utf8_banner;
+    utf8_banner = HASHDEEP_HEADER_10 + std::string(NEWLINE);
+    utf8_banner += HASHDEEP_PREFIX;
+    utf8_banner += "size,";
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
 	if (hashes[i].inuse){
-	    s->utf8_banner += hashes[i].name + std::string(",");
+	    utf8_banner += hashes[i].name + std::string(",");
 	}
     }  
-    s->utf8_banner += std::string("filename") + NEWLINE;
-    s->utf8_banner += "## Invoked from: " + main::make_utf8(main::getcwd()) + NEWLINE;
-    s->utf8_banner += "## ";
+    utf8_banner += std::string("filename") + NEWLINE;
+    utf8_banner += "## Invoked from: " + main::make_utf8(main::getcwd()) + NEWLINE;
+    utf8_banner += "## ";
 #ifdef _WIN32
-    s->utf8_banner += cwd[0] + ":\\>";
+    utf8_banner += cwd[0] + ":\\>";
 #else
-    s->utf8_banner += (geteuid()==0) ? "#" : "$";
+    utf8_banner += (geteuid()==0) ? "#" : "$";
 #endif
     // Accounts for '## ', command prompt, and space before first argument
     size_t bytes_written = 8;
 	
     for (int largc = 0 ; largc < s->argc ; ++largc) {
-	s->utf8_banner += " ";
+	utf8_banner += " ";
 	bytes_written++;
 	
 	// We are going to print the string. It's either ASCII or UTF16
@@ -923,14 +920,16 @@ int main(int argc, char **argv)
     
     // The extra 32 bytes is a fudge factor
 	if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
-	    s->utf8_banner += std::string(NEWLINE) + "## ";
+	    utf8_banner += std::string(NEWLINE) + "## ";
 	    bytes_written = 3;
 	}
 	    
-	s->utf8_banner += arg_utf8;
+	utf8_banner += arg_utf8;
 	bytes_written += current_bytes;
     }
-    s->utf8_banner += std::string(NEWLINE) + "## " + NEWLINE;
+    utf8_banner += std::string(NEWLINE) + "## " + NEWLINE;
+    s->ocb.set_utf8_banner(utf8_banner); // alias
+
     /****************************************************************/
 
 
@@ -941,7 +940,7 @@ int main(int argc, char **argv)
      */
     
     if (optind == argc){
-	s->hash_stdin();
+	s->ocb.hash_stdin();
     } else {
 	for(int i=optind;i<s->argc;i++){
 	    tstring fn = generate_filename(s,s->argv[i]);

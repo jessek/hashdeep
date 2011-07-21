@@ -54,12 +54,11 @@ static std::string make_stars(int count)
 
 
 /*
- * Compute the hash on fdht and store the results in fdht. 
- * returns 0 if success, -1 if failure.
+ * Compute the hash on fdht and store the results in the display ocb.
+ * returns true if successful.
  */
 
-
-int display::compute_hash(file_data_hasher_t *fdht)
+bool file_data_hasher_t::compute_hash()
 {
     time_t current_time;
     uint64_t current_read, mysize, remaining, this_start;
@@ -70,74 +69,73 @@ int display::compute_hash(file_data_hasher_t *fdht)
     // one read operation. Instead we read in blocks of 8192 bytes 
     // (or as needed) to get the number of bytes we need. 
 
-    if (fdht->block_size < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE){
-	mysize = fdht->block_size;
+    if (this->block_size < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE){
+	mysize = this->block_size;
     }
     else {
 	mysize = file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE;
     }
 
-    remaining = fdht->block_size;
+    remaining = this->block_size;
 
     // We get weird results calling ftell on stdin!
-    if (!(fdht->is_stdin)) {
-	fdht->read_start = ftello(fdht->handle);
+    if (!(this->is_stdin)) {
+	this->read_start = ftello(this->handle);
     }
-    fdht->read_end   = fdht->read_start;
-    fdht->bytes_read = 0;
+    this->read_end   = this->read_start;
+    this->bytes_read = 0;
 
     while (TRUE)   {    
 	// Clear the buffer in case we hit an error and need to pad the hash 
 	memset(buffer,0,mysize);
 
-	this_start = fdht->read_end;
+	this_start = this->read_end;
 
-	current_read = fread(buffer, 1, mysize, fdht->handle);
+	current_read = fread(buffer, 1, mysize, this->handle);
     
-	fdht->actual_bytes += current_read;
-	fdht->read_end     += current_read;
-	fdht->bytes_read   += current_read;
+	this->actual_bytes += current_read;
+	this->read_end     += current_read;
+	this->bytes_read   += current_read;
       
 	// If an error occured, display a message but still add this block 
-	if (ferror(fdht->handle)) {
-	    print_error_filename(fdht->file_name,
+	if (ferror(this->handle)) {
+	    print_error_filename(this->file_name,
 				 "error at offset %"PRIu64": %s",
-				 ftello(fdht->handle),
+				 ftello(this->handle),
 				 strerror(errno));
 	   
 	    if (file_fatal_error()){
-		set_return_code(status_t::status_EXIT_FAILURE);
-		return -1;		// error
+		this->ocb->set_return_code(status_t::status_EXIT_FAILURE);
+		return false;		// error
 	    }
       
-	    fdht->multihash_update(buffer,current_read);
+	    this->multihash_update(buffer,current_read);
       
-	    clearerr(fdht->handle);
+	    clearerr(this->handle);
       
 	    // The file pointer's position is now undefined. We have to manually
 	    // advance it to the start of the next buffer to read. 
-	    fseeko(fdht->handle,SEEK_SET,this_start + mysize);
+	    fseeko(this->handle,SEEK_SET,this_start + mysize);
 	} 
 	else    {
 	    // If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE
 	    // bytes and must reflect that in how we update the hash.
-	    fdht->multihash_update(buffer,current_read);
+	    this->multihash_update(buffer,current_read);
 	}
     
 	// Check if we've hit the end of the file 
-	if (feof(fdht->handle))    {	
+	if (feof(this->handle))    {	
 	    // If we've been printing time estimates, we now need to clear the line.
 	    if (opt_estimate){
-		clear_realtime_stats();
+		ocb->clear_realtime_stats();
 	    }
-	    return 0;			// done hashing!
+	    return true;			// done hashing!
 	} 
 
 	// In piecewise mode we only hash one block at a time
-	if (fdht->piecewise_size>0)    {
+	if (this->piecewise_size>0)    {
 	    remaining -= current_read;
-	    if (remaining == 0) return 0; // success!
-
+	    if (remaining == 0) return true; // success!
 	    if (remaining < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE){
 		mysize = remaining;
 	    }
@@ -147,22 +145,20 @@ int display::compute_hash(file_data_hasher_t *fdht)
 	    time(&current_time);
       
 	    // We only update the display only if a full second has elapsed 
-	    if (fdht->last_time != current_time) {
-		fdht->last_time = current_time;
-		display_realtime_stats(fdht,current_time - fdht->start_time);
+	    if (this->last_time != current_time) {
+		this->last_time = current_time;
+		ocb->display_realtime_stats(this,current_time - this->start_time);
 	    }
 	}
     }      
-    return 0;
+    return true;
 }
-
-
 
 /**
  *
  * THIS IS IT!!!!
  *
- * hash(state *s,file_data_hasher_t *fdht)
+ * hash()
  * 
  * This function is called to hash each file.
  *
@@ -171,93 +167,97 @@ int display::compute_hash(file_data_hasher_t *fdht)
  * Result is stored in the fdht structure.
  * This routine is made multi-threaded to make the system run faster.
  */
-int display::hash(file_data_hasher_t *fdht)
-{
-    int done = FALSE;
-  
-    fdht->actual_bytes = 0;
+ void file_data_hasher_t::hash()
+ {
+     file_data_hasher_t *fdht = this;
+     fdht->actual_bytes = 0;
 
-    if (opt_estimate)  {
-	time(&(fdht->start_time));
-	fdht->last_time = fdht->start_time;
-    }
-    
-    if (mode_triage)  {
-	/*
-	 * Triage mode:
-	 * We use the piecewise mode to get a partial hash of the first 
-	 * 512 bytes of the file. But we'll have to remove piecewise mode
-	 * before returning to the main hashing code
-	 */
+     if (opt_estimate)  {
+	 time(&(fdht->start_time));
+	 fdht->last_time = fdht->start_time;
+     }
 
-	fdht->block_size     = 512;
-	fdht->piecewise_size = 512;
-	fdht->multihash_initialize();
-    
-	int success = compute_hash(fdht);
-	fdht->piecewise_size = 0;
-	fdht->multihash_finalize();
-	if(success){
-	    printf ("%"PRIu64"\t%s", fdht->stat_bytes,
-		    fdht->hash_hex[opt_md5deep_mode_algorithm].c_str());
-	}
+     if (fdht->ocb->mode_triage)  {
+	 /*
+	  * Triage mode:
+	  * We use the piecewise mode to get a partial hash of the first 
+	  * 512 bytes of the file. But we'll have to remove piecewise mode
+	  * before returning to the main hashing code
+	  */
 
-	/*
-	 * Rather than muck about with updating the state of the input
-	 * file, just reset everything and process it normally.
-	 */
-	fdht->actual_bytes = 0;
-	fseeko(fdht->handle, 0, SEEK_SET);
-    }
-  
-    if ( fdht->piecewise_size>0 )  {
-	fdht->block_size = fdht->piecewise_size;
-    }
-  
-    while (!done)  {
-	fdht->multihash_initialize();
-	fdht->read_start = fdht->actual_bytes;
+	 fdht->block_size     = 512;
+	 fdht->piecewise_size = 512;
+	 fdht->multihash_initialize();
 
-	/**
-	 * call compute_hash(), which computes the hash of the full file,
-	 * or all of the piecewise hashes.
-	 * It returns FALSE if there is a failure.
-	 */
-	if (compute_hash(fdht)) {
-	    return -1;
-	}
+	 bool success = fdht->compute_hash();
+	 fdht->piecewise_size = 0;
+	 fdht->multihash_finalize();
+	 if(success){
+	     char buf[1024];
+	     snprintf(buf,sizeof(buf),"%"PRIu64"\t%s",
+		      fdht->stat_bytes,
+		      fdht->hash_hex[opt_md5deep_mode_algorithm].c_str());
+	     fdht->triage_info = buf;
+	 }
 
-	// We should only display a hash if we've processed some
-	// data during this read OR if the whole file is zero bytes long.
-	// If the file is zero bytes, we won't have read anything, but
-	// still need to display a hash.
-	if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes) {
-	    if (fdht->piecewise_size>0) {
-		uint64_t tmp_end = 0;
-		if (fdht->read_end != 0){
-		    tmp_end = fdht->read_end - 1;
-		}
-		fdht->file_name_annotation = std::string(" offset ") + itos(fdht->read_start)
-		    + std::string("-") + itos(tmp_end);
-	    }
-      
-	    fdht->multihash_finalize();
+	 /*
+	  * Rather than muck about with updating the state of the input
+	  * file, just reset everything and process it normally.
+	  */
+	 fdht->actual_bytes = 0;
+	 fseeko(fdht->handle, 0, SEEK_SET);
+     }
 
-	    if(md5deep_mode){
-		// Under not matched mode, we only display those known hashes that
-		// didn't match any input files. Thus, we don't display anything now.
-		// The lookup is to mark those known hashes that we do encounter.
-		// searching for the hash will cause matched_file_number to be set
-		if (mode_not_matched){
-		    known.find_hash(opt_md5deep_mode_algorithm,
-				       fdht->hash_hex[opt_md5deep_mode_algorithm],
-				       fdht->file_number);
+     if ( fdht->piecewise_size>0 )  {
+	 fdht->block_size = fdht->piecewise_size;
+     }
+
+     int done = FALSE;
+     while (!done)  {
+	 fdht->multihash_initialize();
+	 fdht->read_start = fdht->actual_bytes;
+
+	 /**
+	  * call compute_hash(), which computes the hash of the full file,
+	  * or all of the piecewise hashes.
+	  * It returns FALSE if there is a failure.
+	  */
+	 if (fdht->compute_hash()) {
+	     fclose(fdht->handle);
+	     fdht->release();
+	 }
+
+	 // We should only display a hash if we've processed some
+	 // data during this read OR if the whole file is zero bytes long.
+	 // If the file is zero bytes, we won't have read anything, but
+	 // still need to display a hash.
+	 if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes) {
+	     if (fdht->piecewise_size>0) {
+		 uint64_t tmp_end = 0;
+		 if (fdht->read_end != 0){
+		     tmp_end = fdht->read_end - 1;
+		 }
+		 fdht->file_name_annotation = std::string(" offset ") + itos(fdht->read_start)
+		     + std::string("-") + itos(tmp_end);
+	     }
+
+	     fdht->multihash_finalize();
+
+	     if(md5deep_mode){
+		 // Under not matched mode, we only display those known hashes that
+		 // didn't match any input files. Thus, we don't display anything now.
+		 // The lookup is to mark those known hashes that we do encounter.
+		 // searching for the hash will cause matched_file_number to be set
+		 if (ocb->mode_not_matched){
+		    ocb->find_hash(opt_md5deep_mode_algorithm,
+					 fdht->hash_hex[opt_md5deep_mode_algorithm],
+					 fdht->file_number);
 		}
 		else {
-		    md5deep_display_hash(fdht);
+		    ocb->md5deep_display_hash(this);
 		}
 	    } else {
-		display_hash(fdht);
+		ocb->display_hash(fdht);
 	    }
 	}
 	if (fdht->piecewise_size>0){
@@ -271,34 +271,37 @@ int display::hash(file_data_hasher_t *fdht)
      * If we are in dfxml mode, output the DFXML, which may optionally include
      * all of the piecewise information.
      */
-    lock();
-    if(dfxml){
-	dfxml->push("fileobject");
-	dfxml->xmlout("filename",fdht->file_name);
-	dfxml->writexml(fdht->dfxml_hash);
-	dfxml->pop();
-    }
-    unlock();
-    return 0;
+    ocb->dfxml_write(this);
+    fclose(this->handle);
+    this->release();
 }
 
 
 /**
- * Given a file name, hash it into a fdht, then ask s to deal with it.
+ * Primary entry point for a file being hashed.
+ * Given a file name:
+ * 1 - create the fdht
+ * 2 - set up the fdht
+ * 3 - hash the fdht
+ * 4 - record it in stdout using display.
  */
-int state::hash_file(file_data_hasher_t *fdht,const tstring &fn)
+void display::hash_file(const tstring &fn)
 {
+    display *ocb = this;
+    file_data_hasher_t *fdht = new file_data_hasher_t(this);
+    fdht->retain();
+
+    // stat the file to get the bytes and timestamp
+    state::file_type(fn,&fdht->stat_bytes,&fdht->timestamp);
+
     if(opt_verbose>=MORE_VERBOSE){
-	print_error("hash_file(%s) mode=%x primary_function=%d",
+	print_error("hash_file(%s) primary_function=%d",
 		    main::make_utf8(fn).c_str(),
-		    this->mode,this->ocb.primary_function);
+		    ocb->primary_function);
     }
 
-    int status		= EXIT_SUCCESS;
-    fdht->is_stdin	= FALSE;
     fdht->file_name	= main::make_utf8(fn);
-
-    if (this->mode & mode_barename)  {
+    if (ocb->mode_barename)  {
 	/* Convert fdht->file_name to its basename */
 
 	/* The basename function kept misbehaving on OS X, so Jesse rewrote it.
@@ -313,47 +316,43 @@ int state::hash_file(file_data_hasher_t *fdht,const tstring &fn)
 	}
     }
 
-    if ((fdht->handle = _tfopen(fn.c_str(),_TEXT("rb"))) != NULL) {
-	// We should have the file size already from the stat functions
-	// called during digging. If for some reason that failed, we'll
-	// try some ioctl calls now to get the full size.
-	if (UNKNOWN_FILE_SIZE == fdht->stat_bytes)
-	    fdht->stat_bytes = find_file_size(fdht->handle);
-	
-	/*
-	 * If this file is above the size threshold set by the user, skip it
-	 * and set the hash to be stars
-	 */
-	if ((this->mode & mode_size) && (fdht->stat_bytes > this->size_threshold)) {
-	    if (this->mode & mode_size_all)      {
-		for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)	{
-		    if (hashes[i].inuse){
-			fdht->hash_hex[i] = make_stars(hashes[i].bit_length/4);
-		    }
-		}
-		ocb.display_hash(fdht);
-	    }
-	    fdht->close();
-	    return EXIT_SUCCESS;
-	}
-	
-	status = ocb.hash(fdht);
-	fdht->close();
-    }
-    else  {
+    /* Open the file for hashing! */
+    fdht->handle = _tfopen(fn.c_str(),_TEXT("rb"));
+    if(fdht->handle==0){
 	print_error_filename(fn,"%s", strerror(errno));
+	fdht->release();
+	return;
     }
-    return status;
+    /*
+     * If this file is above the size threshold set by the user, skip it
+     * and set the hash to be stars
+     */
+    if ((ocb->mode_size) && (fdht->stat_bytes > ocb->size_threshold)) {
+	if (ocb->mode_size_all) {
+	    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
+		if (hashes[i].inuse){
+		    fdht->hash_hex[i] = make_stars(hashes[i].bit_length/4);
+		}
+	    }
+	    this->display_hash(fdht);
+	}
+	fclose(fdht->handle);
+	fdht->release();
+	return ;
+    }
+
+    // DO THE HASH EITHER IN THIS THREAD OR ANOTHER THREAD
+    // hash() WILL CLOSE AND RELEASE
+    fdht->hash();			// DO THE HASH!
 }
 
 
-int state::hash_stdin()
+void display::hash_stdin()
 {
-    file_data_hasher_t *fdht = new file_data_hasher_t(utf8_banner,piecewise_size);
-
+    file_data_hasher_t *fdht = new file_data_hasher_t(this);
+    fdht->retain();
     fdht->file_name = "stdin";
-    fdht->is_stdin  = TRUE;
+    fdht->is_stdin  = true;
     fdht->handle    = stdin;
-
-    return ocb.hash(fdht);
+    fdht->hash();
 }

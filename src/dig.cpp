@@ -1,4 +1,3 @@
-
 // MD5DEEP - dig.c
 //
 // By Jesse Kornblum
@@ -11,6 +10,10 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 //
+
+/* The functions in this file will recurse through a directory
+ * and call hash_file(fn) for every file that needs to be hashes.
+ */
 
 // $Id$
 
@@ -59,77 +62,6 @@ int have_processed_dir(const tstring &fn_)
 /****************************************************************
  *** end of cycle processing.
  ****************************************************************/
-
-
-
-/*
- * These functions have code to handle WIN32, but they are never called on WIN32 systems.
- */
-static void remove_double_slash(tstring &fn)
-{
-    tstring search;
-    search.push_back(DIR_SEPARATOR);
-    search.push_back(DIR_SEPARATOR);
-
-#ifdef _WIN32
-    // On Windows, we have to allow the first two characters to be slashes
-    // to account for UNC paths. e.g. \\SERVER\dir\path
-    // So on windows we ignore the first character
-    size_t start = 1;
-#else    
-    size_t start = 0;
-#endif
-
-    while(true){
-	size_t loc = fn.find(search,start);
-	if(loc==tstring::npos) break;	// no more to find
-	fn.erase(loc,1);		// erase one of the two slashes
-    }
-}
-
-
-/*
- * remove any /./
- */
-static void remove_single_dirs(tstring &fn)
-{
-    tstring search;
-    search.push_back(DIR_SEPARATOR);
-    search.push_back('.');
-    search.push_back(DIR_SEPARATOR);
-
-    while(true){
-	size_t loc = fn.find(search);
-	if(loc==tstring::npos) break;	// no more to find
-	fn.erase(fn.begin()+loc,fn.begin()+loc+2);			// erase
-    }
-}
-
-
-// Removes all "../" references from the absolute path fn 
-// If string contains f/d/e/../a replace it with f/d/a/
-
-void remove_double_dirs(tstring &fn)
-{
-    tstring search;
-    search.push_back(DIR_SEPARATOR);
-    search.push_back('.');
-    search.push_back('.');
-    search.push_back(DIR_SEPARATOR);
-
-    while(true){
-	size_t loc = fn.rfind(search);
-	if(loc==tstring::npos) break;
-	/* See if there is another dir separator */
-	size_t before = fn.rfind(DIR_SEPARATOR,loc-1);
-	if(before==tstring::npos) break;
-
-	/* Now delete all between before+1 and loc+3 */
-	fn.erase(fn.begin()+before+1,fn.begin()+loc+4);
-    }
-}
-
-
 
 #ifdef _WIN32
 /****************************************************************
@@ -295,17 +227,79 @@ static bool is_junction_point(const std::wstring &fn)
   FindClose(hFind);
 */
 
-
-
-
-
-
 #endif
+
+/****************************************************************
+ *** End of WIN32 specific code.
+ ****************************************************************/
 
 
 
 #ifndef _WIN32
 /* POSIX version of clean_name */
+static void remove_double_slash(tstring &fn)
+{
+    tstring search;
+    search.push_back(DIR_SEPARATOR);
+    search.push_back(DIR_SEPARATOR);
+
+#ifdef _WIN32
+    // On Windows, we have to allow the first two characters to be slashes
+    // to account for UNC paths. e.g. \\SERVER\dir\path
+    // So on windows we ignore the first character
+    size_t start = 1;
+#else    
+    size_t start = 0;
+#endif
+    while(true){
+	size_t loc = fn.find(search,start);
+	if(loc==tstring::npos) break;	// no more to find
+	fn.erase(loc,1);		// erase one of the two slashes
+    }
+}
+
+
+/*
+ * remove any /./
+ */
+static void remove_single_dirs(tstring &fn)
+{
+    tstring search;
+    search.push_back(DIR_SEPARATOR);
+    search.push_back('.');
+    search.push_back(DIR_SEPARATOR);
+
+    while(true){
+	size_t loc = fn.find(search);
+	if(loc==tstring::npos) break;	// no more to find
+	fn.erase(fn.begin()+loc,fn.begin()+loc+2);			// erase
+    }
+}
+
+
+// Removes all "../" references from the absolute path fn 
+// If string contains f/d/e/../a replace it with f/d/a/
+
+static void remove_double_dirs(tstring &fn)
+{
+    tstring search;
+    search.push_back(DIR_SEPARATOR);
+    search.push_back('.');
+    search.push_back('.');
+    search.push_back(DIR_SEPARATOR);
+
+    while(true){
+	size_t loc = fn.rfind(search);
+	if(loc==tstring::npos) break;
+	/* See if there is another dir separator */
+	size_t before = fn.rfind(DIR_SEPARATOR,loc-1);
+	if(before==tstring::npos) break;
+
+	/* Now delete all between before+1 and loc+3 */
+	fn.erase(fn.begin()+before+1,fn.begin()+loc+4);
+    }
+}
+
 static void clean_name_posix(std::string &fn)
 {
     // We don't need to call these functions when running in Windows
@@ -325,15 +319,11 @@ static void clean_name_posix(std::string &fn)
 }
 #endif
 
-
-
 // Returns TRUE if the directory is '.' or '..', otherwise FALSE
 static bool is_special_dir(const tstring &d)
 {
     return main::make_utf8(d)=="." || main::make_utf8(d)=="..";
 }
-
-
 
 void state::process_dir(const tstring &fn)
 {
@@ -376,7 +366,11 @@ void state::process_dir(const tstring &fn)
 }
 
 
-static file_types decode_file_type(struct __stat64 sb)
+/* Determine the file type of a structure
+ * called by file_type() and should_hash_symlink() 
+ */
+
+static file_types decode_file_type(const struct __stat64 &sb)
 {
     if (S_ISREG(sb.st_mode))  return stat_regular;
     if (S_ISDIR(sb.st_mode))  return stat_directory;
@@ -397,10 +391,8 @@ static file_types decode_file_type(struct __stat64 sb)
     // http://en.wikipedia.org/wiki/Doors_(computing)
     if (S_ISDOOR(sb.st_mode)) return stat_door; 
 #endif
-
     return stat_unknown;
 }
-
 
 // Use a stat function to look up while kind of file this is
 // and determine its size if possible
@@ -412,34 +404,82 @@ static file_types decode_file_type(struct __stat64 sb)
 #define TLSTAT(path,buf) lstat(path,buf)
 #endif
 
-static file_types file_type(file_data_hasher_t *fdht, const tstring &fn)
+/* Return the 'decoded' file type of a file.
+ * Also return the file size and modification time (may be used elsewhere).
+ */
+file_types state::file_type(const tstring &fn,uint64_t *filesize,timestamp_t *timestamp)
 {
     struct __stat64 sb;
-
     memset(&sb,0,sizeof(sb));
-
     if (TLSTAT(fn.c_str(),&sb))  {
 	print_error_filename(fn,"%s (dig.cpp::file_type)", strerror(errno));
 	return stat_unknown;
     }
-
-    fdht->stat_bytes = sb.st_size;
-
-    // On Win32 this should be the creation time, but on all other systems
-    // it will be the change time.
-    fdht->timestamp = sb.st_ctime; 
-
+    if(timestamp) *timestamp = sb.st_ctime;
+    if(filesize){
+	if(sb.st_size!=0){
+	    *filesize = sb.st_size;
+	} else {
+	    /*
+	     * The stat() function does not return file size for raw devices.
+	     * If we have no file size, try to use the find_file_size function,
+	     * which calls ioctl.
+	     */
+	    FILE *f = _tfopen(fn.c_str(),_TEXT("rb"));
+	    if(f){
+		*filesize = find_file_size(f);
+		fclose(f);
+	    }
+	}
+    }
     return decode_file_type(sb);
 }
 
 
-// Type should be the result of calling lstat on the file. We want to
-// know what this file is, not what it points to
-int state::should_hash_expert(const tstring &fn, file_types type)
+/* Deterine if a symlink should be hashed or not.
+ * Returns TRUE if a symlink should be hashed.
+ */
+bool state::should_hash_symlink(const tstring &fn, file_types *link_type)
+{
+    /**
+     * We must look at what this symlink points to before we process it.
+     * The file_type() function uses lstat to examine the file.
+     * Here we use the normal stat to examine what this symlink points to.
+     */
+
+    struct __stat64 sb;
+
+    if (TSTAT(fn.c_str(),&sb))  {
+	print_error_filename(fn,"%s",strerror(errno));
+	return false;
+    }
+
+    file_types type = decode_file_type(sb);
+
+    if (type == stat_directory)  {
+	if (mode & mode_recursive){
+	    process_dir(fn);
+	} else {
+	    print_error_filename(fn,"Is a directory");
+	}
+	return false;
+    }    
+
+    if (link_type) *link_type = type;
+    return true;    
+}
+    
+
+/*
+ * Type should be the result of calling lstat on the file.
+ * We want to know what this file is, not what it points to
+ * This expert calls itself recursively. The dir_table
+ * makes sure that we do not loop.
+ */
+bool state::should_hash_expert(const tstring &fn, file_types type)
 {
     file_types link_type=stat_unknown;
     switch(type)  {
-
     case stat_directory:
 	if (mode & mode_recursive){
 	    process_dir(fn);
@@ -453,7 +493,7 @@ int state::should_hash_expert(const tstring &fn, file_types type)
 	// a 64-bit value. When that value gets converted back to int,
 	// the high part of it is lost. 
 
-#define RETURN_IF_MODE(A) if (mode & A) return TRUE; break;
+#define RETURN_IF_MODE(A) if (mode & A) return true; break;
     case stat_regular:   RETURN_IF_MODE(mode_regular);
     case stat_block:     RETURN_IF_MODE(mode_block);
     case stat_character: RETURN_IF_MODE(mode_character);
@@ -469,61 +509,22 @@ int state::should_hash_expert(const tstring &fn, file_types type)
 	// The program attempts to open the directory entry itself
 	// and gets into an infinite loop.
 
-	if (!(mode & mode_symlink)) return FALSE;
+	if (!(mode & mode_symlink)) return false;
 	if (should_hash_symlink(fn,&link_type)){
 	    return should_hash_expert(fn,link_type);
 	}
-	return FALSE;
+	return false;
     case stat_unknown:
 	print_error_filename(fn,"unknown file type");
-	return FALSE;
+	return false;
     }
-    return FALSE;
+    return false;
 }
 
 
-int state::should_hash_symlink(const tstring &fn, file_types *link_type)
+bool state::should_hash(const tstring &fn)
 {
-    file_types type;
-    struct __stat64 sb;
-
-    /**
-     * We must look at what this symlink points to before we process it.
-     * The file_type() function uses lstat to examine the file.
-     * Here we use the normal stat to examine what this symlink points to.
-     */
-    if (TSTAT(fn.c_str(),&sb))  {
-	print_error_filename(fn,"%s",strerror(errno));
-	return FALSE;
-    }
-
-    type = decode_file_type(sb);
-
-    if (type == stat_directory)  {
-	if (mode & mode_recursive){
-	    process_dir(fn);
-	}
-	else {
-	    print_error_filename(fn,"Is a directory");
-	}
-	return FALSE;
-    }    
-
-    if (link_type) *link_type = type;
-    return TRUE;    
-}
-    
-
-int state::should_hash(file_data_hasher_t *fdht,const tstring &fn)
-{
-    file_types type;
-
-    // We must reset the number of bytes in each file processed
-    // so that we can tell if fstat reads the number successfully
-    fdht->stat_bytes = UNKNOWN_FILE_SIZE;
-    fdht->timestamp   = 0;
-
-    type = file_type(fdht,fn);
+    file_types  type = state::file_type(fn,0,0);
   
     if (mode & mode_expert){
 	return (should_hash_expert(fn,type));
@@ -532,10 +533,10 @@ int state::should_hash(file_data_hasher_t *fdht,const tstring &fn)
     if (type == stat_directory)  {
 	if (mode & mode_recursive){
 	    process_dir(fn);
-	}    else     {
+	} else {
 	    print_error_filename(fn,"Is a directory");
 	}
-	return FALSE;
+	return false;
     }
 
     if (type == stat_symlink){
@@ -543,37 +544,26 @@ int state::should_hash(file_data_hasher_t *fdht,const tstring &fn)
     }
 
     if (type == stat_unknown){
-	return FALSE;
+	return false;
     }
 
     // By default we hash anything we can't identify as a "bad thing"
-    return TRUE;
+    return true;
 }
 
-
-// RBF - Standardize return values for this function and audit functions
-// previously tThis function returned FALSE. hash_file, called above, returns STATUS_OK
-// process_win32 also returns STATUS_OK. 
-// display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.
-// Pick one and stay with it!
-// 
-// now the return codes are in display
-void state::dig_normal(const tstring &fn)
+/* Search through a directory and its subdirectory for files to hash */
+void state::dig_normal(const tstring &fn_)
 {
-    file_data_hasher_t *fdht = new file_data_hasher_t(utf8_banner,piecewise_size);
-    fdht->retain();
-
-    tstring fn2(fn);
+    tstring fn(fn_);			// local copy will be modified
 #ifdef _WIN32
-    clean_name_win32(fn2);
+    clean_name_win32(fn);
 #else
-    clean_name_posix(fn2);
+    clean_name_posix(fn);
 #endif
 
-    if (should_hash(fdht,fn2)){
-	hash_file(fdht,fn2);
+    if (should_hash(fn)){
+	ocb.hash_file(fn);
     }
-    fdht->release();
 }
 
 
@@ -605,14 +595,9 @@ void state::dig_win32(const std::wstring &fn)
     //  print_status("Called process_win32(%S)", fn);
 
     if (is_win32_device_file(fn)){
-	file_data_hasher_t *fdht = new file_data_hasher_t(mode & mode_piecewise);
-	fdht->retain();
-	int ret = hash_file(fdht,fn);
-	fdht->release();
-	return ret;
+	ocb.hash_file(fn);
+	return ;
     }
-
-    //YOU ARE HERE
 
     // Filenames without wildcards can be processed by the
     // normal recursion code.
@@ -671,9 +656,7 @@ void state::dig_win32(const std::wstring &fn)
   
     rc = FindClose(hFind);
     if (0 == rc)  {
-	print_error_filename(
-			     fn,
-			     "Unknown error while cleaning up wildcard expansion");
+	print_error_filename(fn,"Unknown error while cleaning up wildcard expansion");
     }
     return status;
 }
@@ -747,9 +730,10 @@ void state::dig_self_test()
 		       _T("../testfiles/symlinktest/dir1/dir1"),_T("")};
 
     for(int i=0;names[i].size()>0;i++){
-	file_data_hasher_t fdht("",0);
-	file_types ft = file_type(&fdht,names[i]);
+	uint64_t stat_bytes;
+	timestamp_t timestamp;
+	file_types ft = file_type(names[i],&stat_bytes,&timestamp);
 	std::cerr << "file_type(" << names[i] << ")="
-		  << ft << " size=" << fdht.stat_bytes << " ctime=" << fdht.timestamp << "\n";
+		  << ft << " size=" << stat_bytes << " ctime=" << timestamp << "\n";
     }
 }

@@ -220,9 +220,6 @@ int find_comma_separated_string(char *str, unsigned int n)
 
 off_t find_file_size(FILE *f) 
 {
-  if (NULL == f)
-    return 0;
-
   off_t num_sectors = 0, sector_size = 0;
   int fd = fileno(f);
   struct stat sb;
@@ -274,9 +271,6 @@ off_t find_file_size(FILE *f)
 
 off_t find_file_size(FILE *f) 
 {
-  if (NULL == f)
-    return 0;
-
   struct stat info;
   off_t total = 0;
   off_t original = ftello(f);
@@ -403,9 +397,6 @@ off_t find_dev_size(int fd, int blk_size)
 
 off_t find_file_size(FILE *f) 
 {
-  if (NULL == f)
-    return 0;
-
   // The error checking for this is above. If f is not NULL
   // fd should be vald.
   int fd = fileno(f);
@@ -428,9 +419,6 @@ off_t find_file_size(FILE *f)
 #if defined(_WIN32)
 off_t find_file_size(FILE *f) 
 {
-  if (NULL == f)
-    return 0;
-
   off_t total = 0, original = ftello(f);
   
   // Windows does not support running fstat on block devices,
