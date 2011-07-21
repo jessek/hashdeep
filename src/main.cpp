@@ -70,6 +70,9 @@ bool opt_display_hash = false;
 hashid_t  opt_md5deep_mode_algorithm = alg_unknown;
 /* output options */
 bool opt_csv = false;
+bool opt_asterisk = false;
+//bool opt_triage = false;
+bool md5deep_mode = false;
 
 
 /****************************************************************
@@ -228,9 +231,9 @@ static void md5deep_usage(void)
 static void check_flags_okay(state *s)
 {
   sanity_check(
-	       (((s->primary_function & primary_match) ||
-		 (s->primary_function & primary_match_neg) ||
-		 (s->primary_function & primary_audit)) &&
+	       (((s->ocb.primary_function & primary_match) ||
+		 (s->ocb.primary_function & primary_match_neg) ||
+		 (s->ocb.primary_function & primary_audit)) &&
 		!s->hashes_loaded()),
 	       "Unable to load any matching files");
 
@@ -437,7 +440,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       break;
 
     case 'c': 
-      this->primary_function = primary_compute;
+      this->ocb.primary_function = primary_compute;
       /* Before we parse which algorithms we're using now, we have 
        * to erase the default (or previously entered) values
        */
@@ -448,11 +451,11 @@ int state::hashdeep_process_command_line(int argc, char **argv)
     case 'd': this->ocb.xml_open(stdout); break;
     case 'M': opt_display_hash=true;
 	/* intentional fall through */
-    case 'm': this->primary_function = primary_match;      break;
+    case 'm': this->ocb.primary_function = primary_match;      break;
     case 'X': opt_display_hash=true;
 	/* intentional fall through */
-    case 'x': this->primary_function = primary_match_neg;  break;
-    case 'a': this->primary_function = primary_audit;      break;
+    case 'x': this->ocb.primary_function = primary_match_neg;  break;
+    case 'a': this->ocb.primary_function = primary_audit;      break;
       
       // TODO: Add -t mode to hashdeep
       //    case 't': this->mode |= mode_timestamp;    break;
@@ -464,7 +467,6 @@ int state::hashdeep_process_command_line(int argc, char **argv)
     case 's': opt_silent = true;	    break;
       
     case 'p':
-      this->mode |= mode_piecewise;
       this->piecewise_size = find_block_size(this, optarg);
       if (this->piecewise_size==0)
 	fatal_error("%s: Piecewise blocks of zero bytes are impossible", 
@@ -655,13 +657,13 @@ static void md5deep_check_flags_okay(state *s)
   sanity_check((opt_relative) && (s->mode & mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
-  sanity_check((s->mode & mode_piecewise) && (opt_display_size),
+  sanity_check((s->piecewise_size>0) && (opt_display_size),
 	       "Piecewise mode and file size display is just plain silly");
 
 
   /* If we try to display non-matching files but haven't initialized the
      list of matching files in the first place, bad things will happen. */
-  sanity_check((s->mode & mode_not_matched) && 
+  sanity_check((s->mode & s->ocb.mode_not_matched) && 
 	       ! ((opt_mode_match) || (opt_mode_match_neg)),
 	       "Matching or negative matching must be enabled to display non-matching files");
 
@@ -707,7 +709,6 @@ int state::md5deep_process_command_line(int argc, char **argv)
       break;
 
     case 'p':
-      this->mode |= mode_piecewise;
       this->piecewise_size = find_block_size(this, optarg);
       if (this->piecewise_size==0) {
 	print_error("%s: Illegal size value for piecewise mode.", __progname);
@@ -716,16 +717,16 @@ int state::md5deep_process_command_line(int argc, char **argv)
 
       break;
 
-    case 'Z': this->mode |= mode_triage; break;
-    case 't': this->mode |= mode_timestamp; break;
-    case 'n': this->mode |= mode_not_matched; break;
+    case 'Z': this->ocb.mode_triage	 = true; break;
+    case 't': this->ocb.mode_timestamp   = true; break;
+    case 'n': this->ocb.mode_not_matched = true; break;
     case 'w': opt_show_matched = true;break; 		// display which known hash generated match
 
     case 'a':
 	opt_mode_match=true;
-      md5deep_check_matching_modes(this);
-      this->md5deep_add_hash(optarg,optarg);
-      break;
+	md5deep_check_matching_modes(this);
+	this->md5deep_add_hash(optarg,optarg);
+	break;
 
     case 'A':
 	opt_mode_match_neg=true;
@@ -772,9 +773,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
       this->mode |= mode_recursive;
       break;
 
-    case 'k':
-      this->mode |= mode_asterisk;
-      break;
+    case 'k':	opt_asterisk = true;      break;
 
     case 'b': this->mode |= mode_barename; break;
       
@@ -783,7 +782,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
       break;
 
     case 'q': 
-      this->mode |= mode_quiet; 
+	this->ocb.mode_quiet = true; 
       break;
 
     case 'h':
@@ -854,12 +853,12 @@ int main(int argc, char **argv)
 	algorithm_t::enable_hashing_algorithms(buf);
 	for(int i=0;i<NUM_ALGORITHMS;++i){
 	    if(hashes[i].inuse){
-		s->md5deep_mode = 1;
+		md5deep_mode = true;
 		opt_md5deep_mode_algorithm = hashes[i].id;
 		break;
 	    }
 	}
-	if(s->md5deep_mode==0){
+	if(!md5deep_mode){
 	    cerr << progname << ": unknown hash: " <<algname << "\n";
 	    exit(1);
 	}
@@ -872,7 +871,7 @@ int main(int argc, char **argv)
     }
 
     /* Set up the DFXML output if requested */
-    s->ocb.dfxml_startup();
+    s->ocb.dfxml_startup(argc,argv);
 
    
 #ifdef _WIN32
@@ -893,8 +892,9 @@ int main(int argc, char **argv)
     /****************************************************************/
     /* Make the UTF8 banner in case we need it */
     /* PROBLEM: THIS IS ONLY MAKING HASHDEEP HEADER; WHAT IS MD5DEEP HEADER??? */
-    s->utf8_banner = HASHDEEP_HEADER_10;
-    s->utf8_banner += HASHDEEP_PREFIX;  
+    s->utf8_banner = HASHDEEP_HEADER_10 + std::string(NEWLINE);
+    s->utf8_banner += HASHDEEP_PREFIX;
+    s->utf8_banner += "size,";
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
 	if (hashes[i].inuse){
 	    s->utf8_banner += hashes[i].name + std::string(",");
@@ -923,14 +923,14 @@ int main(int argc, char **argv)
     
     // The extra 32 bytes is a fudge factor
 	if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
-	    s->utf8_banner += std::string(NEWLINE) + "##";
+	    s->utf8_banner += std::string(NEWLINE) + "## ";
 	    bytes_written = 3;
 	}
 	    
 	s->utf8_banner += arg_utf8;
 	bytes_written += current_bytes;
     }
-    s->utf8_banner += std::string(NEWLINE) + "##" + NEWLINE;
+    s->utf8_banner += std::string(NEWLINE) + "## " + NEWLINE;
     /****************************************************************/
 
 
@@ -954,7 +954,7 @@ int main(int argc, char **argv)
     }
   
     /* If we were auditing, display the audit results */
-    if (s->primary_function == primary_audit){
+    if (s->ocb.primary_function == primary_audit){
 	s->ocb.display_audit_results();
     }
   

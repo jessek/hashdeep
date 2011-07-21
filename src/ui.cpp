@@ -43,6 +43,17 @@ void print_error(const char *fmt, ...)
 }
 
 
+/* needs to be moved to display.cpp */
+static  void output_filename(FILE *out,const std::string &fn)
+{
+    if(opt_unicode_escape){
+	std::string f2 = main::escape_utf8(fn);
+	fwrite(f2.c_str(),f2.size(),1,out);
+    } else {
+	fwrite(fn.c_str(),fn.size(),1,out);
+    }
+}
+
 void print_error_filename(const std::string &fn, const char *fmt, ...)
 {
     if (opt_silent) return;
@@ -69,7 +80,7 @@ void fatal_error(const char *fmt, ...)
     if(!opt_silent){
 	MD5DEEP_PRINT_MSG(stderr,fmt);
     }
-    exit (STATUS_USER_ERROR);
+    exit (status_t::STATUS_USER_ERROR);
 }
 
 
@@ -80,7 +91,7 @@ void internal_error(const char *fmt, ... )
 {
     MD5DEEP_PRINT_MSG(stderr,fmt);  
     print_status ("%s: Internal error. Contact developer!", __progname);  
-    exit (STATUS_INTERNAL_ERROR);
+    exit (status_t::STATUS_INTERNAL_ERROR);
 }
 
 

@@ -25,6 +25,12 @@
 #include <map>
 #include <vector>
 
+/* Many of these options were made boolean global variables. Upon reflection,
+ * they could have been made boolean instance variables within the display class.
+ * However, we are far better off having them being boolean variables rather than being
+ * bits in a mask.
+ */
+
 #define mode_none              0
 #define mode_recursive         1<<0
 //#define mode_estimate          1<<1          // now is opt_estimate
@@ -38,20 +44,20 @@
 //#define mode_relative          1<<9
 //#define mode_which             1<<10         // now opt_show_matched
 #define mode_barename          1<<11
-#define mode_asterisk          1<<12
-#define mode_not_matched       1<<13
-#define mode_quiet             1<<14
-#define mode_piecewise         1<<15
+//#define mode_asterisk          1<<12	// now opt_asterisk
+//#define mode_not_matched       1<<13  // now mode_not_matched in display
+//#define mode_quiet             1<<14   // now mode_quiet in display
+//#define mode_piecewise         1<<15
 //these were moved to opt_verbose
 //#define mode_verbose           1<<16
 //#define mode_more_verbose      1<<17
 //#define mode_insanely_verbose  1<<18
 #define mode_size              1<<19
 #define mode_size_all          1<<20
-#define mode_timestamp         1<<21
+//#define mode_timestamp         1<<21 // now in display
 //#define mode_csv               1<<22
 #define mode_read_from_file    1<<25
-#define mode_triage            1<<26
+//#define mode_triage            1<<26 // now opt_triage
 
 // Modes 27-48 are reserved for future use.
 //
@@ -223,7 +229,7 @@ public:
 
     std::string    hash_hex[NUM_ALGORITHMS];	     // the hash in hex of the entire file
     std::string	   hash512_hex[NUM_ALGORITHMS];	     // hash of the first 512 bytes, for partial matching
-    std::string	   file_name;		// just the file_name, apparently; native on POSIX; UTF-8 on Windows.
+    std::string	   file_name;		// just the file_name; native on POSIX; UTF-8 on Windows.
     std::string	   file_name_annotation;// print after file name; for piecewise hashing
 
     uint64_t       matched_file_number;	 // file number that we matched.
@@ -255,12 +261,12 @@ public:
     static const size_t MD5DEEP_IDEAL_BLOCK_SIZE = 8192;
     static const size_t MAX_ALGORITHM_CONTEXT_SIZE = 256;
     static const size_t MAX_ALGORITHM_RESIDUE_SIZE = 256;
-    file_data_hasher_t(const std::string &banner_,bool piecewise_):
+    file_data_hasher_t(const std::string &banner_,uint64_t piecewise_size_):
 	banner(banner_),handle(0),is_stdin(0),
 	read_start(0),read_end(0),bytes_read(0),
 	block_size(MD5DEEP_IDEAL_BLOCK_SIZE),
 	start_time(0),last_time(0),
-	piecewise(piecewise_){
+	piecewise_size(piecewise_size_){
 	file_number = ++next_file_number;
     };
     ~file_data_hasher_t(){
@@ -300,8 +306,7 @@ public:
     time_t          start_time, last_time;
 
     /* Flags */
-    bool		piecewise;	// create picewise hashes
-
+    uint64_t		piecewise_size;	// non-zero means create picewise hashes 
 };
 
 
@@ -461,7 +466,7 @@ public:
  * It is a class because it is protected and is passed around.
  */
 class display {
-private:
+ private:
 #ifdef HAVE_PTHREAD
     pthread_mutex_t	M;	// lock for anything in output section
 #endif    
@@ -475,7 +480,6 @@ private:
     class audit_stats	match;		// for the audit mode
     status_t		return_code;	// prevously returned by hash() and dig().
 
-private:
     void lock(){
 	if(pthread_mutex_lock(&M)){
 	    perror("pthread_mutex_lock failed");
@@ -489,7 +493,11 @@ private:
 	}
     }
 public:
-    display():outfile(0),banner_displayed(0),dfxml(0){
+    display():outfile(stdout),banner_displayed(0),dfxml(0),
+	      mode_triage(false),
+	      mode_not_matched(false),mode_quiet(false),mode_timestamp(false),
+	      primary_function(primary_compute) {
+
 #ifdef HAVE_PTHREAD
 	pthread_mutex_init(&M,NULL);
 #endif	
@@ -499,6 +507,12 @@ public:
 	pthread_mutex_destroy(&M);
 #endif	
     }
+    bool	mode_triage;
+    bool	mode_not_matched;
+    bool	mode_quiet;
+    bool	mode_timestamp;
+
+    primary_t       primary_function;    /* what do we want to do? */
     void	open(const std::string &outfilename); // open outfilename; error if can't.
 
     /* Return code support */
@@ -578,8 +592,9 @@ public:
 	unlock();
     }
 
-    status_t	display_match_result(file_data_hasher_t *fdht);
+    void	display_match_result(file_data_hasher_t *fdht);
     void	md5deep_display_match_result(file_data_hasher_t *fdht);
+    void	md5deep_display_hash(file_data_hasher_t *fdht);
 
     /* audit mode */
     int		audit_update(file_data_hasher_t *fdt);
@@ -635,17 +650,15 @@ inline std::ostream & operator <<(std::ostream &os,const std::wstring &wstr) {
 
 class state {
 public:;
-    state():primary_function(primary_compute),mode(mode_none),
+    state():mode(mode_none),
 	    argc(0),argv(0),
 	    piecewise_size(0),
 	    size_threshold(0),
 	    h_plain(0),h_bsd(0),h_md5deep_size(0),
 	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
-	    h_nsrl20(0), h_encase(0),
-	    md5deep_mode(0)	    {};
+	    h_nsrl20(0), h_encase(0)
+	    {};
 
-    /* Basic Program State */
-    primary_t       primary_function;
     uint64_t        mode;
 
     /* Command line arguments */
@@ -670,11 +683,6 @@ public:;
     uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
     uint8_t      h_ilook, h_ilook3, h_ilook4, h_nsrl15, h_nsrl20, h_encase;
 
-    /* Due to an inadvertant code fork several years ago, this program has different usage
-     * and output when run as 'md5deep' then when run as 'hashdeep'. We call this the
-     * 'md5deep_mode' and track it with the variables below.
-     */
-    bool	md5deep_mode;		// if true, then we were run as md5deep, sha1deep, etc.
     void	md5deep_add_hash(char *h, char *fn); // explicitly add a hash
 
 
@@ -691,7 +699,6 @@ public:;
      */
     
     void	md5deep_load_match_file(const char *fn);
-    void	md5deep_display_hash(file_data_hasher_t *fdht);
     int		find_hash_in_line(char *buf, int fileType, char *filename);
     int		parse_encase_file(const char *fn,FILE *f,uint32_t num_expected_hashes);
     int		find_plain_hash(char *buf,char *known_fn); // returns FALSE if error
@@ -726,8 +733,11 @@ public:;
  * the files class knows how to read various hash file types
  */
 
-class files {
-};
+/* Due to an inadvertant code fork several years ago, this program has different usage
+ * and output when run as 'md5deep' then when run as 'hashdeep'. We call this the
+ * 'md5deep_mode' and track it with the variables below.
+ */
+extern bool	md5deep_mode;		// if true, then we were run as md5deep, sha1deep, etc.
 
 /* main.cpp */
 extern bool opt_relative;		// print relative file names
@@ -744,6 +754,9 @@ extern bool opt_display_hash;
 extern bool opt_mode_match_neg;
 extern hashid_t opt_md5deep_mode_algorithm;	// for when we are in MD5DEEP mode
 extern bool opt_csv;
+extern bool opt_asterisk;
+extern bool md5deep_mode;
+//extern bool mode_triage;
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);

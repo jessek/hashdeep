@@ -344,14 +344,14 @@ void state::process_dir(const tstring &fn)
 
     if (have_processed_dir(fn)) {
 	print_error_filename(fn,"symlink creates cycle");
-	return STATUS_OK;
+	return ;
     }
 
     processing_dir(fn);			// note that we are now processing a directory
   
     if ((current_dir = _topendir(fn.c_str())) == NULL)   {
 	print_error_filename(fn,"%s", strerror(errno));
-	return STATUS_OK;
+	return ;
     }    
 
     while ((entry = _treaddir(current_dir)) != NULL)   {
@@ -367,12 +367,12 @@ void state::process_dir(const tstring &fn)
 	    continue;
 	}
 #endif
-	return_value = dig_normal(new_file);
+	dig_normal(new_file);
 
     }
     _tclosedir(current_dir);		// done with this directory
     done_processing_dir(fn);		// note that we are done with this directory
-    return return_value;
+    return ;
 }
 
 
@@ -552,14 +552,15 @@ int state::should_hash(file_data_hasher_t *fdht,const tstring &fn)
 
 
 // RBF - Standardize return values for this function and audit functions
-// This function returns FALSE. hash_file, called above, returns STATUS_OK
+// previously tThis function returned FALSE. hash_file, called above, returns STATUS_OK
 // process_win32 also returns STATUS_OK. 
 // display_audit_results, used by hashdeep, returns EXIT_SUCCESS/FAILURE.
 // Pick one and stay with it!
+// 
+// now the return codes are in display
 void state::dig_normal(const tstring &fn)
 {
-    int ret = FALSE;
-    file_data_hasher_t *fdht = new file_data_hasher_t(s->utf8_banner,mode & mode_piecewise);
+    file_data_hasher_t *fdht = new file_data_hasher_t(utf8_banner,piecewise_size);
     fdht->retain();
 
     tstring fn2(fn);
@@ -570,10 +571,9 @@ void state::dig_normal(const tstring &fn)
 #endif
 
     if (should_hash(fdht,fn2)){
-	ret = hash_file(fdht,fn2);
+	hash_file(fdht,fn2);
     }
     fdht->release();
-    return ret;
 }
 
 
@@ -747,7 +747,7 @@ void state::dig_self_test()
 		       _T("../testfiles/symlinktest/dir1/dir1"),_T("")};
 
     for(int i=0;names[i].size()>0;i++){
-	file_data_hasher_t fdht(false);
+	file_data_hasher_t fdht("",0);
 	file_types ft = file_type(&fdht,names[i]);
 	std::cerr << "file_type(" << names[i] << ")="
 		  << ft << " size=" << fdht.stat_bytes << " ctime=" << fdht.timestamp << "\n";

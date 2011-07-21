@@ -134,9 +134,9 @@ int display::compute_hash(file_data_hasher_t *fdht)
 	} 
 
 	// In piecewise mode we only hash one block at a time
-	if (fdht->piecewise)    {
+	if (fdht->piecewise_size>0)    {
 	    remaining -= current_read;
-	    if (remaining == 0) return;
+	    if (remaining == 0) return 0; // success!
 
 	    if (remaining < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE){
 		mysize = remaining;
@@ -182,7 +182,7 @@ int display::hash(file_data_hasher_t *fdht)
 	fdht->last_time = fdht->start_time;
     }
     
-    if (s->mode & mode_triage)  {
+    if (mode_triage)  {
 	/*
 	 * Triage mode:
 	 * We use the piecewise mode to get a partial hash of the first 
@@ -190,12 +190,12 @@ int display::hash(file_data_hasher_t *fdht)
 	 * before returning to the main hashing code
 	 */
 
-	fdht->block_size = 512;
-	fdht->piecewise = true;
+	fdht->block_size     = 512;
+	fdht->piecewise_size = 512;
 	fdht->multihash_initialize();
     
 	int success = compute_hash(fdht);
-	fdht->piecewise = false;
+	fdht->piecewise_size = 0;
 	fdht->multihash_finalize();
 	if(success){
 	    printf ("%"PRIu64"\t%s", fdht->stat_bytes,
@@ -210,8 +210,8 @@ int display::hash(file_data_hasher_t *fdht)
 	fseeko(fdht->handle, 0, SEEK_SET);
     }
   
-    if ( fdht->piecewise )  {
-	fdht->block_size = s->piecewise_size;
+    if ( fdht->piecewise_size>0 )  {
+	fdht->block_size = fdht->piecewise_size;
     }
   
     while (!done)  {
@@ -231,8 +231,8 @@ int display::hash(file_data_hasher_t *fdht)
 	// data during this read OR if the whole file is zero bytes long.
 	// If the file is zero bytes, we won't have read anything, but
 	// still need to display a hash.
-	if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes)    {
-	    if (fdht->piecewise)      {
+	if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes) {
+	    if (fdht->piecewise_size>0) {
 		uint64_t tmp_end = 0;
 		if (fdht->read_end != 0){
 		    tmp_end = fdht->read_end - 1;
@@ -243,13 +243,13 @@ int display::hash(file_data_hasher_t *fdht)
       
 	    fdht->multihash_finalize();
 
-	    if(s->md5deep_mode){
+	    if(md5deep_mode){
 		// Under not matched mode, we only display those known hashes that
 		// didn't match any input files. Thus, we don't display anything now.
 		// The lookup is to mark those known hashes that we do encounter.
 		// searching for the hash will cause matched_file_number to be set
-		if (s->mode & mode_not_matched){
-		    s->known.find_hash(opt_md5deep_mode_algorithm,
+		if (mode_not_matched){
+		    known.find_hash(opt_md5deep_mode_algorithm,
 				       fdht->hash_hex[opt_md5deep_mode_algorithm],
 				       fdht->file_number);
 		}
@@ -257,10 +257,10 @@ int display::hash(file_data_hasher_t *fdht)
 		    md5deep_display_hash(fdht);
 		}
 	    } else {
-		s->display_hash(fdht);
+		display_hash(fdht);
 	    }
 	}
-	if (fdht->piecewise){
+	if (fdht->piecewise_size>0){
 	    done = feof(fdht->handle);
 	} else {
 	    done = TRUE;
@@ -271,12 +271,14 @@ int display::hash(file_data_hasher_t *fdht)
      * If we are in dfxml mode, output the DFXML, which may optionally include
      * all of the piecewise information.
      */
-    if(s->dfxml){
-	s->dfxml->push("fileobject");
-	s->dfxml->xmlout("filename",fdht->file_name);
-	s->dfxml->writexml(fdht->dfxml_hash);
-	s->dfxml->pop();
+    lock();
+    if(dfxml){
+	dfxml->push("fileobject");
+	dfxml->xmlout("filename",fdht->file_name);
+	dfxml->writexml(fdht->dfxml_hash);
+	dfxml->pop();
     }
+    unlock();
     return 0;
 }
 
@@ -289,10 +291,10 @@ int state::hash_file(file_data_hasher_t *fdht,const tstring &fn)
     if(opt_verbose>=MORE_VERBOSE){
 	print_error("hash_file(%s) mode=%x primary_function=%d",
 		    main::make_utf8(fn).c_str(),
-		    this->mode,this->primary_function);
+		    this->mode,this->ocb.primary_function);
     }
 
-    int status		= STATUS_OK;
+    int status		= EXIT_SUCCESS;
     fdht->is_stdin	= FALSE;
     fdht->file_name	= main::make_utf8(fn);
 
@@ -329,13 +331,13 @@ int state::hash_file(file_data_hasher_t *fdht,const tstring &fn)
 			fdht->hash_hex[i] = make_stars(hashes[i].bit_length/4);
 		    }
 		}
-		this->display_hash(fdht);
+		ocb.display_hash(fdht);
 	    }
 	    fdht->close();
-	    return STATUS_OK;
+	    return EXIT_SUCCESS;
 	}
 	
-	status = hash(this,fdht);
+	status = ocb.hash(fdht);
 	fdht->close();
     }
     else  {
@@ -347,9 +349,11 @@ int state::hash_file(file_data_hasher_t *fdht,const tstring &fn)
 
 int state::hash_stdin()
 {
-    file_data_hasher_t *fdht = new file_data_hasher_t(this->mode & mode_piecewise);
+    file_data_hasher_t *fdht = new file_data_hasher_t(utf8_banner,piecewise_size);
+
     fdht->file_name = "stdin";
     fdht->is_stdin  = TRUE;
     fdht->handle    = stdin;
-    return hash(this,fdht);
+
+    return ocb.hash(fdht);
 }

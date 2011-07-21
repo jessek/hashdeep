@@ -43,26 +43,23 @@ LPFN_ISWOW64PROCESS fnIsWow64Process;
 
 void check_wow64(state *s)
 {
-  BOOL result;
+    BOOL result;
 
-  fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(GetModuleHandle(TEXT("kernel32")),
+    fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(GetModuleHandle(TEXT("kernel32")),
 							  "IsWow64Process");
-
-
-  // If this system doesn't have the function IsWow64Process then
-  // it's definitely not running under WoW64.
-  if (NULL == fnIsWow64Process) return;
-
-  if (! fnIsWow64Process(GetCurrentProcess(), &result))  {
-    // The function failed? WTF? Well, let's not worry about it.
-    return;
-  }
-
-  if (result) {
-    print_error("%s: WARNING: You are running a 32-bit program on a 64-bit system.", __progname);
-    print_error("%s: You probably want to use the 64-bit version of this program.", __progname);
-  }
-
+    // If this system doesn't have the function IsWow64Process then
+    // it's definitely not running under WoW64.
+    if (NULL == fnIsWow64Process) return;
+    
+    if (! fnIsWow64Process(GetCurrentProcess(), &result))  {
+	// The function failed? WTF? Well, let's not worry about it.
+	return;
+    }
+    
+    if (result) {
+	print_error("%s: WARNING: You are running a 32-bit program on a 64-bit system.", __progname);
+	print_error("%s: You probably want to use the 64-bit version of this program.", __progname);
+    }
 }
 #endif   // ifdef _WIN32
 

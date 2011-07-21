@@ -62,3 +62,5 @@ Files partially matched: 0
            Files moved: 0
        New files found: 0
  Known files not found: 0
+================================================================
+* error printing needs to be threadsafe
