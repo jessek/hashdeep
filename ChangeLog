@@ -1,3 +1,11 @@
+2011-07-21  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/main.cpp (state::md5deep_process_command_line): -f option removed sincei t was not properly implemented and doesnt appear to have been used.
+
+2011-07-21  Simson Garfinkel  <simsong@cmu-466621.wv.cc.cmu.edu>
+
+	* src/Makefile.am: removed md5deep.h and md5deep_match.h
+
 2011-07-20  Simson Garfinkel  <simsong@cmu-466621.wv.cc.cmu.edu>
 
 	* src/main.cpp (state::md5deep_process_command_line): removed mode_piecewise, since it can be determined from picewise_size>0.

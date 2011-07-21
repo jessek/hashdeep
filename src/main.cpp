@@ -54,10 +54,10 @@ int _CRT_fmode = _O_BINARY;
 #endif
 
 
+/* These were inappropriately moved here and need to be moved to classes */
 int opt_debug = 0;			// debug mode; 1 is self-test
 bool opt_silent = false;
 int  opt_verbose = 0;
-bool opt_zero   = false;
 bool opt_estimate = false;
 bool opt_relative = false;
 bool opt_unicode_escape = false;
@@ -68,10 +68,10 @@ bool opt_mode_match_neg = false;
 bool opt_display_hash = false;
 
 hashid_t  opt_md5deep_mode_algorithm = alg_unknown;
+
 /* output options */
 bool opt_csv = false;
 bool opt_asterisk = false;
-//bool opt_triage = false;
 bool md5deep_mode = false;
 
 
@@ -515,7 +515,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       exit(EXIT_SUCCESS);
 	  
     case 'W': ocb.open(optarg); break;
-    case '0': opt_zero = true; break;
+    case '0': ocb.opt_zero = true; break;
     case 'u': opt_unicode_escape = true;break;
 
     case 'h':
@@ -680,126 +680,114 @@ static void md5deep_check_matching_modes(state *s)
 
 int state::md5deep_process_command_line(int argc, char **argv)
 {
-  int i;
+    int i;
+    while ((i = getopt(argc,
+		       argv,
+		       "dI:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:D:u")) != -1) { 
+	switch (i) {
+	case 'D': opt_debug = atoi(optarg);break;
+	case 'd': ocb.xml_open(stdout); break;
+	case 'I':
+	    ocb.mode_size_all=true;
+	    // Note that there is no break here
+	case 'i':
+	    ocb.mode_size=true;
+	    ocb.size_threshold = find_block_size(this,optarg);
+	    if (ocb.size_threshold==0) {
+		print_error("%s: Requested size threshold implies not hashing anything",
+			    __progname);
+		exit(status_t::STATUS_USER_ERROR);
+	    }
+	    break;
 
-  while ((i = getopt(argc,
-		     argv,
-		     "dI:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:D:u")) != -1) { 
-    switch (i) {
+	case 'p':
+	    ocb.piecewise_size = find_block_size(this, optarg);
+	    if (ocb.piecewise_size==0) {
+		print_error("%s: Illegal size value for piecewise mode.", __progname);
+		exit(status_t::STATUS_USER_ERROR);
+	    }
 
-    case 'D': opt_debug = atoi(optarg);break;
-    case 'd': this->ocb.xml_open(stdout); break;
-    case 'I':
-      this->ocb.mode_size_all=true;
-      // Note that there is no break here
-    case 'i':
-      this->ocb.mode_size=true;
-      this->ocb.size_threshold = find_block_size(this,optarg);
-      if (this->ocb.size_threshold==0) {
-	print_error("%s: Requested size threshold implies not hashing anything",
-		    __progname);
-	exit(status_t::STATUS_USER_ERROR);
-      }
-      break;
+	    break;
 
-    case 'p':
-      this->ocb.piecewise_size = find_block_size(this, optarg);
-      if (this->ocb.piecewise_size==0) {
-	print_error("%s: Illegal size value for piecewise mode.", __progname);
-	exit(status_t::STATUS_USER_ERROR);
-      }
+	case 'Z': ocb.mode_triage	 = true; break;
+	case 't': ocb.mode_timestamp   = true; break;
+	case 'n': ocb.mode_not_matched = true; break;
+	case 'w': opt_show_matched = true;break; 		// display which known hash generated match
 
-      break;
+	case 'a':
+	    opt_mode_match=true;
+	    md5deep_check_matching_modes(this);
+	    md5deep_add_hash(optarg,optarg);
+	    break;
 
-    case 'Z': this->ocb.mode_triage	 = true; break;
-    case 't': this->ocb.mode_timestamp   = true; break;
-    case 'n': this->ocb.mode_not_matched = true; break;
-    case 'w': opt_show_matched = true;break; 		// display which known hash generated match
+	case 'A':
+	    opt_mode_match_neg=true;
+	    md5deep_check_matching_modes(this);
+	    md5deep_add_hash(optarg,optarg);
+	    break;
 
-    case 'a':
-	opt_mode_match=true;
-	md5deep_check_matching_modes(this);
-	this->md5deep_add_hash(optarg,optarg);
-	break;
-
-    case 'A':
-	opt_mode_match_neg=true;
-      md5deep_check_matching_modes(this);
-      this->md5deep_add_hash(optarg,optarg);
-      break;
-
-    case 'o': 
-      mode_expert=true; 
-      setup_expert_mode(optarg);
-      break;
+	case 'o': 
+	    mode_expert=true; 
+	    setup_expert_mode(optarg);
+	    break;
       
-    case 'M':
-	opt_display_hash=true;
-      /* Intentional fall through */
-    case 'm':
-	opt_mode_match=true;
-      md5deep_check_matching_modes(this);
-      this->md5deep_load_match_file(optarg);
-      break;
+	case 'M':
+	    opt_display_hash=true;
+	    /* Intentional fall through */
+	case 'm':
+	    opt_mode_match=true;
+	    md5deep_check_matching_modes(this);
+	    md5deep_load_match_file(optarg);
+	    break;
 
-    case 'X':
-	opt_display_hash=true;
-    case 'x':
-	opt_mode_match_neg=true;
-      md5deep_check_matching_modes(this);
-      this->md5deep_load_match_file(optarg);
-      break;
+	case 'X':
+	    opt_display_hash=true;
+	case 'x':
+	    opt_mode_match_neg=true;
+	    md5deep_check_matching_modes(this);
+	    md5deep_load_match_file(optarg);
+	    break;
 
-    case 'c': opt_csv = true;		break;
-    case 'z': opt_display_size = true;	break;
-    case '0': opt_zero = true;		break;
+	case 'c': opt_csv = true;		break;
+	case 'z': opt_display_size = true;	break;
+	case '0': ocb.opt_zero = true;	break;
 
-    case 'S':
-	this->mode_warn_only=true;
-	opt_silent = true;
-      break;
+	case 'S':
+	    mode_warn_only=true;
+	    opt_silent = true;
+	    break;
 
-    case 's': opt_silent = true; break;
-
-    case 'e': opt_estimate = true; break;
-
-    case 'r': this->mode_recursive = true; break;
-    case 'k': opt_asterisk = true;      break;
-    case 'b': this->ocb.mode_barename=true; break;
+	case 's': opt_silent = true;	break;
+	case 'e': opt_estimate = true;	break;
+	case 'r': mode_recursive = true; break;
+	case 'k': opt_asterisk = true;      break;
+	case 'b': ocb.mode_barename=true; break;
       
-    case 'l': 
-	opt_relative = true;
-      break;
+	case 'l': opt_relative = true;      break;
+	case 'q': ocb.mode_quiet = true; break;
+	case 'W': ocb.open(optarg);	break;
+	case 'u': opt_unicode_escape = 1;	break;
 
-    case 'q': 
-	this->ocb.mode_quiet = true; 
-      break;
+	case 'h':
+	    md5deep_usage();
+	    exit (EXIT_SUCCESS);
 
-    case 'h':
-	md5deep_usage();
-      exit (EXIT_SUCCESS);
+	case 'v':
+	    print_status("%s",VERSION);
+	    exit (EXIT_SUCCESS);
 
-    case 'v':
-      print_status("%s",VERSION);
-      exit (EXIT_SUCCESS);
+	case 'V':
+	    // COPYRIGHT is a format string, complete with newlines
+	    print_status(COPYRIGHT);
+	    exit (EXIT_SUCCESS);
 
-    case 'V':
-      // COPYRIGHT is a format string, complete with newlines
-      print_status(COPYRIGHT);
-      exit (EXIT_SUCCESS);
-
-    case 'W':	ocb.open(optarg);	break;
-    case 'u':	opt_unicode_escape = 1;	break;
-
-    default:
-      try_msg();
-      exit (status_t::STATUS_USER_ERROR);
-
+	default:
+	    try_msg();
+	    exit (status_t::STATUS_USER_ERROR);
+	}
     }
-  }
-
-  md5deep_check_flags_okay(this);
-  return EXIT_SUCCESS;
+    md5deep_check_flags_okay(this);
+    return EXIT_SUCCESS;
 }
 
 
@@ -862,7 +850,6 @@ int main(int argc, char **argv)
 
     /* Set up the DFXML output if requested */
     s->ocb.dfxml_startup(argc,argv);
-
    
 #ifdef _WIN32
     if (prepare_windows_command_line(s)){
@@ -880,8 +867,10 @@ int main(int argc, char **argv)
     }
 
     /****************************************************************/
-    /* Make the UTF8 banner in case we need it */
-    /* PROBLEM: THIS IS ONLY MAKING HASHDEEP HEADER; WHAT IS MD5DEEP HEADER??? */
+    /* Make the UTF8 banner in case we need it 
+     * Only hashdeep has a header.
+     */
+       
     std::string utf8_banner;
     utf8_banner = HASHDEEP_HEADER_10 + std::string(NEWLINE);
     utf8_banner += HASHDEEP_PREFIX;
@@ -899,6 +888,7 @@ int main(int argc, char **argv)
 #else
     utf8_banner += (geteuid()==0) ? "#" : "$";
 #endif
+
     // Accounts for '## ', command prompt, and space before first argument
     size_t bytes_written = 8;
 	
@@ -912,12 +902,11 @@ int main(int argc, char **argv)
 	std::string arg_utf8 = main::make_utf8(arg_t);
 	size_t current_bytes = arg_utf8.size();
     
-    // The extra 32 bytes is a fudge factor
+	// The extra 32 bytes is a fudge factor
 	if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
 	    utf8_banner += std::string(NEWLINE) + "## ";
 	    bytes_written = 3;
 	}
-	    
 	utf8_banner += arg_utf8;
 	bytes_written += current_bytes;
     }
@@ -926,10 +915,9 @@ int main(int argc, char **argv)
 
     /****************************************************************/
 
-
-
-    /* Anything left on the command line at this point is a file
-     *  or directory we're supposed to process. If there's nothing
+    /*
+     * Anything left on the command line at this point is a file
+     * or directory we're supposed to process. If there's nothing
      * specified, we should hash standard input
      */
     
@@ -957,7 +945,7 @@ int main(int argc, char **argv)
      * also sets our return values in terms of inputs not being matched
      * or known hashes not being used
      */
-    if ((opt_mode_match) || (opt_mode_match_neg)){
+    if (opt_mode_match || opt_mode_match_neg){
 	s->ocb.finalize_matching();
     }
 

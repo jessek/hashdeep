@@ -25,53 +25,8 @@
 #include <map>
 #include <vector>
 
-/* Many of these options were made boolean global variables. Upon reflection,
- * they could have been made boolean instance variables within the display class.
- * However, we are far better off having them being boolean variables rather than being
- * bits in a mask.
- */
-
-//#define mode_none              0
-//#define mode_recursive         1<<0
-//#define mode_estimate          1<<1          // now is opt_estimate
-//#define mode_silent            1<<2          // now is opt_silent
-//#define mode_warn_only         1<<3
-//#define mode_match             1<<4          // now is opt_mode_match
-//#define mode_match_neg         1<<5          // now is opt_mode_match_neg
-//#define mode_display_hash      1<<6	// now opt_display_hash
-//#define mode_display_size      1<<7          // now opt_display_size
-//#define mode_zero              1<<8          // now is opt_zero
-//#define mode_relative          1<<9
-//#define mode_which             1<<10         // now opt_show_matched
-//#define mode_barename          1<<11         // now mode_barename in display
-//#define mode_asterisk          1<<12	// now opt_asterisk
-//#define mode_not_matched       1<<13  // now mode_not_matched in display
-//#define mode_quiet             1<<14   // now mode_quiet in display
-//#define mode_piecewise         1<<15
-//these were moved to opt_verbose
-//#define mode_verbose           1<<16
-//#define mode_more_verbose      1<<17
-//#define mode_insanely_verbose  1<<18
-//#define mode_size              1<<19
-//#define mode_size_all          1<<20
-//#define mode_timestamp         1<<21 // now in display
-//#define mode_csv               1<<22
-//#define mode_read_from_file    1<<25 // no longer used
-//#define mode_triage            1<<26 // now opt_triage
-
-// Modes 27-48 are reserved for future use.
-//
-// Note that the LL is required to avoid overflows of 32-bit words.
-// LL must be used for any value equal to or above 1<<31. 
-// Also note that these values can't be returned as an int type. 
-// For example, any function that returns an int can't use
-//
-// return (s->mode & mode_regular);   
-// 
-// That value is 64-bits wide and may not be returned correctly. 
-
-#define VERBOSE		1
-#define MORE_VERBOSE	2
+#define VERBOSE		 1
+#define MORE_VERBOSE	 2
 #define INSANELY_VERBOSE 3
 
 /* These describe the version of the file format being used, not
@@ -93,7 +48,7 @@
   * Update the usage function and man page to include the function
   */
 
-typedef enum{ 
+typedef enum { 
   alg_md5=0, 
   alg_sha1, 
   alg_sha256, 
@@ -502,6 +457,7 @@ public:
 	      mode_not_matched(false),mode_quiet(false),mode_timestamp(false),
 	      mode_barename(false),
 	      mode_size(false),mode_size_all(false),
+	      opt_zero(false),
 	      size_threshold(0),
 	      piecewise_size(0),
 	      primary_function(primary_compute) {
@@ -522,6 +478,7 @@ public:
     bool	mode_barename;
     bool	mode_size;
     bool	mode_size_all;
+    bool	opt_zero;
 
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;
@@ -788,7 +745,6 @@ extern bool	md5deep_mode;		// if true, then we were run as md5deep, sha1deep, et
 extern bool opt_relative;		// print relative file names
 extern bool opt_silent;			// previously was mode_silent
 extern int  opt_verbose;		// can be 1, 2 or 3
-extern bool opt_zero;			// newlines are \000 
 extern bool opt_estimate;		// print ETA
 extern int  opt_debug;			// for debugging
 extern bool opt_unicode_escape;
@@ -811,9 +767,9 @@ extern char *__progname;
 // ----------------------------------------------------------------
 // CYCLE CHECKING
 // ----------------------------------------------------------------
-int have_processed_dir(const tstring &fn);
-void processing_dir(const tstring &fn);
-void done_processing_dir(const tstring &fn);
+int	have_processed_dir(const tstring &fn);
+void	processing_dir(const tstring &fn);
+void	done_processing_dir(const tstring &fn);
 
 // ------------------------------------------------------------------
 // HELPER FUNCTIONS
@@ -827,21 +783,17 @@ void     chop_line(char *s);
 void     shift_string(char *fn, size_t start, size_t new_start);
 void     check_wow64(state *s);
 
-int find_comma_separated_string(char *s, unsigned int n);
-int find_quoted_string(char *buf, unsigned int n);
+int	find_comma_separated_string(char *s, unsigned int n);
+int	find_quoted_string(char *buf, unsigned int n);
 
 // Return the size, in bytes of an open file stream. On error, return -1 
-off_t find_file_size(FILE *f);
+off_t	find_file_size(FILE *f);
 
 // ------------------------------------------------------------------
 // MAIN PROCESSING
 // ------------------------------------------------------------------ 
 /* dig.cpp */
 void dig_self_test();			// check the string-processing
-
-
-
-
 
 /* ui.c */
 /* User Interface Functions */

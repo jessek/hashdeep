@@ -108,16 +108,14 @@ bool file_data_hasher_t::compute_hash()
 		this->ocb->set_return_code(status_t::status_EXIT_FAILURE);
 		return false;		// error
 	    }
-      
 	    this->multihash_update(buffer,current_read);
-      
 	    clearerr(this->handle);
       
 	    // The file pointer's position is now undefined. We have to manually
 	    // advance it to the start of the next buffer to read. 
 	    fseeko(this->handle,SEEK_SET,this_start + mysize);
 	} 
-	else    {
+	else {
 	    // If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE
 	    // bytes and must reflect that in how we update the hash.
 	    this->multihash_update(buffer,current_read);

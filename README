@@ -156,3 +156,12 @@ http://www.cs.technion.ac.il/~biham/Reports/Tiger/
 
 The Whirlpool algorithm is defined at:
 http://planeta.terra.com.br/informatica/paulobarreto/WhirlpoolPage.html
+
+================================================================
+Theory of operation.
+
+main.cpp    - sets up the system.
+dig.cpp     - iterates through the individual directories.
+ 	    - calls hash_file() in hash.cpp for each file to hash
+hash.cpp    - performs the hashing of each file.
+display.cpp - stores/displays the results.
