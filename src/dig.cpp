@@ -457,7 +457,7 @@ bool state::should_hash_symlink(const tstring &fn, file_types *link_type)
     file_types type = decode_file_type(sb);
 
     if (type == stat_directory)  {
-	if (mode & mode_recursive){
+	if (mode_recursive){
 	    process_dir(fn);
 	} else {
 	    print_error_filename(fn,"Is a directory");
@@ -481,7 +481,7 @@ bool state::should_hash_expert(const tstring &fn, file_types type)
     file_types link_type=stat_unknown;
     switch(type)  {
     case stat_directory:
-	if (mode & mode_recursive){
+	if (mode_recursive){
 	    process_dir(fn);
 	}
 	else {
@@ -493,7 +493,7 @@ bool state::should_hash_expert(const tstring &fn, file_types type)
 	// a 64-bit value. When that value gets converted back to int,
 	// the high part of it is lost. 
 
-#define RETURN_IF_MODE(A) if (mode & A) return true; break;
+#define RETURN_IF_MODE(A) if (A) return true; break;
     case stat_regular:   RETURN_IF_MODE(mode_regular);
     case stat_block:     RETURN_IF_MODE(mode_block);
     case stat_character: RETURN_IF_MODE(mode_character);
@@ -509,7 +509,7 @@ bool state::should_hash_expert(const tstring &fn, file_types type)
 	// The program attempts to open the directory entry itself
 	// and gets into an infinite loop.
 
-	if (!(mode & mode_symlink)) return false;
+	if (!(mode_symlink)) return false;
 	if (should_hash_symlink(fn,&link_type)){
 	    return should_hash_expert(fn,link_type);
 	}
@@ -526,12 +526,10 @@ bool state::should_hash(const tstring &fn)
 {
     file_types  type = state::file_type(fn,0,0);
   
-    if (mode & mode_expert){
-	return (should_hash_expert(fn,type));
-    }
+    if (mode_expert) return should_hash_expert(fn,type);
 
     if (type == stat_directory)  {
-	if (mode & mode_recursive){
+	if (mode_recursive){
 	    process_dir(fn);
 	} else {
 	    print_error_filename(fn,"Is a directory");

@@ -31,11 +31,11 @@
  * bits in a mask.
  */
 
-#define mode_none              0
-#define mode_recursive         1<<0
+//#define mode_none              0
+//#define mode_recursive         1<<0
 //#define mode_estimate          1<<1          // now is opt_estimate
 //#define mode_silent            1<<2          // now is opt_silent
-#define mode_warn_only         1<<3
+//#define mode_warn_only         1<<3
 //#define mode_match             1<<4          // now is opt_mode_match
 //#define mode_match_neg         1<<5          // now is opt_mode_match_neg
 //#define mode_display_hash      1<<6	// now opt_display_hash
@@ -56,7 +56,7 @@
 //#define mode_size_all          1<<20
 //#define mode_timestamp         1<<21 // now in display
 //#define mode_csv               1<<22
-#define mode_read_from_file    1<<25
+//#define mode_read_from_file    1<<25 // no longer used
 //#define mode_triage            1<<26 // now opt_triage
 
 // Modes 27-48 are reserved for future use.
@@ -69,16 +69,6 @@
 // return (s->mode & mode_regular);   
 // 
 // That value is 64-bits wide and may not be returned correctly. 
-
-#define mode_expert        (1LL)<<49
-#define mode_regular       (1LL)<<50
-#define mode_directory     (1LL)<<51
-#define mode_door          (1LL)<<52
-#define mode_block         (1LL)<<53
-#define mode_character     (1LL)<<54
-#define mode_pipe          (1LL)<<55
-#define mode_socket        (1LL)<<56
-#define mode_symlink       (1LL)<<57
 
 #define VERBOSE		1
 #define MORE_VERBOSE	2
@@ -402,6 +392,7 @@ public:;
      * They read from the handle and just use the filename for printing error messages.
      */
     void		enable_hashing_algorithms_from_hashdeep_file(const std::string &fn,std::string val);
+
     std::string		last_enabled_algorithms; // a string with the algorithms that were enabled last
     hashid_t		hash_column[NUM_ALGORITHMS]; // maps a column number to a hashid;
 						     // the order columns appear in the file being loaded.
@@ -666,7 +657,7 @@ public:
 
 class main {
 public:
-    static tstring getcwd();			  // returns the current directory
+    static tstring getcwd();			// returns the current directory
     static tstring get_realpath(const tstring &fn); // returns the full path
     static std::string get_realpath8(const tstring &fn);  // returns the full path in UTF-8
     static std::string escape_utf8(const std::string &fn); // turns "⦿" to "U+29BF"
@@ -685,17 +676,47 @@ inline std::ostream & operator <<(std::ostream &os,const std::wstring &wstr) {
 }
 #endif
 
-
 class state {
 public:;
-    state():mode(mode_none),
+    state():mode_recursive(false),	// do we recurse?
+	    mode_warn_only(false),	// for loading hash files
+
+	    // these determine which files get hashed
+	    mode_expert(false),
+	    mode_regular(false),
+	    mode_directory(false),
+	    mode_door(false),
+	    mode_block(false),
+	    mode_character(false),
+	    mode_pipe(false),
+	    mode_socket(false),
+	    mode_symlink(false),
+
+	    // command line argument
 	    argc(0),argv(0),
-	    h_plain(0),h_bsd(0),h_md5deep_size(0),
+
+	    // these have something to do with hash files that are loaded
+	    h_plain(0),h_bsd(0),
+	    h_md5deep_size(0),
 	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
 	    h_nsrl20(0), h_encase(0)
 	    {};
 
-    uint64_t        mode;
+    //uint64_t        mode;
+    bool	mode_recursive;
+    bool	mode_warn_only;
+
+    // which files do we hash.
+    bool mode_expert;
+    bool mode_regular;
+    bool mode_directory;
+    bool mode_door;
+    bool mode_block;
+    bool mode_character;
+    bool mode_pipe;
+    bool mode_socket;
+    bool mode_symlink;
+
 
     /* Command line arguments */
     int             argc;
@@ -708,13 +729,12 @@ public:;
     /* configuration and output */
     display	    ocb;		// output control block
 
-
     // Which filetypes this algorithm supports and their position in the file
     uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
     uint8_t      h_ilook, h_ilook3, h_ilook4, h_nsrl15, h_nsrl20, h_encase;
 
     void	md5deep_add_hash(char *h, char *fn); // explicitly add a hash
-
+    void	setup_expert_mode(char *arg);
 
     /* main.cpp */
     int hashdeep_process_command_line(int argc,char **argv);
@@ -722,7 +742,6 @@ public:;
 #ifdef _WIN32
     int prepare_windows_command_line();
 #endif    
-
 
     /* files.cpp
      * Not quite sure what to do with this stuff yet...
@@ -749,7 +768,6 @@ public:;
     void	dig_normal(const tstring &path);	// posix  & win32 
     void	dig_win32(const tstring &path);	// win32 only; calls dig_normal
     static	void dig_self_test();
-
 
     bool hashes_loaded(){
 	return ocb.hashes_loaded();
@@ -783,7 +801,7 @@ extern hashid_t opt_md5deep_mode_algorithm;	// for when we are in MD5DEEP mode
 extern bool opt_csv;
 extern bool opt_asterisk;
 extern bool md5deep_mode;
-//extern bool mode_triage;
+
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);

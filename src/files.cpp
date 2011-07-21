@@ -431,7 +431,7 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
 		continue;
         
 	    // Users expect the line numbers to start at one, not zero.
-	    if ((!opt_silent) || (mode & mode_warn_only)) {
+	    if ((!opt_silent) || (mode_warn_only)) {
 		print_error("%s: No hash found in line %"PRIu32, fn, count + 1);
 		print_error("%s: %s", fn, strerror(errno));
 		return status_t::STATUS_USER_ERROR;
@@ -522,7 +522,7 @@ void state::md5deep_load_match_file(const char *fn)
 	memset(known_fn,0,PATH_MAX);
 
 	if (!find_hash_in_line(buf,file_type,known_fn)) {
-	    if ((!opt_silent) || (mode & mode_warn_only)) {
+	    if ((!opt_silent) || (mode_warn_only)) {
 		fprintf(stderr,"%s: %s: No hash found in line %" PRIu64 "%s", 
 			__progname,fn,line_number,NEWLINE);
 	    }

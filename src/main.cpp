@@ -385,31 +385,29 @@ void algorithm_t::enable_hashing_algorithms(std::string var)
 }
 
 
-static void setup_expert_mode(state *s, char *arg)
+void state::setup_expert_mode(char *arg)
 {
-  unsigned int i = 0;
-
-  while (i < strlen(arg)) {
-    switch (*(arg+i)) {
-    case 'b': // Block Device
-      s->mode |= mode_block;     break;
-    case 'c': // Character Device
-      s->mode |= mode_character; break;
-    case 'p': // Named Pipe
-      s->mode |= mode_pipe;      break;
-    case 'f': // Regular File
-      s->mode |= mode_regular;   break;
-    case 'l': // Symbolic Link
-      s->mode |= mode_symlink;   break;
-    case 's': // Socket
-      s->mode |= mode_socket;    break;
-    case 'd': // Door (Solaris)
-      s->mode |= mode_door;      break;
-    default:
-      print_error("%s: Unrecognized file type: %c",__progname,*(arg+i));
+    for(unsigned int i=0;i<strlen(arg);i++){
+	switch(arg[i]){
+	case 'b': // Block Device
+	    mode_block = true;     break;
+	case 'c': // Character Device
+	    mode_character = true; break;
+	case 'p': // Named Pipe
+	    mode_pipe=true;      break;
+	case 'f': // Regular File
+	    mode_regular=true;   break;
+	case 'l': // Symbolic Link
+	    mode_symlink=true;   break;
+	case 's': // Socket
+	    mode_socket=true;    break;
+	case 'd': // Door (Solaris)
+	    mode_door=true;      break;
+	default:
+	    print_error("%s: Unrecognized file type: %c",
+			__progname,arg[i]);
+	}
     }
-    ++i;
-  }
 }
 
 
@@ -422,8 +420,8 @@ int state::hashdeep_process_command_line(int argc, char **argv)
   while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVhW:0D:u")) != -1)  {
     switch (i) {
     case 'o':
-      this->mode |= mode_expert; 
-      setup_expert_mode(this,optarg);
+      mode_expert=true; 
+      setup_expert_mode(optarg);
       break;
 
     case 'I': 
@@ -463,7 +461,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
     case 'b': this->ocb.mode_barename=true;     break;
     case 'l': opt_relative=true;     break;
     case 'e': opt_estimate = true;	    break;
-    case 'r': this->mode |= mode_recursive;    break;
+    case 'r': this->mode_recursive=true;    break;
     case 's': opt_silent = true;	    break;
       
     case 'p':
@@ -663,7 +661,7 @@ static void md5deep_check_flags_okay(state *s)
 
   /* If we try to display non-matching files but haven't initialized the
      list of matching files in the first place, bad things will happen. */
-  sanity_check((s->mode & s->ocb.mode_not_matched) && 
+  sanity_check((s->ocb.mode_not_matched) && 
 	       ! ((opt_mode_match) || (opt_mode_match_neg)),
 	       "Matching or negative matching must be enabled to display non-matching files");
 
@@ -686,15 +684,11 @@ int state::md5deep_process_command_line(int argc, char **argv)
 
   while ((i = getopt(argc,
 		     argv,
-		     "df:I:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:D:u")) != -1) { 
+		     "dI:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:D:u")) != -1) { 
     switch (i) {
 
     case 'D': opt_debug = atoi(optarg);break;
     case 'd': this->ocb.xml_open(stdout); break;
-    case 'f':
-      this->mode |= mode_read_from_file;
-      break;
-
     case 'I':
       this->ocb.mode_size_all=true;
       // Note that there is no break here
@@ -735,8 +729,8 @@ int state::md5deep_process_command_line(int argc, char **argv)
       break;
 
     case 'o': 
-      this->mode |= mode_expert; 
-      setup_expert_mode(this,optarg);
+      mode_expert=true; 
+      setup_expert_mode(optarg);
       break;
       
     case 'M':
@@ -760,16 +754,16 @@ int state::md5deep_process_command_line(int argc, char **argv)
     case 'z': opt_display_size = true;	break;
     case '0': opt_zero = true;		break;
 
-    case 'S': 
-      this->mode |= mode_warn_only;
-      opt_silent = true;
+    case 'S':
+	this->mode_warn_only=true;
+	opt_silent = true;
       break;
 
     case 's': opt_silent = true; break;
 
     case 'e': opt_estimate = true; break;
 
-    case 'r': this->mode |= mode_recursive; break;
+    case 'r': this->mode_recursive = true; break;
     case 'k': opt_asterisk = true;      break;
     case 'b': this->ocb.mode_barename=true; break;
       
