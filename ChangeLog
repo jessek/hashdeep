@@ -1,5 +1,11 @@
 2011-07-21  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
+	* src/files.cpp (shift_string): moved to files.cpp, the only place where it is used.
+
+	* src/main.cpp (check_wow64): moved to main.cpp
+
+	* src/files.cpp (find_comma_separated_string): moved from helpers.cpp to files.cpp and made static.
+
 	* src/main.cpp (state::md5deep_process_command_line): -f option removed sincei t was not properly implemented and doesnt appear to have been used.
 
 2011-07-21  Simson Garfinkel  <simsong@cmu-466621.wv.cc.cmu.edu>
