@@ -21,49 +21,6 @@ std::string itos(uint64_t i)
     return std::string(buf);
 }
 
-
-
-#ifdef _WIN32
-
-/**
- * Detect if we are a 32-bit program running on a 64-bit system.
- *
- * Running a 32-bit program on a 64-bit system is problematic because WoW64
- * changes the program's view of critical directories. An affected
- * program does not see the true %WINDIR%, but instead gets a mapped
- * version. Thus the user cannot get an accurate picture of their system.
- * See http://jessekornblum.livejournal.com/273084.html for an example.
- *
- * The following is adapted from
- * http://msdn.microsoft.com/en-us/library/ms684139(v=VS.85).aspx
- */
-
-typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
-LPFN_ISWOW64PROCESS fnIsWow64Process;
-
-void check_wow64(state *s)
-{
-    BOOL result;
-
-    fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(GetModuleHandle(TEXT("kernel32")),
-							  "IsWow64Process");
-    // If this system doesn't have the function IsWow64Process then
-    // it's definitely not running under WoW64.
-    if (NULL == fnIsWow64Process) return;
-    
-    if (! fnIsWow64Process(GetCurrentProcess(), &result))  {
-	// The function failed? WTF? Well, let's not worry about it.
-	return;
-    }
-    
-    if (result) {
-	print_error("%s: WARNING: You are running a 32-bit program on a 64-bit system.", __progname);
-	print_error("%s: You probably want to use the 64-bit version of this program.", __progname);
-    }
-}
-#endif   // ifdef _WIN32
-
-
 uint64_t find_block_size(state *s, char *input_str)
 {
   unsigned char c;
@@ -119,99 +76,6 @@ void chop_line(char *s)
     }
 }
 
-
-
-// Shift the contents of a string so that the values after 'new_start'
-// will now begin at location 'start' 
-void shift_string(char *fn, size_t start, size_t new_start)
-{
-  if (NULL == fn)
-    return;
-
-  // TODO: Can shift_string be replaced with memmove? 
-  if (start > strlen(fn) || new_start < start)
-    return;
-
-  while (new_start < strlen(fn))    {
-      fn[start] = fn[new_start];
-      new_start++;
-      start++;
-    }
-
-  fn[start] = 0;
-}
-
-
-// Find the index of the next comma in the string str starting at index start.
-// If there is no next comma, returns -1. 
-int find_next_comma(char *str, unsigned int start)
-{
-  if (NULL == str)
-    return -1;
-
-  size_t size = strlen(str);
-  unsigned int pos = start; 
-  int in_quote = FALSE;
-  
-  while (pos < size)  {
-    switch (str[pos]) {
-    case '"':
-      in_quote = !in_quote;
-      break;
-    case ',':
-      if (in_quote)
-	break;
-
-      // Although it's potentially unwise to cast an unsigned int back
-      // to an int, problems will only occur when the value is beyond 
-      // the range of int. Because we're working with the index of a 
-      // string that is probably less than 32,000 characters, we should
-      // be okay. 
-      return (int)pos;
-    }
-    ++pos;
-  }
-  return -1;
-}
-
- 
-// Returns the string after the nth comma in the string str. If that
-// string is quoted, the quotes are removed. If there is no valid 
-// string to be found, returns TRUE. Otherwise, returns FALSE 
-int find_comma_separated_string(char *str, unsigned int n)
-{
-  if (NULL == str)
-    return TRUE;
-
-  int start = 0, end;
-  unsigned int count = 0; 
-  while (count < n)
-  {
-    if ((start = find_next_comma(str,start)) == -1)
-      return TRUE;
-    ++count;
-    // Advance the pointer past the current comma
-    ++start;
-  }
-
-  // It's okay if there is no next comma, it just means that this is
-  // the last comma separated value in the string 
-  if ((end = find_next_comma(str,start)) == -1)
-    end = strlen(str);
-
-  // Strip off the quotation marks, if necessary. We don't have to worry
-  // about uneven quotation marks (i.e quotes at the start but not the end
-  // as they are handled by the the find_next_comma function.
-  if (str[start] == '"')
-    ++start;
-  if (str[end - 1] == '"')
-    end--;
-
-  str[end] = 0;
-  shift_string(str,0,start);
-  
-  return FALSE;
-}
 
 
 // Return the size, in bytes of an open file stream. On error, return 0 
@@ -346,52 +210,45 @@ midpoint (off_t a, off_t b, long blksize)
   return c;
 }
 
-
-
 off_t find_dev_size(int fd, int blk_size)
 {
-  off_t curr = 0, amount = 0;
-  void *buf;
+    off_t curr = 0, amount = 0;
+    void *buf;
  
-  if (blk_size == 0)
-    return 0;
+    if (blk_size == 0)
+	return 0;
   
-  buf = malloc(blk_size);
+    buf = malloc(blk_size);
   
-  for (;;) {
-    ssize_t nread;
+    for (;;) {
+	ssize_t nread;
     
-    lseek(fd, curr, SEEK_SET);
-    nread = read(fd, buf, blk_size);
-    if (nread < blk_size) 
-    {
-      if (nread <= 0) 
-	{
-	  if (curr == amount) 
-	  {
-	    free(buf);
-	    lseek(fd, 0, SEEK_SET);
-	    return amount;
-	  }
-	  curr = midpoint(amount, curr, blk_size);
+	lseek(fd, curr, SEEK_SET);
+	nread = read(fd, buf, blk_size);
+	if (nread < blk_size)     {
+	    if (nread <= 0) 	{
+		if (curr == amount) 	  {
+		    free(buf);
+		    lseek(fd, 0, SEEK_SET);
+		    return amount;
+		}
+		curr = midpoint(amount, curr, blk_size);
+	    }
+	    else 	{ // 0 < nread < blk_size 
+		free(buf);
+		lseek(fd, 0, SEEK_SET);
+		return amount + nread;
+	    }
+	} 
+	else     {
+	    amount = curr + blk_size;
+	    curr = amount * 2;
 	}
-      else 
-	{ // 0 < nread < blk_size 
-	  free(buf);
-	  lseek(fd, 0, SEEK_SET);
-	  return amount + nread;
-	}
-    } 
-    else 
-    {
-      amount = curr + blk_size;
-      curr = amount * 2;
     }
-  }
 
-  free(buf);
-  lseek(fd, 0, SEEK_SET);
-  return amount;
+    free(buf);
+    lseek(fd, 0, SEEK_SET);
+    return amount;
 }
 
 

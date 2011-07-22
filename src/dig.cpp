@@ -142,7 +142,7 @@ void print_last_error(char *function_name)
 //
 // This function detects junction points and returns TRUE if the
 // given filename is a junction point. Otherwise it returns FALSE.
-static bool is_junction_point(const std::wstring &fn)
+bool state::is_junction_point(const std::wstring &fn)
 {
     int status = FALSE;
 
@@ -157,19 +157,14 @@ static bool is_junction_point(const std::wstring &fn)
 	    // TODO: Maybe have the option to follow symbolic links?
 	    status = TRUE;
 
-	    if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0)
-		{
+	    if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0) {
 		    print_error_filename(fn,"Junction point, skipping");
-		}
-	    else if (IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0)
-		{
+	    } else if (IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0) {
 		    print_error_filename(fn,"Symbolic link, skipping");
-		}	
-	    else 
-		{
+	    } else {
 		    print_error_filename(fn,"Unknown reparse point 0x%"PRIx32", skipping",
 					 FindFileData.dwReserved0);
-		}
+	    }
 	}
 
 	// We don't error check this call as there's nothing to do differently

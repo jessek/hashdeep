@@ -458,6 +458,7 @@ public:
 	      mode_barename(false),
 	      mode_size(false),mode_size_all(false),
 	      opt_zero(false),
+	      opt_display_size(false),
 	      size_threshold(0),
 	      piecewise_size(0),
 	      primary_function(primary_compute) {
@@ -479,6 +480,7 @@ public:
     bool	mode_size;
     bool	mode_size_all;
     bool	opt_zero;
+    bool	opt_display_size;
 
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;
@@ -694,6 +696,7 @@ public:;
     void	setup_expert_mode(char *arg);
 
     /* main.cpp */
+    void md5deep_check_flags_okay();
     int hashdeep_process_command_line(int argc,char **argv);
     int md5deep_process_command_line(int argc,char **argv);
 #ifdef _WIN32
@@ -721,6 +724,9 @@ public:;
     bool	should_hash(const tstring &fn);
 
     static file_types file_type(const tstring &fn,uint64_t *filesize,timestamp_t *timestamp);
+#ifdef _WIN32
+    bool	is_junction_point(const std::wstring &fn);
+#endif
     void	process_dir(const tstring &path);
     void	dig_normal(const tstring &path);	// posix  & win32 
     void	dig_win32(const tstring &path);	// win32 only; calls dig_normal
@@ -749,7 +755,6 @@ extern bool opt_estimate;		// print ETA
 extern int  opt_debug;			// for debugging
 extern bool opt_unicode_escape;
 extern bool opt_show_matched;
-extern bool opt_display_size;
 extern bool opt_mode_match;
 extern bool opt_display_hash;
 extern bool opt_mode_match_neg;
@@ -780,11 +785,7 @@ void	done_processing_dir(const tstring &fn);
 std::string itos(uint64_t i);
 uint64_t find_block_size(state *s, char *input_str);
 void     chop_line(char *s);
-void     shift_string(char *fn, size_t start, size_t new_start);
-void     check_wow64(state *s);
 
-int	find_comma_separated_string(char *s, unsigned int n);
-int	find_quoted_string(char *buf, unsigned int n);
 
 // Return the size, in bytes of an open file stream. On error, return -1 
 off_t	find_file_size(FILE *f);

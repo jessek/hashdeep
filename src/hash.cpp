@@ -123,7 +123,10 @@ bool file_data_hasher_t::compute_hash()
     
 	// Check if we've hit the end of the file 
 	if (feof(this->handle))    {	
-	    // If we've been printing time estimates, we now need to clear the line.
+	    /*
+	     * If we've been printing time estimates,
+	     * we now need to clear the line.
+	     */
 	    if (opt_estimate){
 		ocb->clear_realtime_stats();
 	    }

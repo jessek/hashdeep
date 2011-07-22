@@ -62,7 +62,6 @@ bool opt_estimate = false;
 bool opt_relative = false;
 bool opt_unicode_escape = false;
 bool opt_show_matched = false;
-bool opt_display_size = false;
 bool opt_mode_match = false;
 bool opt_mode_match_neg = false;
 bool opt_display_hash = false;
@@ -640,28 +639,68 @@ std::string main::get_realpath8(const tstring &fn)
 }
 
 
+#ifdef _WIN32
+/**
+ * Detect if we are a 32-bit program running on a 64-bit system.
+ *
+ * Running a 32-bit program on a 64-bit system is problematic because WoW64
+ * changes the program's view of critical directories. An affected
+ * program does not see the true %WINDIR%, but instead gets a mapped
+ * version. Thus the user cannot get an accurate picture of their system.
+ * See http://jessekornblum.livejournal.com/273084.html for an example.
+ *
+ * The following is adapted from
+ * http://msdn.microsoft.com/en-us/library/ms684139(v=VS.85).aspx
+ */
+
+typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+LPFN_ISWOW64PROCESS fnIsWow64Process;
+
+static void check_wow64(state *s)
+{
+    BOOL result;
+
+    fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(GetModuleHandle(TEXT("kernel32")),
+							  "IsWow64Process");
+    // If this system doesn't have the function IsWow64Process then
+    // it's definitely not running under WoW64.
+    if (NULL == fnIsWow64Process) return;
+    
+    if (! fnIsWow64Process(GetCurrentProcess(), &result))  {
+	// The function failed? WTF? Well, let's not worry about it.
+	return;
+    }
+    
+    if (result) {
+	print_error("%s: WARNING: You are running a 32-bit program on a 64-bit system.", __progname);
+	print_error("%s: You probably want to use the 64-bit version of this program.", __progname);
+    }
+}
+#endif   // ifdef _WIN32
+
+
 /****************************************************************
  * Legacy code from md5deep follows....
  *
  ****************************************************************/
 
 
-static void md5deep_check_flags_okay(state *s)
+void state::md5deep_check_flags_okay()
 {
   sanity_check(((opt_mode_match) || (opt_mode_match_neg)) &&
-	       s->hashes_loaded()==0,
+	       hashes_loaded()==0,
 	       "Unable to load any matching files");
 
-  sanity_check((opt_relative) && (s->ocb.mode_barename),
+  sanity_check((opt_relative) && (ocb.mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
-  sanity_check((s->ocb.piecewise_size>0) && (opt_display_size),
+  sanity_check((ocb.piecewise_size>0) && (ocb.opt_display_size),
 	       "Piecewise mode and file size display is just plain silly");
 
 
   /* If we try to display non-matching files but haven't initialized the
      list of matching files in the first place, bad things will happen. */
-  sanity_check((s->ocb.mode_not_matched) && 
+  sanity_check((ocb.mode_not_matched) && 
 	       ! ((opt_mode_match) || (opt_mode_match_neg)),
 	       "Matching or negative matching must be enabled to display non-matching files");
 
@@ -749,7 +788,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	    break;
 
 	case 'c': opt_csv = true;		break;
-	case 'z': opt_display_size = true;	break;
+	case 'z': ocb.opt_display_size = true;	break;
 	case '0': ocb.opt_zero = true;	break;
 
 	case 'S':
@@ -786,7 +825,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	    exit (status_t::STATUS_USER_ERROR);
 	}
     }
-    md5deep_check_flags_okay(this);
+    md5deep_check_flags_okay();
     return EXIT_SUCCESS;
 }
 
