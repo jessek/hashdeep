@@ -423,7 +423,26 @@ class display {
 #ifdef HAVE_PTHREAD
     mutable pthread_mutex_t	M;	// lock for anything in output section
 #endif    
-    FILE		*outfile;	// where things get sent
+    void lock() const {
+#ifdef HAVE_PTHREAD
+	if(pthread_mutex_lock(&M)){
+	    perror("pthread_mutex_lock failed");
+	    exit(1);
+	}
+#endif
+    }
+    void unlock() const {
+#ifdef HAVE_PTHREAD
+	if(pthread_mutex_unlock(&M)){
+	    perror("pthread_mutex_unlock failed");
+	    exit(1);
+	}
+#endif
+    }
+
+    /* all display state variables are protected by M and must be private */
+    std::ostream	*out;		// where things get sent
+    std::ofstream       myoutstream;	// if we open it
     std::string		utf8_banner;	// banner to be displayed
     bool		banner_displayed;	// has the header been shown (text output)
     XML			*dfxml;			/* output in DFXML */
@@ -434,35 +453,24 @@ class display {
     class audit_stats	match;		// for the audit mode
     status_t		return_code;	// prevously returned by hash() and dig().
 
-    void lock() const {
-	if(pthread_mutex_lock(&M)){
-	    perror("pthread_mutex_lock failed");
-	    exit(1);
-	}
-    }
-    void unlock() const {
-	if(pthread_mutex_unlock(&M)){
-	    perror("pthread_mutex_unlock failed");
-	    exit(1);
-	}
-    }
 public:
-    display():outfile(stdout),banner_displayed(0),dfxml(0),
-	      mode_triage(false),
-	      mode_not_matched(false),mode_quiet(false),mode_timestamp(false),
-	      mode_barename(false),
-	      mode_size(false),mode_size_all(false),
-	      opt_silent(false),
-	      opt_zero(false),
-	      opt_display_size(false),
-	      opt_display_hash(false),
-	      opt_show_matched(false),
-	      size_threshold(0),
-	      piecewise_size(0),
-	      primary_function(primary_compute),
-
-	      // threading
-	      tp(0),threadcount(threadpool::numCPU()) {
+    display():
+	out(&std::cout),
+	banner_displayed(0),dfxml(0),
+	mode_triage(false),
+	mode_not_matched(false),mode_quiet(false),mode_timestamp(false),
+	mode_barename(false),
+	mode_size(false),mode_size_all(false),
+	opt_silent(false),
+	opt_zero(false),
+	opt_display_size(false),
+	opt_display_hash(false),
+	opt_show_matched(false),
+	opt_threadcount(threadpool::numCPU()),
+	tp(0),
+	size_threshold(0),
+	piecewise_size(0),
+	primary_function(primary_compute){
 
 #ifdef HAVE_PTHREAD
 	pthread_mutex_init(&M,NULL);
@@ -473,6 +481,8 @@ public:
 	pthread_mutex_destroy(&M);
 #endif	
     }
+
+    /* These variables are read-only after threading starts */
     bool	mode_triage;
     bool	mode_not_matched;
     bool	mode_quiet;
@@ -480,25 +490,25 @@ public:
     bool	mode_barename;
     bool	mode_size;
     bool	mode_size_all;
+    std::string	opt_outfilename;
     bool	opt_silent;
     bool	opt_zero;
     bool	opt_display_size;
     bool	opt_display_hash;
     bool	opt_show_matched;
+    int		opt_threadcount;
+
+    threadpool		*tp;
 
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;
-
     uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */
     primary_t       primary_function;    /* what do we want to do? */
 
-    /* threading */
-    threadpool	*tp;
-    int		threadcount;
 
     /* Functions for working */
 
-    void	open(const std::string &outfilename); // open outfilename; error if can't.
+    void	set_outfilename(std::string outfilename);
 
     /* Return code support */
     int32_t	get_return_code(){ lock(); int ret = return_code.get_status(); unlock(); return ret; }
@@ -523,6 +533,43 @@ public:
 
 
     /* Known hash database interface */
+    /* Display the unused files and return the count */
+    uint64_t	compute_unused(bool display,std::string annotation);
+    void	set_utf8_banner(std::string utf8_banner_){
+	utf8_banner = utf8_banner_;
+    }
+
+    void	try_msg(void);
+    void	display_banner_if_needed();
+    void	display_hash(file_data_hasher_t *fdht);
+    void	display_hash_simple(file_data_hasher_t *fdt);
+
+    /* The following routines are for printing and outputing filenames.
+     * 
+     * fmt_filename formats the filename.
+     * On Windows this version outputs as UTF-8 unless unicode quoting is requested,
+     * in which case Unicode characters are emited as U+xxxx.
+     * For example, the Unicode smiley character ☺ is output as U+263A.
+     *
+     */
+    std::string	fmt_size(const file_data_t *fdh) const;
+    std::string fmt_filename(const filename_t &fn) const;
+    std::string fmt_filename(const file_data_t *fdt) const {
+	return fmt_filename(fdt->file_name);
+    }
+    void	writeln(std::ostream *s,const std::string &str);    // writes a line with NEWLINE
+    void	status(const char *fmt, ...);// Display an ordinary message with newline added
+    void	error(const char *fmt, ...);// Display an error message if not in silent mode 
+    void	fatal_error(const char *fmt, ...);// Display an error message if not in silent mode and exit
+    void	internal_error(const char *fmt, ...);// Display an error message, ask user to contact the developer, 
+    void	print_debug(const char *fmt, ...);
+    void	print_error(const char *fmt, ...);// Display an error message if not in silent mode
+    void	error_filename(const filename_t &fn, const char *fmt, ...);
+
+    /* these versions extract the filename and the annotation if it is present.
+     */
+
+    /* known hash database and realtime stats */
     hashlist::loadstatus_t load_hash_file(const std::string &fn){
 	lock();
 	hashlist::loadstatus_t ret = known.load_hash_file(this,fn);
@@ -541,60 +588,10 @@ public:
 	unlock();
 	return ret;
     }
-
-
-    /* Display the unused files and return the count */
-    uint64_t	compute_unused(bool display,std::string annotation);
-    
-
-    void	set_utf8_banner(std::string utf8_banner_){
-	utf8_banner = utf8_banner_;
-    }
-
-    void	try_msg(void);
-    std::string	fmt_size(const file_data_t *fdh) const;
-    void	display_banner_if_needed();
-    void	display_hash(file_data_hasher_t *fdht);
-    void	display_hash_simple(file_data_hasher_t *fdt);
-
-    /* The following routines are for printing and outputing filenames.
-     * 
-     * fmt_filename formats the filename.
-     * On Windows this version outputs as UTF-8 unless unicode quoting is requested,
-     * in which case Unicode characters are emited as U+xxxx.
-     * For example, the Unicode smiley character ☺ is output as U+263A.
-     *
-     */
-    std::string fmt_filename(const filename_t &fn) const;
-    std::string fmt_filename(const file_data_t *fdt) const {
-	return fmt_filename(fdt->file_name);
-    }
-    void	writeln(FILE *out,const std::string &str);    // writes a line with NEWLINE
-    void	status(const char *fmt, ...);// Display an ordinary message with newline added
-    void	error(const char *fmt, ...);// Display an error message if not in silent mode 
-    void	fatal_error(const char *fmt, ...);// Display an error message if not in silent mode and exit
-    void	internal_error(const char *fmt, ...);// Display an error message, ask user to contact the developer, 
-    //void	print_status(const char *fmt, ...);
-    void	print_debug(const char *fmt, ...);
-    void	print_error(const char *fmt, ...);// Display an error message if not in silent mode
-    void	error_filename(const filename_t &fn, const char *fmt, ...);
-
-    /* these versions extract the filename and the annotation if it is present.
-     */
-    // Display an error message if not in silent mode with a Unicode filename
-
-    /* realtime_stats is the amount of data hashed and what's left */
-
     void	clear_realtime_stats();
     void	display_realtime_stats(const file_data_hasher_t *fdht,time_t elapsed);
-    bool	hashes_loaded() const{
-	return known.size()>0;
-    }
-    void add_fdt(file_data_t *fdt){
-	lock();
-	known.add_fdt(fdt);
-	unlock();
-    }
+    bool	hashes_loaded() const{ lock(); bool ret = known.size()>0; unlock(); return ret; }
+    void	add_fdt(file_data_t *fdt){ lock(); known.add_fdt(fdt); unlock(); }
 
     void	display_match_result(file_data_hasher_t *fdht);
     void	md5deep_display_match_result(file_data_hasher_t *fdht);
@@ -629,9 +626,8 @@ public:
     static std::string escape_utf8(const std::string &fn); // turns "⦿" to "U+29BF"
 #ifdef _WIN32
     static std::string make_utf8(const std::wstring &tfn) ;
-#else
-    static std::string make_utf8(const std::string &tfn){return tfn;}
 #endif
+    static std::string make_utf8(const std::string &tfn){return tfn;}
 };
 
 /* On Win32, allow output of wstr's by converting them to UTF-8 */

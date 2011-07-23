@@ -149,6 +149,7 @@
 #include <string>
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <ctype.h>
 #include <vector>
 

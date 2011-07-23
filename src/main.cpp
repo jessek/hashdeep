@@ -507,10 +507,10 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       ocb.status("%s", VERSION);
       exit(EXIT_SUCCESS);
 	  
-    case 'W': ocb.open(optarg); break;
+    case 'W': ocb.set_outfilename(optarg); break;
     case '0': ocb.opt_zero = true; break;
     case 'u': opt_unicode_escape = true;break;
-    case 'j': ocb.threadcount = atoi(optarg); break;
+    case 'j': ocb.opt_threadcount = atoi(optarg); break;
 
     case 'h':
 	usage();
@@ -747,7 +747,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	case 't': ocb.mode_timestamp   = true; break;
 	case 'n': ocb.mode_not_matched = true; break;
 	case 'w': ocb.opt_show_matched = true;break; 		// display which known hash generated match
-	case 'j': ocb.threadcount          = atoi(optarg);break;
+	case 'j': ocb.opt_threadcount          = atoi(optarg);break;
 
 	case 'a':
 	    opt_mode_match=true;
@@ -800,7 +800,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
       
 	case 'l': opt_relative = true;      break;
 	case 'q': ocb.mode_quiet = true; break;
-	case 'W': ocb.open(optarg);	break;
+	case 'W': ocb.set_outfilename(optarg);	break;
 	case 'u': opt_unicode_escape = 1;	break;
 
 	case 'h':
@@ -974,6 +974,8 @@ int main(int argc, char **argv)
 	state::dig_self_test();
     }
 
+    /* See if we can open a regular file output, if requested */
+
     /* Set up the DFXML output if requested */
     s->ocb.dfxml_startup(argc,argv);
    
@@ -998,8 +1000,8 @@ int main(int argc, char **argv)
     }
 
     /* set up the threadpool */
-    if(s->ocb.threadcount>0){
-	s->ocb.tp = new threadpool(s->ocb.threadcount);
+    if(s->ocb.opt_threadcount>0){
+	s->ocb.tp = new threadpool(s->ocb.opt_threadcount);
     }
 
     /*

@@ -22,98 +22,112 @@
  ** Support routines
  ****************************************************************/
 
-void display::writeln(FILE *out,const std::string &str)
+void display::set_outfilename(std::string outfilename)
 {
-    lock();
-    fwrite(str.c_str(),1,str.size(),out);
-    if (opt_zero){
-	fputc('\000',out);
+    myoutstream.open(outfilename.c_str(),std::ios::out|std::ios::binary);
+    if(!myoutstream.is_open()){
+	fatal_error("%s: Cannot open: ",opt_outfilename.c_str());
     }
-    else {
-	fprintf(out,"%s", NEWLINE);
-    }
-    fflush(out);
-    unlock();
+    out = &myoutstream;
 }
 
-/****************************************************************
- ** Display Routines 
- ****************************************************************/
-
-void display::open(const std::string &fn)
+void display::writeln(std::ostream *os,const std::string &str)
 {
-    outfile = fopen(fn.c_str(),"wb");
-    if(!outfile){
-	perror(fn.c_str());
-	exit(1);
+    lock();
+    (*os) << str;
+    if (opt_zero){
+	(*os) << '\000';
     }
+    else {
+	(*os) << NEWLINE;
+    }
+    os->flush();
+    unlock();
 }
 
 void display::status(const char *fmt,...)
 {
-    lock();
     va_list(ap); 
     va_start(ap,fmt); 
-    if (vfprintf(outfile,fmt,ap) < 0) { 
-	fprintf(stderr, "%s: %s", __progname, strerror(errno)); 
+
+    char *ret = 0;
+    if(vasprintf(&ret,fmt,ap) < 0){
+	(*out) << __progname << ": " << strerror(errno);
 	exit(EXIT_FAILURE);
     }
+    writeln(out,ret);
+    free(ret);
     va_end(ap);
-    fprintf(outfile,"%s", NEWLINE);
-    unlock();
+}
+
+void display::error(const char *fmt,...)
+{
+    va_list(ap); 
+    va_start(ap,fmt); 
+    char *ret = 0;
+    if(vasprintf(&ret,fmt,ap) < 0){
+	(*out) << __progname << ": " << strerror(errno);
+	exit(EXIT_FAILURE);
+    }
+    writeln(&std::cerr,ret);
+    free(ret);
+    va_end(ap);
 }
 
 void display::try_msg(void)
 {
-    status("Try `%s -h` for more information.", __progname);
+    writeln(&std::cerr,std::string("Try `") + __progname + " -h` for more information.");
 }
 
-
-void display::error(const char *fmt,...)
-{
-    lock();
-    va_list(ap); 
-    va_start(ap,fmt); 
-    if (vfprintf(stderr,fmt,ap) < 0) { 
-	fprintf(stderr, "%s: %s", __progname, strerror(errno)); 
-	exit(EXIT_FAILURE);
-    }
-    va_end(ap);
-    fprintf(stderr,"%s", NEWLINE);
-    unlock();
-}
 
 void display::fatal_error(const char *fmt,...)
 {
-    lock();
     va_list(ap); 
     va_start(ap,fmt); 
-    if (vfprintf(stderr,fmt,ap) < 0) { 
-	fprintf(stderr, "%s: %s", __progname, strerror(errno)); 
+
+    char *ret = 0;
+    if(vasprintf(&ret,fmt,ap) < 0){
+	(*out) << __progname << ": " << strerror(errno);
 	exit(EXIT_FAILURE);
     }
+    writeln(&std::cerr,ret);
+    free(ret);
     va_end(ap);
-    fprintf(stderr,"%s", NEWLINE);
-    unlock();
     exit(1);
 }
 
 void display::internal_error(const char *fmt,...)
 {
-    lock();
     va_list(ap); 
     va_start(ap,fmt); 
-    if (vfprintf(stderr,fmt,ap) < 0) { 
-	fprintf(stderr, "%s: %s", __progname, strerror(errno)); 
+
+    char *ret = 0;
+    if(vasprintf(&ret,fmt,ap) < 0){
+	(*out) << __progname << ": " << strerror(errno);
 	exit(EXIT_FAILURE);
     }
+    writeln(&std::cerr,ret);
+    writeln(&std::cerr,std::string(__progname)+": Internal error. Contact developer!");
     va_end(ap);
-    fprintf(stderr,"%s", NEWLINE);
-    fprintf(stderr,"%s: Internal error. Contact developer!%s", __progname,NEWLINE);
-    unlock();
+    free(ret);
     exit(1);
 }
 
+void display::print_debug(const char *fmt, ... )
+{
+#ifdef __DEBUG
+    va_list(ap); 
+    va_start(ap,fmt); 
+    char *ret = 0;
+    if(vasprintf(&ret,fmt,ap) < 0){
+	(*out) << __progname << ": " << strerror(errno);
+	exit(EXIT_FAILURE);
+    }
+    writeln(&std::cerr,std::string("DEBUG:" ) + ret);
+    free(ret);
+    va_end(ap);
+#endif
+}
 /**
  * output the string, typically a fn, optionally performing unicode escaping
  */
@@ -127,55 +141,48 @@ std::string display::fmt_filename(const filename_t &fn) const
     }
 }
 
-void display::print_debug(const char *fmt, ... )
-{
-#ifdef __DEBUG
-    lock();
-    printf ("DEBUG: ");
-    va_list(ap);
-    va_start(ap,fmt);
-    vfprintf(stderr,fmt,ap);
-    va_end(ap);
-    fprintf(stderr,"%s",NEWLINE);
-    unlock();
-#endif
-}
 
 
 
 void display::print_error(const char *fmt, ...)
 {
     if(opt_silent) return;
-    lock();
     va_list(ap);
     va_start(ap,fmt);
-    vfprintf(stderr,fmt,ap);
-    va_end(ap);
-    fprintf(stderr,"%s",NEWLINE);
+    char *ret = 0;
+    if(vasprintf(&ret,fmt,ap) < 0){
+	std::cerr << __progname << ": " << strerror(errno);
+	exit(EXIT_FAILURE);
+    }
+    lock();
+    std::cerr << ret << NEWLINE;
     unlock();
+    free(ret);
+    va_end(ap);
 }
 
 
 void display::error_filename(const filename_t &fn,const char *fmt, ...)
 {
     if(opt_silent) return;
-    std::string line = fmt_filename(fn) + ": ";
-    char buf[1024];
-    va_list(ap);
-    va_start(ap,fmt);
-    vsnprintf(buf,sizeof(buf),fmt,ap);
+
+    va_list(ap); 
+    va_start(ap,fmt); 
+    char *ret = 0;
+    if(vasprintf(&ret,fmt,ap) < 0){
+	(*out) << __progname << ": " << strerror(errno);
+	exit(EXIT_FAILURE);
+    }
+    writeln(&std::cerr,fmt_filename(fn) + ": " + ret);
+    free(ret);
     va_end(ap);
-    line += std::string(buf) + NEWLINE;
-    lock();
-    fwrite(line.c_str(),1,line.size(),stderr);
-    unlock();
 }
 
 
 void display::clear_realtime_stats()
 {
     lock();
-    fprintf(stderr,"\r%s\r",BLANK_LINE);
+    std::cerr << "\r" << BLANK_LINE;
     unlock();
 }
 
@@ -252,8 +259,7 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
     line += msg;
 
     lock();
-    fwrite(line.c_str(),1,line.size(),stderr);
-    fflush(stderr);
+    std::cerr << line << "\r";
     unlock();
 }
 
@@ -263,7 +269,7 @@ void display::display_banner_if_needed()
     if(this->dfxml!=0) return;		// output is in DFXML; no banner
     lock();
     if(banner_displayed==false){
-	fwrite(utf8_banner.c_str(),1,utf8_banner.size(),outfile);
+	(*out) << utf8_banner << NEWLINE ;
 	banner_displayed=true;
     }
     unlock();
@@ -334,7 +340,7 @@ void display::display_hash_simple(file_data_hasher_t *fdht)
 	}
     }
     line += fmt_filename(fdht);
-    writeln(stderr,line);
+    writeln(&std::cerr,line);
 }
 
 /**
@@ -361,12 +367,9 @@ uint64_t display::compute_unused(bool display, std::string annotation)
 	}
     }
     unlock();
-
     for(std::vector<std::string>::const_iterator i = filelist.begin(); i!= filelist.end(); i++){
-	std::string line = *i + annotation + NEWLINE;
-	lock();
-	fwrite(line.c_str(),1,line.size(),stderr);
-	unlock();
+	std::string line = *i + annotation;
+	writeln(&std::cerr,line);
     }
     return count;
 }
@@ -471,7 +474,7 @@ void display::md5deep_display_match_result(file_data_hasher_t *fdht)
 	else{
 	    line += fdht->file_name;
 	}
-	writeln(stderr,line);
+	writeln(&std::cerr,line);
     }
 }
 
@@ -501,12 +504,12 @@ void display::display_match_result(file_data_hasher_t *fdht)
 	  
     case hashlist::status_file_size_mismatch:
 	line = fmt_filename(fdht) + ": Hash collision with " + fmt_filename(matched_fdt);
-	writeln(stderr,line);
+	writeln(&std::cerr,line);
 	break;
 	
     case hashlist::status_partial_match:
 	line = fmt_filename(fdht) + ": partial hash match with " + fmt_filename(matched_fdt);
-	writeln(stderr,line);
+	writeln(&std::cerr,line);
 	break;
 	
     default:
@@ -526,7 +529,7 @@ void display::display_match_result(file_data_hasher_t *fdht)
 		    line += fmt_filename(matched_fdt);
 		}
 	    }
-	    writeln(stderr,line);
+	    writeln(&std::cerr,line);
 	}
     }
 }
@@ -574,7 +577,7 @@ int display::audit_update(file_data_hasher_t *fdht)
 	line = fmt_filename(fdht) + ": Hash collision with " + fmt_filename(matched_fdht);
     }
     if(line.size()>0){
-	writeln(stderr,line);
+	writeln(&std::cerr,line);
     }
     return FALSE;
 }
@@ -585,14 +588,13 @@ int display::audit_update(file_data_hasher_t *fdht)
  */
 void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher because of triage
 {
-
     if (mode_triage) {
 	if(dfxml){
 	    fdht->compute_dfxml(1);	// no lock required here
 	    return;
 	}
 	std::string line = std::string("\t") + fdht->hash_hex[opt_md5deep_mode_algorithm] + std::string("\t") + fdht->file_name;
-	writeln(outfile,line);
+	writeln(out,line);
 	return;
     }
 
@@ -652,7 +654,7 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 	    line += fmt_filename(fdht);
 	}
     }
-    writeln(outfile,line);
+    writeln(out,line);
 }
 
 /**
