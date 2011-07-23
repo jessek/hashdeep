@@ -13,7 +13,7 @@
 class threadpool: public std::vector<class worker *> {
 public:
     pthread_mutex_t	M;			// protects the following variables
-    unsigned int	total_threads;
+    unsigned int	numworkers;
     unsigned int	freethreads;
     pthread_cond_t	TOMAIN;
     pthread_cond_t	TOWORKER;
@@ -22,16 +22,17 @@ public:
     bool		all_free();
     unsigned int	get_free_count();
     static int		numCPU();
-    threadpool(int numthreads);
+    threadpool(int numworkers);
     ~threadpool();
 };
 
 class worker {
 public:
     static void * start_worker(void *arg){return ((worker *)arg)->run();};
-    worker(class threadpool *master_): master(master_){}
+    worker(class threadpool *master_,int workerid_): master(master_),workerid(workerid_){}
     class threadpool *master;		// my master
     pthread_t thread;			// my thread; set when I am created
+    int	workerid;			// my workerID, numbered 0 through numworkers-1
     void *run();
     void do_work(class file_data_hasher_t *); // must delete fdht when done
 };

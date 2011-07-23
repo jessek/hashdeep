@@ -18,6 +18,8 @@
  * All output is threadsafe.
  */
 
+#include <sstream>
+
 /****************************************************************
  ** Support routines
  ****************************************************************/
@@ -140,8 +142,6 @@ std::string display::fmt_filename(const filename_t &fn) const
 	return main::make_utf8(fn);
     }
 }
-
-
 
 
 void display::print_error(const char *fmt, ...)
@@ -318,10 +318,10 @@ uint64_t display::compute_unused(bool display, std::string annotation)
 
     lock();
     for(hashlist::const_iterator i = known.begin(); i != known.end(); i++){
-	if((*i)->matched_file_number==0){
+	if((*i).matched_file_number==0){
 	    count++;
 	    if (display || opt_verbose >= MORE_VERBOSE) {
-		filelist.push_back((*i)->file_name);
+		filelist.push_back((*i).file_name);
 	    }
 	}
     }
@@ -397,9 +397,11 @@ std::string display::fmt_size(const file_data_t *fdt) const
 /* The old display_match_result from md5deep */
 void display::md5deep_display_match_result(file_data_hasher_t *fdht)
 {  
-    file_data_t *fs = known.find_hash(opt_md5deep_mode_algorithm,
-				      fdht->hash_hex[opt_md5deep_mode_algorithm],
-				      fdht->file_number);
+    lock();
+    const file_data_t *fs = known.find_hash(opt_md5deep_mode_algorithm,
+					    fdht->hash_hex[opt_md5deep_mode_algorithm],
+					    fdht->file_number);
+    unlock();
     int known_hash = fs ? 1 : 0;
 
     if ((known_hash && opt_mode_match) || (!known_hash && opt_mode_match_neg)) {
@@ -444,8 +446,7 @@ void display::md5deep_display_match_result(file_data_hasher_t *fdht)
 void display::display_match_result(file_data_hasher_t *fdht)
 {
     file_data_t *matched_fdt = NULL;
-    int should_display; 
-    should_display = (primary_match_neg == primary_function);
+    int should_display = (primary_match_neg == primary_function);
     
     lock();				// protects the search and the printing
     hashlist::searchstatus_t m = known.search(fdht,&matched_fdt);
@@ -567,6 +568,10 @@ void display::finalize_matching()
  */
 void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher because of triage
 {
+    lock();
+    //std::cout << "TK1 md5deep_display_hash... " << fdht->file_name << " piecewise_size= " << fdht->piecewise_size << "\n"; 
+    unlock();
+
     if (mode_triage) {
 	if(dfxml) return;		// traige mode and dfxml are incompatable 
 	std::string line = std::string("\t") + fdht->hash_hex[opt_md5deep_mode_algorithm] + std::string("\t") + fdht->file_name;
@@ -628,6 +633,15 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 	    line += fmt_filename(fdht);
 	}
     }
+    if(fdht->file_name_annotation.size()>0){
+	line += std::string(" ") + fdht->file_name_annotation;
+    }
+
+    std::stringstream ss(std::stringstream::in | std::stringstream::out);
+    ss << fdht->piecewise_size ; 
+
+    //line += "TK piecewise size " + ss.str();
+
     writeln(out,line);
 }
 
@@ -671,7 +685,7 @@ void display::display_hash_simple(file_data_hasher_t *fdht)
 	}
     }
     line += fmt_filename(fdht);
-    writeln(&std::cerr,line);
+    writeln(out,line);
 }
 
 

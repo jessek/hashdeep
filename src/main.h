@@ -151,24 +151,16 @@ typedef std::string	filename_t;
 
 /** file_data_t contains information about a file.
  * It can be created by hashing an actual file, or by reading a hash file a file of hashes. 
- * Pointers to these objects are stored in a single vector and in a map for each algorithm.
+ * The object is simple so that the built in C++ shallow copy will make a proper copy of it.
  * Note that all hashes are currently stored as a hex string. That incurs a 2x memory overhead.
  * This will be changed.
  */
 class file_data_t {
 public:
-    file_data_t():refcount(0),matched_file_number(0),file_size(0),stat_bytes(0),actual_bytes(0) {
+    file_data_t():matched_file_number(0),file_size(0),stat_bytes(0),actual_bytes(0) {
     };
     virtual ~file_data_t(){}		// required because we subclass
     // Implement a simple reference count garbage collection system
-    int		   refcount;		// reference counting
-    void retain() { refcount++;}
-    void release() {
-	if(--refcount==0){
-	    delete this;
-	}
-    }
-
     std::string    hash_hex[NUM_ALGORITHMS];	     // the hash in hex of the entire file
     std::string	   hash512_hex[NUM_ALGORITHMS];	     // hash of the first 512 bytes, for partial matching
     std::string	   file_name;		// just the file_name; native on POSIX; UTF-8 on Windows.
@@ -182,7 +174,6 @@ public:
     uint64_t       file_size;		// in bytes
     uint64_t       stat_bytes;		// how much stat returned
     uint64_t       actual_bytes;	// how many we read.
-
     uint64_t	   stat_megs() const{
 	return stat_bytes / ONE_MEGABYTE;
     }
@@ -207,11 +198,7 @@ public:
 	start_time(0),last_time(0){
 	file_number = ++next_file_number;
     };
-    ~file_data_hasher_t(){
-	if(handle){
-	    fclose(handle);	// make sure that it' closed.
-	}
-    }
+    virtual ~file_data_hasher_t(){ }
 
     /* Where the results go */
     class display *ocb;
@@ -235,7 +222,6 @@ public:
     uint64_t	file_number;
     void	append_dfxml_for_byterun();
     void	compute_dfxml(bool known_hash);
-
 
     // Where the last read operation started and ended
     // bytes_read is a shorthand for read_end - read_start
@@ -262,7 +248,6 @@ public:
 };
 
 
-
 /** The hashlist holds a list of file_data_t pointers.
  * state->known is used to hold the audit file that is loaded.
  * state->seen is used to hold the hashes seen on the current run.
@@ -272,7 +257,7 @@ public:
  * the hashlist.cpp file contains the implementation. It's largely taken
  * from the v3 audit.cpp and match.cpp files.
  */
-class hashlist : public std::vector<file_data_t *> {
+class hashlist : public std::vector<file_data_t> {
     /**
      * The largest number of columns we can expect in a file of hashes
      * (knowns).  Normally this should be the number of hash
@@ -326,13 +311,13 @@ public:;
 	file_unknown
     } hashfile_format; 
 
-    class hashmap : public  std::map<std::string,file_data_t *> {
+    class hashmap : public  std::map<std::string,file_data_t> {
     public:;
-	void add_file(file_data_t *fi,int alg_num);
+	void add_file(const file_data_t &fi,int alg_num);
     };
     hashmap		hashmaps[NUM_ALGORITHMS];
     searchstatus_t	search(const file_data_hasher_t *fdht,
-			       file_data_t **matched) const; // look up a fdt
+			       file_data_t **matched) ; // look up a fdt
     uint64_t		total_matched;
 
     /**
@@ -349,17 +334,15 @@ public:;
     hashfile_format	identify_format(class display *ocb,const std::string &fn,FILE *handle);
     loadstatus_t	load_hash_file(class display *ocb,const std::string &fn); // not tstring! always ASCII
 
-    file_data_t		*find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number); 
+    const file_data_t	*find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number); 
     void		dump_hashlist(); // send contents to stdout
     
     /**
      * add_fdt adds a file_data_t record to the hashlist, and its hashes to the hashmaps.
      * @param state - needed to find the algorithms in use
      */
-    void add_fdt(file_data_t *fi);
+    void add_fdt(const file_data_t &fi);
 };
-
-
 
 /* Primary modes of operation (primary_function) */
 typedef enum  { 
@@ -466,7 +449,7 @@ public:
 	opt_display_size(false),
 	opt_display_hash(false),
 	opt_show_matched(false),
-	opt_threadcount(threadpool::numCPU()),
+	opt_threadcount(0),
 	tp(0),
 	size_threshold(0),
 	piecewise_size(0),
@@ -582,16 +565,16 @@ public:
 	unlock();
 	return ret;
     }
-    file_data_t *find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number){
+    const file_data_t *find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number){
 	lock();
-	file_data_t *ret = known.find_hash(alg,hash_hex,file_number);
+	const file_data_t *ret = known.find_hash(alg,hash_hex,file_number);
 	unlock();
 	return ret;
     }
     void	clear_realtime_stats();
     void	display_realtime_stats(const file_data_hasher_t *fdht,time_t elapsed);
     bool	hashes_loaded() const{ lock(); bool ret = known.size()>0; unlock(); return ret; }
-    void	add_fdt(file_data_t *fdt){ lock(); known.add_fdt(fdt); unlock(); }
+    void	add_fdt(const file_data_t &fdt){ lock(); known.add_fdt(fdt); unlock(); }
 
     void	display_match_result(file_data_hasher_t *fdht);
     void	md5deep_display_match_result(file_data_hasher_t *fdht);

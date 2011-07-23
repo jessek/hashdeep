@@ -485,7 +485,7 @@ void state::md5deep_add_hash(char *h, char *fn)
     class file_data_t *fdt = new file_data_t();
     fdt->hash_hex[opt_md5deep_mode_algorithm] = h; 
     fdt->file_name = fn;
-    ocb.add_fdt(fdt);
+    ocb.add_fdt(*fdt);
 }
 
 
@@ -558,7 +558,7 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
 	class file_data_t *fdt = new file_data_t();
 	fdt->hash_hex[opt_md5deep_mode_algorithm] = result; 
 	fdt->file_name = fn;
-	ocb.add_fdt(fdt);
+	ocb.add_fdt(*fdt);
     }
 
     if (expected_hashes != count){
@@ -627,7 +627,7 @@ void state::md5deep_load_match_file(const char *fn)
 	    file_data_t *fdt = new file_data_t();
 	    fdt->hash_hex[opt_md5deep_mode_algorithm] = buf; // the hex hash
 	    fdt->file_name = known_fn;		    // the filename
-	    ocb.add_fdt(fdt);
+	    ocb.add_fdt(*fdt);
 	}
     }
     fclose(f);

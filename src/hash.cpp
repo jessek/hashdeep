@@ -15,6 +15,7 @@
 
 #include "main.h"
 #include "threadpool.h"
+#include <sstream>
 
 /****************************************************************
  *** Service routines
@@ -60,7 +61,6 @@ static std::string make_stars(int count)
 
 bool file_data_hasher_t::compute_hash()
 {
-
     // Although we need to read MD5DEEP_BLOCK_SIZE bytes before
     // we exit this function, we may not be able to do that in 
     // one read operation. Instead we read in blocks of 8192 bytes 
@@ -218,7 +218,6 @@ void file_data_hasher_t::hash()
 	 * It returns FALSE if there is a failure.
 	 */
 	if (fdht->compute_hash()==false) {
-	    fdht->release();		// failure?
 	    return;
 	}
 
@@ -228,14 +227,16 @@ void file_data_hasher_t::hash()
 	 * If the file is zero bytes, we won't have read anything, but
 	 * still need to display a hash.
 	 */
+	//std::cerr << fdht->file_name << " TK annotation=" << fdht->file_name_annotation << " picewise_size=" << fdht->piecewise_size<< "\n";
+
+
 	if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes) {
 	    if (fdht->piecewise_size>0) {
 		uint64_t tmp_end = 0;
 		if (fdht->read_end != 0){
 		    tmp_end = fdht->read_end - 1;
 		}
-		fdht->file_name_annotation = std::string(" offset ") + itos(fdht->read_start)
-		    + std::string("-") + itos(tmp_end);
+		fdht->file_name_annotation = std::string(" offset ") + itos(fdht->read_start) + std::string("-") + itos(tmp_end);
 	    }
 
 	    fdht->multihash_finalize();
@@ -271,7 +272,6 @@ void file_data_hasher_t::hash()
      * all of the piecewise information.
      */
     ocb->dfxml_write(this);
-    this->release();
 }
 
 
@@ -279,7 +279,12 @@ void file_data_hasher_t::hash()
 void worker::do_work(file_data_hasher_t *fdht)
 {
     // this is all we should need to do
+    //std::cerr << "worker " << workerid << "\n";
+    //std::stringstream s;
+    // s << "TK worker " << workerid << " ";
+    //fdht->file_name_annotation = s.str();
     fdht->hash();
+    delete fdht;
 }
 
 
@@ -295,7 +300,6 @@ void display::hash_file(const tstring &fn)
 {
     display *ocb = this;
     file_data_hasher_t *fdht = new file_data_hasher_t(this);
-    fdht->retain();
 
     // stat the file to get the bytes and timestamp
     state::file_type(fn,ocb,&fdht->stat_bytes,&fdht->timestamp);
@@ -321,11 +325,14 @@ void display::hash_file(const tstring &fn)
 	}
     }
 
+    lock();
+    //std::cout << "TK0 hash_file " << fdht->file_name << " piecewise_size= " << fdht->piecewise_size << "\n"; 
+    unlock();
+
     /* Open the file for hashing! */
     fdht->handle = _tfopen(fn.c_str(),_TEXT("rb"));
     if(fdht->handle==0){
 	ocb->error_filename(fn,"%s", strerror(errno));
-	fdht->release();
 	return;
     }
     /*
@@ -346,7 +353,6 @@ void display::hash_file(const tstring &fn)
 	    }
 	}
 	fclose(fdht->handle);
-	fdht->release();
 	return ;
     }
 
@@ -356,15 +362,16 @@ void display::hash_file(const tstring &fn)
 	tp->schedule_work(fdht);
 	return;
     }
-
+    
+    // Do the has locally
     fdht->hash();			// DO THE HASH!
+    delete fdht;
 }
 
 
 void display::hash_stdin()
 {
     file_data_hasher_t *fdht = new file_data_hasher_t(this);
-    fdht->retain();
     fdht->file_name = "stdin";
     fdht->handle    = stdin;
     fdht->hash();

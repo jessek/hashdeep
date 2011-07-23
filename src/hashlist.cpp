@@ -10,11 +10,10 @@
 #include <new>
 #include <iostream>
 
-void hashlist::hashmap::add_file(file_data_t *fi,int alg_num)
+void hashlist::hashmap::add_file(const file_data_t &fi,int alg_num)
 {
-    if(fi->hash_hex[alg_num].size()){
-	fi->retain();
-	insert(std::pair<std::string,file_data_t *>(fi->hash_hex[alg_num],fi));
+    if(fi.hash_hex[alg_num].size()){
+	insert(std::pair<std::string,file_data_t>(fi.hash_hex[alg_num],fi));
     }
 }
 
@@ -24,9 +23,8 @@ void hashlist::hashmap::add_file(file_data_t *fi,int alg_num)
  * Does not copy the object; that must be done elsewhere.
  * Notice we add the hash whether it is in use or not, as long as we have it.
  */
-void hashlist::add_fdt(file_data_t *fi)
+void hashlist::add_fdt(const file_data_t &fi)
 { 
-    fi->retain();
     push_back(fi);
     for(int i=0;i<NUM_ALGORITHMS;i++){
 	hashmaps[i].add_file(fi,i);
@@ -36,19 +34,19 @@ void hashlist::add_fdt(file_data_t *fi)
 /** 
  * search for a hash
  */
-file_data_t * hashlist::find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number)
+const file_data_t *hashlist::find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number)
 {
-    std::map<std::string,file_data_t *>::iterator it = hashmaps[alg].find(hash_hex);
+    std::map<std::string,file_data_t>::iterator it = hashmaps[alg].find(hash_hex);
     if(it==hashmaps[alg].end()) return 0;
-    (*it).second->matched_file_number = file_number;	// note that it's used!
-    return (*it).second;
+    (*it).second.matched_file_number = file_number;	// note that it's used!
+    return &(*it).second;
 }
 
 
 /**
  * Search for the provided fdt in the hashlist and return the status of the match.
  */
-hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,file_data_t **matched) const
+hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,file_data_t **matched) 
 {
     bool file_size_mismatch = false;
     bool file_name_mismatch = false;
@@ -59,16 +57,16 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,file_da
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
 	/* Only search hash functions that are in use and hashes that are in the fdt */
 	if (hashes[i].inuse && fdht->hash_hex[i].size()){
-	    hashmap::const_iterator it = hashmaps[i].find(fdht->hash_hex[i]);
+	    hashmap::iterator it = hashmaps[i].find(fdht->hash_hex[i]);
 	    if(it != hashmaps[i].end()){
 		/* found a match*/
 
 		did_match = true;
 
-		const file_data_t *match = it->second;
+		file_data_t *match = &it->second;
 		if(matched){
-		    (*matched)   = it->second; // make a copy
-		    it->second->matched_file_number = fdht->file_number;
+		    (*matched)   = &it->second; // make a copy
+		    it->second.matched_file_number = fdht->file_number;
 		}
 
 		/* Verify that all of the other hash functions for *it match fdt as well,
@@ -204,7 +202,7 @@ void hashlist::enable_hashing_algorithms_from_hashdeep_file(class display *ocb,c
 void hashlist::dump_hashlist()
 {
     for(hashlist::const_iterator it = begin(); it!=end(); it++){
-	std::cout << (*it)->file_size << "," << (*it)->hash_hex << "," << (*it)->file_name << "\n";
+	std::cout << (*it).file_size << "," << (*it).hash_hex << "," << (*it).file_name << "\n";
     }
 }
 
@@ -292,7 +290,7 @@ hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &
 	    t->hash_hex[hash_column[column_number]] = word;
 	}
 	if ( record_valid) {
-	    add_fdt(t);	/* add the file to the database*/
+	    add_fdt(*t);	/* add the file to the database*/
 	}
     }
     fclose(handle);

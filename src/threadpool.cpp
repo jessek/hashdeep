@@ -95,18 +95,18 @@ void ERR(int val,const char *msg)
  * Create the thread pool.
  * Each thread has its own feature_recorder_set.
  */
-threadpool::threadpool(int numthreads)
+threadpool::threadpool(int numworkers_)
 {
-    total_threads	= numthreads;
-    freethreads		= numthreads;
+    numworkers		= numworkers_;
+    freethreads		= numworkers;
     if(pthread_mutex_init(&M,NULL))	  ERR(1,"pthread_mutex_init failed");
     if(pthread_cond_init(&TOMAIN,NULL))   ERR(1,"pthread_cond_init #1 failed");
     if(pthread_cond_init(&TOWORKER,NULL)) ERR(1,"pthread_cond_init #2 failed");
 
     // lock while I create the threads
     if(pthread_mutex_lock(&M))		  ERR(1,"pthread_mutex_lock failed");
-    for(int i=0;i<numthreads;i++){
-	class worker *w = new worker(this);
+    for(unsigned int i=0;i<numworkers;i++){
+	class worker *w = new worker(this,i);
 	push_back(w);
 	pthread_create(&w->thread,NULL,worker::start_worker,(void *)w);
     }
@@ -125,7 +125,6 @@ threadpool::~threadpool()
 	this->schedule_work(0);
     }
 #endif
-
     /* Release our resources */
     pthread_mutex_destroy(&M);
     pthread_cond_destroy(&TOMAIN);
@@ -195,5 +194,5 @@ void *worker::run()
 
 bool threadpool::all_free()
 {
-    return total_threads == get_free_count();
+    return numworkers == get_free_count();
 }
