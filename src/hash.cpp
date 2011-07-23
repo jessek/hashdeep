@@ -339,7 +339,11 @@ void display::hash_file(const tstring &fn)
 		    fdht->hash_hex[i] = make_stars(hashes[i].bit_length/4);
 		}
 	    }
-	    this->display_hash(fdht);
+	    if(md5deep_mode){
+		this->md5deep_display_hash(fdht);
+	    } else {
+		this->display_hash(fdht);
+	    }
 	}
 	fclose(fdht->handle);
 	fdht->release();

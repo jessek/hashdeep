@@ -302,47 +302,6 @@ void file_data_hasher_t::compute_dfxml(bool known_hash)
     }
 }
 
-/*
- * Externally called to display a simple hash
- */
-void display::display_hash_simple(file_data_hasher_t *fdht)
-{
-    if(this->dfxml){
-	fdht->compute_dfxml(opt_show_matched);
-	return;
-    }
-
-    /* In piecewise mode the size of each 'file' is the size
-     * of the block it came from. This is important when doing an
-     * audit in piecewise mode. In all other cases we use the 
-     * total number of bytes from the file we *actually* read
-     *
-     * NOTE: Ignore the warning in the format when running on mingw with GCC-4.3.0
-     * see http://lists.gnu.org/archive/html/qemu-devel/2009-01/msg01979.html
-     */
-     
-    display_banner_if_needed();
-    std::string line;
-    if (fdht->piecewise_size){
-	char buf[1024];
-	snprintf(buf,sizeof(buf),"%"PRIu64",", fdht->bytes_read);
-	line = std::string(buf);
-    }
-    else {
-	char buf[1024];
-	snprintf(buf,sizeof(buf),"%"PRIu64",", fdht->actual_bytes);
-	line = std::string(buf);
-    }
-
-    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
-	if (hashes[i].inuse){
-	    line += fdht->hash_hex[i] + std::string(",");
-	}
-    }
-    line += fmt_filename(fdht);
-    writeln(&std::cerr,line);
-}
-
 /**
  * Return the number of entries in the hashlist that have used==0
  * Optionally display them, optionally with additional output.
@@ -582,6 +541,26 @@ int display::audit_update(file_data_hasher_t *fdht)
     return FALSE;
 }
 
+/**
+ * Examines the hash table and determines if any known hashes have not
+ * been used or if any input files did not match the known hashes. If
+ * requested, displays any unused known hashes. Returns a status variable
+ */
+void display::finalize_matching()
+{
+    if (known.total_matched!=known.size()){
+	return_code.add(status_t::STATUS_UNUSED_HASHES); // were there any unmatched?
+    }
+    if (known.total_matched==0){
+	return_code.add(status_t::STATUS_INPUT_DID_NOT_MATCH); // were they all unmatched?
+    }
+    if (mode_not_matched){	// should we display those that were not matched?
+	compute_unused(true,"");
+    }
+}
+
+
+
 /* The old display_hash from the md5deep program, with modifications
  * to build the line before outputing it.
  *
@@ -589,10 +568,7 @@ int display::audit_update(file_data_hasher_t *fdht)
 void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher because of triage
 {
     if (mode_triage) {
-	if(dfxml){
-	    fdht->compute_dfxml(1);	// no lock required here
-	    return;
-	}
+	if(dfxml) return;		// traige mode and dfxml are incompatable 
 	std::string line = std::string("\t") + fdht->hash_hex[opt_md5deep_mode_algorithm] + std::string("\t") + fdht->file_name;
 	writeln(out,line);
 	return;
@@ -613,9 +589,7 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 	return;
     }
 
-    std::string line;
-
-    line = fmt_size(fdht) + fdht->hash_hex[opt_md5deep_mode_algorithm];
+    std::string line = fmt_size(fdht) + fdht->hash_hex[opt_md5deep_mode_algorithm];
 
     if (mode_quiet){
 	line += "  ";
@@ -657,26 +631,48 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
     writeln(out,line);
 }
 
-/**
- * Examines the hash table and determines if any known hashes have not
- * been used or if any input files did not match the known hashes. If
- * requested, displays any unused known hashes. Returns a status variable
+
+/*
+ * Externally called to display a simple hash
  */
-void display::finalize_matching()
+void display::display_hash_simple(file_data_hasher_t *fdht)
 {
-    if (known.total_matched!=known.size()){
-	return_code.add(status_t::STATUS_UNUSED_HASHES); // were there any unmatched?
+    if(this->dfxml){
+	fdht->compute_dfxml(opt_show_matched);
+	return;
     }
-    if (known.total_matched==0){
-	return_code.add(status_t::STATUS_INPUT_DID_NOT_MATCH); // were they all unmatched?
+
+    /* In piecewise mode the size of each 'file' is the size
+     * of the block it came from. This is important when doing an
+     * audit in piecewise mode. In all other cases we use the 
+     * total number of bytes from the file we *actually* read
+     *
+     * NOTE: Ignore the warning in the format when running on mingw with GCC-4.3.0
+     * see http://lists.gnu.org/archive/html/qemu-devel/2009-01/msg01979.html
+     */
+     
+    display_banner_if_needed();
+    std::string line;
+
+    if (fdht->piecewise_size){
+	char buf[1024];
+	snprintf(buf,sizeof(buf),"%"PRIu64",", fdht->bytes_read);
+	line = std::string(buf);
     }
-    if (mode_not_matched){	// should we display those that were not matched?
-	compute_unused(true,"");
+    else {
+	char buf[1024];
+	snprintf(buf,sizeof(buf),"%"PRIu64",", fdht->actual_bytes);
+	line = std::string(buf);
     }
+
+    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
+	if (hashes[i].inuse){
+	    line += fdht->hash_hex[i] + std::string(",");
+	}
+    }
+    line += fmt_filename(fdht);
+    writeln(&std::cerr,line);
 }
-
-
-
 
 
 /**
@@ -685,11 +681,6 @@ void display::finalize_matching()
  */ 
 void display::display_hash(file_data_hasher_t *fdht)
 {
-    if(md5deep_mode){
-	md5deep_display_hash(fdht);
-	return;
-    }
-
     switch (primary_function) {
     case primary_compute: 
 	display_hash_simple(fdht);
