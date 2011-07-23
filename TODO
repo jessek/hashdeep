@@ -3,6 +3,11 @@ moved them all to the SourceForge Feature Request Tracker.
 See https://sourceforge.net/tracker/?group_id=67079&atid=516781
 for all current TODO items.
 
+Here's what's left:
+1 - Remove the file_name_annotation and instead remember the piecewise start and stop.
+2 - Figure out why threading turns on piecewise problem.
+3 - get hashlist matching working again
+
 == 
 
 Below is what we've done:
