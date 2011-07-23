@@ -13,13 +13,14 @@
 class threadpool: public std::vector<class worker *> {
 public:
     pthread_mutex_t	M;			// protects the following variables
-    int			freethreads;
+    unsigned int	total_threads;
+    unsigned int	freethreads;
     pthread_cond_t	TOMAIN;
     pthread_cond_t	TOWORKER;
     std::queue<class file_data_hasher_t *> work_queue;
     void		schedule_work(class file_data_hasher_t *);
     bool		all_free();
-    int			get_free_count();
+    unsigned int	get_free_count();
     static int		numCPU();
     threadpool(int numthreads);
     ~threadpool();

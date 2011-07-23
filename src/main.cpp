@@ -1023,13 +1023,12 @@ int main(int argc, char **argv)
   
     /* If we are multi-threading, wait for all threads to finish */
     if(s->ocb.tp){
-	while(true){
+	while(s->ocb.tp->all_free()==false){
 #ifdef HAVE_USLEEP
 	    usleep(50);
 #else	    
 	    sleep(1);
 #endif
-	    if(num_remaining==0) break;
 	}
     }
 	    

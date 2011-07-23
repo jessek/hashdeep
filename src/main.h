@@ -569,7 +569,7 @@ public:
     std::string fmt_filename(const file_data_t *fdt) const {
 	return fmt_filename(fdt->file_name);
     }
-    void	newline();			// outputs a \n or a 0
+    void	writeln(FILE *out,const std::string &str);    // writes a line with NEWLINE
     void	status(const char *fmt, ...);// Display an ordinary message with newline added
     void	error(const char *fmt, ...);// Display an error message if not in silent mode 
     void	fatal_error(const char *fmt, ...);// Display an error message if not in silent mode and exit

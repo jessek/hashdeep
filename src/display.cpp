@@ -22,24 +22,19 @@
  ** Support routines
  ****************************************************************/
 
-
-
-void display::newline()
+void display::writeln(FILE *out,const std::string &str)
 {
+    lock();
+    fwrite(str.c_str(),1,str.size(),out);
     if (opt_zero){
-	lock();
-	printf("%c", 0);
-	fflush(stdout);
-	unlock();
+	fputc('\000',out);
     }
     else {
-	lock();
-	printf("%s", NEWLINE);
-	fflush(stdout);
-	unlock();
+	fprintf(out,"%s", NEWLINE);
     }
+    fflush(out);
+    unlock();
 }
-
 
 /****************************************************************
  ** Display Routines 
@@ -338,10 +333,8 @@ void display::display_hash_simple(file_data_hasher_t *fdht)
 	    line += fdht->hash_hex[i] + std::string(",");
 	}
     }
-    line += fmt_filename(fdht) + NEWLINE;
-    lock();
-    fwrite(line.c_str(),1,line.size(),stderr);
-    unlock();
+    line += fmt_filename(fdht);
+    writeln(stderr,line);
 }
 
 /**
@@ -478,10 +471,7 @@ void display::md5deep_display_match_result(file_data_hasher_t *fdht)
 	else{
 	    line += fdht->file_name;
 	}
-	line += NEWLINE;
-	lock();
-	fwrite(line.c_str(),1,line.size(),stderr);
-	unlock();
+	writeln(stderr,line);
     }
 }
 
@@ -510,17 +500,13 @@ void display::display_match_result(file_data_hasher_t *fdht)
 	break;
 	  
     case hashlist::status_file_size_mismatch:
-	line = fmt_filename(fdht) + ": Hash collision with " + fmt_filename(matched_fdt) + NEWLINE;
-	lock();
-	fwrite(line.c_str(),1,line.size(),stderr);
-	unlock();
+	line = fmt_filename(fdht) + ": Hash collision with " + fmt_filename(matched_fdt);
+	writeln(stderr,line);
 	break;
 	
     case hashlist::status_partial_match:
-	line = fmt_filename(fdht) + ": partial hash match with " + fmt_filename(matched_fdt) + NEWLINE;
-	lock();
-	fwrite(line.c_str(),1,line.size(),stderr);
-	unlock();
+	line = fmt_filename(fdht) + ": partial hash match with " + fmt_filename(matched_fdt);
+	writeln(stderr,line);
 	break;
 	
     default:
@@ -540,10 +526,7 @@ void display::display_match_result(file_data_hasher_t *fdht)
 		    line += fmt_filename(matched_fdt);
 		}
 	    }
-	    line += NEWLINE;
-	    lock();
-	    fwrite(line.c_str(),1,line.size(),stderr);
-	    unlock();
+	    writeln(stderr,line);
 	}
     }
 }
@@ -591,9 +574,7 @@ int display::audit_update(file_data_hasher_t *fdht)
 	line = fmt_filename(fdht) + ": Hash collision with " + fmt_filename(matched_fdht);
     }
     if(line.size()>0){
-	lock();
-	fwrite(line.c_str(),1,line.size(),stderr);
-	unlock();
+	writeln(stderr,line);
     }
     return FALSE;
 }
@@ -610,10 +591,8 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 	    fdht->compute_dfxml(1);	// no lock required here
 	    return;
 	}
-	std::string line = std::string("\t") + fdht->hash_hex[opt_md5deep_mode_algorithm] + std::string("\t") + fdht->file_name + NEWLINE;
-	lock();
-	fwrite(line.c_str(),1,line.size(),outfile);
-	unlock();
+	std::string line = std::string("\t") + fdht->hash_hex[opt_md5deep_mode_algorithm] + std::string("\t") + fdht->file_name;
+	writeln(outfile,line);
 	return;
     }
 
@@ -673,10 +652,7 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 	    line += fmt_filename(fdht);
 	}
     }
-    line += NEWLINE;
-    lock();
-    fwrite(line.c_str(),1,line.size(),outfile);
-    unlock();
+    writeln(outfile,line);
 }
 
 /**

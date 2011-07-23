@@ -172,7 +172,6 @@ bool file_data_hasher_t::compute_hash()
 	 fdht->last_time = fdht->start_time;
      }
 
-#if 0
      if (fdht->ocb->mode_triage)  {
 	 /*
 	  * Triage mode:
@@ -207,7 +206,6 @@ bool file_data_hasher_t::compute_hash()
      if ( fdht->piecewise_size>0 )  {
 	 fdht->block_size = fdht->piecewise_size;
      }
-#endif
      int done = FALSE;
      while (!done)  {
 	 fdht->multihash_initialize();
@@ -282,7 +280,9 @@ void worker::do_work(file_data_hasher_t *fdht)
     // this is all we should need to do
     fdht->hash();
 
-    // this is for testing
+    //std::cerr << "pop " << fdht << " " << fdht->file_name << "\n";
+    //fdht->release();
+
     //fdht->ocb->output_filename(stdout,fdht);
     //fdht->ocb->newline();
     //fdht->release();

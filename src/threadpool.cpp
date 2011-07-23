@@ -97,7 +97,8 @@ void ERR(int val,const char *msg)
  */
 threadpool::threadpool(int numthreads)
 {
-    freethreads = numthreads;
+    total_threads	= numthreads;
+    freethreads		= numthreads;
     if(pthread_mutex_init(&M,NULL))	  ERR(1,"pthread_mutex_init failed");
     if(pthread_cond_init(&TOMAIN,NULL))   ERR(1,"pthread_cond_init #1 failed");
     if(pthread_cond_init(&TOWORKER,NULL)) ERR(1,"pthread_cond_init #2 failed");
@@ -150,15 +151,17 @@ void threadpool::schedule_work(file_data_hasher_t *fdht)
     pthread_mutex_unlock(&M);
 }
 
-int threadpool::get_free_count()
+unsigned int threadpool::get_free_count()
 {
     pthread_mutex_lock(&M);
-    int ret = freethreads;
+    unsigned int ret = freethreads;
     pthread_mutex_unlock(&M);
     return ret;
 }
 
-/* Run the worker. */
+/* Run the worker.
+ * Each worker runs run...
+ */
 void *worker::run()
 {
     while(true){
@@ -175,13 +178,13 @@ void *worker::run()
 		exit(1);
 	    }
 	}
-	file_data_hasher_t *w = master->work_queue.front(); // get the sbuf
+	file_data_hasher_t *fdht = master->work_queue.front(); // get the sbuf
 	master->work_queue.pop();		   // pop from the list
 	pthread_mutex_unlock(&master->M);	   // unlock
-	if(w==0) {
+	if(fdht==0) {
 	    break;			// told to exit
 	}
-	do_work(w);
+	do_work(fdht);
 	pthread_mutex_lock(&master->M);
 	master->freethreads++;
 	pthread_cond_signal(&master->TOMAIN); // tell the master that we are free!
@@ -190,3 +193,7 @@ void *worker::run()
     return 0;
 }
 
+bool threadpool::all_free()
+{
+    return total_threads == get_free_count();
+}
