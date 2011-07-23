@@ -349,8 +349,7 @@ int state::check_for_encase(FILE *f,uint32_t *expected_hashes)
 {
   ENCASE_HASH_HEADER *h = (ENCASE_HASH_HEADER *)malloc(sizeof(ENCASE_HASH_HEADER));
   
-  if (NULL == h)
-    fatal_error("Out of memory");
+  if (NULL == h) ocb.fatal_error("Out of memory");
   
   if (sizeof(ENCASE_HASH_HEADER) != fread(h,1,sizeof(ENCASE_HASH_HEADER),f))  {
     free(h);
@@ -519,7 +518,7 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
     // as fread will append an extra \0 to the string 
 
     if (fseeko(handle,ENCASE_START_HASHES,SEEK_SET))  {
-	print_error("%s: Unable to seek to start of hashes", fn);
+	ocb.print_error("%s: Unable to seek to start of hashes", fn);
 	return status_t::STATUS_USER_ERROR;
     }
         
@@ -529,9 +528,9 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
 		continue;
         
 	    // Users expect the line numbers to start at one, not zero.
-	    if ((!opt_silent) || (mode_warn_only)) {
-		print_error("%s: No hash found in line %"PRIu32, fn, count + 1);
-		print_error("%s: %s", fn, strerror(errno));
+	    if ((!ocb.opt_silent) || (mode_warn_only)) {
+		ocb.print_error("%s: No hash found in line %"PRIu32, fn, count + 1);
+		ocb.print_error("%s: %s", fn, strerror(errno));
 		return status_t::STATUS_USER_ERROR;
 	    }
 	}
@@ -563,9 +562,8 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
     }
 
     if (expected_hashes != count){
-	print_error(
-		    "%s: Expecting %"PRIu32" hashes, found %"PRIu32"\n", 
-		    fn, expected_hashes, count);
+	ocb.print_error("%s: Expecting %"PRIu32" hashes, found %"PRIu32"\n", 
+			fn, expected_hashes, count);
     }
     return status_t::status_ok;
 }
@@ -586,13 +584,13 @@ void state::md5deep_load_match_file(const char *fn)
 
     FILE *f= fopen(fn,"rb");
     if (f == NULL) {
-	print_error("%s: %s", fn,strerror(errno));
+	ocb.print_error("%s: %s", fn,strerror(errno));
 	return;
     }
 
     int file_type = identify_hash_file_type(f,&expected_hashes);
     if (file_type == TYPE_UNKNOWN)  {
-	print_error("%s: Unable to find any hashes in file, skipped.", fn);
+	ocb.print_error("%s: Unable to find any hashes in file, skipped.", fn);
 	fclose(f);
 	return;
     }
@@ -620,7 +618,7 @@ void state::md5deep_load_match_file(const char *fn)
 	memset(known_fn,0,PATH_MAX);
 
 	if (!find_hash_in_line(buf,file_type,known_fn)) {
-	    if ((!opt_silent) || (mode_warn_only)) {
+	    if ((!ocb.opt_silent) || (mode_warn_only)) {
 		fprintf(stderr,"%s: %s: No hash found in line %" PRIu64 "%s", 
 			__progname,fn,line_number,NEWLINE);
 	    }

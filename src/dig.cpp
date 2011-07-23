@@ -26,34 +26,32 @@
  *** so much smaller now, we put it here.
  ****************************************************************/
 
-class dir_table_t : public std::set<tstring>{
-};
 
-dir_table_t dir_table;
 
-void done_processing_dir(const tstring &fn_)
+void state::done_processing_dir(const tstring &fn_)
 {
     tstring fn = main::get_realpath(fn_);
     dir_table_t::iterator pos = dir_table.find(fn);
     if(pos==dir_table.end()){
-	internal_error("%s: Directory %s not found in done_processing_dir", __progname, fn.c_str());
+	ocb.internal_error("%s: Directory %s not found in done_processing_dir", __progname, fn.c_str());
 	// will not be reached.
     }
     dir_table.erase(pos);
 }
 
 
-void processing_dir(const tstring &fn_)
+void state::processing_dir(const tstring &fn_)
 {
     tstring fn = main::get_realpath(fn_);
     if(dir_table.find(fn)!=dir_table.end()){
-	internal_error("%s: Attempt to add existing %s in processing_dir", __progname, fn.c_str());
+	ocb.internal_error("%s: Attempt to add existing %s in processing_dir", __progname, fn.c_str());
+	// will not be reached.
     }
     dir_table.insert(fn);
 }
 
 
-int have_processed_dir(const tstring &fn_)
+bool state::have_processed_dir(const tstring &fn_)
 {
     tstring fn = main::get_realpath(fn_);
     return dir_table.find(fn)!=dir_table.end();
@@ -328,14 +326,14 @@ void state::process_dir(const tstring &fn)
     if(opt_debug) std::cerr << "process_dir(" << main::make_utf8(fn) << ")\n";
 
     if (have_processed_dir(fn)) {
-	print_error_filename(fn,"symlink creates cycle");
+	ocb.error_filename(fn,"symlink creates cycle");
 	return ;
     }
 
     processing_dir(fn);			// note that we are now processing a directory
   
     if ((current_dir = _topendir(fn.c_str())) == NULL)   {
-	print_error_filename(fn,"%s", strerror(errno));
+	ocb.error_filename(fn,"%s", strerror(errno));
 	return ;
     }    
 
@@ -365,7 +363,7 @@ void state::process_dir(const tstring &fn)
  * called by file_type() and should_hash_symlink() 
  */
 
-static file_types decode_file_type(const struct __stat64 &sb)
+state::file_types state::decode_file_type(const struct __stat64 &sb)
 {
     if (S_ISREG(sb.st_mode))  return stat_regular;
     if (S_ISDIR(sb.st_mode))  return stat_directory;
@@ -400,14 +398,16 @@ static file_types decode_file_type(const struct __stat64 &sb)
 #endif
 
 /* Return the 'decoded' file type of a file.
+ * If an error is found and ocb is provided, send the error to ocb.
+ * If filesize and timestamp are provided, give them.
  * Also return the file size and modification time (may be used elsewhere).
  */
-file_types state::file_type(const tstring &fn,uint64_t *filesize,timestamp_t *timestamp)
+state::file_types state::file_type(const tstring &fn,display *ocb,uint64_t *filesize,timestamp_t *timestamp)
 {
     struct __stat64 sb;
     memset(&sb,0,sizeof(sb));
     if (TLSTAT(fn.c_str(),&sb))  {
-	print_error_filename(fn,"%s (dig.cpp::file_type)", strerror(errno));
+	if(ocb) ocb->error_filename(fn,"%s (dig.cpp::file_type)", strerror(errno));
 	return stat_unknown;
     }
     if(timestamp) *timestamp = sb.st_ctime;
@@ -422,7 +422,7 @@ file_types state::file_type(const tstring &fn,uint64_t *filesize,timestamp_t *ti
 	     */
 	    FILE *f = _tfopen(fn.c_str(),_TEXT("rb"));
 	    if(f){
-		*filesize = find_file_size(f);
+		*filesize = find_file_size(f,ocb);
 		fclose(f);
 	    }
 	}
@@ -445,17 +445,17 @@ bool state::should_hash_symlink(const tstring &fn, file_types *link_type)
     struct __stat64 sb;
 
     if (TSTAT(fn.c_str(),&sb))  {
-	print_error_filename(fn,"%s",strerror(errno));
+	ocb.error_filename(fn,"%s",strerror(errno));
 	return false;
     }
 
-    file_types type = decode_file_type(sb);
+    state::file_types type = decode_file_type(sb);
 
     if (type == stat_directory)  {
 	if (mode_recursive){
 	    process_dir(fn);
 	} else {
-	    print_error_filename(fn,"Is a directory");
+	    ocb.error_filename(fn,"Is a directory");
 	}
 	return false;
     }    
@@ -480,7 +480,7 @@ bool state::should_hash_expert(const tstring &fn, file_types type)
 	    process_dir(fn);
 	}
 	else {
-	    print_error_filename(fn,"Is a directory");
+	    ocb.error_filename(fn,"Is a directory");
 	}
 	return FALSE;
 
@@ -510,7 +510,7 @@ bool state::should_hash_expert(const tstring &fn, file_types type)
 	}
 	return false;
     case stat_unknown:
-	print_error_filename(fn,"unknown file type");
+	ocb.error_filename(fn,"unknown file type");
 	return false;
     }
     return false;
@@ -519,7 +519,7 @@ bool state::should_hash_expert(const tstring &fn, file_types type)
 
 bool state::should_hash(const tstring &fn)
 {
-    file_types  type = state::file_type(fn,0,0);
+    file_types  type = state::file_type(fn,&ocb,0,0);
   
     if (mode_expert) return should_hash_expert(fn,type);
 
@@ -527,7 +527,7 @@ bool state::should_hash(const tstring &fn)
 	if (mode_recursive){
 	    process_dir(fn);
 	} else {
-	    print_error_filename(fn,"Is a directory");
+	    ocb.error_filename(fn,"Is a directory");
 	}
 	return false;
     }
@@ -722,10 +722,11 @@ void state::dig_self_test()
 		       _T("."),_T("/dev/null"),_T("/dev/tty"),
 		       _T("../testfiles/symlinktest/dir1/dir1"),_T("")};
 
+    state s;
     for(int i=0;names[i].size()>0;i++){
 	uint64_t stat_bytes;
 	timestamp_t timestamp;
-	file_types ft = file_type(names[i],&stat_bytes,&timestamp);
+	file_types ft = s.file_type(names[i],&s.ocb,&stat_bytes,&timestamp);
 	std::cerr << "file_type(" << names[i] << ")="
 		  << ft << " size=" << stat_bytes << " ctime=" << timestamp << "\n";
     }

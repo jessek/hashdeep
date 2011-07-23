@@ -22,14 +22,15 @@ Below is what we've done:
 2 - Fix -k so that it loads into that database
 3 - Fix audit mode so that it reads from that database.
 * - Loading hashes should return a string with the set of hashes that were added.
+1 - Go through entire program looking for dead code.
+5 - migrate to multi-threaded producer/consumer architecture with the file searching (dig) being the producer and hash() being the consumer.
+6 - Add "-j" option to control how many threads; -j0 turns off threading.
+* - error printing is mostly threadsafe
 
 Below is what's planned:
 
-1 - Go through entire program looking for dead code.
 2 - Add procesisng of all hash file formats to tests.
 4 - a file pattern that specifies what files are hashed.
-5 - migrate to multi-threaded producer/consumer architecture with the file searching (dig) being the producer and hash() being the consumer. This will require a bunch of locks added.
-6 - Add "-j" option to control how many threads; -j0 turns off threading.
 
 What's on hold 
 ================
@@ -63,5 +64,9 @@ Files partially matched: 0
        New files found: 0
  Known files not found: 0
 ================================================================
-* error printing needs to be threadsafe
 * Check triage mdoe
+================================================================
+Multithreading works, but not if you hash. 
+problem is either:
+ - the hashing
+ - the printing of the hashes.

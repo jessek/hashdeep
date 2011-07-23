@@ -61,10 +61,11 @@ done
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h stdint.h stdlib.h string.h sys/cdefs.h sys/types.h sys/ioctl.h sys/param.h wchar.h unistd.h sys/stat.h sys/disk.h])
+AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h stdint.h stdlib.h string.h sys/cdefs.h sys/types.h \
+			   sys/ioctl.h sys/mmap.h sys/param.h wchar.h unistd.h sys/stat.h sys/disk.h])
 
 # These functions not available everywhere
-AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r])
+AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r mmap usleep])
 
 # These includes are required on FreeBSD
 AC_CHECK_HEADERS([sys/mount.h],[],[],
@@ -119,6 +120,7 @@ if test x"${extern_progname}" = x"yes"; then
   AC_DEFINE(HAVE_EXTERN_PROGNAME,1,[define to 1 if __progname is available])
 fi
 
+################################################################
 # PTHREAD support
 AC_CHECK_HEADERS([pthread.h])
 m4_include([ax_pthread.m4])
@@ -127,6 +129,7 @@ LIBS="$PTHREAD_LIBS $LIBS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
 CC="$PTHREAD_CC"
+################################################################
 
 
 # This allows us to easily disable optimizations for debugging

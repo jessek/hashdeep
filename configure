@@ -5686,7 +5686,8 @@ $as_echo "#define STDC_HEADERS 1" >>confdefs.h
 
 fi
 
-for ac_header in libgen.h fcntl.h limits.h inttypes.h stdint.h stdlib.h string.h sys/cdefs.h sys/types.h sys/ioctl.h sys/param.h wchar.h unistd.h sys/stat.h sys/disk.h
+for ac_header in libgen.h fcntl.h limits.h inttypes.h stdint.h stdlib.h string.h sys/cdefs.h sys/types.h \
+			   sys/ioctl.h sys/mmap.h sys/param.h wchar.h unistd.h sys/stat.h sys/disk.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -5701,7 +5702,7 @@ done
 
 
 # These functions not available everywhere
-for ac_func in _gmtime64_s _gmtime64 gmtime_r
+for ac_func in _gmtime64_s _gmtime64 gmtime_r mmap usleep
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -6586,6 +6587,7 @@ $as_echo "#define HAVE_EXTERN_PROGNAME 1" >>confdefs.h
 
 fi
 
+################################################################
 # PTHREAD support
 for ac_header in pthread.h
 do :
@@ -7055,6 +7057,7 @@ LIBS="$PTHREAD_LIBS $LIBS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
 CC="$PTHREAD_CC"
+################################################################
 
 
 # This allows us to easily disable optimizations for debugging

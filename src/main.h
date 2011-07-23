@@ -21,6 +21,7 @@
 
 #include "common.h"
 #include "xml.h"
+#include "threadpool.h"
 
 #include <map>
 #include <vector>
@@ -60,18 +61,6 @@ typedef enum {
   alg_unknown 
 } hashid_t;
 
-typedef enum {
-    stat_regular=0,
-    stat_directory,
-    stat_door,
-    stat_block,
-    stat_character,
-    stat_pipe,
-    stat_socket,
-    stat_symlink,
-    stat_unknown=254
-} file_types;
-
 #define NUM_ALGORITHMS  alg_unknown
 
 /* Which ones are enabled by default */
@@ -80,12 +69,6 @@ typedef enum {
 #define DEFAULT_ENABLE_SHA256      TRUE
 #define DEFAULT_ENABLE_TIGER       FALSE
 #define DEFAULT_ENABLE_WHIRLPOOL   FALSE
-
-/* these cannot be used for normal printing once we are running */
-void print_status(const char *fmt, ...);// Display an ordinary message with newline added
-void print_error(const char *fmt, ...);// Display an error message if not in silent mode
-
-
 
 /* This class holds the information known about each hash algorithm.
  * It's sort of like the EVP system in OpenSSL.
@@ -158,9 +141,11 @@ public:;
 
 
 #ifdef _WIN32
-typedef __time64_t    timestamp_t;
+typedef __time64_t	timestamp_t;
+typedef std::wstring	filename_t;
 #else
-typedef time_t        timestamp_t;
+typedef time_t		timestamp_t;
+typedef std::string	filename_t;
 #endif
 
 
@@ -174,8 +159,9 @@ class file_data_t {
 public:
     file_data_t():refcount(0),matched_file_number(0),file_size(0),stat_bytes(0),actual_bytes(0) {
     };
+    virtual ~file_data_t(){}		// required because we subclass
     // Implement a simple reference count garbage collection system
-    int		   refcount;			     // reference counting
+    int		   refcount;		// reference counting
     void retain() { refcount++;}
     void release() {
 	if(--refcount==0){
@@ -215,15 +201,18 @@ public:
     static const size_t MAX_ALGORITHM_RESIDUE_SIZE = 256;
     file_data_hasher_t(class display *ocb_):
 	ocb(ocb_),			// where we put results
-	handle(0),is_stdin(false),
+	handle(0),
 	read_start(0),read_end(0),bytes_read(0),
 	block_size(MD5DEEP_IDEAL_BLOCK_SIZE),
 	start_time(0),last_time(0){
 	file_number = ++next_file_number;
     };
     ~file_data_hasher_t(){
-	if(handle) fclose(handle);	// make sure that it' closed.
+	if(handle){
+	    fclose(handle);	// make sure that it' closed.
+	}
     }
+
     /* Where the results go */
     class display *ocb;
     
@@ -232,8 +221,13 @@ public:
     void multihash_update(const unsigned char *buffer,size_t bufsize);
     void multihash_finalize();
 
+    /* How we read the data */
     FILE        *handle;		// the file we are reading
-    bool        is_stdin;		// flag if the file is stdin
+    int		fd;			// fd used for mmap
+    const uint8_t *base;		// base of mapped file
+    size_t	bounds;			// size of the mapped file
+
+    /* Information for the hashing underway */
     uint8_t     hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 
     std::string	triage_info;		// if true, must print on output
     std::string	dfxml_hash;          // the DFXML hash digest for the piece just hashed;
@@ -346,14 +340,15 @@ public:;
      * Both of these functions take the file name and the open handle.
      * They read from the handle and just use the filename for printing error messages.
      */
-    void		enable_hashing_algorithms_from_hashdeep_file(const std::string &fn,std::string val);
+    void		enable_hashing_algorithms_from_hashdeep_file(class display *ocb,const std::string &fn,std::string val);
 
     std::string		last_enabled_algorithms; // a string with the algorithms that were enabled last
     hashid_t		hash_column[NUM_ALGORITHMS]; // maps a column number to a hashid;
 						     // the order columns appear in the file being loaded.
     int			num_columns;		     // number of columns in file being loaded
-    hashfile_format	identify_format(const std::string &fn,FILE *handle);
-    loadstatus_t	load_hash_file(const std::string &fn); // not tstring! always ASCII
+    hashfile_format	identify_format(class display *ocb,const std::string &fn,FILE *handle);
+    loadstatus_t	load_hash_file(class display *ocb,const std::string &fn); // not tstring! always ASCII
+
     file_data_t		*find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number); 
     void		dump_hashlist(); // send contents to stdout
     
@@ -439,13 +434,13 @@ class display {
     class audit_stats	match;		// for the audit mode
     status_t		return_code;	// prevously returned by hash() and dig().
 
-    void lock() const{
+    void lock() const {
 	if(pthread_mutex_lock(&M)){
 	    perror("pthread_mutex_lock failed");
 	    exit(1);
 	}
     }
-    void unlock() const{
+    void unlock() const {
 	if(pthread_mutex_unlock(&M)){
 	    perror("pthread_mutex_unlock failed");
 	    exit(1);
@@ -457,11 +452,17 @@ public:
 	      mode_not_matched(false),mode_quiet(false),mode_timestamp(false),
 	      mode_barename(false),
 	      mode_size(false),mode_size_all(false),
+	      opt_silent(false),
 	      opt_zero(false),
 	      opt_display_size(false),
+	      opt_display_hash(false),
+	      opt_show_matched(false),
 	      size_threshold(0),
 	      piecewise_size(0),
-	      primary_function(primary_compute) {
+	      primary_function(primary_compute),
+
+	      // threading
+	      tp(0),threadcount(threadpool::numCPU()) {
 
 #ifdef HAVE_PTHREAD
 	pthread_mutex_init(&M,NULL);
@@ -479,14 +480,24 @@ public:
     bool	mode_barename;
     bool	mode_size;
     bool	mode_size_all;
+    bool	opt_silent;
     bool	opt_zero;
     bool	opt_display_size;
+    bool	opt_display_hash;
+    bool	opt_show_matched;
 
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;
 
     uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */
     primary_t       primary_function;    /* what do we want to do? */
+
+    /* threading */
+    threadpool	*tp;
+    int		threadcount;
+
+    /* Functions for working */
+
     void	open(const std::string &outfilename); // open outfilename; error if can't.
 
     /* Return code support */
@@ -510,14 +521,11 @@ public:
     void dfxml_shutdown();
     void dfxml_write(file_data_hasher_t *fdht);
 
-    void newline();			// outputs a \n or a 0
-    void status(const char *fmt, ...);// Display an ordinary message with newline added
-    void error(const char *fmt, ...);// Display an error message if not in silent mode
 
     /* Known hash database interface */
     hashlist::loadstatus_t load_hash_file(const std::string &fn){
 	lock();
-	hashlist::loadstatus_t ret = known.load_hash_file(fn);
+	hashlist::loadstatus_t ret = known.load_hash_file(this,fn);
 	unlock();
 	return ret;
     }
@@ -543,33 +551,37 @@ public:
 	utf8_banner = utf8_banner_;
     }
 
-    void	display_size(const file_data_t *fdh);
+    void	try_msg(void);
+    std::string	fmt_size(const file_data_t *fdh) const;
     void	display_banner_if_needed();
     void	display_hash(file_data_hasher_t *fdht);
     void	display_hash_simple(file_data_hasher_t *fdt);
 
     /* The following routines are for printing and outputing filenames.
      * 
-     * output_filename simply sends the filename to the specified output.
-     * The wstring version outputs as UTF-8 unless unicode quoting is requested,
+     * fmt_filename formats the filename.
+     * On Windows this version outputs as UTF-8 unless unicode quoting is requested,
      * in which case Unicode characters are emited as U+xxxx.
      * For example, the Unicode smiley character ☺ is output as U+263A.
      *
-     * Locking is used to assure that different threads do not intermix output
-     * and because the STDIO system is not threadsafe.
      */
-    void	output_filename(FILE *out,const std::string &fn);
-#ifdef _WIN32
-    void	output_filename(FILE *out,const std::wstring &fn);
-#endif
+    std::string fmt_filename(const filename_t &fn) const;
+    std::string fmt_filename(const file_data_t *fdt) const {
+	return fmt_filename(fdt->file_name);
+    }
+    void	newline();			// outputs a \n or a 0
+    void	status(const char *fmt, ...);// Display an ordinary message with newline added
+    void	error(const char *fmt, ...);// Display an error message if not in silent mode 
+    void	fatal_error(const char *fmt, ...);// Display an error message if not in silent mode and exit
+    void	internal_error(const char *fmt, ...);// Display an error message, ask user to contact the developer, 
+    //void	print_status(const char *fmt, ...);
+    void	print_debug(const char *fmt, ...);
+    void	print_error(const char *fmt, ...);// Display an error message if not in silent mode
+    void	error_filename(const filename_t &fn, const char *fmt, ...);
 
     /* these versions extract the filename and the annotation if it is present.
      */
-    
-    void	output_filename(FILE *out,const file_data_t &fdt);
-    void	output_filename(FILE *out,const file_data_t *fdt){
-	output_filename(out,*fdt);
-    };
+    // Display an error message if not in silent mode with a Unicode filename
 
     /* realtime_stats is the amount of data hashed and what's left */
 
@@ -599,11 +611,6 @@ public:
     void	hash_stdin();
 
 };
-
-
-
-
-
 
 /**
  * The 'state' class holds the state of the hashdeep/md5deep program.
@@ -637,6 +644,18 @@ inline std::ostream & operator <<(std::ostream &os,const std::wstring &wstr) {
 
 class state {
 public:;
+    typedef enum {
+	stat_regular=0,
+	stat_directory,
+	stat_door,
+	stat_block,
+	stat_character,
+	stat_pipe,
+	stat_socket,
+	stat_symlink,
+	stat_unknown=254
+    } file_types;
+
     state():mode_recursive(false),	// do we recurse?
 	    mode_warn_only(false),	// for loading hash files
 
@@ -658,35 +677,34 @@ public:;
 	    h_plain(0),h_bsd(0),
 	    h_md5deep_size(0),
 	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),
-	    h_nsrl20(0), h_encase(0)
+	    h_nsrl20(0), h_encase(0),
+	    usage_count(0)		// allows -hh to print extra help
 	    {};
 
-    //uint64_t        mode;
     bool	mode_recursive;
     bool	mode_warn_only;
 
     // which files do we hash.
-    bool mode_expert;
-    bool mode_regular;
-    bool mode_directory;
-    bool mode_door;
-    bool mode_block;
-    bool mode_character;
-    bool mode_pipe;
-    bool mode_socket;
-    bool mode_symlink;
-
-
+    bool	mode_expert;
+    bool	mode_regular;
+    bool	mode_directory;
+    bool	mode_door;
+    bool	mode_block;
+    bool	mode_character;
+    bool	mode_pipe;
+    bool	mode_socket;
+    bool	mode_symlink;
+ 
     /* Command line arguments */
-    int             argc;
+    int		argc;
 #ifdef _WIN32
-    wchar_t        **argv;			// never allocated, never freed
+    wchar_t     **argv;			// never allocated, never freed
 #else
-    char	   **argv;
+    char	**argv;
 #endif
 
     /* configuration and output */
-    display	    ocb;		// output control block
+    display	ocb;		// output control block
 
     // Which filetypes this algorithm supports and their position in the file
     uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
@@ -696,11 +714,19 @@ public:;
     void	setup_expert_mode(char *arg);
 
     /* main.cpp */
-    void md5deep_check_flags_okay();
-    int hashdeep_process_command_line(int argc,char **argv);
-    int md5deep_process_command_line(int argc,char **argv);
+    uint64_t	find_block_size(std::string input_str);
+    int		usage_count;
+    tstring	generate_filename(const TCHAR *input);
+    void	usage();
+    std::string	make_banner();
+    void	md5deep_usage();
+    void	check_flags_okay();
+    void	md5deep_check_flags_okay();
+    int		hashdeep_process_command_line(int argc,char **argv);
+    void	md5deep_check_matching_modes();
+    int		md5deep_process_command_line(int argc,char **argv);
 #ifdef _WIN32
-    int prepare_windows_command_line();
+    int		prepare_windows_command_line();
 #endif    
 
     /* files.cpp
@@ -716,14 +742,31 @@ public:;
     int		find_rigid_hash(char *buf,  char *fn, unsigned int fn_location, unsigned int hash_location);
     int		find_ilook_hash(char *buf, char *known_fn);
     int		check_for_encase(FILE *f,uint32_t *expected_hashes);
-    int		identify_hash_file_type(FILE *f,uint32_t *expected_hashes); // identify the hash file type
 
-    /* dig.cpp */
+    /* dig.cpp 
+     *
+     * Note the file typing system needs to be able to display errors...
+     */
+
+    class dir_table_t : public std::set<tstring>{
+    };
+    dir_table_t dir_table;
+    void	done_processing_dir(const tstring &fn_);
+    void	processing_dir(const tstring &fn_);
+    bool	have_processed_dir(const tstring &fn_);
+    
+
+    int		identify_hash_file_type(FILE *f,uint32_t *expected_hashes); // identify the hash file type
     bool	should_hash_symlink(const tstring &fn,file_types *link_type);
     bool	should_hash_expert(const tstring &fn, file_types type);
     bool	should_hash(const tstring &fn);
 
-    static file_types file_type(const tstring &fn,uint64_t *filesize,timestamp_t *timestamp);
+    /* file_type returns the file type of a string.
+     * If an error is found and ocb is provided, send the error to ocb.
+     * If filesize and timestamp are provided, give them.
+     */
+    static file_types decode_file_type(const struct __stat64 &sb);
+    static file_types file_type(const filename_t &fn,class display *ocb,uint64_t *filesize,timestamp_t *timestamp);
 #ifdef _WIN32
     bool	is_junction_point(const std::wstring &fn);
 #endif
@@ -745,18 +788,15 @@ public:;
  * and output when run as 'md5deep' then when run as 'hashdeep'. We call this the
  * 'md5deep_mode' and track it with the variables below.
  */
-extern bool	md5deep_mode;		// if true, then we were run as md5deep, sha1deep, etc.
 
 /* main.cpp */
+extern bool	md5deep_mode;		// if true, then we were run as md5deep, sha1deep, etc.
+extern int	opt_debug;		// for debugging
 extern bool opt_relative;		// print relative file names
-extern bool opt_silent;			// previously was mode_silent
 extern int  opt_verbose;		// can be 1, 2 or 3
 extern bool opt_estimate;		// print ETA
-extern int  opt_debug;			// for debugging
 extern bool opt_unicode_escape;
-extern bool opt_show_matched;
 extern bool opt_mode_match;
-extern bool opt_display_hash;
 extern bool opt_mode_match_neg;
 extern hashid_t opt_md5deep_mode_algorithm;	// for when we are in MD5DEEP mode
 extern bool opt_csv;
@@ -769,13 +809,6 @@ std::vector<std::string> split(const std::string &s, char delim);
 void lowercase(std::string &s);
 extern char *__progname;
 
-// ----------------------------------------------------------------
-// CYCLE CHECKING
-// ----------------------------------------------------------------
-int	have_processed_dir(const tstring &fn);
-void	processing_dir(const tstring &fn);
-void	done_processing_dir(const tstring &fn);
-
 // ------------------------------------------------------------------
 // HELPER FUNCTIONS
 //
@@ -783,12 +816,8 @@ void	done_processing_dir(const tstring &fn);
 // ------------------------------------------------------------------
 
 std::string itos(uint64_t i);
-uint64_t find_block_size(state *s, char *input_str);
 void     chop_line(char *s);
-
-
-// Return the size, in bytes of an open file stream. On error, return -1 
-off_t	find_file_size(FILE *f);
+off_t	find_file_size(FILE *f,class display *ocb); // Return the size, in bytes of an open file stream. On error, return -1 
 
 // ------------------------------------------------------------------
 // MAIN PROCESSING
@@ -796,25 +825,7 @@ off_t	find_file_size(FILE *f);
 /* dig.cpp */
 void dig_self_test();			// check the string-processing
 
-/* ui.c */
-/* User Interface Functions */
 
-// Display an error message if not in silent mode with a Unicode filename
-void print_error_filename(const std::string &fn, const char *fmt, ...);
-#ifdef _WIN32
-void print_error_filename(const std::wstring &wfn, const char *fmt, ...);
-#endif
 
-// Display an error message, if not in silent mode,  
-// and exit with EXIT_FAILURE
-void fatal_error(const char *fmt, ...);
-
-// Display an error message, ask user to contact the developer, 
-// and exit with EXIT_FAILURE
-void internal_error(const char *fmt, ... );
-
-// Display a filename, possibly including Unicode characters
-void print_debug(const char *fmt, ...);
-void try_msg(void);
 
 #endif /* ifndef __MAIN_H */

@@ -45,7 +45,6 @@ char *__progname;
 "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",\
 NEWLINE, NEWLINE, NEWLINE
 
-
 #ifdef _WIN32 
 // This can't go in main.h or we get multiple definitions of it
 // Allows us to open standard input in binary mode by default 
@@ -57,34 +56,39 @@ int _CRT_fmode = _O_BINARY;
 /* These were inappropriately moved here and need to be moved to classes */
 int opt_debug = 0;			// debug mode; 1 is self-test
 bool opt_silent = false;
+bool md5deep_mode = false;
 int  opt_verbose = 0;
 bool opt_estimate = false;
 bool opt_relative = false;
 bool opt_unicode_escape = false;
-bool opt_show_matched = false;
 bool opt_mode_match = false;
 bool opt_mode_match_neg = false;
-bool opt_display_hash = false;
 
-hashid_t  opt_md5deep_mode_algorithm = alg_unknown;
 
 /* output options */
 bool opt_csv = false;
 bool opt_asterisk = false;
-bool md5deep_mode = false;
 
 
 /****************************************************************
  ** Various helper functions.
  ****************************************************************/
 
-uint64_t file_data_hasher_t::next_file_number = 0;
+hashid_t  opt_md5deep_mode_algorithm = alg_unknown;
+uint64_t file_data_hasher_t::next_file_number = 0; // needs to live somewhere
+
+/* This is the one place we allow a printf, becuase we are about to exit, and we call it before we multithread */
+static void try_msg(void)
+{
+    fprintf(stderr,"Try `%s -h` for more information.", __progname);
+}
+
 
 static void sanity_check(int condition, const char *msg)
 {
     if (condition) {
 	if (!opt_silent) {
-	    print_status("%s: %s", __progname, msg);
+	    fprintf(stderr,"%s: %s", __progname, msg);
 	    try_msg();
 	}
 	exit (status_t::STATUS_USER_ERROR);
@@ -104,7 +108,7 @@ static int is_absolute_path(const TCHAR *fn)
  * return the full pathname for a filename.
  */
  
-static tstring generate_filename(state *s,const TCHAR *input)
+tstring state::generate_filename(const TCHAR *input)
 {
     if ((opt_relative) || is_absolute_path(input)){
 #ifdef _WIN32
@@ -131,7 +135,7 @@ static tstring generate_filename(state *s,const TCHAR *input)
 	// going to be able to build the relative path to this file anyway.
 	// So we just call realpath and make the best of things 
 	if (realpath(input,buf)==0){
-	    internal_error("Error calling realpath in generate_filename");
+	    ocb.internal_error("Error calling realpath in generate_filename");
 	}
 	return string(buf);
     }
@@ -140,52 +144,44 @@ static tstring generate_filename(state *s,const TCHAR *input)
 }
 
 
-
-
-
-/**
- * usage_count allows the use of -hh to print extra help.
- */
-int usage_count = 0;
-
 // So that the usage message fits in a standard DOS window, this
 // function should produce no more than 22 lines of text.
-static void usage(state *s)
+void state::usage()
 {
     if(usage_count==0){
-	print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
-	print_status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-V|-h] [-o <mode>] [FILES]",
+	ocb.status("%s version %s by %s.",__progname,VERSION,AUTHOR);
+	ocb.status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-jnn] [-V|-h] [-o <mode>] [FILES]",
 		     CMD_PROMPT,__progname);
-	print_status("");
+	ocb.status("");
 	
 	/* Make a list of the hashes */
-	print_status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
+	ocb.status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
 	fprintf(stderr,"     legal values: ");
 	for (int i = 0 ; i < NUM_ALGORITHMS ; i++){
 	    fprintf(stderr,"%s%s",hashes[i].name.c_str(),(i+1<NUM_ALGORITHMS) ? "," : NEWLINE);
 	}
 	
-	print_status("-a - audit mode. Validates FILES against known hashes. Requires -k");
-	print_status("-d - output in DFXML (Digital Forensics XML)");
-	print_status("-m - matching mode. Requires -k");
-	print_status("-x - negative matching mode. Requires -k");
-	print_status("-w - in -m mode, displays which known file was matched");
-	print_status("-M and -X act like -m and -x, but display hashes of matching files");
-	print_status("-k - add a file of known hashes");
-	print_status("-r - recursive mode. All subdirectories are traversed");
-	print_status("-e - compute estimated time remaining for each file");
-	print_status("-s - silent mode. Suppress all error messages");
-	print_status("-p - piecewise mode. Files are broken into blocks for hashing");
-	print_status("-b - prints only the bare name of files; all path information is omitted");
-	print_status("-l - print relative paths for filenames");
-	print_status("-i - only process files smaller than the given threshold");
-	print_status("-o - only process certain types of files. See README/manpage");
-	print_status("-v - verbose mode. Use again to be more verbose.");
-	print_status("-V - display version number and exit");
-	print_status("-W FILE - write output to a file");
+	ocb.status("-a - audit mode. Validates FILES against known hashes. Requires -k");
+	ocb.status("-d - output in DFXML (Digital Forensics XML)");
+	ocb.status("-m - matching mode. Requires -k");
+	ocb.status("-x - negative matching mode. Requires -k");
+	ocb.status("-w - in -m mode, displays which known file was matched");
+	ocb.status("-M and -X act like -m and -x, but display hashes of matching files");
+	ocb.status("-k - add a file of known hashes");
+	ocb.status("-r - recursive mode. All subdirectories are traversed");
+	ocb.status("-e - compute estimated time remaining for each file");
+	ocb.status("-s - silent mode. Suppress all error messages");
+	ocb.status("-p - piecewise mode. Files are broken into blocks for hashing");
+	ocb.status("-b - prints only the bare name of files; all path information is omitted");
+	ocb.status("-l - print relative paths for filenames");
+	ocb.status("-i - only process files smaller than the given threshold");
+	ocb.status("-o - only process certain types of files. See README/manpage");
+	ocb.status("-v - verbose mode. Use again to be more verbose.");
+	ocb.status("-V - display version number and exit");
+	ocb.status("-W FILE - write output to a file; -jnn run nn threads (default %d)",threadpool::numCPU());
     }
     if(usage_count==1){
-	print_status("-u  - escape Unicode");
+	ocb.status("-u  - escape Unicode");
     }
     usage_count++;
 }
@@ -193,51 +189,51 @@ static void usage(state *s)
 
 // So that the usage message fits in a standard DOS window, this
 // function should produce no more than 22 lines of text. 
-static void md5deep_usage(void) 
+void state::md5deep_usage(void) 
 {
     if(usage_count==0){
-	print_status("%s version %s by %s.",__progname,VERSION,AUTHOR);
-	print_status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,__progname);
-	print_status("See the man page or README.txt file for the full list of options");
-	print_status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
-	print_status("-r  - recursive mode. All subdirectories are traversed");
-	print_status("-e  - compute estimated time remaining for each file");
-	print_status("-s  - silent mode. Suppress all error messages");
-	print_status("-S  - displays warnings on bad hashes only");
-	print_status("-z  - display file size before hash");
-	print_status("-m <file> - enables matching mode. See README/man page");
-	print_status("-x <file> - enables negative matching mode. See README/man page");
-	print_status("-M and -X are the same as -m and -x but also print hashes of each file");
-	print_status("-w  - displays which known file generated a match");
-	print_status("-n  - displays known hashes that did not match any input files");
-	print_status("-a and -A add a single hash to the positive or negative matching set");
-	print_status("-b  - prints only the bare name of files; all path information is omitted");
-	print_status("-l  - print relative paths for filenames");
-	print_status("-k  - print asterisk before filename; -0 - use a NULL for newline.");
-	print_status("-t  - print GMT timestamp");
-	print_status("-i/I- only process files smaller than the given threshold");
-	print_status("-o  - only process certain types of files. See README/manpage");
-	print_status("-v  - display version number and exit");
-	print_status("-W FILE - write output to a file");
+	ocb.status("%s version %s by %s.",__progname,VERSION,AUTHOR);
+	ocb.status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,__progname);
+	ocb.status("See the man page or README.txt file for the full list of options");
+	ocb.status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
+	ocb.status("-r  - recursive mode. All subdirectories are traversed");
+	ocb.status("-e  - compute estimated time remaining for each file");
+	ocb.status("-s  - silent mode. Suppress all error messages");
+	ocb.status("-S  - displays warnings on bad hashes only");
+	ocb.status("-z  - display file size before hash");
+	ocb.status("-m <file> - enables matching mode. See README/man page");
+	ocb.status("-x <file> - enables negative matching mode. See README/man page");
+	ocb.status("-M and -X are the same as -m and -x but also print hashes of each file");
+	ocb.status("-w  - displays which known file generated a match");
+	ocb.status("-n  - displays known hashes that did not match any input files");
+	ocb.status("-a and -A add a single hash to the positive or negative matching set");
+	ocb.status("-b  - prints only the bare name of files; all path information is omitted");
+	ocb.status("-l  - print relative paths for filenames");
+	ocb.status("-k  - print asterisk before filename; -0 - use a NULL for newline.");
+	ocb.status("-t  - print GMT timestamp");
+	ocb.status("-i/I- only process files smaller than the given threshold");
+	ocb.status("-o  - only process certain types of files. See README/manpage");
+	ocb.status("-v  - display version number and exit");
+	ocb.status("-W FILE - write output to a file; -jnn run nn threads (default %d)",threadpool::numCPU());
     }
     if(usage_count==1){
-	print_status("-u  - escape Unicode");
+	ocb.status("-u  - escape Unicode");
     }
     usage_count++;
 }
 
 
-static void check_flags_okay(state *s)
+void state::check_flags_okay()
 {
   sanity_check(
-	       (((s->ocb.primary_function & primary_match) ||
-		 (s->ocb.primary_function & primary_match_neg) ||
-		 (s->ocb.primary_function & primary_audit)) &&
-		!s->hashes_loaded()),
+	       (((ocb.primary_function & primary_match) ||
+		 (ocb.primary_function & primary_match_neg) ||
+		 (ocb.primary_function & primary_audit)) &&
+		!hashes_loaded()),
 	       "Unable to load any matching files");
 
   sanity_check(
-	       (opt_relative) && (s->ocb.mode_barename),
+	       (opt_relative) && (ocb.mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
   /* Additional sanity checks will go here as needed... */
@@ -375,7 +371,7 @@ void algorithm_t::enable_hashing_algorithms(std::string var)
 		return;
 	    }
 	    /* No idea what this algorithm is. */
-	    print_error("%s: Unknown algorithm: %s", __progname, (*it).c_str());
+	    fprintf(stderr,"%s: Unknown algorithm: %s", __progname, (*it).c_str());
 	    try_msg();
 	    exit(EXIT_FAILURE);
 	}
@@ -403,8 +399,7 @@ void state::setup_expert_mode(char *arg)
 	case 'd': // Door (Solaris)
 	    mode_door=true;      break;
 	default:
-	    print_error("%s: Unrecognized file type: %c",
-			__progname,arg[i]);
+	    ocb.print_error("%s: Unrecognized file type: %c", __progname,arg[i]);
 	}
     }
 }
@@ -416,7 +411,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVhW:0D:u")) != -1)  {
+  while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVhW:0D:uj:")) != -1)  {
     switch (i) {
     case 'o':
       mode_expert=true; 
@@ -424,20 +419,20 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       break;
 
     case 'I': 
-	this->ocb.mode_size_all=true;
+	ocb.mode_size_all=true;
       // Note no break here;
     case 'i':
-	this->ocb.mode_size = true;
-	this->ocb.size_threshold = find_block_size(this,optarg);
-	if (0 == this->ocb.size_threshold) {
-	    print_error("%s: Requested size threshold implies not hashing anything",
+	ocb.mode_size = true;
+	ocb.size_threshold = find_block_size(optarg);
+	if (ocb.size_threshold==0) {
+	    ocb.print_error("%s: Requested size threshold implies not hashing anything",
 			__progname);
 	    exit(status_t::STATUS_USER_ERROR);
 	}
 	break;
 
     case 'c': 
-      this->ocb.primary_function = primary_compute;
+      ocb.primary_function = primary_compute;
       /* Before we parse which algorithms we're using now, we have 
        * to erase the default (or previously entered) values
        */
@@ -445,39 +440,38 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       algorithm_t::enable_hashing_algorithms(optarg);
       break;
       
-    case 'd': this->ocb.xml_open(stdout); break;
-    case 'M': opt_display_hash=true;
+    case 'd': ocb.xml_open(stdout); break;
+    case 'M': ocb.opt_display_hash=true;
 	/* intentional fall through */
-    case 'm': this->ocb.primary_function = primary_match;      break;
-    case 'X': opt_display_hash=true;
+    case 'm': ocb.primary_function = primary_match;      break;
+    case 'X': ocb.opt_display_hash=true;
 	/* intentional fall through */
-    case 'x': this->ocb.primary_function = primary_match_neg;  break;
-    case 'a': this->ocb.primary_function = primary_audit;      break;
+    case 'x': ocb.primary_function = primary_match_neg;  break;
+    case 'a': ocb.primary_function = primary_audit;      break;
       
       // TODO: Add -t mode to hashdeep
-      //    case 't': this->mode |= mode_timestamp;    break;
+      //    case 't': mode |= mode_timestamp;    break;
 
-    case 'b': this->ocb.mode_barename=true;     break;
+    case 'b': ocb.mode_barename=true;     break;
     case 'l': opt_relative=true;     break;
     case 'e': opt_estimate = true;	    break;
-    case 'r': this->mode_recursive=true;    break;
+    case 'r': mode_recursive=true;    break;
     case 's': opt_silent = true;	    break;
       
     case 'p':
-	this->ocb.piecewise_size = find_block_size(this, optarg);
-      if (this->ocb.piecewise_size==0)
-	fatal_error("%s: Piecewise blocks of zero bytes are impossible", 
-		    __progname);
+	ocb.piecewise_size = find_block_size(optarg);
+      if (ocb.piecewise_size==0)
+	  ocb.fatal_error("%s: Piecewise blocks of zero bytes are impossible",__progname);
       
       break;
       
-    case 'w': opt_show_matched = true;        break; // displays which known hash generated a match
+    case 'w': ocb.opt_show_matched = true;    break; // displays which known hash generated a match
       
     case 'k':
-	switch (this->ocb.load_hash_file(optarg)) {
+	switch (ocb.load_hash_file(optarg)) {
 	case hashlist::loadstatus_ok: 
 	    if(opt_verbose>=MORE_VERBOSE){
-		print_error("%s: %s: Match file loaded %d known hash values.",
+		ocb.print_error("%s: %s: Match file loaded %d known hash values.",
 			    __progname,optarg,ocb.known_size());
 	    }
 	    break;
@@ -488,7 +482,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	  break;
 	  
       case hashlist::status_contains_bad_hashes:
-	  print_error("%s: %s: contains some bad hashes, using anyway", 
+	  ocb.print_error("%s: %s: contains some bad hashes, using anyway", 
 		      __progname, optarg);
 	  break;
 	  
@@ -498,28 +492,29 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	    break;
 	    
 	default:
-	  print_error("%s: %s: unknown error, skipping", __progname, optarg);
+	    fprintf(stderr,"%s: %s: unknown error, skipping", __progname, optarg);
 	  break;
 	}
       break;
       
     case 'v':
 	if(++opt_verbose > INSANELY_VERBOSE){
-	    print_error("%s: User request for insane verbosity denied", __progname);
+	    ocb.print_error("%s: User request for insane verbosity denied", __progname);
 	}
 	break;
       
     case 'V':
-      print_status("%s", VERSION);
+      ocb.status("%s", VERSION);
       exit(EXIT_SUCCESS);
 	  
     case 'W': ocb.open(optarg); break;
     case '0': ocb.opt_zero = true; break;
     case 'u': opt_unicode_escape = true;break;
+    case 'j': ocb.threadcount = atoi(optarg); break;
 
     case 'h':
-      usage(this);
-      exit(EXIT_SUCCESS);
+	usage();
+	exit(EXIT_SUCCESS);
       
     case 'D': opt_debug = atoi(optarg);break;
     default:
@@ -528,7 +523,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
     }            
   }
   
-  check_flags_okay(this);
+  check_flags_okay();
   return FALSE;
 }
 
@@ -704,13 +699,13 @@ void state::md5deep_check_flags_okay()
 	       ! ((opt_mode_match) || (opt_mode_match_neg)),
 	       "Matching or negative matching must be enabled to display non-matching files");
 
-  sanity_check((opt_show_matched) && 
+  sanity_check(ocb.opt_show_matched && 
 	       ! ((opt_mode_match) || (opt_mode_match_neg)), 
 	       "Matching or negative matching must be enabled to display which file matched");
 }
 
 
-static void md5deep_check_matching_modes(state *s)
+void state::md5deep_check_matching_modes()
 {
     sanity_check((opt_mode_match) && (opt_mode_match_neg),
 		 "Regular and negative matching are mutually exclusive.");
@@ -722,7 +717,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
     int i;
     while ((i = getopt(argc,
 		       argv,
-		       "dI:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:D:u")) != -1) { 
+		       "dI:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:D:uj:")) != -1) { 
 	switch (i) {
 	case 'D': opt_debug = atoi(optarg);break;
 	case 'd': ocb.xml_open(stdout); break;
@@ -731,37 +726,38 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	    // Note that there is no break here
 	case 'i':
 	    ocb.mode_size=true;
-	    ocb.size_threshold = find_block_size(this,optarg);
+	    ocb.size_threshold = find_block_size(optarg);
 	    if (ocb.size_threshold==0) {
-		print_error("%s: Requested size threshold implies not hashing anything",
+		ocb.print_error("%s: Requested size threshold implies not hashing anything",
 			    __progname);
 		exit(status_t::STATUS_USER_ERROR);
 	    }
 	    break;
 
 	case 'p':
-	    ocb.piecewise_size = find_block_size(this, optarg);
+	    ocb.piecewise_size = find_block_size(optarg);
 	    if (ocb.piecewise_size==0) {
-		print_error("%s: Illegal size value for piecewise mode.", __progname);
+		ocb.print_error("%s: Illegal size value for piecewise mode.", __progname);
 		exit(status_t::STATUS_USER_ERROR);
 	    }
 
 	    break;
 
-	case 'Z': ocb.mode_triage	 = true; break;
+	case 'Z': ocb.mode_triage      = true; break;
 	case 't': ocb.mode_timestamp   = true; break;
 	case 'n': ocb.mode_not_matched = true; break;
-	case 'w': opt_show_matched = true;break; 		// display which known hash generated match
+	case 'w': ocb.opt_show_matched = true;break; 		// display which known hash generated match
+	case 'j': ocb.threadcount          = atoi(optarg);break;
 
 	case 'a':
 	    opt_mode_match=true;
-	    md5deep_check_matching_modes(this);
+	    md5deep_check_matching_modes();
 	    md5deep_add_hash(optarg,optarg);
 	    break;
 
 	case 'A':
 	    opt_mode_match_neg=true;
-	    md5deep_check_matching_modes(this);
+	    md5deep_check_matching_modes();
 	    md5deep_add_hash(optarg,optarg);
 	    break;
 
@@ -771,19 +767,19 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	    break;
       
 	case 'M':
-	    opt_display_hash=true;
+	    ocb.opt_display_hash=true;
 	    /* Intentional fall through */
 	case 'm':
 	    opt_mode_match=true;
-	    md5deep_check_matching_modes(this);
+	    md5deep_check_matching_modes();
 	    md5deep_load_match_file(optarg);
 	    break;
 
 	case 'X':
-	    opt_display_hash=true;
+	    ocb.opt_display_hash=true;
 	case 'x':
 	    opt_mode_match_neg=true;
-	    md5deep_check_matching_modes(this);
+	    md5deep_check_matching_modes();
 	    md5deep_load_match_file(optarg);
 	    break;
 
@@ -812,12 +808,12 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	    exit (EXIT_SUCCESS);
 
 	case 'v':
-	    print_status("%s",VERSION);
+	    ocb.status("%s",VERSION);
 	    exit (EXIT_SUCCESS);
 
 	case 'V':
 	    // COPYRIGHT is a format string, complete with newlines
-	    print_status(COPYRIGHT);
+	    ocb.status(COPYRIGHT);
 	    exit (EXIT_SUCCESS);
 
 	default:
@@ -828,6 +824,97 @@ int state::md5deep_process_command_line(int argc, char **argv)
     md5deep_check_flags_okay();
     return EXIT_SUCCESS;
 }
+
+
+/****************************************************************/
+/* Make the UTF8 banner in case we need it 
+ * Only hashdeep has a header.
+ */
+std::string state::make_banner()
+{
+    std::string utf8_banner;
+    utf8_banner = HASHDEEP_HEADER_10 + std::string(NEWLINE);
+    utf8_banner += HASHDEEP_PREFIX;
+    utf8_banner += "size,";
+    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
+	if (hashes[i].inuse){
+	    utf8_banner += hashes[i].name + std::string(",");
+	}
+    }  
+    utf8_banner += std::string("filename") + NEWLINE;
+    utf8_banner += "## Invoked from: " + main::make_utf8(main::getcwd()) + NEWLINE;
+    utf8_banner += "## ";
+#ifdef _WIN32
+    utf8_banner += cwd[0] + ":\\>";
+#else
+    utf8_banner += (geteuid()==0) ? "#" : "$";
+#endif
+
+    // Accounts for '## ', command prompt, and space before first argument
+    size_t bytes_written = 8;
+	
+    for (int largc = 0 ; largc < this->argc ; ++largc) {
+	utf8_banner += " ";
+	bytes_written++;
+	
+	// We are going to print the string. It's either ASCII or UTF16
+	// convert it to a tstring and then to UTF8 string.
+	tstring arg_t = tstring(this->argv[largc]);
+	std::string arg_utf8 = main::make_utf8(arg_t);
+	size_t current_bytes = arg_utf8.size();
+    
+	// The extra 32 bytes is a fudge factor
+	if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
+	    utf8_banner += std::string(NEWLINE) + "## ";
+	    bytes_written = 3;
+	}
+	utf8_banner += arg_utf8;
+	bytes_written += current_bytes;
+    }
+    utf8_banner += std::string(NEWLINE) + "## " + NEWLINE;
+    return utf8_banner;
+    /****************************************************************/
+
+}
+
+uint64_t state::find_block_size(std::string input_str)
+{
+    if(input_str.size()==0) return 0;	// no input???
+    uint64_t multiplier = 1;
+    char last_char = input_str[input_str.size()-1];
+
+    // There are deliberately no break statements in this switch
+    switch (tolower(last_char)) {
+    case 'e':
+	multiplier *= 1024;    
+    case 'p':
+	multiplier *= 1024;    
+    case 't':
+	multiplier *= 1024;    
+    case 'g':
+	multiplier *= 1024;    
+    case 'm':
+	multiplier *= 1024;
+    case 'k':
+	multiplier *= 1024;
+    case 'b':
+	input_str.erase(input_str.size()-1,1); // erase the last character
+	break;
+    default:
+	ocb.print_error("%s: Improper piecewise multiplier ignored", __progname);
+	break;
+    case '0':case '1':case '2':case '3':case '4':
+    case '5':case '6':case '7':case '8':case '9':
+	break;
+    }
+    
+#ifdef __HPUX
+    return (strtoumax ( input_str.c_str(), (char**)0, 10) * multiplier);
+#else
+    return (atoll(input_str.c_str()) * multiplier);
+#endif
+}
+
 
 
 int main(int argc, char **argv)
@@ -902,57 +989,18 @@ int main(int argc, char **argv)
 
     /* Verify that we can get the current working directory. */
     if(main::getcwd().size()==0){
-	fatal_error("%s: %s", __progname, strerror(errno));
+	s->ocb.fatal_error("%s: %s", __progname, strerror(errno));
     }
 
-    /****************************************************************/
-    /* Make the UTF8 banner in case we need it 
-     * Only hashdeep has a header.
-     */
-       
-    std::string utf8_banner;
-    utf8_banner = HASHDEEP_HEADER_10 + std::string(NEWLINE);
-    utf8_banner += HASHDEEP_PREFIX;
-    utf8_banner += "size,";
-    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
-	if (hashes[i].inuse){
-	    utf8_banner += hashes[i].name + std::string(",");
-	}
-    }  
-    utf8_banner += std::string("filename") + NEWLINE;
-    utf8_banner += "## Invoked from: " + main::make_utf8(main::getcwd()) + NEWLINE;
-    utf8_banner += "## ";
-#ifdef _WIN32
-    utf8_banner += cwd[0] + ":\\>";
-#else
-    utf8_banner += (geteuid()==0) ? "#" : "$";
-#endif
-
-    // Accounts for '## ', command prompt, and space before first argument
-    size_t bytes_written = 8;
-	
-    for (int largc = 0 ; largc < s->argc ; ++largc) {
-	utf8_banner += " ";
-	bytes_written++;
-	
-	// We are going to print the string. It's either ASCII or UTF16
-	// convert it to a tstring and then to UTF8 string.
-	tstring arg_t = tstring(s->argv[largc]);
-	std::string arg_utf8 = main::make_utf8(arg_t);
-	size_t current_bytes = arg_utf8.size();
-    
-	// The extra 32 bytes is a fudge factor
-	if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
-	    utf8_banner += std::string(NEWLINE) + "## ";
-	    bytes_written = 3;
-	}
-	utf8_banner += arg_utf8;
-	bytes_written += current_bytes;
+    /* Make the banner if we are not in md5deep mode */
+    if (!md5deep_mode){
+	s->ocb.set_utf8_banner( s->make_banner());
     }
-    utf8_banner += std::string(NEWLINE) + "## " + NEWLINE;
-    s->ocb.set_utf8_banner(utf8_banner); // alias
 
-    /****************************************************************/
+    /* set up the threadpool */
+    if(s->ocb.threadcount>0){
+	s->ocb.tp = new threadpool(s->ocb.threadcount);
+    }
 
     /*
      * Anything left on the command line at this point is a file
@@ -964,7 +1012,7 @@ int main(int argc, char **argv)
 	s->ocb.hash_stdin();
     } else {
 	for(int i=optind;i<s->argc;i++){
-	    tstring fn = generate_filename(s,s->argv[i]);
+	    tstring fn = s->generate_filename(s->argv[i]);
 #ifdef _WIN32
 	    s->dig_win32(fn);
 #else
@@ -973,6 +1021,21 @@ int main(int argc, char **argv)
 	}
     }
   
+    /* If we are multi-threading, wait for all threads to finish */
+    if(s->ocb.tp){
+	while(true){
+#ifdef HAVE_USLEEP
+	    usleep(50);
+#else	    
+	    sleep(1);
+#endif
+	    if(num_remaining==0) break;
+	}
+    }
+	    
+	    
+	
+
     /* If we were auditing, display the audit results */
     if (s->ocb.primary_function == primary_audit){
 	s->ocb.display_audit_results();

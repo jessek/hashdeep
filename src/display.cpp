@@ -68,6 +68,12 @@ void display::status(const char *fmt,...)
     unlock();
 }
 
+void display::try_msg(void)
+{
+    status("Try `%s -h` for more information.", __progname);
+}
+
+
 void display::error(const char *fmt,...)
 {
     lock();
@@ -82,35 +88,92 @@ void display::error(const char *fmt,...)
     unlock();
 }
 
+void display::fatal_error(const char *fmt,...)
+{
+    lock();
+    va_list(ap); 
+    va_start(ap,fmt); 
+    if (vfprintf(stderr,fmt,ap) < 0) { 
+	fprintf(stderr, "%s: %s", __progname, strerror(errno)); 
+	exit(EXIT_FAILURE);
+    }
+    va_end(ap);
+    fprintf(stderr,"%s", NEWLINE);
+    unlock();
+    exit(1);
+}
+
+void display::internal_error(const char *fmt,...)
+{
+    lock();
+    va_list(ap); 
+    va_start(ap,fmt); 
+    if (vfprintf(stderr,fmt,ap) < 0) { 
+	fprintf(stderr, "%s: %s", __progname, strerror(errno)); 
+	exit(EXIT_FAILURE);
+    }
+    va_end(ap);
+    fprintf(stderr,"%s", NEWLINE);
+    fprintf(stderr,"%s: Internal error. Contact developer!%s", __progname,NEWLINE);
+    unlock();
+    exit(1);
+}
+
 /**
  * output the string, typically a fn, optionally performing unicode escaping
  */
 
-void display::output_filename(FILE *out,const std::string &fn)
+std::string display::fmt_filename(const filename_t &fn) const
 {
     if(opt_unicode_escape){
-	std::string f2 = main::escape_utf8(fn);
-	lock();
-	fwrite(f2.c_str(),f2.size(),1,out);
-	unlock();
+	return main::escape_utf8(fn);
     } else {
-	lock();
-	fwrite(fn.c_str(),fn.size(),1,out);
-	unlock();
+	return main::make_utf8(fn);
     }
 }
 
-#ifdef _WIN32
-/* NOTE - This is where to do the UTF-8 or U+ substitution */
-void output_filename(FILE *out,const std::wstring &fn)
+void display::print_debug(const char *fmt, ... )
 {
-    output_filename(out,main::make_utf8(fn));
-}
+#ifdef __DEBUG
+    lock();
+    printf ("DEBUG: ");
+    va_list(ap);
+    va_start(ap,fmt);
+    vfprintf(stderr,fmt,ap);
+    va_end(ap);
+    fprintf(stderr,"%s",NEWLINE);
+    unlock();
 #endif
+}
 
-void display::output_filename(FILE *out,const file_data_t &fdt)
+
+
+void display::print_error(const char *fmt, ...)
 {
-    output_filename(out,fdt.file_name + fdt.file_name_annotation);
+    if(opt_silent) return;
+    lock();
+    va_list(ap);
+    va_start(ap,fmt);
+    vfprintf(stderr,fmt,ap);
+    va_end(ap);
+    fprintf(stderr,"%s",NEWLINE);
+    unlock();
+}
+
+
+void display::error_filename(const filename_t &fn,const char *fmt, ...)
+{
+    if(opt_silent) return;
+    std::string line = fmt_filename(fn) + ": ";
+    char buf[1024];
+    va_list(ap);
+    va_start(ap,fmt);
+    vsnprintf(buf,sizeof(buf),fmt,ap);
+    va_end(ap);
+    line += std::string(buf) + NEWLINE;
+    lock();
+    fwrite(line.c_str(),1,line.size(),stderr);
+    unlock();
 }
 
 
@@ -171,32 +234,30 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
 	seconds -= min * 60;
 
 	shorten = 1;
-	char msg[64];
 	snprintf(msg,sizeof(msg),"%"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s",
 		 mb_read, fdht->stat_megs(), hour, min, seconds, BLANK_LINE);
     }
-
     
+    std::string line = std::string("\r");
+
     /*
      * This is the only place where filenames are shortened.
      * So do it explicitly here.
      *
      */
-    
 
     tstring fn = fdht->file_name;
-
     if (fn.size() < MAX_FILENAME_LENGTH){
 	/* Shorten from the middle */
 	size_t half = MAX_FILENAME_LENGTH/2;
 	fn = fn.substr(0,half) + _T("...") + fn.substr(fn.size()-half,half);
     }
+
+    line += fmt_filename(fn);
+    line += msg;
+
     lock();
-    fprintf(stderr,"\r");
-    unlock();
-    output_filename(stderr,fn);
-    output_filename(stderr,msg);	// was previously put in the anotation
-    lock();
+    fwrite(line.c_str(),1,line.size(),stderr);
     fflush(stderr);
     unlock();
 }
@@ -207,7 +268,7 @@ void display::display_banner_if_needed()
     if(this->dfxml!=0) return;		// output is in DFXML; no banner
     lock();
     if(banner_displayed==false){
-	fprintf(outfile,"%s",utf8_banner.c_str());
+	fwrite(utf8_banner.c_str(),1,utf8_banner.size(),outfile);
 	banner_displayed=true;
     }
     unlock();
@@ -260,25 +321,27 @@ void display::display_hash_simple(file_data_hasher_t *fdht)
      */
      
     display_banner_if_needed();
-    lock();
+    std::string line;
     if (fdht->piecewise_size){
-	fprintf(outfile,"%"PRIu64",", fdht->bytes_read);
+	char buf[1024];
+	snprintf(buf,sizeof(buf),"%"PRIu64",", fdht->bytes_read);
+	line = std::string(buf);
     }
     else {
-	fprintf(outfile,"%"PRIu64",", fdht->actual_bytes);
+	char buf[1024];
+	snprintf(buf,sizeof(buf),"%"PRIu64",", fdht->actual_bytes);
+	line = std::string(buf);
     }
 
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
 	if (hashes[i].inuse){
-	    fprintf(outfile,"%s,", fdht->hash_hex[i].c_str());
+	    line += fdht->hash_hex[i] + std::string(",");
 	}
     }
-    unlock();
-    output_filename(outfile,*fdht);
+    line += fmt_filename(fdht) + NEWLINE;
     lock();
-    fprintf(outfile,"%s",NEWLINE);
+    fwrite(line.c_str(),1,line.size(),stderr);
     unlock();
-    return;
 }
 
 /**
@@ -307,9 +370,9 @@ uint64_t display::compute_unused(bool display, std::string annotation)
     unlock();
 
     for(std::vector<std::string>::const_iterator i = filelist.begin(); i!= filelist.end(); i++){
-	output_filename(stdout,*i);
+	std::string line = *i + annotation + NEWLINE;
 	lock();
-	fprintf(stdout,"%s%s", annotation.c_str(),NEWLINE);
+	fwrite(line.c_str(),1,line.size(),stderr);
 	unlock();
     }
     return count;
@@ -357,22 +420,22 @@ void display::display_audit_results()
 }
 
 
-/* This doesn't lock/unlock because we should already be locked or unlocked */
-void display::display_size(const file_data_t *fdt)
+std::string display::fmt_size(const file_data_t *fdt) const
 {
     if (opt_display_size)  {
-	// Under CSV mode we have to include a comma, otherwise two spaces
 	if (opt_csv){
-	    lock();
-	    fprintf(outfile,"%"PRIu64",", fdt->actual_bytes);
-	    unlock();
+	    // Under CSV mode we have to include a comma, otherwise two spaces
+	    char buf[64];
+	    snprintf(buf,sizeof(buf),"%"PRIu64",", fdt->actual_bytes);
+	    return std::string(buf);
 	}
 	else {
-	    lock();
-	    fprintf(outfile,"%10"PRIu64"  ", fdt->actual_bytes);
-	    unlock();
+	    char buf[64];
+	    snprintf(buf,sizeof(buf),"%10"PRIu64"  ", fdt->actual_bytes);
+	    return std::string(buf);
 	}
     }
+    return std::string();
 }
 
 
@@ -384,40 +447,41 @@ void display::md5deep_display_match_result(file_data_hasher_t *fdht)
 				      fdht->file_number);
     int known_hash = fs ? 1 : 0;
 
-    if ((known_hash && (opt_mode_match)) ||
-	(!known_hash && (opt_mode_match_neg))) {
+    if ((known_hash && opt_mode_match) || (!known_hash && opt_mode_match_neg)) {
 	if(dfxml){
 	    fdht->compute_dfxml(opt_show_matched || known_hash);
 	    return ;
 	}
 
-	display_size(fdht);
+	std::string line;
+
+	line = fmt_size(fdht);
 	if (opt_display_hash) {
-	    fprintf(outfile,"%s", fdht->hash_hex[opt_md5deep_mode_algorithm].c_str());
+	    line += fdht->hash_hex[opt_md5deep_mode_algorithm];
 	    if (opt_csv) {
-		fprintf(outfile,",");
+		line += ",";
 	    } else if (opt_asterisk) {
-		fprintf(outfile," *");
+		line += " *";
 	    } else {
-		fprintf(outfile,"  ");
+		line += "  ";
 	    }
 	}
 	    
 	if (opt_show_matched) 	    {
 	    if (known_hash && (opt_mode_match)) {
-		output_filename(outfile,*fdht);
-		fprintf(outfile," matched ");
-		output_filename(outfile,fs->file_name);
+		line += fdht->file_name + " matched " + fs->file_name;
 	    }
 	    else {
-		output_filename(outfile,*fdht);
-		fprintf(outfile," does NOT match");
+		line += fdht->file_name + " does NOT match";
 	    }
 	}
 	else{
-	    output_filename(outfile,*fdht);
+	    line += fdht->file_name;
 	}
-	newline();
+	line += NEWLINE;
+	lock();
+	fwrite(line.c_str(),1,line.size(),stderr);
+	unlock();
     }
 }
 
@@ -435,6 +499,8 @@ void display::display_match_result(file_data_hasher_t *fdht)
     hashlist::searchstatus_t m = known.search(fdht,&matched_fdt);
     unlock();
 
+    std::string line;
+
     switch(m){
 	// If only the name is different, it's still really a match
 	//  as far as we're concerned. 
@@ -444,36 +510,40 @@ void display::display_match_result(file_data_hasher_t *fdht)
 	break;
 	  
     case hashlist::status_file_size_mismatch:
-	output_filename(stderr,fdht);
-	fprintf(stderr,": Hash collision with ");
-	output_filename(stderr,matched_fdt);
-	fprintf(stderr,"%s", NEWLINE);
+	line = fmt_filename(fdht) + ": Hash collision with " + fmt_filename(matched_fdt) + NEWLINE;
+	lock();
+	fwrite(line.c_str(),1,line.size(),stderr);
+	unlock();
 	break;
 	
     case hashlist::status_partial_match:
-	output_filename(stderr,fdht);
-	fprintf(stderr,": partial hash match with ");
-	output_filename(stderr,matched_fdt);
-	fprintf(stderr,"%s", NEWLINE);
+	line = fmt_filename(fdht) + ": partial hash match with " + fmt_filename(matched_fdt) + NEWLINE;
+	lock();
+	fwrite(line.c_str(),1,line.size(),stderr);
+	unlock();
 	break;
 	
     default:
 	break;
     }
     if (should_display) {
-	if (opt_display_hash)
+	if (opt_display_hash){
 	    display_hash_simple(fdht);
+	}
 	else {
-	    output_filename(stdout,fdht);
+	    line = fmt_filename(fdht);
 	    if (opt_show_matched && primary_match == primary_function) {
-		fprintf(stdout," matches ");
+		line += " matches ";
 		if (NULL == matched_fdt) {
-		    fprintf(stdout,"(unknown file)");
+		    line += "(unknown file)";
 		} else {
-		    output_filename(stdout,matched_fdt);
+		    line += fmt_filename(matched_fdt);
 		}
 	    }
-	    status("");			// generates a newline
+	    line += NEWLINE;
+	    lock();
+	    fwrite(line.c_str(),1,line.size(),stderr);
+	    unlock();
 	}
     }
 }
@@ -487,32 +557,29 @@ void display::display_match_result(file_data_hasher_t *fdht)
 
 int display::audit_update(file_data_hasher_t *fdht)
 {
-    lock();				// protects the search and the printing
     file_data_t *matched_fdht=0;
+    lock();				// protects the search and the printing
     hashlist::searchstatus_t m = known.search(fdht,&matched_fdht);
+    unlock();
+    std::string line;
     switch(m){
     case hashlist::status_match:
     case hashlist::searchstatus_ok:
 	this->match.exact++;
 	if (opt_verbose >= INSANELY_VERBOSE) {
-	    output_filename(stdout,fdht);
-	    status(": Ok");
+	    line = fmt_filename(fdht) + ": Ok";
 	}
 	break;
     case hashlist::status_no_match:
 	this->match.unknown++;
 	if (opt_verbose >= MORE_VERBOSE) {
-	    output_filename(stdout,fdht);
-	    status(": No match");
+	    line = fmt_filename(fdht) + ": No match";
 	}
 	break;
     case hashlist::status_file_name_mismatch:
 	this->match.moved++;
 	if (opt_verbose >= MORE_VERBOSE) {
-	    output_filename(stdout,fdht);
-	    fprintf(stdout,": Moved from ");
-	    output_filename(stdout,matched_fdht);
-	    status("");
+	    line = fmt_filename(fdht) + ": Moved from " + fmt_filename(matched_fdht);
 	}
 	break;
     case hashlist::status_partial_match:
@@ -521,41 +588,41 @@ int display::audit_update(file_data_hasher_t *fdht)
 	// We only record the hash collision if it wasn't anything else.
 	// At the same time, however, a collision is such a significant
 	// event that we print it no matter what. 
-	output_filename(stdout,fdht);
-	fprintf(stdout,": Hash collision with ");
-	output_filename(stdout,matched_fdht);
-	status("");
+	line = fmt_filename(fdht) + ": Hash collision with " + fmt_filename(matched_fdht);
     }
-    unlock();
+    if(line.size()>0){
+	lock();
+	fwrite(line.c_str(),1,line.size(),stderr);
+	unlock();
+    }
     return FALSE;
 }
 
-
-
-
-
-
-
-/* The old display_hash from the md5deep program, with a few modifications */
+/* The old display_hash from the md5deep program, with modifications
+ * to build the line before outputing it.
+ *
+ */
 void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher because of triage
 {
+
     if (mode_triage) {
 	if(dfxml){
 	    fdht->compute_dfxml(1);	// no lock required here
 	    return;
 	}
+	std::string line = std::string("\t") + fdht->hash_hex[opt_md5deep_mode_algorithm] + std::string("\t") + fdht->file_name + NEWLINE;
 	lock();
-	fprintf(outfile,"\t%s\t", fdht->hash_hex[opt_md5deep_mode_algorithm].c_str());
-	output_filename(stdout,fdht);
-	newline();
+	fwrite(line.c_str(),1,line.size(),outfile);
 	unlock();
 	return;
     }
 
-    // We can't call display_size here because we don't know if we're
-    // going to display *anything* yet. If we're in matching mode, we
-    // have to evaluate if there was a match first. 
-    if ((opt_mode_match) || (opt_mode_match_neg)){
+    /**
+     * We can't call display_size here because we don't know if we're
+     * going to display *anything* yet. If we're in matching mode, we
+     * have to evaluate if there was a match first.
+     */
+    if (opt_mode_match || opt_mode_match_neg){
 	md5deep_display_match_result(fdht);
 	return;
     }
@@ -565,18 +632,15 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 	return;
     }
 
-    display_size(fdht);
-    lock();
-    fprintf(outfile,"%s", fdht->hash_hex[opt_md5deep_mode_algorithm].c_str());
-    unlock();
+    std::string line;
+
+    line = fmt_size(fdht) + fdht->hash_hex[opt_md5deep_mode_algorithm];
 
     if (mode_quiet){
-	lock();
-	fprintf(outfile,"  ");
-	unlock();
+	line += "  ";
     }
     else  {
-	if ((fdht->piecewise_size) || !(fdht->is_stdin))    {
+	if ((fdht->piecewise_size) || (fdht->handle!=stdin))    {
 	    if (mode_timestamp)      {
 		struct tm my_time;
 		memset(&my_time,0,sizeof(my_time)); // clear it out
@@ -595,28 +659,24 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 		// The format is four digit year, two digit month, 
 		// two digit hour, two digit minute, two digit second
 		strftime(time_str, sizeof(time_str), "%Y:%m:%d:%H:%M:%S", &my_time);
-		
-		lock();
-		fprintf(outfile,"%c%s", (opt_csv ?',':' '), time_str);
-		unlock();
+
+		line += (opt_csv ? ",":" ");
+		line += time_str;
 	    }
 	    if (opt_csv) {
-		lock();
-		fprintf(outfile,",");
-		unlock();
+		line += ",";
 	    } else if (opt_asterisk) {
-		lock();
-		fprintf(outfile," *");
-		unlock();
+		line += " *";
 	    } else {
-		lock();
-		fprintf(outfile,"  ");
-		unlock();
+		line += "  ";
 	    }
-	    output_filename(stdout,fdht);
+	    line += fmt_filename(fdht);
 	}
     }
-    newline();
+    line += NEWLINE;
+    lock();
+    fwrite(line.c_str(),1,line.size(),outfile);
+    unlock();
 }
 
 /**
@@ -670,8 +730,8 @@ void display::display_hash(file_data_hasher_t *fdht)
 
 void display::dfxml_startup(int argc,char **argv)
 {
-    lock();
     if(dfxml){
+	lock();
 	dfxml->push("dfxml","xmloutputversion='1.0'");
 	dfxml->push("metadata",
 		       "\n  xmlns='http://md5deep.sourceforge.net/md5deep/' "
@@ -689,30 +749,31 @@ void display::dfxml_startup(int argc,char **argv)
 	}
 	dfxml->pop();			// algorithms
 	dfxml->pop();			// configuration
+	unlock();
     }
-    unlock();
-}
-
-void display::dfxml_shutdown()
-{
-    lock();
-    if(dfxml){
-	dfxml->pop();		// outermost
-	dfxml->close();
-	delete dfxml;
-	dfxml = 0;
-    }
-    unlock();
 }
 
 void display::dfxml_write(file_data_hasher_t *fdht)
 {
-    lock();
     if(dfxml){
+	lock();
 	dfxml->push("fileobject");
 	dfxml->xmlout("filename",fdht->file_name);
 	dfxml->writexml(fdht->dfxml_hash);
 	dfxml->pop();
+	unlock();
     }
-    unlock();
 }
+
+void display::dfxml_shutdown()
+{
+    if(dfxml){
+	lock();
+	dfxml->pop();		// outermost
+	dfxml->close();
+	delete dfxml;
+	dfxml = 0;
+	unlock();
+    }
+}
+

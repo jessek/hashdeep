@@ -23,19 +23,6 @@ if (vfprintf(HANDLE,MSG,ap) < 0) { \
 va_end(ap); fprintf (HANDLE,"%s", NEWLINE);
 
 
-void print_debug(const char *fmt, ... )
-{
-#ifdef __DEBUG
-    printf ("DEBUG: ");
-    MD5DEEP_PRINT_MSG(stderr,fmt)
-#endif
-}
-
-void print_status(const char *fmt, ...)
-{
-    MD5DEEP_PRINT_MSG(stdout,fmt)
-}
-
 void print_error(const char *fmt, ...)
 {
     if (opt_silent) return;
@@ -95,7 +82,3 @@ void internal_error(const char *fmt, ... )
 }
 
 
-void try_msg(void)
-{
-    print_status("Try `%s -h` for more information.", __progname);
-}

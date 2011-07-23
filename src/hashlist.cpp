@@ -121,7 +121,7 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,file_da
  * Returns the file type of a given input file.
  * fn is provided so that error messages can be printed.
  */
-hashlist::hashfile_format hashlist::identify_format(const std::string &fn,FILE *handle)
+hashlist::hashfile_format hashlist::identify_format(class display *ocb,const std::string &fn,FILE *handle)
 {
     char buf[MAX_STRING_LENGTH];
 
@@ -155,13 +155,13 @@ hashlist::hashfile_format hashlist::identify_format(const std::string &fn,FILE *
     std::string previously_enabled_algorithms = last_enabled_algorithms; 
     
     // Skip the "%%%% size," when parsing the list of hashes 
-    enable_hashing_algorithms_from_hashdeep_file(fn,buf + 10);
+    enable_hashing_algorithms_from_hashdeep_file(ocb,fn,buf + 10);
     
     // If the set of hashes now in use doesn't match those previously in use,
     // give a warning.
     if (previously_enabled_algorithms.size()>0
 	&& previously_enabled_algorithms != last_enabled_algorithms){
-	print_error("%s: %s: Hashes not in same format as previously loaded",__progname, fn.c_str());
+	if(ocb) ocb->print_error("%s: %s: Hashes not in same format as previously loaded",__progname, fn.c_str());
     }
     return file_hashdeep_10;
 }
@@ -172,7 +172,7 @@ hashlist::hashfile_format hashlist::identify_format(const std::string &fn,FILE *
  * enable them and note their order. If the last algorithm is 'filename', ignore it.
  */
 
-void hashlist::enable_hashing_algorithms_from_hashdeep_file(const std::string &fn,std::string val)
+void hashlist::enable_hashing_algorithms_from_hashdeep_file(class display *ocb,const std::string &fn,std::string val)
 {
     // The first position is always the file size, so we start with an 
     // the first position of one.
@@ -186,8 +186,10 @@ void hashlist::enable_hashing_algorithms_from_hashdeep_file(const std::string &f
 	if(name=="filename") continue;
 	hashid_t id = algorithm_t::get_hashid_for_name(name);
 	if(id==alg_unknown){
-	    print_error("%s: %s: Badly formatted file", __progname, fn.c_str());
-	    try_msg();
+	    if(ocb){
+		ocb->print_error("%s: %s: Badly formatted file", __progname, fn.c_str());
+		ocb->try_msg();
+	    }
 	    exit(EXIT_FAILURE);
 	}
 	    
@@ -211,20 +213,20 @@ void hashlist::dump_hashlist()
  * Loads a file of known hashes.
  * First identifies the file type, then reads the file.
  */
-hashlist::loadstatus_t hashlist::load_hash_file(const std::string &fn)
+hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &fn)
 {
     loadstatus_t status = loadstatus_ok;
     hashfile_format type;
 
     FILE *handle = fopen(fn.c_str(),"rb");
     if (NULL == handle) {
-	print_error("%s: %s: %s", __progname, fn.c_str(), strerror(errno));
+	if(ocb) ocb->print_error("%s: %s: %s", __progname, fn.c_str(), strerror(errno));
 	return status_file_error;
     }
   
-    type = identify_format(fn,handle);
+    type = identify_format(ocb,fn,handle);
     if (file_unknown == type)  {
-	print_error("%s: %s: Unable to identify file format", __progname, fn.c_str());
+	if(ocb) ocb->print_error("%s: %s: Unable to identify file format", __progname, fn.c_str());
 	fclose(handle);
 	return status_unknown_filetype;
     }
@@ -252,7 +254,7 @@ hashlist::loadstatus_t hashlist::load_hash_file(const std::string &fn)
 	// http://www.cplusplus.com/reference/std/new/nothrow/
 	file_data_t *t = new (std::nothrow) file_data_t(); // C++ new fails with a bad_a
 	if (NULL == t){
-	    fatal_error("%s: %s: Out of memory in line %"PRIu64, 
+	    ocb->fatal_error("%s: %s: Out of memory in line %"PRIu64, 
 			__progname, fn.c_str(), line_number);
 	}
 
@@ -276,9 +278,9 @@ hashlist::loadstatus_t hashlist::load_hash_file(const std::string &fn)
 
 	    // All other columns should contain a valid hash in hex
 	    if ( !algorithm_t::valid_hash(hash_column[column_number],word)){
-		print_error("%s: %s: Invalid %s hash in line %"PRIu64,__progname, fn.c_str(), 
-			    hashes[hash_column[column_number]].name.c_str(),
-			    line_number);
+		if(ocb) ocb->print_error("%s: %s: Invalid %s hash in line %"PRIu64,__progname, fn.c_str(), 
+					 hashes[hash_column[column_number]].name.c_str(),
+					 line_number);
 		contains_bad_lines = TRUE;
 		record_valid = FALSE;
 		// Break out (done = true) and then process the next line

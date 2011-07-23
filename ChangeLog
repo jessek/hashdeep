@@ -1,3 +1,9 @@
+2011-07-22  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/hash.cpp (display::hash_stdin): removed is_stdin because we can just compare handle to stdin.
+
+	* src/dig.cpp (have_processed_dir): cycle system no longer public; now it's static. (should there be a dig class?)
+
 2011-07-21  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* src/files.cpp (shift_string): moved to files.cpp, the only place where it is used.

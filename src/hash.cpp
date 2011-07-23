@@ -1,28 +1,29 @@
-//
-// By Jesse Kornblum and Simson Garfinkel
-//
-// This is a work of the US Government. In accordance with 17 USC 105,
-// copyright protection is not available for any work of the US Government.
-//
-// This program is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//
-// $Id$
-//
-// 2011 JUN 1 - SLG - Removed #ifdef MD5DEEP, since we now have a single binary for both MD5DEEP and HASHDEEP
+/*
+ * By Jesse Kornblum and Simson Garfinkel
+ *
+ * This is a work of the US Government. In accordance with 17 USC 105,
+ * copyright protection is not available for any work of the US Government.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * $Id$
+ *
+ * 2011 JUN 1 - SLG - Removed #ifdef MD5DEEP, since we now have a single binary for both MD5DEEP and HASHDEEP
+ */
 
-
-// Code for hashdeep 
 #include "main.h"
-
+#include "threadpool.h"
 
 /****************************************************************
  *** Service routines
  ****************************************************************/
 
-// Returns TRUE if errno is currently set to a fatal error. That is,
-// an error that can't possibly be fixed while trying to read this file
+/*
+ * Returns TRUE if errno is currently set to a fatal error. That is,
+ * an error that can't possibly be fixed while trying to read this file
+ */
 static int file_fatal_error(void)
 {
     switch(errno) {
@@ -37,7 +38,6 @@ static int file_fatal_error(void)
 	// This happens with Windows system files 
     case EIO:      // Input/Output error
 	// Added 22 Nov 2010 in response to user email
-	
 	return TRUE;  
     }
     return FALSE;
@@ -55,31 +55,26 @@ static std::string make_stars(int count)
 
 /*
  * Compute the hash on fdht and store the results in the display ocb.
- * returns true if successful.
+ * returns true if successful, flase if failure
  */
 
 bool file_data_hasher_t::compute_hash()
 {
-    time_t current_time;
-    uint64_t current_read, mysize, remaining, this_start;
-    unsigned char buffer[file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE];
 
     // Although we need to read MD5DEEP_BLOCK_SIZE bytes before
     // we exit this function, we may not be able to do that in 
     // one read operation. Instead we read in blocks of 8192 bytes 
     // (or as needed) to get the number of bytes we need. 
 
+    uint64_t mysize=file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE;
     if (this->block_size < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE){
 	mysize = this->block_size;
     }
-    else {
-	mysize = file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE;
-    }
 
-    remaining = this->block_size;
+    uint64_t remaining = this->block_size;
 
     // We get weird results calling ftell on stdin!
-    if (!(this->is_stdin)) {
+    if (this->handle != stdin){
 	this->read_start = ftello(this->handle);
     }
     this->read_end   = this->read_start;
@@ -87,11 +82,12 @@ bool file_data_hasher_t::compute_hash()
 
     while (TRUE)   {    
 	// Clear the buffer in case we hit an error and need to pad the hash 
-	memset(buffer,0,mysize);
+	unsigned char buffer[file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE];
+	memset(buffer,0,sizeof(buffer));
 
-	this_start = this->read_end;
+	uint64_t this_start = this->read_end;
 
-	current_read = fread(buffer, 1, mysize, this->handle);
+	size_t current_read = fread(buffer, 1, mysize, this->handle);
     
 	this->actual_bytes += current_read;
 	this->read_end     += current_read;
@@ -99,10 +95,8 @@ bool file_data_hasher_t::compute_hash()
       
 	// If an error occured, display a message but still add this block 
 	if (ferror(this->handle)) {
-	    print_error_filename(this->file_name,
-				 "error at offset %"PRIu64": %s",
-				 ftello(this->handle),
-				 strerror(errno));
+	    ocb->error_filename(this->file_name,"error at offset %"PRIu64": %s",
+			       ftello(this->handle), strerror(errno));
 	   
 	    if (file_fatal_error()){
 		this->ocb->set_return_code(status_t::status_EXIT_FAILURE);
@@ -143,8 +137,8 @@ bool file_data_hasher_t::compute_hash()
 	}
     
 	if (opt_estimate)    {
+	    time_t current_time;
 	    time(&current_time);
-      
 	    // We only update the display only if a full second has elapsed 
 	    if (this->last_time != current_time) {
 		this->last_time = current_time;
@@ -178,6 +172,7 @@ bool file_data_hasher_t::compute_hash()
 	 fdht->last_time = fdht->start_time;
      }
 
+#if 0
      if (fdht->ocb->mode_triage)  {
 	 /*
 	  * Triage mode:
@@ -212,7 +207,7 @@ bool file_data_hasher_t::compute_hash()
      if ( fdht->piecewise_size>0 )  {
 	 fdht->block_size = fdht->piecewise_size;
      }
-
+#endif
      int done = FALSE;
      while (!done)  {
 	 fdht->multihash_initialize();
@@ -223,15 +218,17 @@ bool file_data_hasher_t::compute_hash()
 	  * or all of the piecewise hashes.
 	  * It returns FALSE if there is a failure.
 	  */
-	 if (fdht->compute_hash()) {
-	     fclose(fdht->handle);
-	     fdht->release();
+	 if (fdht->compute_hash()==false) {
+	     fdht->release();		// failure?
+	     return;
 	 }
 
-	 // We should only display a hash if we've processed some
-	 // data during this read OR if the whole file is zero bytes long.
-	 // If the file is zero bytes, we won't have read anything, but
-	 // still need to display a hash.
+	 /*
+	  * We should only display a hash if we've processed some
+	  * data during this read OR if the whole file is zero bytes long.
+	  * If the file is zero bytes, we won't have read anything, but
+	  * still need to display a hash.
+	  */
 	 if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes) {
 	     if (fdht->piecewise_size>0) {
 		 uint64_t tmp_end = 0;
@@ -245,14 +242,16 @@ bool file_data_hasher_t::compute_hash()
 	     fdht->multihash_finalize();
 
 	     if(md5deep_mode){
-		 // Under not matched mode, we only display those known hashes that
-		 // didn't match any input files. Thus, we don't display anything now.
-		 // The lookup is to mark those known hashes that we do encounter.
-		 // searching for the hash will cause matched_file_number to be set
+		 /**
+		  * Under not matched mode, we only display those known hashes that
+		  *  didn't match any input files. Thus, we don't display anything now.
+		  * The lookup is to mark those known hashes that we do encounter.
+		  * searching for the hash will cause matched_file_number to be set
+		  */
 		 if (ocb->mode_not_matched){
 		    ocb->find_hash(opt_md5deep_mode_algorithm,
-					 fdht->hash_hex[opt_md5deep_mode_algorithm],
-					 fdht->file_number);
+				   fdht->hash_hex[opt_md5deep_mode_algorithm],
+				   fdht->file_number);
 		}
 		else {
 		    ocb->md5deep_display_hash(this);
@@ -273,8 +272,20 @@ bool file_data_hasher_t::compute_hash()
      * all of the piecewise information.
      */
     ocb->dfxml_write(this);
-    fclose(this->handle);
     this->release();
+}
+
+
+/* Here is where we tie-in to the threadpool system */
+void worker::do_work(file_data_hasher_t *fdht)
+{
+    // this is all we should need to do
+    fdht->hash();
+
+    // this is for testing
+    //fdht->ocb->output_filename(stdout,fdht);
+    //fdht->ocb->newline();
+    //fdht->release();
 }
 
 
@@ -293,12 +304,11 @@ void display::hash_file(const tstring &fn)
     fdht->retain();
 
     // stat the file to get the bytes and timestamp
-    state::file_type(fn,&fdht->stat_bytes,&fdht->timestamp);
+    state::file_type(fn,ocb,&fdht->stat_bytes,&fdht->timestamp);
 
     if(opt_verbose>=MORE_VERBOSE){
 	print_error("hash_file(%s) primary_function=%d",
-		    main::make_utf8(fn).c_str(),
-		    ocb->primary_function);
+		    main::make_utf8(fn).c_str(),ocb->primary_function);
     }
 
     fdht->file_name	= main::make_utf8(fn);
@@ -320,7 +330,7 @@ void display::hash_file(const tstring &fn)
     /* Open the file for hashing! */
     fdht->handle = _tfopen(fn.c_str(),_TEXT("rb"));
     if(fdht->handle==0){
-	print_error_filename(fn,"%s", strerror(errno));
+	ocb->error_filename(fn,"%s", strerror(errno));
 	fdht->release();
 	return;
     }
@@ -344,6 +354,11 @@ void display::hash_file(const tstring &fn)
 
     // DO THE HASH EITHER IN THIS THREAD OR ANOTHER THREAD
     // hash() WILL CLOSE AND RELEASE
+    if(tp){
+	tp->schedule_work(fdht);
+	return;
+    }
+
     fdht->hash();			// DO THE HASH!
 }
 
@@ -353,7 +368,6 @@ void display::hash_stdin()
     file_data_hasher_t *fdht = new file_data_hasher_t(this);
     fdht->retain();
     fdht->file_name = "stdin";
-    fdht->is_stdin  = true;
     fdht->handle    = stdin;
     fdht->hash();
 }

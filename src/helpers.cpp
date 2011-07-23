@@ -21,44 +21,6 @@ std::string itos(uint64_t i)
     return std::string(buf);
 }
 
-uint64_t find_block_size(state *s, char *input_str)
-{
-  unsigned char c;
-  uint64_t multiplier = 1;
-
-  if (NULL == s || NULL == input_str)
-    return 0;
-
-  if (isalpha(input_str[strlen(input_str) - 1])) {
-      c = tolower(input_str[strlen(input_str) - 1]);
-      // There are deliberately no break statements in this switch
-      switch (c) {
-      case 'e':
-	multiplier *= 1024;    
-      case 'p':
-	multiplier *= 1024;    
-      case 't':
-	multiplier *= 1024;    
-      case 'g':
-	multiplier *= 1024;    
-      case 'm':
-	multiplier *= 1024;
-      case 'k':
-	multiplier *= 1024;
-      case 'b':
-	break;
-      default:
-	print_error("%s: Improper piecewise multiplier ignored", __progname);
-      }
-      input_str[strlen(input_str) - 1] = 0;
-    }
-
-#ifdef __HPUX
-  return (strtoumax ( input_str, (char**)0, 10) * multiplier);
-#else
-  return (atoll(input_str) * multiplier);
-#endif
-}
 
       
 
@@ -82,7 +44,7 @@ void chop_line(char *s)
 #ifndef _WIN32
 #if defined (__LINUX__)
 
-off_t find_file_size(FILE *f) 
+off_t find_file_size(FILE *f,class display *ocb) 
 {
   off_t num_sectors = 0, sector_size = 0;
   int fd = fileno(f);
@@ -99,8 +61,7 @@ off_t find_file_size(FILE *f)
   if (S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode))
   {
 #if defined(_IO) && defined(BLKGETSIZE)
-    if (ioctl(fd, BLKGETSIZE, &num_sectors))
-    {
+    if (ioctl(fd, BLKGETSIZE, &num_sectors)) {
       print_debug("%s: ioctl BLKGETSIZE failed: %s", 
 		  __progname, strerror(errno));
       return 0;
@@ -133,7 +94,7 @@ off_t find_file_size(FILE *f)
 
 #elif defined (__APPLE__)
 
-off_t find_file_size(FILE *f) 
+off_t find_file_size(FILE *f,class display *ocb) 
 {
   struct stat info;
   off_t total = 0;
@@ -147,8 +108,8 @@ off_t find_file_size(FILE *f)
   // have been caught before we got here. 
 
   if (fstat(fd, &info)) {
-    print_status("%s: %s", __progname,strerror(errno));
-    return 0;
+      if(ocb) ocb->status("%s: %s", __progname,strerror(errno));
+      return 0;
   }
 
 #ifdef HAVE_SYS_IOCTL_H
@@ -163,16 +124,16 @@ off_t find_file_size(FILE *f)
     // Get the block size 
     if (ioctl(fd, DKIOCGETBLOCKSIZE,&blocksize) < 0) 
     {
-      print_debug("%s: ioctl DKIOCGETBLOCKSIZE failed: %s", 
-		  __progname, strerror(errno));
+	if(ocb) ocb->print_debug("%s: ioctl DKIOCGETBLOCKSIZE failed: %s", 
+				 __progname, strerror(errno));
       return 0;
     } 
     
     // Get the number of blocks 
     if (ioctl(fd, DKIOCGETBLOCKCOUNT, &blockcount) < 0) 
     {
-      print_debug("%s: ioctl DKIOCGETBLOCKCOUNT failed: %s", 
-		  __progname, strerror(errno));
+	if(ocb) ocb->print_debug("%s: ioctl DKIOCGETBLOCKCOUNT failed: %s", 
+				 __progname, strerror(errno));
     }
 
     total = blocksize * blockcount;
@@ -252,7 +213,7 @@ off_t find_dev_size(int fd, int blk_size)
 }
 
 
-off_t find_file_size(FILE *f) 
+off_t find_file_size(FILE *f,class display *ocb) 
 {
   // The error checking for this is above. If f is not NULL
   // fd should be vald.
@@ -274,7 +235,7 @@ off_t find_file_size(FILE *f)
 #endif // ifndef _WIN32
 
 #if defined(_WIN32)
-off_t find_file_size(FILE *f) 
+off_t find_file_size(FILE *f,class display *ocb) 
 {
   off_t total = 0, original = ftello(f);
   
