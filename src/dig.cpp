@@ -423,7 +423,7 @@ state::file_types state::file_type(const tstring &fn,display *ocb,uint64_t *file
 	    FILE *f = _tfopen(fn.c_str(),_TEXT("rb"));
 	    if(f){
 		*filesize = find_file_size(f,ocb);
-		fclose(f);
+		fclose(f); f = 0;
 	    }
 	}
     }

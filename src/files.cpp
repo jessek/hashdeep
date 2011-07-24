@@ -591,7 +591,7 @@ void state::md5deep_load_match_file(const char *fn)
     int file_type = identify_hash_file_type(f,&expected_hashes);
     if (file_type == TYPE_UNKNOWN)  {
 	ocb.print_error("%s: Unable to find any hashes in file, skipped.", fn);
-	fclose(f);
+	fclose(f); f = 0;
 	return;
     }
 
@@ -599,7 +599,7 @@ void state::md5deep_load_match_file(const char *fn)
 	// We can't use the normal file reading code which is based on
 	// a one-line-at-a-time approach. Encase files are binary records 
 	status = parse_encase_file(fn,f,expected_hashes);
-	fclose(f);
+	fclose(f); f = 0;
 	return;
     }
 
@@ -630,7 +630,7 @@ void state::md5deep_load_match_file(const char *fn)
 	    ocb.add_fdt(fdt);
 	}
     }
-    fclose(f);
+    fclose(f); f = 0;
 }
 
 

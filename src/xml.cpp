@@ -198,12 +198,10 @@ void XML::close()
 		exit(1);
 	    }
 	}
-	fclose(rf);
-	rf = 0;
+	fclose(rf); rf = 0;
 	unlink(tempfilename.c_str());
     }
-    fclose(out);
-    out = 0;
+    fclose(out); out = 0;
 }
 
 void XML::write_dtd(FILE *f)

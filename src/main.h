@@ -201,7 +201,12 @@ public:
 	base(0),bounds(0),file_number(0),start_time(0),last_time(0){
 	file_number = ++next_file_number;
     };
-    virtual ~file_data_hasher_t(){ }
+    virtual ~file_data_hasher_t(){
+	if(handle){
+	    fclose(handle);
+	    handle = 0;
+	}
+    }
 
     /* Where the results go */
     class display *ocb;

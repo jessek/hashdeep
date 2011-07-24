@@ -341,6 +341,7 @@ void display::hash_file(const tstring &fn)
 	    }
 	}
 	fclose(fdht->handle);
+	fdht->handle = 0;
 	return ;
     }
 

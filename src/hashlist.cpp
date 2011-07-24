@@ -244,6 +244,7 @@ hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &
     if (file_unknown == type)  {
 	if(ocb) ocb->print_error("%s: %s: Unable to identify file format", __progname, fn.c_str());
 	fclose(handle);
+	handle = 0;
 	return status_unknown_filetype;
     }
 
@@ -312,6 +313,7 @@ hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &
 	}
     }
     fclose(handle);
+    handle = 0;
 
     if (contains_bad_lines){
 	return status_contains_bad_hashes;
