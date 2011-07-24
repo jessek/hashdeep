@@ -10,24 +10,27 @@
 #include <new>
 #include <iostream>
 
-void hashlist::hashmap::add_file(const file_data_t &fi,int alg_num)
+void hashlist::hashmap::add_file(file_data_t *fi,int alg_num)
 {
-    if(fi.hash_hex[alg_num].size()){
-	insert(std::pair<std::string,file_data_t>(fi.hash_hex[alg_num],fi));
+    if(fi->hash_hex[alg_num].size()){
+
+	//std::cerr << "insert hash=" << fi->hash_hex[alg_num] << " file=" << fi->file_name << "\n";
+
+	insert(std::pair<std::string,file_data_t *>(fi->hash_hex[alg_num],fi));
     }
 }
 
 
 /**
  * Adds a file_data_t pointer to the hashlist.
- * Does not copy the object; that must be done elsewhere.
- * Notice we add the hash whether it is in use or not, as long as we have it.
+ * Does not copy the object.
+ * Object will be modified from matching.
  */
-void hashlist::add_fdt(const file_data_t &fi)
+void hashlist::add_fdt(file_data_t *fi)
 { 
-    push_back(fi);
-    for(int i=0;i<NUM_ALGORITHMS;i++){
-	hashmaps[i].add_file(fi,i);
+    push_back(fi);			// retain our copy
+    for(int i=0;i<NUM_ALGORITHMS;i++){	// and add for each algorithm
+	hashmaps[i].add_file(fi,i); // and point to the back
     };
 }
 
@@ -36,10 +39,15 @@ void hashlist::add_fdt(const file_data_t &fi)
  */
 const file_data_t *hashlist::find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number)
 {
-    std::map<std::string,file_data_t>::iterator it = hashmaps[alg].find(hash_hex);
+    //std::cerr << "searching for " << hash_hex << "\n";
+
+    std::map<std::string,file_data_t *>::iterator it = hashmaps[alg].find(hash_hex);
     if(it==hashmaps[alg].end()) return 0;
-    (*it).second.matched_file_number = file_number;	// note that it's used!
-    return &(*it).second;
+
+    //std::cerr << "  found " << (*it).second->file_name << " " << (*it).second->hash_hex[alg] << "\n";
+
+    (*it).second->matched_file_number = file_number;	// note that it's used!
+    return (*it).second;
 }
 
 
@@ -63,10 +71,10 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,file_da
 
 		did_match = true;
 
-		file_data_t *match = &it->second;
+		file_data_t *match = it->second;
 		if(matched){
-		    (*matched)   = &it->second; // make a copy
-		    it->second.matched_file_number = fdht->file_number;
+		    (*matched)   = it->second; // make a copy
+		    it->second->matched_file_number = fdht->file_number;
 		}
 
 		/* Verify that all of the other hash functions for *it match fdt as well,
@@ -88,7 +96,7 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,file_da
 		 * Which is to be expected.
 		 * Check to see if the sizes are the same.
 		 */
-		if(fdht->file_size != match->file_size){
+		if(fdht->file_bytes != match->file_bytes){
 		    /* Amazing. We found two files that have the same hash but different
 		     * file sizes. This has never happened before in the history of the world.
 		     * Call the newspapers!
@@ -202,8 +210,18 @@ void hashlist::enable_hashing_algorithms_from_hashdeep_file(class display *ocb,c
 void hashlist::dump_hashlist()
 {
     for(hashlist::const_iterator it = begin(); it!=end(); it++){
-	std::cout << (*it).file_size << "," << (*it).hash_hex << "," << (*it).file_name << "\n";
+	std::cout << (*it)->file_bytes << "," << (*it)->hash_hex[alg_md5] << "," << (*it)->file_name
+		  << "  matched=" << (*it)->matched_file_number << "\n";
     }
+}
+
+uint64_t hashlist::total_matched()
+{
+    uint64_t total = 0;
+    for(hashlist::const_iterator it = begin(); it!=end(); it++){
+	if( (*it)->matched_file_number > 0) total++;
+    }
+    return total;
 }
 
 
@@ -265,7 +283,7 @@ hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &
 	    // The first column should always be the file size
 	    std::string word = fields[column_number];
 	    if (column_number==0) {
-		t->file_size = (uint64_t)strtoll(word.c_str(),NULL,10);
+		t->file_bytes = (uint64_t)strtoll(word.c_str(),NULL,10);
 		continue;
 	    }
 	    if (column_number==fields.size()-1){
@@ -290,7 +308,7 @@ hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &
 	    t->hash_hex[hash_column[column_number]] = word;
 	}
 	if ( record_valid) {
-	    add_fdt(*t);	/* add the file to the database*/
+	    add_fdt(t);	/* add the file to the database*/
 	}
     }
     fclose(handle);

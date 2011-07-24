@@ -407,7 +407,7 @@ state::file_types state::file_type(const tstring &fn,display *ocb,uint64_t *file
     struct __stat64 sb;
     memset(&sb,0,sizeof(sb));
     if (TLSTAT(fn.c_str(),&sb))  {
-	if(ocb) ocb->error_filename(fn,"%s (dig.cpp::file_type)", strerror(errno));
+	if(ocb) ocb->error_filename(fn,"%s", strerror(errno));
 	return stat_unknown;
     }
     if(timestamp) *timestamp = sb.st_ctime;

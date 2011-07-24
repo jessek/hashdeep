@@ -42,7 +42,6 @@ void file_data_hasher_t::multihash_finalize()
     
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
 	if (hashes[i].inuse) {
-
 	    /* Calculate the residue and convert to hex */
 	    uint8_t residue[file_data_hasher_t::MAX_ALGORITHM_RESIDUE_SIZE];
 	    hashes[i].f_finalize(this->hash_context[i], residue);
@@ -54,7 +53,7 @@ void file_data_hasher_t::multihash_finalize()
     }
 
     // old code
-    this->file_size = this->bytes_read;
+    //this->file_size = this->bytes_read;
 }
 
 

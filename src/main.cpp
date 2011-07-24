@@ -1004,6 +1004,11 @@ int main(int argc, char **argv)
 	s->ocb.tp = new threadpool(s->ocb.opt_threadcount);
     }
 
+    if(opt_debug>2){
+	std::cout << "dump hashlist before matching:\n";
+	s->ocb.dump_hashlist();
+    }
+
     /*
      * Anything left on the command line at this point is a file
      * or directory we're supposed to process. If there's nothing
@@ -1034,8 +1039,11 @@ int main(int argc, char **argv)
 	}
     }
 	    
-	    
-	
+    if(opt_debug>2){
+	std::cout << "\ndump hashlist after matching:\n";
+	s->ocb.dump_hashlist();
+    }
+
 
     /* If we were auditing, display the audit results */
     if (s->ocb.primary_function == primary_audit){

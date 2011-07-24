@@ -54,46 +54,73 @@ static std::string make_stars(int count)
 }
 
 
+static inline uint64_t min(uint64_t a,uint64_t b){
+    if(a<b) return a;
+    return b;
+}
+
 /*
  * Compute the hash on fdht and store the results in the display ocb.
- * returns true if successful, flase if failure
+ * returns true if successful, flase if failure.
+ * Doesn't need to seek because the caller handles it. 
  */
 
-bool file_data_hasher_t::compute_hash()
-{
-    // Although we need to read MD5DEEP_BLOCK_SIZE bytes before
-    // we exit this function, we may not be able to do that in 
-    // one read operation. Instead we read in blocks of 8192 bytes 
-    // (or as needed) to get the number of bytes we need. 
+#if 0
+    size_t read_size = request_len;
 
-    uint64_t mysize=file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE;
-    if (this->block_size < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE){
+    if (this->block_size < ){
 	mysize = this->block_size;
     }
 
     uint64_t remaining = this->block_size;
 
-    // We get weird results calling ftell on stdin!
-    if (this->handle != stdin){
-	this->read_start = ftello(this->handle);
+    // Seek if necessary...
+	if(this->read_start != request_start){
+	    fseek(this->handle,
+	}
     }
     this->read_end   = this->read_start;
-    this->bytes_read = 0;
+#endif
 
-    while (TRUE)   {    
+
+	
+
+bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_len)
+{
+    /*
+     * We may need to read multiple times; don't read more than
+     * file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE
+     * at a time.
+     */
+    // We get weird results calling ftell on stdin!
+    if (this->handle != stdin){
+	if(ftello(this->handle) != (int64_t)request_start){
+	    fseeko(this->handle,request_start,SEEK_SET);
+	}
+    }
+
+    this->read_offset = request_start;
+    this->read_len    = 0;		// so far
+    this->multihash_initialize();
+    while (!feof(this->handle) && request_len>0){
 	// Clear the buffer in case we hit an error and need to pad the hash 
 	unsigned char buffer[file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE];
 	memset(buffer,0,sizeof(buffer));
 
-	uint64_t this_start = this->read_end;
-
-	size_t current_read = fread(buffer, 1, mysize, this->handle);
+	// Figure out how many bytes we need to read 
+	uint64_t toread = min(request_len,file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE);
+	size_t current_read_bytes = fread(buffer, 1, toread, this->handle);
     
-	this->actual_bytes += current_read;
-	this->read_end     += current_read;
-	this->bytes_read   += current_read;
+	/* Update the pointers and the hash */
+	this->file_bytes    += current_read_bytes;
+	this->read_len     += current_read_bytes;
+	this->multihash_update(buffer,current_read_bytes); // hash in the non-error
       
-	// If an error occured, display a message but still add this block 
+	// Get set up for the next read
+	request_start += toread;
+	request_len   -= toread;
+
+	// If an error occured, display a message and see if we need to quit.
 	if (ferror(this->handle)) {
 	    ocb->error_filename(this->file_name,"error at offset %"PRIu64": %s",
 			       ftello(this->handle), strerror(errno));
@@ -102,51 +129,28 @@ bool file_data_hasher_t::compute_hash()
 		this->ocb->set_return_code(status_t::status_EXIT_FAILURE);
 		return false;		// error
 	    }
-	    this->multihash_update(buffer,current_read);
 	    clearerr(this->handle);
       
 	    // The file pointer's position is now undefined. We have to manually
 	    // advance it to the start of the next buffer to read. 
-	    fseeko(this->handle,SEEK_SET,this_start + mysize);
-	} 
-	else {
-	    // If we hit the end of the file, we read less than MD5DEEP_BLOCK_SIZE
-	    // bytes and must reflect that in how we update the hash.
-	    this->multihash_update(buffer,current_read);
-	}
-    
-	// Check if we've hit the end of the file 
-	if (feof(this->handle))    {	
-	    /*
-	     * If we've been printing time estimates,
-	     * we now need to clear the line.
-	     */
-	    if (opt_estimate){
-		ocb->clear_realtime_stats();
+	    if(this->handle != stdin){
+		fseeko(this->handle,request_start,SEEK_SET);
 	    }
-	    return true;			// done hashing!
-	} 
+	}
 
-	// In piecewise mode we only hash one block at a time
-	if (this->piecewise_size>0)    {
-	    remaining -= current_read;
-	    if (remaining == 0) return true; // success!
-	    if (remaining < file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE){
-		mysize = remaining;
-	    }
-	}
-    
+	// If we are printing estimates, update the time
 	if (opt_estimate)    {
-	    time_t current_time;
-	    time(&current_time);
+	    time_t current_time = time(0);
 	    // We only update the display only if a full second has elapsed 
 	    if (this->last_time != current_time) {
 		this->last_time = current_time;
 		ocb->display_realtime_stats(this,current_time - this->start_time);
 	    }
 	}
-    }      
-    return true;
+    }
+    if (opt_estimate) ocb->clear_realtime_stats();
+    this->multihash_finalize();
+    return true;			// done hashing!
 }
 
 /**
@@ -156,16 +160,21 @@ bool file_data_hasher_t::compute_hash()
  * hash()
  * 
  * This function is called to hash each file.
+ * Calls:
+ *    - compute_hash() to hash the file or the file segment
+ *    - display_hash() to display each hash after it is computed.
  *
  * Called by: hash_stdin and hash_file.
  * 
- * Result is stored in the fdht structure.
+ * Triage Mode: First computes the hash on the first 512-bytes
+ * Piecewise Mode: Calls pieceiwse hasher iteratively
+ * In the case of piecewise hashing, 
  * This routine is made multi-threaded to make the system run faster.
  */
 void file_data_hasher_t::hash()
 {
     file_data_hasher_t *fdht = this;
-    fdht->actual_bytes = 0;
+    fdht->file_bytes = 0;		// actual number of bytes we have read
 
     if (opt_estimate)  {
 	time(&(fdht->start_time));
@@ -179,47 +188,43 @@ void file_data_hasher_t::hash()
 	 * 512 bytes of the file. But we'll have to remove piecewise mode
 	 * before returning to the main hashing code
 	 */
+	
+	bool success = fdht->compute_hash(0,512);
 
-	fdht->block_size     = 512;
-	fdht->piecewise_size = 512;
-	fdht->multihash_initialize();
-
-	bool success = fdht->compute_hash();
-	fdht->piecewise_size = 0;
-	fdht->multihash_finalize();
 	if(success){
-	    char buf[1024];
-	    snprintf(buf,sizeof(buf),"%"PRIu64"\t%s",
-		     fdht->stat_bytes,
-		     fdht->hash_hex[opt_md5deep_mode_algorithm].c_str());
-	    fdht->triage_info = buf;
+	    std::stringstream ss;
+	    ss << fdht->stat_bytes << "\t" << fdht->hash_hex[opt_md5deep_mode_algorithm];
+	    fdht->triage_info = ss.str();
 	}
 
 	/*
 	 * Rather than muck about with updating the state of the input
 	 * file, just reset everything and process it normally.
 	 */
-	fdht->actual_bytes = 0;
+	fdht->file_bytes = 0;
 	fseeko(fdht->handle, 0, SEEK_SET);
     }
 
-    if ( fdht->piecewise_size>0 )  {
-	fdht->block_size = fdht->piecewise_size;
-    }
+    /*
+     * Read the file, handling piecewise hashing as necessary
+     */
 
-    int done = FALSE;
-    while (!done)  {
-	fdht->multihash_initialize();
-	fdht->read_start = fdht->actual_bytes;
+    uint64_t request_start = 0;
+    while (!feof(fdht->handle))  {
+	
+	uint64_t request_len = 0xffffffffffffffffUL; // really big
+	if ( fdht->ocb->piecewise_size>0 )  {
+	    request_len = fdht->ocb->piecewise_size;
+	}
 
 	/**
-	 * call compute_hash(), which computes the hash of the full file,
-	 * or all of the piecewise hashes.
+	 * call compute_hash(), which computes the hash of the full file, or next next piecewise hashe.
 	 * It returns FALSE if there is a failure.
 	 */
-	if (fdht->compute_hash()==false) {
-	    return;
+	if (fdht->compute_hash(request_start,request_len)==false) {
+	    break;
 	}
+	request_start += request_len;
 
 	/*
 	 * We should only display a hash if we've processed some
@@ -227,20 +232,8 @@ void file_data_hasher_t::hash()
 	 * If the file is zero bytes, we won't have read anything, but
 	 * still need to display a hash.
 	 */
-	//std::cerr << fdht->file_name << " TK annotation=" << fdht->file_name_annotation << " picewise_size=" << fdht->piecewise_size<< "\n";
 
-
-	if (fdht->bytes_read != 0 || 0 == fdht->stat_bytes) {
-	    if (fdht->piecewise_size>0) {
-		uint64_t tmp_end = 0;
-		if (fdht->read_end != 0){
-		    tmp_end = fdht->read_end - 1;
-		}
-		fdht->file_name_annotation = std::string(" offset ") + itos(fdht->read_start) + std::string("-") + itos(tmp_end);
-	    }
-
-	    fdht->multihash_finalize();
-
+	if (fdht->read_len > 0 || fdht->stat_bytes==0) {
 	    if(md5deep_mode){
 		/**
 		 * Under not matched mode, we only display those known hashes that
@@ -259,11 +252,6 @@ void file_data_hasher_t::hash()
 	    } else {
 		ocb->display_hash(fdht);
 	    }
-	}
-	if (fdht->piecewise_size>0){
-	    done = feof(fdht->handle);
-	} else {
-	    done = TRUE;
 	}
     }
 
@@ -325,9 +313,9 @@ void display::hash_file(const tstring &fn)
 	}
     }
 
-    lock();
+    //lock();
     //std::cout << "TK0 hash_file " << fdht->file_name << " piecewise_size= " << fdht->piecewise_size << "\n"; 
-    unlock();
+    //unlock();
 
     /* Open the file for hashing! */
     fdht->handle = _tfopen(fn.c_str(),_TEXT("rb"));

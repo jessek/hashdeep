@@ -157,23 +157,28 @@ typedef std::string	filename_t;
  */
 class file_data_t {
 public:
-    file_data_t():matched_file_number(0),file_size(0),stat_bytes(0),actual_bytes(0) {
+    file_data_t():matched_file_number(0),timestamp(0),stat_bytes(0),file_bytes(0),read_offset(0),read_len(0) {
     };
     virtual ~file_data_t(){}		// required because we subclass
     // Implement a simple reference count garbage collection system
-    std::string    hash_hex[NUM_ALGORITHMS];	     // the hash in hex of the entire file
-    std::string	   hash512_hex[NUM_ALGORITHMS];	     // hash of the first 512 bytes, for partial matching
-    std::string	   file_name;		// just the file_name; native on POSIX; UTF-8 on Windows.
-    std::string	   file_name_annotation;// print after file name; for piecewise hashing
+    std::string hash_hex[NUM_ALGORITHMS];	     // the hash in hex of the entire file
+    std::string	hash512_hex[NUM_ALGORITHMS];	     // hash of the first 512 bytes, for partial matching
+    std::string	file_name;		// just the file_name; native on POSIX; UTF-8 on Windows.
+    //std::string	   file_name_annotation;// print after file name; for piecewise hashing
 
-    uint64_t       matched_file_number;	 // file number that we matched.
-    timestamp_t	   timestamp;
+    uint64_t    matched_file_number;	 // file number that we matched.; 0 if no match
+    timestamp_t	timestamp;
 
     // How many bytes (and megs) we think are in the file, via stat(2)
     // and how many bytes we've actually read in the file
-    uint64_t       file_size;		// in bytes
-    uint64_t       stat_bytes;		// how much stat returned
-    uint64_t       actual_bytes;	// how many we read.
+    uint64_t    stat_bytes;		// how much stat returned
+    uint64_t    file_bytes;		// in bytes (how many we actually read)
+    //uint64_t    actual_bytes;	// how many we read.
+
+    // where this segment was actually read
+    uint64_t	read_offset;		// where the segment we read started
+    uint64_t	read_len;		// how many bytes were read and hashed
+
     uint64_t	   stat_megs() const{
 	return stat_bytes / ONE_MEGABYTE;
     }
@@ -193,9 +198,7 @@ public:
     file_data_hasher_t(class display *ocb_):
 	ocb(ocb_),			// where we put results
 	handle(0),
-	read_start(0),read_end(0),bytes_read(0),
-	block_size(MD5DEEP_IDEAL_BLOCK_SIZE),
-	start_time(0),last_time(0){
+	base(0),bounds(0),file_number(0),start_time(0),last_time(0){
 	file_number = ++next_file_number;
     };
     virtual ~file_data_hasher_t(){ }
@@ -223,32 +226,33 @@ public:
     void	append_dfxml_for_byterun();
     void	compute_dfxml(bool known_hash);
 
-    // Where the last read operation started and ended
+    // Request of where to read the file (or segment)
+    // Where it was actually read is put in read_start and read_len
     // bytes_read is a shorthand for read_end - read_start
-    uint64_t        read_start;
-    uint64_t        read_end;
-    uint64_t        bytes_read;
+    //uint64_t	request_start;
+    //uint64_t	request_len;		// the maximum I wish to read
+    //uint64_t  read_end;
+    //uint64_t	bytes_read;
 
     /* Size of blocks used in normal hashing */
-    uint64_t        block_size;
+    //uint64_t	block_size;
 
-    /* When do we start the hashing, and when was the last time a display was printed? */
-    time_t          start_time, last_time;
+    /* When we started the hashing, and when was the last time a display was printed? */
+    time_t	start_time, last_time;
 
-    /* Flags */
-    uint64_t	    piecewise_size;	// non-zero means create picewise hashes 
 
     /* multithreaded hash implementation is these functions in hash.cpp.
      * hash() is called to hash each file and record the results.
      * Return codes are now both stored in display return_code and returned
      * 0 - for success, -1 for error
      */
-    bool compute_hash();// called to actually do the computation; returns true if successful
+    // called to actually do the computation; returns true if successful
+    bool compute_hash(uint64_t request_start,uint64_t request_len);
     void hash();	// called to hash each file and record results
 };
 
 
-/** The hashlist holds a list of file_data_t pointers.
+/** The hashlist holds a list of file_data_t objects.
  * state->known is used to hold the audit file that is loaded.
  * state->seen is used to hold the hashes seen on the current run.
  * We store multiple maps for each algorithm number which map the hash hex code
@@ -257,7 +261,7 @@ public:
  * the hashlist.cpp file contains the implementation. It's largely taken
  * from the v3 audit.cpp and match.cpp files.
  */
-class hashlist : public std::vector<file_data_t> {
+class hashlist : public std::vector<file_data_t *> {
     /**
      * The largest number of columns we can expect in a file of hashes
      * (knowns).  Normally this should be the number of hash
@@ -311,14 +315,17 @@ public:;
 	file_unknown
     } hashfile_format; 
 
-    class hashmap : public  std::map<std::string,file_data_t> {
+    class hashmap : public  std::map<std::string,file_data_t *> {
     public:;
-	void add_file(const file_data_t &fi,int alg_num);
+	void add_file(file_data_t *fi,int alg_num);
     };
     hashmap		hashmaps[NUM_ALGORITHMS];
-    searchstatus_t	search(const file_data_hasher_t *fdht,
-			       file_data_t **matched) ; // look up a fdt
-    uint64_t		total_matched;
+    //
+    // look up a fdt by hash code(s) and return if it is present or not.
+    // optionally return a pointer to it as well.
+    searchstatus_t	search(const file_data_hasher_t *fdht, file_data_t **matched) ; 
+
+    uint64_t		total_matched(); // return the total matched
 
     /**
      * Figure out the format of a hashlist file and load it.
@@ -339,9 +346,9 @@ public:;
     
     /**
      * add_fdt adds a file_data_t record to the hashlist, and its hashes to the hashmaps.
-     * @param state - needed to find the algorithms in use
+     * @param fi - a file_data_t to add. Don't erase it; we're going to use it (and modify it)
      */
-    void add_fdt(const file_data_t &fi);
+    void add_fdt(file_data_t *fi);
 };
 
 /* Primary modes of operation (primary_function) */
@@ -452,7 +459,7 @@ public:
 	opt_threadcount(0),
 	tp(0),
 	size_threshold(0),
-	piecewise_size(0),
+	piecewise_size(0),	
 	primary_function(primary_compute){
 
 #ifdef HAVE_PTHREAD
@@ -485,7 +492,7 @@ public:
 
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;
-    uint64_t        piecewise_size;    /* Size of blocks used in piecewise hashing */
+    uint64_t        piecewise_size;    // non-zero for piecewise mode
     primary_t       primary_function;    /* what do we want to do? */
 
 
@@ -574,7 +581,7 @@ public:
     void	clear_realtime_stats();
     void	display_realtime_stats(const file_data_hasher_t *fdht,time_t elapsed);
     bool	hashes_loaded() const{ lock(); bool ret = known.size()>0; unlock(); return ret; }
-    void	add_fdt(const file_data_t &fdt){ lock(); known.add_fdt(fdt); unlock(); }
+    void	add_fdt(file_data_t *fdt){ lock(); known.add_fdt(fdt); unlock(); }
 
     void	display_match_result(file_data_hasher_t *fdht);
     void	md5deep_display_match_result(file_data_hasher_t *fdht);
@@ -589,7 +596,7 @@ public:
     /* hash.cpp: Actually trigger the hashing. */
     void	hash_file(const tstring &file_name);
     void	hash_stdin();
-
+    void	dump_hashlist(){ lock(); known.dump_hashlist(); unlock(); }
 };
 
 /**

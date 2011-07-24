@@ -197,23 +197,36 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
     uint64_t mb_read=0;
     bool shorten = false;
 
+    /*
+     * This is the only place where filenames are shortened.
+     * So do it explicitly here.
+     *
+     */
+
+    std::stringstream ss;
+
+    tstring fn = fdht->file_name;
+    if (fn.size() < MAX_FILENAME_LENGTH){
+	/* Shorten from the middle */
+	size_t half = MAX_FILENAME_LENGTH/2;
+	fn = fn.substr(0,half) + _T("...") + fn.substr(fn.size()-half,half);
+    }
+
+    ss << fmt_filename(fn) << " ";
+
     // If we've read less than one MB, then the computed value for mb_read 
     // will be zero. Later on we may need to divide the total file size, 
     // total_megs, by mb_read. Dividing by zero can create... problems 
-    if (fdht->bytes_read < ONE_MEGABYTE){
+    if (fdht->read_len < ONE_MEGABYTE){
 	mb_read = 1;
     }
     else {
-	mb_read = fdht->actual_bytes / ONE_MEGABYTE;
+	mb_read = fdht->read_len / ONE_MEGABYTE;
     }
-  
-    char msg[64];
-    memset(msg,0,sizeof(msg));
 
     if (fdht->stat_megs()==0 || opt_estimate==false)  {
 	shorten = true;
-	snprintf(msg,sizeof(msg)-1,"%"PRIu64"MB done. Unable to estimate remaining time.%s",
-		 mb_read,BLANK_LINE);
+	ss << mb_read << "MB done. Unable to estimate remaining time.";
     }
     else {
 	// Estimate the number of seconds using only integer math.
@@ -223,7 +236,7 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
 	// By subtracting the number of elapsed seconds from that, we should
 	// get a good estimate of how many seconds remain.
 
-	uint64_t seconds = (fdht->stat_bytes / (fdht->actual_bytes / elapsed)) - elapsed;
+	uint64_t seconds = (fdht->stat_bytes / (fdht->file_bytes / elapsed)) - elapsed;
 
 	// We don't care if the remaining time is more than one day.
 	// If you're hashing something that big, to quote the movie Jaws:
@@ -236,30 +249,16 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
 	seconds -= min * 60;
 
 	shorten = 1;
-	snprintf(msg,sizeof(msg),"%"PRIu64"MB of %"PRIu64"MB done, %02"PRIu64":%02"PRIu64":%02"PRIu64" left%s",
-		 mb_read, fdht->stat_megs(), hour, min, seconds, BLANK_LINE);
+	ss << mb_read << "MB of " << fdht->stat_megs() << "MB done, ";
+	char msg[64];
+	snprintf(msg,sizeof(msg),"%02"PRIu64":%02"PRIu64":%02"PRIu64" left", hour, min, seconds);
+	ss << msg;
     }
     
-    std::string line = std::string("\r");
-
-    /*
-     * This is the only place where filenames are shortened.
-     * So do it explicitly here.
-     *
-     */
-
-    tstring fn = fdht->file_name;
-    if (fn.size() < MAX_FILENAME_LENGTH){
-	/* Shorten from the middle */
-	size_t half = MAX_FILENAME_LENGTH/2;
-	fn = fn.substr(0,half) + _T("...") + fn.substr(fn.size()-half,half);
-    }
-
-    line += fmt_filename(fn);
-    line += msg;
+    ss << "\r";
 
     lock();
-    std::cerr << line << "\r";
+    std::cerr << ss.str() << "\r";
     unlock();
 }
 
@@ -269,23 +268,21 @@ void display::display_banner_if_needed()
     if(this->dfxml!=0) return;		// output is in DFXML; no banner
     lock();
     if(banner_displayed==false){
-	(*out) << utf8_banner << NEWLINE ;
+	(*out) << utf8_banner;
 	banner_displayed=true;
     }
     unlock();
 }
 
 
-/* No locks, so do not call on the same FDHT in different threads */
 void file_data_hasher_t::compute_dfxml(bool known_hash)
 {
-    if(this->piecewise_size){
-	uint64_t bytes = this->read_end - this->read_start;
+    if(this->ocb->piecewise_size>0){
 	this->dfxml_hash +=
 	    std::string("<byte_run file_offset='")
-	    + itos(this->read_start)
+	    + itos(this->read_offset)
 	    + std::string("' bytes='")
-	    + itos(bytes) + std::string("'>\n   ");
+	    + itos(this->read_len) + std::string("'>\n   ");
     }
     for(int i=0;i<NUM_ALGORITHMS;i++){
 	if(hashes[i].inuse){
@@ -297,7 +294,7 @@ void file_data_hasher_t::compute_dfxml(bool known_hash)
     if(known_hash){
 	this->dfxml_hash += std::string("<matched>1</matched>");
     }
-    if(this->piecewise_size){
+    if(this->ocb->piecewise_size){
 	this->dfxml_hash += "</byte_run>\n";
     }
 }
@@ -318,17 +315,17 @@ uint64_t display::compute_unused(bool display, std::string annotation)
 
     lock();
     for(hashlist::const_iterator i = known.begin(); i != known.end(); i++){
-	if((*i).matched_file_number==0){
+	if((*i)->matched_file_number==0){
 	    count++;
 	    if (display || opt_verbose >= MORE_VERBOSE) {
-		filelist.push_back((*i).file_name);
+		filelist.push_back((*i)->file_name);
 	    }
 	}
     }
     unlock();
     for(std::vector<std::string>::const_iterator i = filelist.begin(); i!= filelist.end(); i++){
 	std::string line = *i + annotation;
-	writeln(&std::cerr,line);
+	writeln(out,line);
     }
     return count;
 }
@@ -378,17 +375,13 @@ void display::display_audit_results()
 std::string display::fmt_size(const file_data_t *fdt) const
 {
     if (opt_display_size)  {
-	if (opt_csv){
-	    // Under CSV mode we have to include a comma, otherwise two spaces
-	    char buf[64];
-	    snprintf(buf,sizeof(buf),"%"PRIu64",", fdt->actual_bytes);
-	    return std::string(buf);
-	}
-	else {
-	    char buf[64];
-	    snprintf(buf,sizeof(buf),"%10"PRIu64"  ", fdt->actual_bytes);
-	    return std::string(buf);
-	}
+	std::stringstream ss;
+	ss.width(10);
+	ss.fill(' ');
+	ss << fdt->file_bytes;
+	ss.width(1);
+	ss << (opt_csv ? ", " : "  ");
+	return ss.str();
     }
     return std::string();
 }
@@ -402,6 +395,9 @@ void display::md5deep_display_match_result(file_data_hasher_t *fdht)
 					    fdht->hash_hex[opt_md5deep_mode_algorithm],
 					    fdht->file_number);
     unlock();
+
+    //if(fs) std::cerr << "fdht->file_name=" << fdht->file_name << " fs->file_name=" << fs->file_name << "\n";
+
     int known_hash = fs ? 1 : 0;
 
     if ((known_hash && opt_mode_match) || (!known_hash && opt_mode_match_neg)) {
@@ -435,7 +431,7 @@ void display::md5deep_display_match_result(file_data_hasher_t *fdht)
 	else{
 	    line += fdht->file_name;
 	}
-	writeln(&std::cerr,line);
+	writeln(out,line);
     }
 }
 
@@ -489,7 +485,7 @@ void display::display_match_result(file_data_hasher_t *fdht)
 		    line += fmt_filename(matched_fdt);
 		}
 	    }
-	    writeln(&std::cerr,line);
+	    writeln(out,line);
 	}
     }
 }
@@ -549,10 +545,16 @@ int display::audit_update(file_data_hasher_t *fdht)
  */
 void display::finalize_matching()
 {
-    if (known.total_matched!=known.size()){
+    /* Could the total matched */
+    lock();
+    uint64_t total_matched = known.total_matched();
+    uint64_t known_size    = known.size();
+    unlock();
+
+    if (total_matched!=known_size){
 	return_code.add(status_t::STATUS_UNUSED_HASHES); // were there any unmatched?
     }
-    if (known.total_matched==0){
+    if (total_matched==0){
 	return_code.add(status_t::STATUS_INPUT_DID_NOT_MATCH); // were they all unmatched?
     }
     if (mode_not_matched){	// should we display those that were not matched?
@@ -600,7 +602,7 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 	line += "  ";
     }
     else  {
-	if ((fdht->piecewise_size) || (fdht->handle!=stdin))    {
+	if ((fdht->ocb->piecewise_size) || (fdht->handle!=stdin))    {
 	    if (mode_timestamp)      {
 		struct tm my_time;
 		memset(&my_time,0,sizeof(my_time)); // clear it out
@@ -633,15 +635,13 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 	    line += fmt_filename(fdht);
 	}
     }
-    if(fdht->file_name_annotation.size()>0){
-	line += std::string(" ") + fdht->file_name_annotation;
+    if(fdht->ocb->piecewise_size > 0){
+	std::stringstream ss;
+	uint64_t len = (fdht->read_offset+fdht->read_len-1);
+	if(fdht->read_offset==0 && fdht->read_len==0) len=0;
+	ss << " offset " << fdht->read_offset << "-" << len;
+	line += ss.str();
     }
-
-    std::stringstream ss(std::stringstream::in | std::stringstream::out);
-    ss << fdht->piecewise_size ; 
-
-    //line += "TK piecewise size " + ss.str();
-
     writeln(out,line);
 }
 
@@ -656,28 +656,30 @@ void display::display_hash_simple(file_data_hasher_t *fdht)
 	return;
     }
 
-    /* In piecewise mode the size of each 'file' is the size
+    /* Old comment:
+     * In piecewise mode the size of each 'file' is the size
      * of the block it came from. This is important when doing an
      * audit in piecewise mode. In all other cases we use the 
      * total number of bytes from the file we *actually* read
      *
+     * New comment:
+     * read_len is always correct.
+     * In piecewise mode its the size of the piece,
+     * In normal mode it's the size of the file.
+     * 
+     *
      * NOTE: Ignore the warning in the format when running on mingw with GCC-4.3.0
      * see http://lists.gnu.org/archive/html/qemu-devel/2009-01/msg01979.html
+     *
+     
      */
      
     display_banner_if_needed();
     std::string line;
 
-    if (fdht->piecewise_size){
-	char buf[1024];
-	snprintf(buf,sizeof(buf),"%"PRIu64",", fdht->bytes_read);
-	line = std::string(buf);
-    }
-    else {
-	char buf[1024];
-	snprintf(buf,sizeof(buf),"%"PRIu64",", fdht->actual_bytes);
-	line = std::string(buf);
-    }
+    char buf[1024];
+    snprintf(buf,sizeof(buf),"%"PRIu64",", fdht->read_len);
+    line = std::string(buf);
 
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
 	if (hashes[i].inuse){
@@ -685,6 +687,13 @@ void display::display_hash_simple(file_data_hasher_t *fdht)
 	}
     }
     line += fmt_filename(fdht);
+    if(fdht->ocb->piecewise_size > 0){
+	std::stringstream ss;
+	uint64_t len = (fdht->read_offset+fdht->read_len-1);
+	if(fdht->read_offset==0 && fdht->read_len==0) len=0;
+	ss << " offset " << fdht->read_offset << "-" << len;
+	line += ss.str();
+    }
     writeln(out,line);
 }
 

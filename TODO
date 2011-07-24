@@ -7,7 +7,8 @@ Here's what's left:
 1 - Remove the file_name_annotation and instead remember the piecewise start and stop.
 2 - Figure out why threading turns on piecewise problem.
 3 - get hashlist matching working again
-
+4 - need a better startegy for "Known file not used" in audit_check, because I don't want to modify the map.
+5 - don't create strings for algorithms we don't use; remove matched_file_number from fdht structure.
 == 
 
 Below is what we've done:
