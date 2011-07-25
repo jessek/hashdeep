@@ -160,11 +160,10 @@ public:
     file_data_t():matched_file_number(0),timestamp(0),stat_bytes(0),file_bytes(0),read_offset(0),read_len(0) {
     };
     virtual ~file_data_t(){}		// required because we subclass
-    // Implement a simple reference count garbage collection system
+
     std::string hash_hex[NUM_ALGORITHMS];	     // the hash in hex of the entire file
     std::string	hash512_hex[NUM_ALGORITHMS];	     // hash of the first 512 bytes, for partial matching
     std::string	file_name;		// just the file_name; native on POSIX; UTF-8 on Windows.
-    //std::string	   file_name_annotation;// print after file name; for piecewise hashing
 
     uint64_t    matched_file_number;	 // file number that we matched.; 0 if no match
     timestamp_t	timestamp;
@@ -207,6 +206,9 @@ public:
 	    handle = 0;
 	}
     }
+
+    /* The actual file to hash */
+    filename_t file_name_to_hash;
 
     /* Where the results go */
     class display *ocb;

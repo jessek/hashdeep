@@ -174,7 +174,62 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 void file_data_hasher_t::hash()
 {
     file_data_hasher_t *fdht = this;
+
+    /* Open the file and print an error if we can't */
+    // stat the file to get the bytes and timestamp
+    state::file_type(fdht->file_name_to_hash,ocb,&fdht->stat_bytes,&fdht->timestamp);
+
+    if(opt_verbose>=MORE_VERBOSE){
+	errno = 0;			// no error
+	ocb->error_filename(fdht->file_name_to_hash,"hash() primary_function=%d",ocb->primary_function);
+    }
+    fdht->file_name	= main::make_utf8(fdht->file_name_to_hash);
     fdht->file_bytes = 0;		// actual number of bytes we have read
+
+    if (ocb->mode_barename)  {
+	/* Convert fdht->file_name to its basename */
+
+	/* The basename function kept misbehaving on OS X, so Jesse rewrote it.
+	 * This approach isn't perfect, nor is it designed to be. Because
+	 * we're guarenteed to be working with a file here, there's no way
+	 * that str will end with a DIR_SEPARATOR (e.g. /foo/bar/). This function
+	 * will not work properly for a string that ends in a DIR_SEPARATOR
+	 */
+	size_t delim = fdht->file_name.rfind(DIR_SEPARATOR);
+	if(delim!=std::string::npos){
+	    fdht->file_name = fdht->file_name.substr(delim+1);
+	}
+    }
+    /* Open the file for hashing! */
+    fdht->handle = _tfopen(file_name_to_hash.c_str(),_TEXT("rb"));
+    if(fdht->handle==0){
+	ocb->error_filename(fdht->file_name_to_hash,"%s", strerror(errno));
+	return;
+    }
+    /*
+     * If this file is above the size threshold set by the user, skip it
+     * and set the hash to be stars
+     */
+    if ((ocb->mode_size) && (fdht->stat_bytes > ocb->size_threshold)) {
+	if (ocb->mode_size_all) {
+	    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
+		if (hashes[i].inuse){
+		    fdht->hash_hex[i] = make_stars(hashes[i].bit_length/4);
+		}
+	    }
+	    if(md5deep_mode){
+		fdht->ocb->md5deep_display_hash(fdht);
+	    } else {
+		fdht->ocb->display_hash(fdht);
+	    }
+	}
+	fclose(fdht->handle);
+	fdht->handle = 0;
+	return ;
+    }
+
+
+
 
     if (opt_estimate)  {
 	time(&(fdht->start_time));
@@ -263,14 +318,10 @@ void file_data_hasher_t::hash()
 }
 
 
-/* Here is where we tie-in to the threadpool system */
+/* Here is where we tie-in to the threadpool system.
+ */
 void worker::do_work(file_data_hasher_t *fdht)
 {
-    // this is all we should need to do
-    //std::cerr << "worker " << workerid << "\n";
-    //std::stringstream s;
-    // s << "TK worker " << workerid << " ";
-    //fdht->file_name_annotation = s.str();
     fdht->hash();
     delete fdht;
 }
@@ -279,82 +330,30 @@ void worker::do_work(file_data_hasher_t *fdht)
 /**
  * Primary entry point for a file being hashed.
  * Given a file name:
- * 1 - create the fdht
- * 2 - set up the fdht
- * 3 - hash the fdht
- * 4 - record it in stdout using display.
+ * 1 - create a minimal fdht and pass it off to either schedule_work() or hash().
+ *
+ * hash() will 
+ * 1 - open the file (or print an error message if it can't).
+ * 2 - hash the fdht
+ * 3 - record it in stdout using display.
  */
 void display::hash_file(const tstring &fn)
 {
-    display *ocb = this;
     file_data_hasher_t *fdht = new file_data_hasher_t(this);
 
-    // stat the file to get the bytes and timestamp
-    state::file_type(fn,ocb,&fdht->stat_bytes,&fdht->timestamp);
+    fdht->file_name_to_hash = fn;
 
-    if(opt_verbose>=MORE_VERBOSE){
-	print_error("hash_file(%s) primary_function=%d",
-		    main::make_utf8(fn).c_str(),ocb->primary_function);
-    }
-
-    fdht->file_name	= main::make_utf8(fn);
-    if (ocb->mode_barename)  {
-	/* Convert fdht->file_name to its basename */
-
-	/* The basename function kept misbehaving on OS X, so Jesse rewrote it.
-	 * This approach isn't perfect, nor is it designed to be. Because
-	 * we're guarenteed to be working with a file here, there's no way
-	 * that str will end with a DIR_SEPARATOR (e.g. /foo/bar/). This function
-	 * will not work properly for a string that ends in a DIR_SEPARATOR
-	 */
-	size_t delim = fdht->file_name.rfind(DIR_SEPARATOR);
-	if(delim!=std::string::npos){
-	    fdht->file_name = fdht->file_name.substr(delim+1);
-	}
-    }
-
-    //lock();
-    //std::cout << "TK0 hash_file " << fdht->file_name << " piecewise_size= " << fdht->piecewise_size << "\n"; 
-    //unlock();
-
-    /* Open the file for hashing! */
-    fdht->handle = _tfopen(fn.c_str(),_TEXT("rb"));
-    if(fdht->handle==0){
-	ocb->error_filename(fn,"%s", strerror(errno));
-	return;
-    }
-    /*
-     * If this file is above the size threshold set by the user, skip it
-     * and set the hash to be stars
+    /**
+     * If we are using a thread pool, hash in another thread
+     * with do_work 
      */
-    if ((ocb->mode_size) && (fdht->stat_bytes > ocb->size_threshold)) {
-	if (ocb->mode_size_all) {
-	    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
-		if (hashes[i].inuse){
-		    fdht->hash_hex[i] = make_stars(hashes[i].bit_length/4);
-		}
-	    }
-	    if(md5deep_mode){
-		this->md5deep_display_hash(fdht);
-	    } else {
-		this->display_hash(fdht);
-	    }
-	}
-	fclose(fdht->handle);
-	fdht->handle = 0;
-	return ;
-    }
-
-    // DO THE HASH EITHER IN THIS THREAD OR ANOTHER THREAD
-    // hash() WILL CLOSE AND RELEASE
     if(tp){
 	tp->schedule_work(fdht);
 	return;
+    } else {
+	fdht->hash();		
+	delete fdht;
     }
-    
-    // Do the has locally
-    fdht->hash();			// DO THE HASH!
-    delete fdht;
 }
 
 
