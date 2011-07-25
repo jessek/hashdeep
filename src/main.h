@@ -463,7 +463,7 @@ public:
 	opt_display_size(false),
 	opt_display_hash(false),
 	opt_show_matched(false),
-	opt_threadcount(0),
+	opt_threadcount(threadpool::numCPU()),
 	tp(0),
 	size_threshold(0),
 	piecewise_size(0),	

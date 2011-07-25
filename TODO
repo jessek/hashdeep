@@ -3,12 +3,34 @@ moved them all to the SourceForge Feature Request Tracker.
 See https://sourceforge.net/tracker/?group_id=67079&atid=516781
 for all current TODO items.
 
-Here's what's left:
-1 - Remove the file_name_annotation and instead remember the piecewise start and stop.
-2 - Figure out why threading turns on piecewise problem.
-3 - get hashlist matching working again
-4 - need a better startegy for "Known file not used" in audit_check, because I don't want to modify the map.
-5 - don't create strings for algorithms we don't use; remove matched_file_number from fdht structure.
+July 24, 2011 status report.
+
+md5deep/hashdeep:
+* the same code base
+* completely rewritten in C++
+* multi-threaded (-j4 runs 4 worker threads and one primary thread).
+  - default is 1 worker per CPU.
+  - specify 0 workers to turn off multi-threading
+* each worker opens the files
+
+Here's future stuff to do:
+* Finish regression testing for multi-threading (will also produce a nice graph showing speedup)
+* Test multi-threading on Linux
+* Add processing of all hash file formats to tests.
+* Port multi-threading to Windows (will require PTHREADS for Windows, but it might be easier to just redo the minimal calls I need)
+* Check triage mode
+* Check case below with hash codes from different algorithms
+* Add a file pattern option that specifies what files are hashed.
+* Improve usage for -hh so that everything gets printed.
+* - Add support for memory-mapped files
+    1- memory-mapped files can generate a SIGSEGV or SIGBUS if the mapped region is not available.
+       http://linux.die.net/man/2/mmap
+       This needs to be explicitly handled with a signal handler.
+    
+    2-Memory mapped files can be handled on WIndows.
+* - Performance tuning:
+    1 - don't create hash_hex strings for algorithms we don't use. (
+* - should have a better startegy for "Known file not used" in audit_check, because I don't want to modify the map.
 == 
 
 Below is what we've done:
@@ -32,13 +54,11 @@ Below is what we've done:
 5 - migrate to multi-threaded producer/consumer architecture with the file searching (dig) being the producer and hash() being the consumer.
 6 - Add "-j" option to control how many threads; -j0 turns off threading.
 * - error printing is mostly threadsafe
+1 - Remove the file_name_annotation and instead remember the piecewise start and stop.
+2 - Figured out why threading turns on piecewise problem.
+3 - got hashlist matching working again
 
 Below is what's planned:
-
-2 - Add procesisng of all hash file formats to tests.
-4 - a file pattern that specifies what files are hashed.
-
-What's on hold 
 ================
 Test cases:
  - An audit file with the MD5 hash changed to simulate a partial hash.
@@ -70,9 +90,3 @@ Files partially matched: 0
        New files found: 0
  Known files not found: 0
 ================================================================
-* Check triage mdoe
-================================================================
-Multithreading works, but not if you hash. 
-problem is either:
- - the hashing
- - the printing of the hashes.

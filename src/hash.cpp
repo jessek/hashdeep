@@ -347,13 +347,15 @@ void display::hash_file(const tstring &fn)
      * If we are using a thread pool, hash in another thread
      * with do_work 
      */
+#ifdef HAVE_POSIX
     if(tp){
 	tp->schedule_work(fdht);
 	return;
-    } else {
-	fdht->hash();		
-	delete fdht;
     }
+#endif
+    /* no threading; just work normally */
+    fdht->hash();		
+    delete fdht;
 }
 
 
