@@ -1,9 +1,13 @@
-** Changes in version 3.9.2 (RBF DATE 2011)
+** Changes in version 3.9.2 (26 Jul 2011)
 
 * New Features
 
       Added a warning message when running 32-bit versions of the
       programs on a 64-bit system.
+
+* Bug Fixes
+
+      Fixed a cosmetic bug in the hashdeep header.
 
 
 
