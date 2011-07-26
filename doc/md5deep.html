@@ -242,20 +242,20 @@ Returns a bit-wise value based
 on the success of the operation and the status of any matching operations.
 <p>
 
-<ul>
-<li> 0 = Success. Note that the program considers itself successful even when it
+<ol>
+<li>Success. Note that the program considers itself successful even when it
 encounters read errors, permission denied errors, or finds directories
-when not in recursive mode. </li><li>1 = Unused hashes. Under any of the matching modes,
+when not in recursive mode. </li><li>Unused hashes. Under any of the matching modes,
 returns this  value if one or more of the known hashes was not matched
-by any of the input files. </li><li>2 = Unmatched inputs. Under any of the matching modes,
+by any of the input files. </li><li>Unmatched inputs. Under any of the matching modes,
 returns this value if one or more of the input values did not match any
-of the known hashes.  </li><li>64 = User error, such as trying to do both positive and
-negative matching at  the same time.  </li><li>128 = Internal error, such as memory corruption
+of the known hashes.  </li><li>User error, such as trying to do both positive and
+negative matching at  the same time.  </li><li>Internal error, such as memory corruption
 or uncaught cycle. All internal errors should be reported to the developer!
 See the section "Reporting Bugs" below. 
 <p> 
 <p> </li>
-</ul>
+</ol>
 
 <h2><a name='sect5' href='#toc5'>Author</a></h2>
 md5deep was written by Jesse
