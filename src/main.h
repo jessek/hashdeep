@@ -21,7 +21,10 @@
 
 #include "common.h"
 #include "xml.h"
+
+#ifdef HAVE_PTHREAD
 #include "threadpool.h"
+#endif
 
 #include <map>
 #include <vector>
@@ -463,8 +466,12 @@ public:
 	opt_display_size(false),
 	opt_display_hash(false),
 	opt_show_matched(false),
+#ifdef HAVE_PTRHEAD
 	opt_threadcount(threadpool::numCPU()),
 	tp(0),
+#else
+	opt_threadcount(0),
+#endif
 	size_threshold(0),
 	piecewise_size(0),	
 	primary_function(primary_compute){
@@ -495,7 +502,9 @@ public:
     bool	opt_show_matched;
     int		opt_threadcount;
 
+#ifdef HAVE_PTHREAD
     threadpool		*tp;
+#endif
 
     // When only hashing files larger/smaller than a given threshold
     uint64_t        size_threshold;

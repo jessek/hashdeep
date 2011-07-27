@@ -47,7 +47,16 @@ void display::writeln(std::ostream *os,const std::string &str)
     unlock();
 }
 
+#if defined(HAVE_VASPRINTF) && defined(__MINGW_H)
+/* prototype missing under mingw */
+extern "C" {
+    int vasprintf(char **ret,const char *fmt,va_list ap);
+}
+#endif    
+	
+
 #ifndef HAVE_VASPRINTF
+extern "C" {
 int vasprintf(char **ret,const char *fmt,va_list ap)
 {
     /* Figure out how long the result will be */
@@ -57,6 +66,7 @@ int vasprintf(char **ret,const char *fmt,va_list ap)
     /* Now allocate the memory */
     *ret = (char *)malloc(size+16);
     return vsnprintf(*ret,size+16,fmt,ap);
+}
 }
 #endif
 

@@ -81,7 +81,7 @@ static void clean_name_win32(std::wstring &fn)
 	return;
     }
     if (fn[fn.size()-1] == _TEXT(DIR_SEPARATOR)){
-	fn.erase(fn.end()-1);
+	fn.erase(fn.size()-1);
     }
 }
 
@@ -565,7 +565,7 @@ void state::dig_normal(const tstring &fn_)
 /**
  * Extract the directory name from a string and return it.
  */
-std::wstring  my_dirname(const std::wstring &fn)
+std::wstring  win32_dirname(const std::wstring &fn)
 {
     size_t loc = fn.rfind(DIR_SEPARATOR);
     if(loc==tstring::npos) return tstring(); // return empty string
@@ -610,7 +610,7 @@ void state::dig_win32(const std::wstring &fn)
 #define FATAL_ERROR_UNK(A) if (NULL == A) fatal_error("%s: %s", __progname, strerror(errno));
 #define FATAL_ERROR_MEM(A) if (NULL == A) fatal_error("%s: Out of memory", __progname);
   
-    tstring dirname = my_dirname(fn);
+    tstring dirname = win32_dirname(fn) + _TEXT(DIR_SEPARATOR);
   
     int rc = 1;
     while (rc!=0)  {

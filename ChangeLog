@@ -1,3 +1,10 @@
+2011-07-27  Simson Garfinkel  <simsong@t.nitroba.org>
+
+	* configure.ac: now compiles with and without PTHREAD, and on win32 and win64
+	updated version to 4.0.0_alpha_001
+
+	* src/hash.cpp (hash): triage mode no longer works on stdin
+
 2011-07-26  Simson Garfinkel  <simsong@t.nitroba.org>
 
 	* src/main.cpp (main): main is now a method of state.

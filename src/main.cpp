@@ -152,7 +152,6 @@ void state::usage()
 	ocb.status("%s version %s by %s.",__progname,VERSION,AUTHOR);
 	ocb.status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-jnn] [-V|-h] [-o <mode>] [FILES]",
 		     CMD_PROMPT,__progname);
-	ocb.status("");
 	
 	/* Make a list of the hashes */
 	ocb.status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
@@ -161,24 +160,29 @@ void state::usage()
 	    fprintf(stderr,"%s%s",hashes[i].name.c_str(),(i+1<NUM_ALGORITHMS) ? "," : NEWLINE);
 	}
 	
-	ocb.status("-a - audit mode. Validates FILES against known hashes. Requires -k");
-	ocb.status("-d - output in DFXML (Digital Forensics XML)");
-	ocb.status("-m - matching mode. Requires -k");
-	ocb.status("-x - negative matching mode. Requires -k");
-	ocb.status("-w - in -m mode, displays which known file was matched");
+	ocb.status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
+	ocb.status("-r  - recursive mode. All subdirectories are traversed");
+	ocb.status("-d  - output in DFXML (Digital Forensics XML)");
+	ocb.status("-k <FN>  - add a file of known hashes");
+	ocb.status("-a  - audit mode. Validates FILES against known hashes. Requires -k");
+	ocb.status("-m  - matching mode. Requires -k");
+	ocb.status("-x  - negative matching mode. Requires -k");
+	ocb.status("-w  - in -m mode, displays which known file was matched");
 	ocb.status("-M and -X act like -m and -x, but display hashes of matching files");
-	ocb.status("-k - add a file of known hashes");
-	ocb.status("-r - recursive mode. All subdirectories are traversed");
-	ocb.status("-e - compute estimated time remaining for each file");
-	ocb.status("-s - silent mode. Suppress all error messages");
-	ocb.status("-p - piecewise mode. Files are broken into blocks for hashing");
-	ocb.status("-b - prints only the bare name of files; all path information is omitted");
-	ocb.status("-l - print relative paths for filenames");
-	ocb.status("-i - only process files smaller than the given threshold");
-	ocb.status("-o - only process certain types of files. See README/manpage");
-	ocb.status("-v - verbose mode. Use again to be more verbose.");
-	ocb.status("-V - display version number and exit");
-	ocb.status("-W FILE - write output to a file; -jnn run nn threads (default %d)",threadpool::numCPU());
+	ocb.status("-e  - compute estimated time remaining for each file");
+	ocb.status("-s  - silent mode. Suppress all error messages");
+	ocb.status("-b  - prints only the bare name of files; all path information is omitted");
+	ocb.status("-l  - print relative paths for filenames");
+	ocb.status("-i  - only process files smaller than the given threshold");
+	ocb.status("-o  - only process certain types of files. See README/manpage");
+	ocb.status("-v  - verbose mode. Use again to be more verbose; -V display version & exit.");
+	ocb.status("-d  - output in DFXML; -u - Escape Unicode; -W FILE - write to FILE.");
+#ifdef HAVE_PTHREAD
+	ocb.status("-jnn run nn threads (default %d)",threadpool::numCPU());
+#else
+	ocb.status("-jnn ignored (compiled without pthreads)");
+#endif	
+
     }
     if(usage_count==1){
 	ocb.status("-u  - escape Unicode");
@@ -197,9 +201,8 @@ void state::md5deep_usage(void)
 	ocb.status("See the man page or README.txt file for the full list of options");
 	ocb.status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
 	ocb.status("-r  - recursive mode. All subdirectories are traversed");
-	ocb.status("-e  - compute estimated time remaining for each file");
-	ocb.status("-s  - silent mode. Suppress all error messages");
-	ocb.status("-S  - displays warnings on bad hashes only");
+	ocb.status("-e  - show estimated time remaining for each file");
+	ocb.status("-s  - silent mode. Suppress all error messages; -S warn on bad hashes only");
 	ocb.status("-z  - display file size before hash");
 	ocb.status("-m <file> - enables matching mode. See README/man page");
 	ocb.status("-x <file> - enables negative matching mode. See README/man page");
@@ -214,10 +217,12 @@ void state::md5deep_usage(void)
 	ocb.status("-i/I- only process files smaller than the given threshold");
 	ocb.status("-o  - only process certain types of files. See README/manpage");
 	ocb.status("-v  - display version number and exit");
-	ocb.status("-W FILE - write output to a file; -jnn run nn threads (default %d)",threadpool::numCPU());
-    }
-    if(usage_count==1){
-	ocb.status("-u  - escape Unicode");
+	ocb.status("-d  - output in DFXML; -u - Escape Unicode; -W FILE - write to FILE.");
+#ifdef HAVE_PTHREAD
+	ocb.status("-jnn run nn threads (default %d)",threadpool::numCPU());
+#else
+	ocb.status("-jnn ignored (compiled without pthreads)");
+#endif	
     }
     usage_count++;
 }
@@ -565,6 +570,8 @@ std::string main::escape_utf8(const std::string &utf8)
  */
 std::string main::make_utf8(const tstring &str) 
 {
+    if(str.size()==0) return std::string(); // nothing to convert
+
     /* Figure out how many bytes req required */
     size_t len = WideCharToMultiByte(CP_UTF8,0,str.c_str(),str.size(),0,0,0,0);
     if(len==0){
@@ -1004,10 +1011,12 @@ int state::main(int _argc,char **_argv)
 	ocb.set_utf8_banner( make_banner());
     }
 
+#ifdef HAVE_PTHREAD
     /* set up the threadpool */
     if(ocb.opt_threadcount>0){
 	ocb.tp = new threadpool(ocb.opt_threadcount);
     }
+#endif
 
     if(opt_debug>2){
 	std::cout << "dump hashlist before matching:\n";
@@ -1034,6 +1043,7 @@ int state::main(int _argc,char **_argv)
     }
   
     /* If we are multi-threading, wait for all threads to finish */
+#ifdef HAVE_PTHREAD
     if(ocb.tp){
 	while(ocb.tp->all_free()==false){
 #ifdef HAVE_USLEEP
@@ -1043,7 +1053,8 @@ int state::main(int _argc,char **_argv)
 #endif
 	}
     }
-	    
+#endif
+
     if(opt_debug>2){
 	std::cout << "\ndump hashlist after matching:\n";
 	ocb.dump_hashlist();

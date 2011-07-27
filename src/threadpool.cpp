@@ -3,6 +3,7 @@
  ****************************************************************/
 
 #include "main.h"
+#ifdef HAVE_PTHREAD
 #include "threadpool.h"
 
 
@@ -196,3 +197,4 @@ bool threadpool::all_free()
 {
     return numworkers == get_free_count();
 }
+#endif

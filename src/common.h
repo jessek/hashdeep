@@ -174,10 +174,10 @@ inline bool STRINGS_EQUAL(const char *a,const char *b)
     return strcmp(a,b)==0;
 }
 
-inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
-{
-    return a==b;
-}
+//inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
+//{
+//    return a==b;
+//}
 #endif
 
 
