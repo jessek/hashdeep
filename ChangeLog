@@ -1,3 +1,7 @@
+2011-07-27  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/main.h (class display): added conditional defines so that wstring stuff isn't compiled on mac
+
 2011-07-27  Simson Garfinkel  <simsong@t.nitroba.org>
 
 	* configure.ac: now compiles with and without PTHREAD, and on win32 and win64
