@@ -65,7 +65,7 @@ AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h stdint.h stdlib.h string.
 			   sys/ioctl.h sys/mmap.h sys/param.h wchar.h unistd.h sys/stat.h sys/disk.h])
 
 # These functions not available everywhere
-AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r mmap usleep])
+AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r mmap usleep mkstemp vasprintf])
 
 # These includes are required on FreeBSD
 AC_CHECK_HEADERS([sys/mount.h],[],[],

@@ -256,8 +256,7 @@ int state::find_bsd_hash(char *buf, char *fn)
     return FALSE;
   second_paren = pos;
 
-  if (fn != NULL)
-  {
+  if (fn != NULL)  {
     temp = strdup(buf);
     temp[second_paren] = 0;
     // The filename starts one character after the first paren
@@ -283,9 +282,9 @@ int state::find_bsd_hash(char *buf, char *fn)
   int status = valid_hash(s,temp);
   return status;
 #endif
-  assert(0);
   free(temp);
-
+  assert(0);
+  return 0;
 }
   
 
@@ -305,18 +304,19 @@ int state::find_rigid_hash(char *buf,  char *fn, unsigned int fn_location, unsig
   char *temp = strdup(buf);
   if (temp == NULL)
     return FALSE;
-  if (find_comma_separated_string(temp,fn_location-1))
-  {
+  if (find_comma_separated_string(temp,fn_location-1))  {
     free(temp);
     return FALSE;
   }
   strncpy(fn, temp, strlen(fn));
   free(temp);
-  if (find_comma_separated_string(buf,hash_location-1))
+  if (find_comma_separated_string(buf,hash_location-1)){
     return FALSE;
+  }
 
   //return valid_hash(s,buf);
   assert(0);
+  return false;
 }
 
 #ifdef WORDS_BIGENDIAN

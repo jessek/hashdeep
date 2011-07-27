@@ -47,6 +47,20 @@ void display::writeln(std::ostream *os,const std::string &str)
     unlock();
 }
 
+#ifndef HAVE_VASPRINTF
+int vasprintf(char **ret,const char *fmt,va_list ap)
+{
+    /* Figure out how long the result will be */
+    char buf[2];
+    int size = vsnprintf(buf,sizeof(buf),fmt,ap);
+    if(size<0) return size;
+    /* Now allocate the memory */
+    *ret = (char *)malloc(size+16);
+    return vsnprintf(*ret,size+16,fmt,ap);
+}
+#endif
+
+
 void display::status(const char *fmt,...)
 {
     va_list(ap); 
@@ -134,10 +148,20 @@ void display::print_debug(const char *fmt, ... )
  * output the string, typically a fn, optionally performing unicode escaping
  */
 
-std::string display::fmt_filename(const filename_t &fn) const
+std::string display::fmt_filename(const std::string &fn) const
 {
     if(opt_unicode_escape){
 	return main::escape_utf8(fn);
+    } else {
+	return fn;			// assumed to be utf8
+    }
+}
+
+
+std::string display::fmt_filename(const std::wstring &fn) const
+{
+    if(opt_unicode_escape){
+	return main::escape_utf8(main::make_utf8(fn));
     } else {
 	return main::make_utf8(fn);
     }
@@ -162,7 +186,23 @@ void display::print_error(const char *fmt, ...)
 }
 
 
-void display::error_filename(const filename_t &fn,const char *fmt, ...)
+void display::error_filename(const std::string &fn,const char *fmt, ...)
+{
+    if(opt_silent) return;
+
+    va_list(ap); 
+    va_start(ap,fmt); 
+    char *ret = 0;
+    if(vasprintf(&ret,fmt,ap) < 0){
+	(*out) << __progname << ": " << strerror(errno);
+	exit(EXIT_FAILURE);
+    }
+    writeln(&std::cerr,fmt_filename(fn) + ": " + ret);
+    free(ret);
+    va_end(ap);
+}
+
+void display::error_filename(const std::wstring &fn,const char *fmt, ...)
 {
     if(opt_silent) return;
 
@@ -205,11 +245,11 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
 
     std::stringstream ss;
 
-    tstring fn = fdht->file_name;
+    std::string fn = fdht->file_name;
     if (fn.size() < MAX_FILENAME_LENGTH){
 	/* Shorten from the middle */
 	size_t half = MAX_FILENAME_LENGTH/2;
-	fn = fn.substr(0,half) + _T("...") + fn.substr(fn.size()-half,half);
+	fn = fn.substr(0,half) + "..." + fn.substr(fn.size()-half,half);
     }
 
     ss << fmt_filename(fn) << " ";
@@ -568,6 +608,7 @@ void display::finalize_matching()
  * to build the line before outputing it.
  *
  */
+
 void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher because of triage
 {
     lock();
@@ -606,11 +647,14 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 	    if (mode_timestamp)      {
 		struct tm my_time;
 		memset(&my_time,0,sizeof(my_time)); // clear it out
-#ifdef HAVE__GMTIME64_S		
-		_gmtime64_s(&fdht->timestamp,&my_time);
-#endif
 #ifdef HAVE__GMTIME64
+		// This is not threadsafe, hence the lock //
+		lock();
 		my_time = *_gmtime64(&fdht->timestamp);
+		unlock();
+		//we tried this:
+		//_gmtime64_s(&fdht->timestamp,&my_time);
+		//but it had problems on mingw64
 #endif
 #ifdef HAVE_GMTIME_R		
 		gmtime_r(&fdht->timestamp,&my_time);

@@ -1,3 +1,7 @@
+2011-07-26  Simson Garfinkel  <simsong@t.nitroba.org>
+
+	* src/main.cpp (main): main is now a method of state.
+
 2011-07-22  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* src/hash.cpp (display::hash_stdin): removed is_stdin because we can just compare handle to stdin.

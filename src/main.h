@@ -550,7 +550,8 @@ public:
      *
      */
     std::string	fmt_size(const file_data_t *fdh) const;
-    std::string fmt_filename(const filename_t &fn) const;
+    std::string fmt_filename(const std::string  &fn) const;
+    std::string fmt_filename(const std::wstring &fn) const;
     std::string fmt_filename(const file_data_t *fdt) const {
 	return fmt_filename(fdt->file_name);
     }
@@ -561,7 +562,8 @@ public:
     void	internal_error(const char *fmt, ...);// Display an error message, ask user to contact the developer, 
     void	print_debug(const char *fmt, ...);
     void	print_error(const char *fmt, ...);// Display an error message if not in silent mode
-    void	error_filename(const filename_t &fn, const char *fmt, ...);
+    void	error_filename(const std::string &fn, const char *fmt, ...);
+    void	error_filename(const std::wstring &fn, const char *fmt, ...);
 
     /* these versions extract the filename and the annotation if it is present.
      */
@@ -714,6 +716,7 @@ public:;
     std::string	make_banner();
     void	md5deep_usage();
     void	check_flags_okay();
+    void	check_wow64();
     void	md5deep_check_flags_okay();
     int		hashdeep_process_command_line(int argc,char **argv);
     void	md5deep_check_matching_modes();
@@ -771,6 +774,9 @@ public:;
     bool hashes_loaded(){
 	return ocb.hashes_loaded();
     }
+
+    int main(int argc,char **argv);	// main
+
 };
 
 /**

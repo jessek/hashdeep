@@ -156,11 +156,11 @@ bool state::is_junction_point(const std::wstring &fn)
 	    status = TRUE;
 
 	    if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0) {
-		    print_error_filename(fn,"Junction point, skipping");
+		ocb.error_filename(fn,"Junction point, skipping");
 	    } else if (IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0) {
-		    print_error_filename(fn,"Symbolic link, skipping");
+		ocb.error_filename(fn,"Symbolic link, skipping");
 	    } else {
-		    print_error_filename(fn,"Unknown reparse point 0x%"PRIx32", skipping",
+		ocb.error_filename(fn,"Unknown reparse point 0x%"PRIx32", skipping",
 					 FindFileData.dwReserved0);
 	    }
 	}
@@ -228,7 +228,6 @@ bool state::is_junction_point(const std::wstring &fn)
 
 
 
-#ifndef _WIN32
 /* POSIX version of clean_name */
 static void remove_double_slash(tstring &fn)
 {
@@ -293,6 +292,8 @@ static void remove_double_dirs(tstring &fn)
     }
 }
 
+
+#ifndef _WIN32
 static void clean_name_posix(std::string &fn)
 {
     // We don't need to call these functions when running in Windows
@@ -581,7 +582,6 @@ std::wstring  my_dirname(const std::wstring &fn)
 
 void state::dig_win32(const std::wstring &fn)
 {
-    int rc, status = STATUS_OK;
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind;
 
@@ -597,13 +597,14 @@ void state::dig_win32(const std::wstring &fn)
     size_t asterisk = fn.find(L'*');
     size_t question  = fn.find(fn,L'?');
     if (asterisk==std::wstring::npos && question==std::wstring::npos){
-	return (dig_normal(fn));
+	dig_normal(fn);
+	return;
     }
   
     hFind = FindFirstFile(fn.c_str(), &FindFileData);
     if (INVALID_HANDLE_VALUE == hFind)  {
-	print_error_filename(fn,"No such file or directory");
-	return STATUS_OK;
+	ocb.error_filename(fn,"No such file or directory");
+	return;
     }
   
 #define FATAL_ERROR_UNK(A) if (NULL == A) fatal_error("%s: %s", __progname, strerror(errno));
@@ -611,7 +612,7 @@ void state::dig_win32(const std::wstring &fn)
   
     tstring dirname = my_dirname(fn);
   
-    rc = 1;
+    int rc = 1;
     while (rc!=0)  {
 	if (!(is_special_dir(FindFileData.cFileName)))    {
 	    // The filename we've found doesn't include any path information.
@@ -643,15 +644,15 @@ void state::dig_win32(const std::wstring &fn)
 	// is beserk. Rather than play their silly games, we 
 	// acknowledge that an unknown error occured and hope we
 	// can continue.
-	print_error_filename(fn,"Unknown error while expanding wildcard");
-	return STATUS_OK;
+	ocb.error_filename(fn,"Unknown error while expanding wildcard");
+	return;
     }
   
     rc = FindClose(hFind);
     if (0 == rc)  {
-	print_error_filename(fn,"Unknown error while cleaning up wildcard expansion");
+	ocb.error_filename(fn,"Unknown error while cleaning up wildcard expansion");
     }
-    return status;
+    return;
 }
 #endif
 

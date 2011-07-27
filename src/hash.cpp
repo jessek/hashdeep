@@ -15,6 +15,7 @@
 
 #include "main.h"
 #include "threadpool.h"
+#include <limits.h>
 #include <sstream>
 
 /****************************************************************
@@ -123,7 +124,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 	// If an error occured, display a message and see if we need to quit.
 	if (ferror(this->handle)) {
 	    ocb->error_filename(this->file_name,"error at offset %"PRIu64": %s",
-			       ftello(this->handle), strerror(errno));
+				ftello(this->handle), strerror(errno));
 	   
 	    if (file_fatal_error()){
 		this->ocb->set_return_code(status_t::status_EXIT_FAILURE);
@@ -264,10 +265,14 @@ void file_data_hasher_t::hash()
      * Read the file, handling piecewise hashing as necessary
      */
 
+#ifndef ULLONG_MAX
+#define ULLONG_MAX 9223372036854775807ll
+#endif
+
     uint64_t request_start = 0;
     while (!feof(fdht->handle))  {
 	
-	uint64_t request_len = 0xffffffffffffffffUL; // really big
+	uint64_t request_len = ULLONG_MAX; // really big
 	if ( fdht->ocb->piecewise_size>0 )  {
 	    request_len = fdht->ocb->piecewise_size;
 	}

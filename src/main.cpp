@@ -651,7 +651,7 @@ std::string main::get_realpath8(const tstring &fn)
 typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
 LPFN_ISWOW64PROCESS fnIsWow64Process;
 
-static void check_wow64(state *s)
+void state::check_wow64()
 {
     BOOL result;
 
@@ -667,8 +667,8 @@ static void check_wow64(state *s)
     }
     
     if (result) {
-	print_error("%s: WARNING: You are running a 32-bit program on a 64-bit system.", __progname);
-	print_error("%s: You probably want to use the 64-bit version of this program.", __progname);
+	ocb.print_error("%s: WARNING: You are running a 32-bit program on a 64-bit system.", __progname);
+	ocb.print_error("%s: You probably want to use the 64-bit version of this program.", __progname);
     }
 }
 #endif   // ifdef _WIN32
@@ -845,7 +845,7 @@ std::string state::make_banner()
     utf8_banner += "## Invoked from: " + main::make_utf8(main::getcwd()) + NEWLINE;
     utf8_banner += "## ";
 #ifdef _WIN32
-    utf8_banner += cwd[0] + ":\\>";
+    utf8_banner += main::make_utf8(main::getcwd())[0] + ":\\>";
 #else
     utf8_banner += (geteuid()==0) ? "#" : "$";
 #endif
@@ -937,6 +937,11 @@ int main(int argc, char **argv)
     algorithm_t::load_hashing_algorithms();		
     state *s = new state();
 
+    return s->main(argc,argv);
+}
+
+int state::main(int _argc,char **_argv)
+{
     /**
      * Originally this program was two sets of progarms:
      * 'hashdeep' with the new interface, and 'md5deep', 'sha1deep', etc
@@ -949,7 +954,7 @@ int main(int argc, char **argv)
     std::transform(progname.begin(), progname.end(), progname.begin(), ::tolower);
     std::string algname = progname.substr(0,progname.find("deep"));
     if(algname=="hash"){			// we are hashdeep
-	s->hashdeep_process_command_line(argc,argv);
+	hashdeep_process_command_line(_argc,_argv);
     } else {
 	algorithm_t::clear_algorithms_inuse();
 	char buf[256];
@@ -966,7 +971,7 @@ int main(int argc, char **argv)
 	    cerr << progname << ": unknown hash: " <<algname << "\n";
 	    exit(1);
 	}
-	s->md5deep_process_command_line(argc,argv);
+	md5deep_process_command_line(_argc,_argv);
     }
 
     if(opt_debug==1){
@@ -977,36 +982,36 @@ int main(int argc, char **argv)
     /* See if we can open a regular file output, if requested */
 
     /* Set up the DFXML output if requested */
-    s->ocb.dfxml_startup(argc,argv);
+    ocb.dfxml_startup(_argc,_argv);
    
 #ifdef _WIN32
-    if (prepare_windows_command_line(s)){
-	fatal_error("%s: Unable to process command line arguments", __progname);
+    if (prepare_windows_command_line()){
+	ocb.fatal_error("%s: Unable to process command line arguments", __progname);
     }
-    check_wow64(s);
+    check_wow64();
 #else
-    s->argc = argc;
-    s->argv = argv;
+    argc = _argc;
+    argv = _argv;
 #endif
 
     /* Verify that we can get the current working directory. */
     if(main::getcwd().size()==0){
-	s->ocb.fatal_error("%s: %s", __progname, strerror(errno));
+	ocb.fatal_error("%s: %s", __progname, strerror(errno));
     }
 
     /* Make the banner if we are not in md5deep mode */
     if (!md5deep_mode){
-	s->ocb.set_utf8_banner( s->make_banner());
+	ocb.set_utf8_banner( make_banner());
     }
 
     /* set up the threadpool */
-    if(s->ocb.opt_threadcount>0){
-	s->ocb.tp = new threadpool(s->ocb.opt_threadcount);
+    if(ocb.opt_threadcount>0){
+	ocb.tp = new threadpool(ocb.opt_threadcount);
     }
 
     if(opt_debug>2){
 	std::cout << "dump hashlist before matching:\n";
-	s->ocb.dump_hashlist();
+	ocb.dump_hashlist();
     }
 
     /*
@@ -1016,21 +1021,21 @@ int main(int argc, char **argv)
      */
     
     if (optind == argc){
-	s->ocb.hash_stdin();
+	ocb.hash_stdin();
     } else {
-	for(int i=optind;i<s->argc;i++){
-	    tstring fn = s->generate_filename(s->argv[i]);
+	for(int i=optind;i<argc;i++){
+	    tstring fn = generate_filename(this->argv[i]);
 #ifdef _WIN32
-	    s->dig_win32(fn);
+	    dig_win32(fn);
 #else
-	    s->dig_normal(fn);
+	    dig_normal(fn);
 #endif
 	}
     }
   
     /* If we are multi-threading, wait for all threads to finish */
-    if(s->ocb.tp){
-	while(s->ocb.tp->all_free()==false){
+    if(ocb.tp){
+	while(ocb.tp->all_free()==false){
 #ifdef HAVE_USLEEP
 	    usleep(50);
 #else	    
@@ -1041,13 +1046,13 @@ int main(int argc, char **argv)
 	    
     if(opt_debug>2){
 	std::cout << "\ndump hashlist after matching:\n";
-	s->ocb.dump_hashlist();
+	ocb.dump_hashlist();
     }
 
 
     /* If we were auditing, display the audit results */
-    if (s->ocb.primary_function == primary_audit){
-	s->ocb.display_audit_results();
+    if (ocb.primary_function == primary_audit){
+	ocb.display_audit_results();
     }
   
     /* We only have to worry about checking for unused hashes if one 
@@ -1057,11 +1062,11 @@ int main(int argc, char **argv)
      * or known hashes not being used
      */
     if (opt_mode_match || opt_mode_match_neg){
-	s->ocb.finalize_matching();
+	ocb.finalize_matching();
     }
 
     /* If we were generating DFXML, finish the job */
-    s->ocb.dfxml_shutdown();
-    return s->ocb.get_return_code();
+    ocb.dfxml_shutdown();
+    return ocb.get_return_code();
 }
 
