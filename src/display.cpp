@@ -168,6 +168,7 @@ std::string display::fmt_filename(const std::string &fn) const
 }
 
 
+#ifdef _WIN32
 std::string display::fmt_filename(const std::wstring &fn) const
 {
     if(opt_unicode_escape){
@@ -176,6 +177,7 @@ std::string display::fmt_filename(const std::wstring &fn) const
 	return main::make_utf8(fn);
     }
 }
+#endif
 
 
 void display::print_error(const char *fmt, ...)
@@ -212,6 +214,7 @@ void display::error_filename(const std::string &fn,const char *fmt, ...)
     va_end(ap);
 }
 
+#ifdef _WIN32
 void display::error_filename(const std::wstring &fn,const char *fmt, ...)
 {
     if(opt_silent) return;
@@ -227,7 +230,7 @@ void display::error_filename(const std::wstring &fn,const char *fmt, ...)
     free(ret);
     va_end(ap);
 }
-
+#endif
 
 void display::clear_realtime_stats()
 {

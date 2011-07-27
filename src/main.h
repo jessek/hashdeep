@@ -560,7 +560,9 @@ public:
      */
     std::string	fmt_size(const file_data_t *fdh) const;
     std::string fmt_filename(const std::string  &fn) const;
+#ifdef _WIN32
     std::string fmt_filename(const std::wstring &fn) const;
+#endif
     std::string fmt_filename(const file_data_t *fdt) const {
 	return fmt_filename(fdt->file_name);
     }
@@ -572,7 +574,9 @@ public:
     void	print_debug(const char *fmt, ...);
     void	print_error(const char *fmt, ...);// Display an error message if not in silent mode
     void	error_filename(const std::string &fn, const char *fmt, ...);
+#ifdef _WIN32
     void	error_filename(const std::wstring &fn, const char *fmt, ...);
+#endif
 
     /* these versions extract the filename and the annotation if it is present.
      */
