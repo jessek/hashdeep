@@ -294,7 +294,7 @@ static void remove_double_dirs(tstring &fn)
 
 
 #ifndef _WIN32
-static void clean_name_posix(std::string &fn)
+void state::clean_name_posix(std::string &fn)
 {
     // We don't need to call these functions when running in Windows
     // as we've already called real_path() on them in main.c. These
@@ -305,7 +305,7 @@ static void clean_name_posix(std::string &fn)
     //
     // TODO: See if Windows Vista's symbolic links create problems 
 
-    if (!opt_relative)  {
+    if (!ocb.opt_relative)  {
 	remove_double_slash(fn);
 	remove_single_dirs(fn);
 	remove_double_dirs(fn);

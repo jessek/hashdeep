@@ -795,6 +795,7 @@ public:;
 #ifdef _WIN32
     bool	is_junction_point(const std::wstring &fn);
 #endif
+    void	clean_name_posix(std::string &fn);
     void	process_dir(const tstring &path);
     void	dig_normal(const tstring &path);	// posix  & win32 
     void	dig_win32(const tstring &path);	// win32 only; calls dig_normal
