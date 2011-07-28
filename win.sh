@@ -97,4 +97,14 @@ echo Creating md5deep-$VERSION.zip
 mkdir md5deep-$VERSION
 cp src/*.exe md5deep-$VERSION
 zip md5deep-$VERSION.zip md5deep-$VERSION/*.exe
+
+echo Adding text files
+cp NEWS		md5deep-$VERSION/changes.txt
+cp COPYING	md5deep-$VERSION/copying.txt
+cp FILEFORMAT   md5deep-$VERSION/fileformat.txt
+nroff -man man/hashdeep.1 > md5deep-$VERSION/hashdeep.txt
+nroff -man man/md5deep.1  > md5deep-$VERSION/md5deep.txt
+zip --to-crlf md5deep-$VERSION.zip md5deep-$VERSION/*.txt
+
 /bin/rm -rf md5deep-$VERSION
+
