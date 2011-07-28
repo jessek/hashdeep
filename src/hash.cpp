@@ -140,7 +140,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 	}
 
 	// If we are printing estimates, update the time
-	if (opt_estimate)    {
+	if (ocb->opt_estimate)    {
 	    time_t current_time = time(0);
 	    // We only update the display only if a full second has elapsed 
 	    if (this->last_time != current_time) {
@@ -149,7 +149,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 	    }
 	}
     }
-    if (opt_estimate) ocb->clear_realtime_stats();
+    if (ocb->opt_estimate) ocb->clear_realtime_stats();
     this->multihash_finalize();
     return true;			// done hashing!
 }
@@ -185,7 +185,7 @@ void file_data_hasher_t::hash()
 	// stat the file to get the bytes and timestamp
 	state::file_type(fdht->file_name_to_hash,ocb,&fdht->stat_bytes,&fdht->timestamp);
 
-	if(opt_verbose>=MORE_VERBOSE){
+	if(ocb->opt_verbose>=MORE_VERBOSE){
 	    errno = 0;			// no error
 	    ocb->error_filename(fdht->file_name_to_hash,"hash() primary_function=%d",ocb->primary_function);
 	}
@@ -235,7 +235,7 @@ void file_data_hasher_t::hash()
 	}
     }
 
-    if (opt_estimate)  {
+    if (ocb->opt_estimate)  {
 	time(&(fdht->start_time));
 	fdht->last_time = fdht->start_time;
     }

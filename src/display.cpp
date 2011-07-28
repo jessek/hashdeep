@@ -57,16 +57,21 @@ extern "C" {
 
 #ifndef HAVE_VASPRINTF
 extern "C" {
-int vasprintf(char **ret,const char *fmt,va_list ap)
-{
-    /* Figure out how long the result will be */
-    char buf[2];
-    int size = vsnprintf(buf,sizeof(buf),fmt,ap);
-    if(size<0) return size;
-    /* Now allocate the memory */
-    *ret = (char *)malloc(size+16);
-    return vsnprintf(*ret,size+16,fmt,ap);
-}
+    /**
+     * We do not have vasprintf.
+     * We have determined that vsnprintf() does not perform properly on windows.
+     * So we just allocate a huge buffer and then strdup() and hope!
+     */
+    int vasprintf(char **ret,const char *fmt,va_list ap)
+    {
+	/* Figure out how long the result will be */
+	char buf[65536];
+	int size = vsnprintf(buf,sizeof(buf),fmt,ap);
+	if(size<0) return size;
+	/* Now allocate the memory */
+	*ret = (char *)strdup(buf);
+	return size;
+    }
 }
 #endif
 

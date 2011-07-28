@@ -54,6 +54,26 @@ then
   make distclean
 fi
 
+/bin/rm -f src/*.exe
+
+echo Trying to make the 64-bit windows
+have64='no'
+for cc in x86_64-w64-mingw32
+do
+  if [ $have64 = 'no' ] && ${cc}-g++ -v ;
+  then 
+    echo I can run the ${cc}-g++ compiler
+    ./configure --host=$cc
+    make
+    ${cc}-strip */*.exe
+    for i in */*.exe 
+    do
+	mv -f $i `echo $i|sed s/.exe/64.exe/`
+    done
+    have64='yes'
+  fi
+done
+
 echo Trying to make the 32-bit windows
 have32='no'
 for cc in i586-mingw32msvc  i386-mingw32
@@ -68,18 +88,13 @@ do
   fi
 done
 
-echo Trying to make the 64-bit windows
-have64='no'
-for cc in x86_64-w64-mingw32
-do
-  if [ $have64 = 'no' ] && ${cc}-g++ -v ;
-  then 
-    echo I can run the ${cc}-g++ compiler
-    ./configure --host=$cc
-    make
-    ${cc}-strip */*.exe
-    have64='yes'
-done
+
 echo Successfully compiled 32-bit windows code: $have32
 echo Successfully compiled 64-bit windows code: $have64
 
+VERSION=`grep PACKAGE_VERSION config.h | awk '{print $3}' | sed s/\"//g`
+echo Creating md5deep-$VERSION.zip
+mkdir md5deep-$VERSION
+cp src/*.exe md5deep-$VERSION
+zip md5deep-$VERSION.zip md5deep-$VERSION/*.exe
+/bin/rm -rf md5deep-$VERSION

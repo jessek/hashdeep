@@ -53,28 +53,16 @@ int _CRT_fmode = _O_BINARY;
 #endif
 
 
-/* These were inappropriately moved here and need to be moved to classes */
-int opt_debug = 0;			// debug mode; 1 is self-test
-bool opt_silent = false;
-bool md5deep_mode = false;
-int  opt_verbose = 0;
-bool opt_estimate = false;
-bool opt_relative = false;
-bool opt_unicode_escape = false;
-bool opt_mode_match = false;
-bool opt_mode_match_neg = false;
-
-
-/* output options */
-bool opt_csv = false;
-bool opt_asterisk = false;
+/* The only remaining global options */
+bool	md5deep_mode = false;
+int	opt_debug = 0;			// debug mode; 1 is self-test
+hashid_t  opt_md5deep_mode_algorithm = alg_unknown;
 
 
 /****************************************************************
  ** Various helper functions.
  ****************************************************************/
 
-hashid_t  opt_md5deep_mode_algorithm = alg_unknown;
 uint64_t file_data_hasher_t::next_file_number = 0; // needs to live somewhere
 
 /* This is the one place we allow a printf, becuase we are about to exit, and we call it before we multithread */
@@ -84,10 +72,10 @@ static void try_msg(void)
 }
 
 
-static void sanity_check(int condition, const char *msg)
+void state::sanity_check(int condition, const char *msg)
 {
     if (condition) {
-	if (!opt_silent) {
+	if (!ocb.opt_silent) {
 	    fprintf(stderr,"%s: %s", __progname, msg);
 	    try_msg();
 	}
@@ -110,7 +98,7 @@ static int is_absolute_path(const TCHAR *fn)
  
 tstring state::generate_filename(const TCHAR *input)
 {
-    if ((opt_relative) || is_absolute_path(input)){
+    if ((ocb.opt_relative) || is_absolute_path(input)){
 #ifdef _WIN32
 	return tstring((const wchar_t *)input);
 #else
@@ -238,7 +226,7 @@ void state::check_flags_okay()
 	       "Unable to load any matching files");
 
   sanity_check(
-	       (opt_relative) && (ocb.mode_barename),
+	       (ocb.opt_relative) && (ocb.mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
   /* Additional sanity checks will go here as needed... */
@@ -458,10 +446,10 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       //    case 't': mode |= mode_timestamp;    break;
 
     case 'b': ocb.mode_barename=true;     break;
-    case 'l': opt_relative=true;     break;
-    case 'e': opt_estimate = true;	    break;
+    case 'l': ocb.opt_relative=true;     break;
+    case 'e': ocb.opt_estimate = true;	    break;
     case 'r': mode_recursive=true;    break;
-    case 's': opt_silent = true;	    break;
+    case 's': ocb.opt_silent = true;	    break;
       
     case 'p':
 	ocb.piecewise_size = find_block_size(optarg);
@@ -475,7 +463,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
     case 'k':
 	switch (ocb.load_hash_file(optarg)) {
 	case hashlist::loadstatus_ok: 
-	    if(opt_verbose>=MORE_VERBOSE){
+	    if(ocb.opt_verbose>=MORE_VERBOSE){
 		ocb.print_error("%s: %s: Match file loaded %d known hash values.",
 			    __progname,optarg,ocb.known_size());
 	    }
@@ -503,7 +491,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       break;
       
     case 'v':
-	if(++opt_verbose > INSANELY_VERBOSE){
+	if(++ocb.opt_verbose > INSANELY_VERBOSE){
 	    ocb.print_error("%s: User request for insane verbosity denied", __progname);
 	}
 	break;
@@ -514,7 +502,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	  
     case 'W': ocb.set_outfilename(optarg); break;
     case '0': ocb.opt_zero = true; break;
-    case 'u': opt_unicode_escape = true;break;
+    case 'u': ocb.opt_unicode_escape = true;break;
     case 'j': ocb.opt_threadcount = atoi(optarg); break;
 
     case 'h':
@@ -689,11 +677,11 @@ void state::check_wow64()
 
 void state::md5deep_check_flags_okay()
 {
-  sanity_check(((opt_mode_match) || (opt_mode_match_neg)) &&
+  sanity_check(((ocb.opt_mode_match) || (ocb.opt_mode_match_neg)) &&
 	       hashes_loaded()==0,
 	       "Unable to load any matching files");
 
-  sanity_check((opt_relative) && (ocb.mode_barename),
+  sanity_check((ocb.opt_relative) && (ocb.mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive");
   
   sanity_check((ocb.piecewise_size>0) && (ocb.opt_display_size),
@@ -703,18 +691,18 @@ void state::md5deep_check_flags_okay()
   /* If we try to display non-matching files but haven't initialized the
      list of matching files in the first place, bad things will happen. */
   sanity_check((ocb.mode_not_matched) && 
-	       ! ((opt_mode_match) || (opt_mode_match_neg)),
+	       ! ((ocb.opt_mode_match) || (ocb.opt_mode_match_neg)),
 	       "Matching or negative matching must be enabled to display non-matching files");
 
   sanity_check(ocb.opt_show_matched && 
-	       ! ((opt_mode_match) || (opt_mode_match_neg)), 
+	       ! ((ocb.opt_mode_match) || (ocb.opt_mode_match_neg)), 
 	       "Matching or negative matching must be enabled to display which file matched");
 }
 
 
 void state::md5deep_check_matching_modes()
 {
-    sanity_check((opt_mode_match) && (opt_mode_match_neg),
+    sanity_check((ocb.opt_mode_match) && (ocb.opt_mode_match_neg),
 		 "Regular and negative matching are mutually exclusive.");
 }
 
@@ -722,6 +710,7 @@ void state::md5deep_check_matching_modes()
 int state::md5deep_process_command_line(int argc, char **argv)
 {
     int i;
+
     while ((i = getopt(argc,
 		       argv,
 		       "dI:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:D:uj:")) != -1) { 
@@ -757,13 +746,13 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	case 'j': ocb.opt_threadcount          = atoi(optarg);break;
 
 	case 'a':
-	    opt_mode_match=true;
+	    ocb.opt_mode_match=true;
 	    md5deep_check_matching_modes();
 	    md5deep_add_hash(optarg,optarg);
 	    break;
 
 	case 'A':
-	    opt_mode_match_neg=true;
+	    ocb.opt_mode_match_neg=true;
 	    md5deep_check_matching_modes();
 	    md5deep_add_hash(optarg,optarg);
 	    break;
@@ -777,7 +766,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	    ocb.opt_display_hash=true;
 	    /* Intentional fall through */
 	case 'm':
-	    opt_mode_match=true;
+	    ocb.opt_mode_match=true;
 	    md5deep_check_matching_modes();
 	    md5deep_load_match_file(optarg);
 	    break;
@@ -785,30 +774,30 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	case 'X':
 	    ocb.opt_display_hash=true;
 	case 'x':
-	    opt_mode_match_neg=true;
+	    ocb.opt_mode_match_neg=true;
 	    md5deep_check_matching_modes();
 	    md5deep_load_match_file(optarg);
 	    break;
 
-	case 'c': opt_csv = true;		break;
+	case 'c': ocb.opt_csv = true;		break;
 	case 'z': ocb.opt_display_size = true;	break;
 	case '0': ocb.opt_zero = true;	break;
 
 	case 'S':
 	    mode_warn_only=true;
-	    opt_silent = true;
+	    ocb.opt_silent = true;
 	    break;
 
-	case 's': opt_silent = true;	break;
-	case 'e': opt_estimate = true;	break;
+	case 's': ocb.opt_silent = true;	break;
+	case 'e': ocb.opt_estimate = true;	break;
 	case 'r': mode_recursive = true; break;
-	case 'k': opt_asterisk = true;      break;
+	case 'k': ocb.opt_asterisk = true;      break;
 	case 'b': ocb.mode_barename=true; break;
       
-	case 'l': opt_relative = true;      break;
+	case 'l': ocb.opt_relative = true;      break;
 	case 'q': ocb.mode_quiet = true; break;
 	case 'W': ocb.set_outfilename(optarg);	break;
-	case 'u': opt_unicode_escape = 1;	break;
+	case 'u': ocb.opt_unicode_escape = 1;	break;
 
 	case 'h':
 	    md5deep_usage();
@@ -1072,7 +1061,7 @@ int state::main(int _argc,char **_argv)
      * also sets our return values in terms of inputs not being matched
      * or known hashes not being used
      */
-    if (opt_mode_match || opt_mode_match_neg){
+    if (ocb.opt_mode_match || ocb.opt_mode_match_neg){
 	ocb.finalize_matching();
     }
 

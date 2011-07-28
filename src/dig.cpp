@@ -564,11 +564,16 @@ void state::dig_normal(const tstring &fn_)
 #ifdef _WIN32
 /**
  * Extract the directory name from a string and return it.
+ * Do not include the final 
  */
+
 std::wstring  win32_dirname(const std::wstring &fn)
 {
     size_t loc = fn.rfind(DIR_SEPARATOR);
-    if(loc==tstring::npos) return tstring(); // return empty string
+    if(loc==tstring::npos){
+	std::cerr << "returning empty\n";
+	return tstring(); // return empty string
+    }
     return fn.substr(0,loc);
 }
 
@@ -610,7 +615,8 @@ void state::dig_win32(const std::wstring &fn)
 #define FATAL_ERROR_UNK(A) if (NULL == A) fatal_error("%s: %s", __progname, strerror(errno));
 #define FATAL_ERROR_MEM(A) if (NULL == A) fatal_error("%s: Out of memory", __progname);
   
-    tstring dirname = win32_dirname(fn) + _TEXT(DIR_SEPARATOR);
+    tstring dirname = win32_dirname(fn);
+    if(dirname.size()>0) dirname += _TEXT(DIR_SEPARATOR);
   
     int rc = 1;
     while (rc!=0)  {
@@ -627,7 +633,7 @@ void state::dig_win32(const std::wstring &fn)
 	    std::wstring new_fn;
 
 	    new_fn = dirname + FindFileData.cFileName;
-	    if (!opt_relative) {
+	    if (!ocb.opt_relative) {
 		new_fn = main::get_realpath(new_fn);
 	    }
       

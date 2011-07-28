@@ -462,6 +462,14 @@ public:
 	mode_barename(false),
 	mode_size(false),mode_size_all(false),
 	opt_silent(false),
+	opt_verbose(false),
+	opt_estimate(false),
+	opt_relative(false),
+	opt_unicode_escape(false),
+	opt_mode_match(false),
+	opt_mode_match_neg(false),
+	opt_csv(false),
+	opt_asterisk(false),
 	opt_zero(false),
 	opt_display_size(false),
 	opt_display_hash(false),
@@ -496,6 +504,14 @@ public:
     bool	mode_size_all;
     std::string	opt_outfilename;
     bool	opt_silent;
+    bool	opt_verbose;
+    bool	opt_estimate;
+    bool	opt_relative;
+    bool	opt_unicode_escape;
+    bool	opt_mode_match;
+    bool	opt_mode_match_neg;
+    bool	opt_csv;
+    bool	opt_asterisk;
     bool	opt_zero;
     bool	opt_display_size;
     bool	opt_display_hash;
@@ -789,6 +805,7 @@ public:;
     }
 
     int main(int argc,char **argv);	// main
+    void sanity_check(int condition,const char *msg);
 
 };
 
@@ -804,16 +821,7 @@ public:;
 /* main.cpp */
 extern bool	md5deep_mode;		// if true, then we were run as md5deep, sha1deep, etc.
 extern int	opt_debug;		// for debugging
-extern bool opt_relative;		// print relative file names
-extern int  opt_verbose;		// can be 1, 2 or 3
-extern bool opt_estimate;		// print ETA
-extern bool opt_unicode_escape;
-extern bool opt_mode_match;
-extern bool opt_mode_match_neg;
 extern hashid_t opt_md5deep_mode_algorithm;	// for when we are in MD5DEEP mode
-extern bool opt_csv;
-extern bool opt_asterisk;
-extern bool md5deep_mode;
 
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);

@@ -4,7 +4,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT([MD5DEEP],[4.0.0_alpha_001],[research@jessekornblum.com])
+AC_INIT([MD5DEEP],[4.0.0_alpha_002],[research@jessekornblum.com])
 AC_CONFIG_FILES([Makefile src/Makefile man/Makefile tests/Makefile])
 AM_INIT_AUTOMAKE
 
@@ -29,16 +29,14 @@ AC_CANONICAL_HOST
 case $host in
   *-*-*linux*-*) AC_DEFINE([__LINUX__],1,[Linux operating system functions])
   		 ;;
-  *-*-mingw32)   
+
+  *-*-mingw32*)   
                  LIBS="-liberty $LIBS" 
   		 CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 $CPPFLAGS"
 		 CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
+		 CXXFLAGS="$CXXFLAGS --static"
      		 ;;		 		     
-  *-*-mingw32msvc)
-                 LIBS="-liberty $LIBS" 
-  		 CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 $CPPFLAGS"
-		 CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
-     		 ;;		 		     
+
 esac
 
 AC_PROG_CC
@@ -61,7 +59,7 @@ done
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h stdint.h stdlib.h string.h sys/cdefs.h sys/types.h \
+AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h malloc.h stdint.h stdlib.h string.h sys/cdefs.h sys/types.h \
 			   sys/ioctl.h sys/mmap.h sys/param.h wchar.h unistd.h sys/stat.h sys/disk.h])
 
 # These functions not available everywhere
