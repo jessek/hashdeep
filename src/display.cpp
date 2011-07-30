@@ -345,7 +345,7 @@ void file_data_hasher_t::compute_dfxml(bool known_hash)
     for(int i=0;i<NUM_ALGORITHMS;i++){
 	if(hashes[i].inuse){
 	    this->dfxml_hash += "<hashdigest type='";
-	    this->dfxml_hash += makeupper(this->hash_hex[i]);
+	    this->dfxml_hash += makeupper(hashes[i].name);
 	    this->dfxml_hash += std::string("'>") + this->hash_hex[i] + std::string("</hashdigest>\n");
 	}
     }
