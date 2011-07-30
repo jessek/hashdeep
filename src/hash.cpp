@@ -15,9 +15,6 @@
 
 #include "main.h"
 
-#include <limits.h>
-#include <sstream>
-
 /****************************************************************
  *** Service routines
  ****************************************************************/
@@ -26,7 +23,7 @@
  * Returns TRUE if errno is currently set to a fatal error. That is,
  * an error that can't possibly be fixed while trying to read this file
  */
-static int file_fatal_error(void)
+static int file_fatal_error()
 {
     switch(errno) {
     case EINVAL:   // Invalid argument (happens on Windows)
@@ -59,6 +56,10 @@ static inline uint64_t min(uint64_t a,uint64_t b){
     if(a<b) return a;
     return b;
 }
+static inline uint64_t max(uint64_t a,uint64_t b){
+    if(a>b) return a;
+    return b;
+}
 
 /*
  * Compute the hash on fdht and store the results in the display ocb.
@@ -86,6 +87,10 @@ static inline uint64_t min(uint64_t a,uint64_t b){
 
 	
 
+/**
+ * compute_hash is where the data gets read and hashed.
+ */
+
 bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_len)
 {
     /*
@@ -93,52 +98,88 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
      * file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE
      * at a time.
      */
-    // We get weird results calling ftell on stdin!
-    if (this->handle != stdin){
-	if(ftello(this->handle) != (int64_t)request_start){
-	    fseeko(this->handle,request_start,SEEK_SET);
+
+#if 0
+    /* This code is not needed. The file handle is properly positioned when
+     * this function starts. If we get an error, it is re-positioned.
+     */
+
+    /*
+     * We get weird results calling ftell on stdin!
+     * Not sure this is really needed, though, since we should keep track of where the position is.
+     * We really only need to seek after an error, right?
+     */
+    if (this->is_stdin()==false){
+	if(this->handle){
+	    if(ftello(this->handle) != (int64_t)request_start){
+		fseeko(this->handle,request_start,SEEK_SET);
+	    }
 	}
     }
+#endif
 
     this->read_offset = request_start;
     this->read_len    = 0;		// so far
     this->multihash_initialize();
-    while (!feof(this->handle) && request_len>0){
+
+    while (request_len>0){
 	// Clear the buffer in case we hit an error and need to pad the hash 
-	unsigned char buffer[file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE];
-	memset(buffer,0,sizeof(buffer));
+	// The use of MD5DEEP_IDEAL_BLOCK_SIZE means that we loop even for memory-mapped
+	// files. That's okay, becuase our super-fast SHA1 implementation
+	// actually corrupts its input buffer, forcing a copy...
 
-	// Figure out how many bytes we need to read 
-	uint64_t toread = min(request_len,file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE);
-	size_t current_read_bytes = fread(buffer, 1, toread, this->handle);
+	unsigned char buffer_[file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE];
+	const unsigned char *buffer = buffer_;
+	uint64_t toread = min(request_len,file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE); // and shrink
+
+	if(this->base==0){		// not mmap, so clear buffer
+	    memset(buffer_,0,sizeof(buffer_));
+	}
+
+	// read the data into buffer
+	ssize_t current_read_bytes = 0;
+
+	if(this->handle){
+	    current_read_bytes = fread(buffer_, 1, toread, this->handle);
+	}
+	if(this->fd){
+	    if(this->base){
+		buffer = this->base + request_start;
+		current_read_bytes = min(toread,this->bounds - request_start); // can't read more than this
+		if(this->read_offset+current_read_bytes==this->bounds){
+		    this->eof = true;	// we hit the end
+		}
+	    } else {
+		current_read_bytes = read(this->fd,buffer_,toread);
+	    }
+	}
     
-	/* Update the pointers and the hash */
-	this->file_bytes    += current_read_bytes;
-	this->read_len     += current_read_bytes;
-	this->multihash_update(buffer,current_read_bytes); // hash in the non-error
-      
-	// Get set up for the next read
-	request_start += toread;
-	request_len   -= toread;
-
 	// If an error occured, display a message and see if we need to quit.
-	if (ferror(this->handle)) {
+	if ((current_read_bytes<0) || (this->handle && ferror(this->handle))){
 	    ocb->error_filename(this->file_name,"error at offset %"PRIu64": %s",
-				ftello(this->handle), strerror(errno));
+				request_start, strerror(errno));
 	   
 	    if (file_fatal_error()){
 		this->ocb->set_return_code(status_t::status_EXIT_FAILURE);
 		return false;		// error
 	    }
-	    clearerr(this->handle);
+	    if(this->handle) clearerr(this->handle);
       
 	    // The file pointer's position is now undefined. We have to manually
 	    // advance it to the start of the next buffer to read. 
-	    if(this->handle != stdin){
-		fseeko(this->handle,request_start,SEEK_SET);
+	    if(this->is_stdin()==false){
+		if(this->handle) fseeko(this->handle,request_start,SEEK_SET);
+		if(this->fd)     lseek(this->fd,request_start,SEEK_SET);
 	    }
 	}
 
+	/* Update the pointers and the hash */
+	if(current_read_bytes>0){
+	    this->file_bytes   += current_read_bytes;
+	    this->read_len     += current_read_bytes;
+	    this->multihash_update(buffer,current_read_bytes); // hash in the non-error
+	}
+      
 	// If we are printing estimates, update the time
 	if (ocb->opt_estimate)    {
 	    time_t current_time = time(0);
@@ -148,9 +189,19 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 		ocb->display_realtime_stats(this,current_time - this->start_time);
 	    }
 	}
+	// If we are at the end of the file, break
+	if((current_read_bytes==0) || (this->handle && feof(this->handle))){
+	    this->eof = true;
+	    break;
+	}
+
+	// Get set up for the next read
+	request_start += toread;
+	request_len   -= toread;
     }
     if (ocb->opt_estimate) ocb->clear_realtime_stats();
     this->multihash_finalize();
+    if (this->file_bytes == this->stat_bytes) this->eof = true; // end of the file
     return true;			// done hashing!
 }
 
@@ -207,11 +258,45 @@ void file_data_hasher_t::hash()
 	    }
 	}
 
-	fdht->handle = _tfopen(file_name_to_hash.c_str(),_TEXT("rb"));
-	if(fdht->handle==0){
-	    ocb->error_filename(fdht->file_name_to_hash,"%s", strerror(errno));
-	    return;
+	switch(ocb->opt_iomode){
+	case iomode::buffered:
+	    fdht->handle = _tfopen(file_name_to_hash.c_str(),_TEXT("rb"));
+	    if(fdht->handle==0){
+		ocb->error_filename(fdht->file_name_to_hash,"%s", strerror(errno));
+		return;
+	    }
+	    break;
+	case iomode::unbuffered:
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+	    fdht->fd    = _topen(file_name_to_hash.c_str(),O_BINARY|O_RDONLY,0);
+	    if(fdht->fd<0){
+		ocb->error_filename(fdht->file_name_to_hash,"%s", strerror(errno));
+		return;
+	    }
+	    break;
+	case iomode::mmapped:
+	    fdht->fd    = _topen(file_name_to_hash.c_str(),O_BINARY|O_RDONLY,0);
+	    if(fdht->fd<0){
+		ocb->error_filename(fdht->file_name_to_hash,"%s", strerror(errno));
+		return;
+	    }
+#ifdef HAVE_MMAP
+	    fdht->base = (uint8_t *)mmap(0,fdht->stat_bytes,PROT_READ,MAP_FILE|MAP_SHARED,fd,0);
+	    if(fdht->base>0){		
+		/* mmap is successful, so set the bounds.
+		 * if it is not successful, we default to reading the fd
+		 */
+		fdht->bounds = fdht->stat_bytes;
+	    }
+#endif
+	    break;
+	default:
+	    assert(0);			// invalid setting of iomode
 	}
+
+
 	/*
 	 * If this file is above the size threshold set by the user, skip it
 	 * and set the hash to be stars
@@ -229,9 +314,7 @@ void file_data_hasher_t::hash()
 		    fdht->ocb->display_hash(fdht);
 		}
 	    }
-	    fclose(fdht->handle);
-	    fdht->handle = 0;
-	    return ;
+	    return ;			// close will happend when the fdht is killed
 	}
     }
 
@@ -240,7 +323,7 @@ void file_data_hasher_t::hash()
 	fdht->last_time = fdht->start_time;
     }
 
-    if (fdht->ocb->mode_triage && fdht->handle!=stdin)  {
+    if (fdht->ocb->mode_triage && fdht->is_stdin()==false)  {
 	/*
 	 * Triage mode:
 	 * We use the piecewise mode to get a partial hash of the first 
@@ -270,14 +353,10 @@ void file_data_hasher_t::hash()
      * Read the file, handling piecewise hashing as necessary
      */
 
-#ifndef ULLONG_MAX
-#define ULLONG_MAX 9223372036854775807ll
-#endif
-
     uint64_t request_start = 0;
-    while (!feof(fdht->handle))  {
+    while (fdht->eof==false)  {
 	
-	uint64_t request_len = ULLONG_MAX; // really big
+	uint64_t request_len = fdht->stat_bytes; // by default, hash the file
 	if ( fdht->ocb->piecewise_size>0 )  {
 	    request_len = fdht->ocb->piecewise_size;
 	}
@@ -371,6 +450,7 @@ void display::hash_file(const tstring &fn)
 }
 
 
+/* Hashing stdin can only be done with buffered */
 void display::hash_stdin()
 {
     file_data_hasher_t *fdht = new file_data_hasher_t(this);

@@ -661,7 +661,7 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 	line += "  ";
     }
     else  {
-	if ((fdht->ocb->piecewise_size) || (fdht->handle!=stdin))    {
+	if ((fdht->ocb->piecewise_size) || (fdht->is_stdin()==false))    {
 	    if (mode_timestamp)      {
 		struct tm my_time;
 		memset(&my_time,0,sizeof(my_time)); // clear it out

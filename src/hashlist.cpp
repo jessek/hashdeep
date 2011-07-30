@@ -234,17 +234,17 @@ hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &
     loadstatus_t status = loadstatus_ok;
     hashfile_format type;
 
-    FILE *handle = fopen(fn.c_str(),"rb");
-    if (NULL == handle) {
+    FILE *hl_handle = fopen(fn.c_str(),"rb");
+    if (NULL == hl_handle) {
 	if(ocb) ocb->print_error("%s: %s: %s", __progname, fn.c_str(), strerror(errno));
 	return status_file_error;
     }
   
-    type = identify_format(ocb,fn,handle);
+    type = identify_format(ocb,fn,hl_handle);
     if (file_unknown == type)  {
 	if(ocb) ocb->print_error("%s: %s: Unable to identify file format", __progname, fn.c_str());
-	fclose(handle);
-	handle = 0;
+	fclose(hl_handle);
+	hl_handle = 0;
 	return status_unknown_filetype;
     }
 
@@ -258,7 +258,7 @@ hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &
     /* Redo this to use std::string everywhere */
     char line[MAX_STRING_LENGTH];	// holds the line we are reading
 
-    while (fgets(line,MAX_STRING_LENGTH,handle)) {
+    while (fgets(line,MAX_STRING_LENGTH,hl_handle)) {
 	line_number++;			// count where we are
 
 	// Lines starting with a pound sign are comments and can be ignored
@@ -312,8 +312,8 @@ hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &
 	    add_fdt(t);	/* add the file to the database*/
 	}
     }
-    fclose(handle);
-    handle = 0;
+    fclose(hl_handle);
+    hl_handle = 0;
 
     if (contains_bad_lines){
 	return status_contains_bad_hashes;

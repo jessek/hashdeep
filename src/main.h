@@ -73,6 +73,21 @@ typedef enum {
 #define DEFAULT_ENABLE_TIGER       FALSE
 #define DEFAULT_ENABLE_WHIRLPOOL   FALSE
 
+class iomode {
+public:;
+    static const int buffered=0;				// use fopen, fread, fclose
+    static const int unbuffered=1;			// use open, read, close
+    static const int mmapped=2;				// use open, mmap, close
+    static int toiomode(const std::string &str){
+	if(str=="0" || str[0]=='b') return iomode::buffered;
+	if(str=="1" || str[0]=='u') return iomode::unbuffered;
+	if(str=="2" || str[0]=='m') return iomode::mmapped;
+	std::cerr << "Invalid iomode '" << str << "'";
+	assert(0);
+	return iomode::buffered;
+    }
+};
+
 /* This class holds the information known about each hash algorithm.
  * It's sort of like the EVP system in OpenSSL.
  *
@@ -200,7 +215,9 @@ public:
     file_data_hasher_t(class display *ocb_):
 	ocb(ocb_),			// where we put results
 	handle(0),
-	base(0),bounds(0),file_number(0),start_time(0),last_time(0){
+	fd(0),
+	base(0),bounds(0),		// for mmap
+	file_number(0),start_time(0),last_time(0),eof(false){
 	file_number = ++next_file_number;
     };
     virtual ~file_data_hasher_t(){
@@ -208,6 +225,19 @@ public:
 	    fclose(handle);
 	    handle = 0;
 	}
+	if(fd){
+#ifdef HAVE_MMAP
+	    if(base){
+		munmap((void *)base,bounds);
+	    }
+#endif
+	    close(fd);
+	    fd = 0;
+	}
+    }
+
+    bool is_stdin(){
+	return handle==stdin;
     }
 
     /* The actual file to hash */
@@ -223,8 +253,8 @@ public:
 
     /* How we read the data */
     FILE        *handle;		// the file we are reading
-    int		fd;			// fd used for mmap
-    const uint8_t *base;		// base of mapped file
+    int		fd;			// fd used for unbuffered and mmap
+    const unsigned char *base;		// base of mapped file
     size_t	bounds;			// size of the mapped file
 
     /* Information for the hashing underway */
@@ -236,19 +266,9 @@ public:
     void	append_dfxml_for_byterun();
     void	compute_dfxml(bool known_hash);
 
-    // Request of where to read the file (or segment)
-    // Where it was actually read is put in read_start and read_len
-    // bytes_read is a shorthand for read_end - read_start
-    //uint64_t	request_start;
-    //uint64_t	request_len;		// the maximum I wish to read
-    //uint64_t  read_end;
-    //uint64_t	bytes_read;
-
-    /* Size of blocks used in normal hashing */
-    //uint64_t	block_size;
-
     /* When we started the hashing, and when was the last time a display was printed? */
     time_t	start_time, last_time;
+    bool	eof;			// end of file?
 
 
     /* multithreaded hash implementation is these functions in hash.cpp.
@@ -334,7 +354,6 @@ public:;
     // look up a fdt by hash code(s) and return if it is present or not.
     // optionally return a pointer to it as well.
     searchstatus_t	search(const file_data_hasher_t *fdht, file_data_t **matched) ; 
-
     uint64_t		total_matched(); // return the total matched
 
     /**
@@ -414,7 +433,9 @@ public:
  * output_control_block, and not elsewhere, and all of the access to
  * them needs to be mediated.
  *
- * It also needs to maintain all of the stuff for audit mode.
+ * It also needs to maintain all of the state for audit mode.
+ * Finally, it maintains options for reading
+ * (e.g. buffered, unbuffered, or memory-mapped I/O)
  *
  * It is a class because it is protected and is passed around.
  */
@@ -474,6 +495,7 @@ public:
 	opt_display_size(false),
 	opt_display_hash(false),
 	opt_show_matched(false),
+	opt_iomode(iomode::buffered),	// by default, use FILE
 #ifdef HAVE_PTRHEAD
 	opt_threadcount(threadpool::numCPU()),
 	tp(0),
@@ -516,6 +538,7 @@ public:
     bool	opt_display_size;
     bool	opt_display_hash;
     bool	opt_show_matched;
+    int		opt_iomode;
     int		opt_threadcount;
 
 #ifdef HAVE_PTHREAD
@@ -719,6 +742,7 @@ public:;
     bool	mode_socket;
     bool	mode_symlink;
  
+
     /* Command line arguments */
     int		argc;
 #ifdef _WIN32

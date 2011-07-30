@@ -404,7 +404,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"do:I:i:c:MmXxtablk:resp:wvVhW:0D:uj:")) != -1)  {
+  while ((i=getopt(argc,argv,"abc:deF:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
     switch (i) {
     case 'o':
       mode_expert=true; 
@@ -504,6 +504,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
     case '0': ocb.opt_zero = true; break;
     case 'u': ocb.opt_unicode_escape = true;break;
     case 'j': ocb.opt_threadcount = atoi(optarg); break;
+    case 'F': ocb.opt_iomode = iomode::toiomode(optarg);break;
 
     case 'h':
 	usage();
@@ -713,7 +714,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
 
     while ((i = getopt(argc,
 		       argv,
-		       "dI:i:M:X:x:m:o:A:a:tnwczsSp:erhvV0lbkqZW:D:uj:")) != -1) { 
+		       "A:a:bcdeF:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) { 
 	switch (i) {
 	case 'D': opt_debug = atoi(optarg);break;
 	case 'd': ocb.xml_open(stdout); break;
@@ -739,11 +740,12 @@ int state::md5deep_process_command_line(int argc, char **argv)
 
 	    break;
 
-	case 'Z': ocb.mode_triage      = true; break;
-	case 't': ocb.mode_timestamp   = true; break;
-	case 'n': ocb.mode_not_matched = true; break;
-	case 'w': ocb.opt_show_matched = true;break; 		// display which known hash generated match
-	case 'j': ocb.opt_threadcount          = atoi(optarg);break;
+	case 'Z': ocb.mode_triage	= true; break;
+	case 't': ocb.mode_timestamp	= true; break;
+	case 'n': ocb.mode_not_matched	= true; break;
+	case 'w': ocb.opt_show_matched	= true; break; 	// display which known hash generated match
+	case 'j': ocb.opt_threadcount	= atoi(optarg);break;
+	case 'F': ocb.opt_iomode	= iomode::toiomode(optarg);break;
 
 	case 'a':
 	    ocb.opt_mode_match=true;
@@ -938,6 +940,8 @@ int main(int argc, char **argv)
 
 int state::main(int _argc,char **_argv)
 {
+    ocb.opt_threadcount = threadpool::numCPU(); // be sure it's set
+
     /**
      * Originally this program was two sets of progarms:
      * 'hashdeep' with the new interface, and 'md5deep', 'sha1deep', etc

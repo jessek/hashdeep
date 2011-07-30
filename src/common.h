@@ -145,6 +145,14 @@
 // LINE_LENGTH is different between UNIX and WIN32 and is defined below 
 #define MAX_FILENAME_LENGTH   LINE_LENGTH - 41
 
+#ifdef HAVE_MMAP_H
+#include <mmap.h>
+#endif
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
+
+
 #if defined(__cplusplus)
 #include <string>
 #include <algorithm>
@@ -152,6 +160,8 @@
 #include <fstream>
 #include <ctype.h>
 #include <vector>
+#include <sstream>
+
 
 /* Some nice C++ manipulation routines */
 
@@ -297,6 +307,7 @@ typedef char TCHAR;			// no TCHAR on POSIX; use CHAR
 #define  _TEXT(A)   A
 #define  _T(A)      A
 #define  _tfopen    fopen
+#define  _topen	    open
 
 #define  _topendir  opendir
 #define  _treaddir  readdir
