@@ -60,7 +60,7 @@ done
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h malloc.h stdint.h stdlib.h string.h sys/cdefs.h sys/types.h \
-			   sys/ioctl.h sys/mmap.h sys/param.h wchar.h unistd.h sys/stat.h sys/disk.h])
+			   sys/ioctl.h sys/mmap.h sys/mman.h sys/param.h wchar.h unistd.h sys/stat.h sys/disk.h])
 
 # These functions not available everywhere
 AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r mmap usleep mkstemp vasprintf])
