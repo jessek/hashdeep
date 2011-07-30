@@ -823,6 +823,7 @@ void display::dfxml_shutdown()
 {
     if(dfxml){
 	lock();
+	dfxml->add_rusage();
 	dfxml->pop();		// outermost
 	dfxml->close();
 	delete dfxml;
