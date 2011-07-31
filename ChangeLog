@@ -1,3 +1,7 @@
+2011-07-31  Simson Garfinkel  <simsong@alphonse-mucha.local>
+
+	* src/hash.cpp (display::hash_stdin): sets stat_bytes to SIZE_T_MAX when hashing stdin.
+
 2011-07-27  Simson Garfinkel  <simsong@imac3.local>
 
 	* src/main.h (class display): added conditional defines so that wstring stuff isn't compiled on mac

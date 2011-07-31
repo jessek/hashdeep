@@ -99,25 +99,6 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
      * at a time.
      */
 
-#if 0
-    /* This code is not needed. The file handle is properly positioned when
-     * this function starts. If we get an error, it is re-positioned.
-     */
-
-    /*
-     * We get weird results calling ftell on stdin!
-     * Not sure this is really needed, though, since we should keep track of where the position is.
-     * We really only need to seek after an error, right?
-     */
-    if (this->is_stdin()==false){
-	if(this->handle){
-	    if(ftello(this->handle) != (int64_t)request_start){
-		fseeko(this->handle,request_start,SEEK_SET);
-	    }
-	}
-    }
-#endif
-
     this->read_offset = request_start;
     this->read_len    = 0;		// so far
     this->multihash_initialize();
@@ -325,7 +306,8 @@ void file_data_hasher_t::hash()
 
     if (fdht->ocb->mode_triage && fdht->is_stdin()==false)  {
 	/*
-	 * Triage mode:
+	 * Triage mode output consists of file size, hash of the first 512 bytes, then hash of the whole file.
+	 * 
 	 * We use the piecewise mode to get a partial hash of the first 
 	 * 512 bytes of the file. But we'll have to remove piecewise mode
 	 * before returning to the main hashing code.
@@ -346,7 +328,11 @@ void file_data_hasher_t::hash()
 	 * file, just reset everything and process it normally.
 	 */
 	fdht->file_bytes = 0;
-	fseeko(fdht->handle, 0, SEEK_SET);
+	if(fdht->handle) fseeko(fdht->handle, 0, SEEK_SET);
+	if(fdht->fd){
+	    lseek(this->fd,0,SEEK_SET);
+	}
+	fdht->eof = false;		// 
     }
 
     /*
@@ -455,7 +441,12 @@ void display::hash_stdin()
 {
     file_data_hasher_t *fdht = new file_data_hasher_t(this);
     fdht->file_name_to_hash = _T("stdin");
-    fdht->file_name = "stdin";
-    fdht->handle    = stdin;
+    fdht->file_name  = "stdin";
+    fdht->handle     = stdin;
+#ifdef SIZE_T_MAX
+    fdht->stat_bytes = SIZE_T_MAX;
+#else
+    fdht->stat_bytes = 0x7fffffffffffffffLL;
+#endif
     fdht->hash();
 }

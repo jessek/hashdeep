@@ -1,4 +1,4 @@
-EXTRA_DIST=README.txt test1.out test2.out test3.out test4.out test5.out
+EXTRA_DIST=README.txt 
 TESTS=tests.sh
 
 

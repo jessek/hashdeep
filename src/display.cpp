@@ -625,21 +625,11 @@ void display::finalize_matching()
 /* The old display_hash from the md5deep program, with modifications
  * to build the line before outputing it.
  *
+ * needs hasher because of triage mode
  */
 
-void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher because of triage
+void  display::md5deep_display_hash(file_data_hasher_t *fdht) 
 {
-    lock();
-    //std::cout << "TK1 md5deep_display_hash... " << fdht->file_name << " piecewise_size= " << fdht->piecewise_size << "\n"; 
-    unlock();
-
-    if (mode_triage) {
-	if(dfxml) return;		// traige mode and dfxml are incompatable 
-	std::string line = std::string("\t") + fdht->hash_hex[opt_md5deep_mode_algorithm] + std::string("\t") + fdht->file_name;
-	writeln(out,line);
-	return;
-    }
-
     /**
      * We can't call display_size here because we don't know if we're
      * going to display *anything* yet. If we're in matching mode, we
@@ -655,7 +645,12 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 	return;
     }
 
-    std::string line = fmt_size(fdht) + fdht->hash_hex[opt_md5deep_mode_algorithm];
+    std::string line;
+
+    if (mode_triage) {
+	line += fdht->triage_info + "\t";
+    }
+    line += fmt_size(fdht) + fdht->hash_hex[opt_md5deep_mode_algorithm];
 
     if (mode_quiet){
 	line += "  ";
@@ -691,6 +686,8 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht) // needs hasher be
 		line += ",";
 	    } else if (opt_asterisk) {
 		line += " *";
+	    } else if (mode_triage) {
+		line += "\t";
 	    } else {
 		line += "  ";
 	    }

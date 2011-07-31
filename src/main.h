@@ -260,7 +260,7 @@ public:
     /* Information for the hashing underway */
     uint8_t     hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 
     std::string	triage_info;		// if true, must print on output
-    std::string	dfxml_hash;          // the DFXML hash digest for the piece just hashed;
+    std::string	dfxml_hash;		// the DFXML hash digest for the piece just hashed;
 					// used to build piecewise
     uint64_t	file_number;
     void	append_dfxml_for_byterun();
