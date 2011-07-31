@@ -51,6 +51,10 @@
 #include <afflib/afflib.h>
 #endif
 
+#ifdef HAVE_SYS_RUSAGE_H
+#include <sys/rusage.h>
+#endif
+
 #ifdef __cplusplus
 class XML {
     std::string outfilename;
