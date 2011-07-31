@@ -1,9 +1,9 @@
 #!/bin/sh
 #
 # meta-build system. Each target is run as a different script. Options:
-# normal.sh - Do a "normal" configure and make.
-# win.sh    - cross-compile for windows using i386-ming32 and mingw-w64
-# world.sh  - same as "normal.sh"
+# win.sh    - cross-compile for windows using x86_64-w64-mingw32 and either i586-mingw32msvc or i386-mingw32
+# world.sh  - does a make dist (for the source code distribution) and then a make win.
+
 
 # On Ubuntu, you can get going in many cases with "apt-get install gcc-mingw32"
 #
@@ -40,8 +40,6 @@
 
 # I haven't been able to find a 64-bit cross-compiler for Mac.
 
-
-
 if [ ! -r configure ];
 then
   echo configure does not exist. Running autoreconf.
@@ -73,6 +71,7 @@ do
     have64='yes'
   fi
 done
+
 
 echo Trying to make the 32-bit windows
 have32='no'
