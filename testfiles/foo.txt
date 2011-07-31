@@ -1,3 +1,3 @@
-somefile.doc
-anotherfile.txt
-thirdfile.xlsx
+../testfiles/copying.txt
+../testfiles/deadbeef.txt
+../testfiles/dot_file_⦿.txt

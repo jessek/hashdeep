@@ -404,8 +404,11 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 {
   int i;
   
-  while ((i=getopt(argc,argv,"abc:deF:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
+  while ((i=getopt(argc,argv,"abc:deF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
     switch (i) {
+    case 'a': ocb.primary_function = primary_audit;      break;
+    case 'd': ocb.xml_open(stdout); break;
+    case 'f': opt_input_list = optarg;break;
     case 'o':
       mode_expert=true; 
       setup_expert_mode(optarg);
@@ -433,14 +436,12 @@ int state::hashdeep_process_command_line(int argc, char **argv)
       algorithm_t::enable_hashing_algorithms(optarg);
       break;
       
-    case 'd': ocb.xml_open(stdout); break;
     case 'M': ocb.opt_display_hash=true;
 	/* intentional fall through */
     case 'm': ocb.primary_function = primary_match;      break;
     case 'X': ocb.opt_display_hash=true;
 	/* intentional fall through */
     case 'x': ocb.primary_function = primary_match_neg;  break;
-    case 'a': ocb.primary_function = primary_audit;      break;
       
       // TODO: Add -t mode to hashdeep
       //    case 't': mode |= mode_timestamp;    break;
@@ -714,10 +715,11 @@ int state::md5deep_process_command_line(int argc, char **argv)
 
     while ((i = getopt(argc,
 		       argv,
-		       "A:a:bcdeF:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) { 
+		       "A:a:bcdeF:f:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) { 
 	switch (i) {
 	case 'D': opt_debug = atoi(optarg);break;
 	case 'd': ocb.xml_open(stdout); break;
+	case 'f': opt_input_list = optarg;break;
 	case 'I':
 	    ocb.mode_size_all=true;
 	    // Note that there is no break here
@@ -1016,13 +1018,44 @@ int state::main(int _argc,char **_argv)
 	ocb.dump_hashlist();
     }
 
+    /* If we were given an input list, process it */
+    if(opt_input_list!=""){
+	std::ifstream in;
+	in.open(opt_input_list.c_str());
+	if(!in.is_open()){
+	    std::cerr << "Cannot open " << opt_input_list << ": " << strerror(errno) << "\n";
+	    exit(1);
+	}
+	while(!in.eof()){
+	    std::string line;
+	    std::getline(in,line);
+	    /* Remove any possible \r\n or \n */
+	    if(line.size()>0 && line[line.size()-1]=='\n') line.erase(line.size()-1);
+	    if(line.size()>0 && line[line.size()-1]=='\r') line.erase(line.size()-1);
+	    if(line.size()==0) continue;
+	    /* If we are running on Windows, turn it into a UTF-16 filename */
+#ifdef _WIN32
+	    /* I think that this will work, but it needs to be tested */
+	    std::wstring wstr;
+	    utf8::utf8to16::(line.begin(),line.end(),back_inserter(wstr));
+	    dig_win32(wstr);
+	    exit(1);
+#else
+	    dig_normal(line.c_str());
+#endif
+	}
+	in.close();
+	
+	
+    }
+
     /*
      * Anything left on the command line at this point is a file
      * or directory we're supposed to process. If there's nothing
      * specified, we should hash standard input
      */
     
-    if (optind == argc){
+    if (optind == argc && opt_input_list==""){
 	ocb.hash_stdin();
     } else {
 	for(int i=optind;i<argc;i++){

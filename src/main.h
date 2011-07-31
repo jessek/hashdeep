@@ -744,6 +744,7 @@ public:;
  
 
     /* Command line arguments */
+    std::string opt_input_list;		// file with a list of files to read
     int		argc;
 #ifdef _WIN32
     wchar_t     **argv;			// never allocated, never freed
