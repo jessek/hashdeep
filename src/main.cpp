@@ -982,7 +982,6 @@ int state::main(int _argc,char **_argv)
     }
 
     /* See if we can open a regular file output, if requested */
-
     /* Set up the DFXML output if requested */
     ocb.dfxml_startup(_argc,_argv);
    
@@ -1045,8 +1044,6 @@ int state::main(int _argc,char **_argv)
 #endif
 	}
 	in.close();
-	
-	
     }
 
     /*
@@ -1056,6 +1053,9 @@ int state::main(int _argc,char **_argv)
      */
     
     if (optind == argc && opt_input_list==""){
+	if(ocb.mode_triage){
+	    ocb.fatal_error("Processing stdin not supported in Triage mode");
+	}
 	ocb.hash_stdin();
     } else {
 	for(int i=optind;i<argc;i++){
