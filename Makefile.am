@@ -1,15 +1,9 @@
-SUBDIRS = src tests man
+SUBDIRS = src tests man testfiles
 
 CROSS_PREFIX = i586-mingw32msvc
 CROSS64_PREFIX = x86_64-w64-mingw32
 
-EXTRA_DIST = FILEFORMAT config.guess config.sub  \
-   testfiles/anotherfile.txt \
-   testfiles/foo.txt \
-   testfiles/one-byte-file \
-   testfiles/somefile.doc \
-   testfiles/thirdfile.xlsx \
-   testfiles/zero-byte-file
+EXTRA_DIST = FILEFORMAT config.guess config.sub  
 
 
 nice:

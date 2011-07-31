@@ -5,7 +5,7 @@
 AC_PREREQ(2.57)
 
 AC_INIT([MD5DEEP],[4.0.0_alpha_002],[research@jessekornblum.com])
-AC_CONFIG_FILES([Makefile src/Makefile man/Makefile tests/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile man/Makefile testfiles/Makefile tests/Makefile])
 AM_INIT_AUTOMAKE
 
 ################################################################
