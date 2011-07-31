@@ -942,7 +942,9 @@ int main(int argc, char **argv)
 
 int state::main(int _argc,char **_argv)
 {
+#ifdef HAVE_PTHREAD
     ocb.opt_threadcount = threadpool::numCPU(); // be sure it's set
+#endif
 
     /**
      * Originally this program was two sets of progarms:
@@ -1036,7 +1038,7 @@ int state::main(int _argc,char **_argv)
 #ifdef _WIN32
 	    /* I think that this will work, but it needs to be tested */
 	    std::wstring wstr;
-	    utf8::utf8to16::(line.begin(),line.end(),back_inserter(wstr));
+	    utf8::utf8to16(line.begin(),line.end(),back_inserter(wstr));
 	    dig_win32(wstr);
 	    exit(1);
 #else

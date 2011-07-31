@@ -151,7 +151,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-EXTRA_DIST = README.txt test1.out test2.out test3.out test4.out test5.out
+EXTRA_DIST = README.txt 
 TESTS = tests.sh
 all: all-am
 

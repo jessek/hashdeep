@@ -210,12 +210,12 @@ CROSS_PREFIX = i586-mingw32msvc
 CROSS64_PREFIX = x86_64-w64-mingw32
 EXTRA_DIST = FILEFORMAT config.guess config.sub  
 CLEANFILES = man/md5deep.txt man/hashdeep.txt
-SUFFIXES = .TXT .1
+SUFFIXES = .txt .1
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .TXT .1
+.SUFFIXES: .txt .1
 am--refresh:
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -727,11 +727,15 @@ win64: distclean
 	mv src/hashdeep.exe     src/hashdeep64.exe
 	cp src/*.exe $(distdir)
 
-world: dist man/hashdeep.txt man/md5deep.txt
+#man/hashdeep.txt: man/hashdeep.1
+#man/md5deep.txt: man/md5deep.1
+
+world: dist 
 	rm -rf $(distdir).zip $(distdir) src/*.exe src/*.exe
 	mkdir $(distdir)
 	make win32
 	make win64
+	make man/hashdeep.txt man/md5deep.txt
 	zip -r9 $(distdir).zip $(distdir)
 	@echo Adding text files to $(distdir).zip 
 	cp NEWS			$(distdir)/CHANGES.txt
@@ -741,8 +745,14 @@ world: dist man/hashdeep.txt man/md5deep.txt
 	cp man/hashdeep.txt	$(distdir)/MD5DEEP.txt
 	zip --to-crlf $(distdir).zip $(distdir)/*.txt
 	rm -rf $(distdir) $(WINDOWSDOCS) MD5DEEP.1 HASHDEEP.1
+	echo "*************************"
+	echo "*** THE WORLD IS MADE ***"
+	echo ""
+	ls -l $(distdir).{zip,tar.gz}
+	echo ""
+	@unzip -l $(distdir).zip
 
-.1.TXT:
+.1.txt:
 	/usr/bin/tbl $< | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
