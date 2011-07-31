@@ -122,8 +122,8 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 
 	if(this->handle){
 	    current_read_bytes = fread(buffer_, 1, toread, this->handle);
-	}
-	if(this->fd){
+	} else {
+	    assert(this->fd!=0);
 	    if(this->base){
 		buffer = this->base + request_start;
 		current_read_bytes = min(toread,this->bounds - request_start); // can't read more than this
@@ -363,7 +363,7 @@ void file_data_hasher_t::hash()
 	 * still need to display a hash.
 	 */
 
-	if (fdht->read_len > 0 || fdht->stat_bytes==0) {
+	if (fdht->read_len > 0 || fdht->stat_bytes==0 || fdht->is_stdin()) {
 	    if(md5deep_mode){
 		/**
 		 * Under not matched mode, we only display those known hashes that
