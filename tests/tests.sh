@@ -90,6 +90,9 @@ do
     33) cmd="echo README.txt | $BASE/sha256deep "    ;;
     34) cmd="echo README.txt | $BASE/whirlpooldeep " ;;
     35) cmd="$BASE/md5deep $S -Z /tmp/test/*.txt "      ;; 
+    36) cmd="$BASE/md5deep $S -m  ../testfiles/known.txt .svn" ;;	  
+    37) cmd="$BASE/md5deep $S -Sm ../testfiles/known.txt .svn" ;;	  
+    38) cmd="$BASE/md5deep $S -sm ../testfiles/known.txt .svn" ;;
    esac
    if [ x"$cmd" = "x" ]
    then 
