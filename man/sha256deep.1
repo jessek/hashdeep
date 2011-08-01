@@ -17,7 +17,8 @@ whirlpooldeep \- Compute and compare Whirlpool message digests
 .br
 .B md5deep
 [\-m|\-M|\-x|\-X <file>]  [-a|-A <hash>] [\-f <file>]
-[\-p <size>] [\-i <size>] [\-tnwzresS0lbkqZ] [\-o <fbcplsd>] [\fBFILES\fR]
+[\-p <size>] [\-i <size>] [\-tnwzresS0lbkqZud] [\-F<bum>] [\-o <fbcplsd>] 
+[\-jnn] [\fBFILES\fR]
 
 .SH DESCRIPTION
 .PP
@@ -220,6 +221,36 @@ s \- Sockets
 d \- Solaris Doors
 
 .TP
+\fB-jnn\fR
+Controls multi-threading. By default the program will create one
+producer thread to scna the file system and one hashing thread per CPU
+core. Multi-threading causes output filenames to be in
+non-deterministic order, as files that take longer to hash will be
+delayed while they are hashed. If a deterministic order is required,
+specify \fB-j0\fR to disable multi-threading
+
+
+.TP
+\fB-d\fR
+Output in Digital Forensics XML (DFXML) format.
+
+.TP
+\fB-u\fR
+Quote Unicode output. For example, the snowman is shown as
+\fBU+C426\fR.
+
+.TP
+\fB-F<bum>\fR
+Specifies the input mode that is used to read files. The default is
+\fB-Fb\fR (buffered I/O) which reads files with fopen(). Specifying
+\fB-Fu\fR will use unbuffered I/O and read the file with
+open(). Specifying \fB-Fm\fR will use memory-mapped I/O which will be
+faster on some platforms, but which (currently) will not work with
+files that produce I/O errors.
+
+
+
+.TP
 \fB\-h\fR
 Show a help screen and exit.
 
@@ -232,13 +263,29 @@ Show the version number and exit.
 Show copyright information and exit.
 
 .SH UNICODE SUPPORT
-As of version 2.0 the program supports Unicode characters in filenames
-on Microsoft Windows systems. Due to limitations in Windows, however,
-each Unicode character is represented as a question mark (?) in the output.
-Note that Unicode characters are \fBnot\fR supported in the files
-containing known hashes. You can specify a file of known hashes that has
-Unicode characters in its name by using tab completition or an asterisk
-(e.g. md5deep -m *.txt where there is only one file with a .txt extension).
+As of version 3.0 the program supports Unicode characters in filenames
+on Microsoft Windows systems for filenames specified on the command
+line with globbing (e.g. *), for files specified with the
+\fB-f\fR of files to hash, and for files read from directories using
+the \fB-r\fR option.
+
+By default all program input and output
+should be in UTF-8.  The program automatically converts this to UTF-16
+for opening files).
+
+On Unix/Linux/MacOS, you should use a terminal emulator that supports
+UTF-8 and UTF-8 characters in filenames will be properly displayed.
+
+On Windows, please note that the onsole is not capiable of displaying Unicode
+characters. You must either redirect output to a file and open the
+file with Wordpad (which can display Unicode), or you must specify the
+\fB-u\fR option to quote Unicode using standard \fBU+XXXX\fR notation.
+
+Currently the file name of a file containing known hashes may not be
+specified as a unicode filename, but you can specify the name using
+tab completition or an asterisk (e.g. md5deep -m *.txt where there is
+only one file with a .txt extension).
+
 
 .SH RETURN VALUE
 Returns a bit-wise value based on the success of the operation and the

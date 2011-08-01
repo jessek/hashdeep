@@ -1,3 +1,7 @@
+2011-08-01  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/hash.cpp (file_data_hasher_t::hash): whoops; dfxml had old bytes=; replaced with len=;
+
 2011-07-31  Simson Garfinkel  <simsong@alphonse-mucha.local>
 
 	* src/hash.cpp (display::hash_stdin): sets stat_bytes to SIZE_T_MAX when hashing stdin.

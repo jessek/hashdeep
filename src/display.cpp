@@ -339,7 +339,7 @@ void file_data_hasher_t::compute_dfxml(bool known_hash)
 	this->dfxml_hash +=
 	    std::string("<byte_run file_offset='")
 	    + itos(this->read_offset)
-	    + std::string("' bytes='")
+	    + std::string("' len='")
 	    + itos(this->read_len) + std::string("'>\n   ");
     }
     for(int i=0;i<NUM_ALGORITHMS;i++){
