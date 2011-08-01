@@ -21,21 +21,22 @@ todo:
 win32: distclean
 	./configure --host=$(CROSS_PREFIX)
 	make
+
+strip32:
 	$(CROSS_PREFIX)-strip src/*.exe src/*.exe
-	cp src/*.exe src/*.exe $(distdir)
 
 win64: distclean
 	./configure --host=$(CROSS64_PREFIX)
 	make
-	$(CROSS64_PREFIX)-strip src/*exe 
 	mv src/md5deep.exe       src/md5deep64.exe
 	mv src/sha1deep.exe      src/sha1deep64.exe
 	mv src/sha256deep.exe    src/sha256deep64.exe
 	mv src/tigerdeep.exe     src/tigerdeep64.exe
 	mv src/whirlpooldeep.exe src/whirlpooldeep64.exe
 	mv src/hashdeep.exe     src/hashdeep64.exe
-	cp src/*.exe $(distdir)
 
+strip64:
+	$(CROSS64_PREFIX)-strip src/*64.exe 
 
 #man/hashdeep.txt: man/hashdeep.1
 #man/md5deep.txt: man/md5deep.1
@@ -43,9 +44,22 @@ win64: distclean
 world: dist 
 	rm -rf $(distdir).zip $(distdir) src/*.exe src/*.exe
 	mkdir $(distdir)
+	@echo 
+	@echo Making win32 
 	make win32
+	make strip32
+	cp src/*.exe src/*.exe $(distdir)
+	@echo ====================================
+	@echo 
+	@echo Making win32 
 	make win64
+	make strip64
 	make man/hashdeep.txt man/md5deep.txt
+	cp src/*.exe $(distdir)
+	@echo ====================================
+	@echo 
+	@echo Creating ZIP archive
+	@echo 
 	zip -r9 $(distdir).zip $(distdir)
 	@echo Adding text files to $(distdir).zip 
 	cp NEWS			$(distdir)/CHANGES.txt

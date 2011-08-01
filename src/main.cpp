@@ -845,7 +845,10 @@ std::string state::make_banner()
     utf8_banner += "## Invoked from: " + main::make_utf8(main::getcwd()) + NEWLINE;
     utf8_banner += "## ";
 #ifdef _WIN32
-    utf8_banner += main::make_utf8(main::getcwd())[0] + ":\\>";
+    std::wstring cwd = main::getcwd();
+    std::string  cwd8 = main::make_utf8(cwd);
+
+    utf8_banner += cwd8 + ">";
 #else
     utf8_banner += (geteuid()==0) ? "#" : "$";
 #endif
