@@ -94,7 +94,7 @@ public:;
  * In version 3 the list of known hashes was stored here as well.
  * That has been moved to the hashlist database (further down).
  *
- * Right now we are using some global variables; the better way to do this
+* Right now we are using some global variables; the better way to do this
  * would be with a C++ singleton.
  *
  * Perhaps the correct way to do this would be a global C++ vector of objects?
@@ -143,9 +143,11 @@ public:;
     static const int32_t status_unknown_error = -4;
     static const int32_t status_omg_ponies = -5;
 
-    // Return values for the program 
-    // RBF - Document these return values for hashdeep
-    // A successful run has these or'ed together
+    /*
+     * Return values for the program 
+     * RBF - Document these return values for hashdeep
+     * A successful run has these or'ed together
+     */
     static const int32_t STATUS_UNUSED_HASHES = 1;
     static const int32_t STATUS_INPUT_DID_NOT_MATCH = 2;
     static const int32_t STATUS_USER_ERROR = 64;
@@ -166,7 +168,6 @@ typedef time_t		timestamp_t;
 typedef std::string	filename_t;
 #endif
 
-
 /** file_data_t contains information about a file.
  * It can be created by hashing an actual file, or by reading a hash file a file of hashes. 
  * The object is simple so that the built in C++ shallow copy will make a proper copy of it.
@@ -175,30 +176,40 @@ typedef std::string	filename_t;
  */
 class file_data_t {
 public:
-    file_data_t():matched_file_number(0),timestamp(0),stat_bytes(0),file_bytes(0),read_offset(0),read_len(0) {
+    file_data_t():file_bytes(0),matched_file_number(0){
     };
     virtual ~file_data_t(){}		// required because we subclass
 
     std::string hash_hex[NUM_ALGORITHMS];	     // the hash in hex of the entire file
-    std::string	hash512_hex[NUM_ALGORITHMS];	     // hash of the first 512 bytes, for partial matching
+    std::string	hash512_hex[NUM_ALGORITHMS];	     // hash of the first 512 bytes, for triage mode
     std::string	file_name;		// just the file_name; native on POSIX; UTF-8 on Windows.
 
+    uint64_t    file_bytes;		// how many bytes were actually read
     uint64_t    matched_file_number;	 // file number that we matched.; 0 if no match
-    timestamp_t	timestamp;
 
-    // How many bytes (and megs) we think are in the file, via stat(2)
-    // and how many bytes we've actually read in the file
-    uint64_t    stat_bytes;		// how much stat returned
-    uint64_t    file_bytes;		// in bytes (how many we actually read)
-    //uint64_t    actual_bytes;	// how many we read.
+};
 
-    // where this segment was actually read
+/**
+ * hash_context stores information for a specific hash.
+ * which may for a piece of a file or an entire file
+ */
+class hash_context_obj {
+public:;
+    hash_context_obj():read_offset(0),read_len(0){}
+
+    /* Information for the hashing underway */
+    static const size_t MAX_ALGORITHM_CONTEXT_SIZE = 256;
+    static const size_t MAX_ALGORITHM_RESIDUE_SIZE = 256;
+    uint8_t	hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 
+
+    /* The actual hashing */
+    void multihash_initialize();
+    void multihash_update(const unsigned char *buffer,size_t bufsize);
+    void multihash_finalize(std::string dest[]);
+
+    // for piecewise hashing: where this segment was actually read
     uint64_t	read_offset;		// where the segment we read started
     uint64_t	read_len;		// how many bytes were read and hashed
-
-    uint64_t	   stat_megs() const{
-	return stat_bytes / ONE_MEGABYTE;
-    }
 };
 
 
@@ -209,15 +220,17 @@ class file_data_hasher_t : public file_data_t {
 private:
     static uint64_t next_file_number;
 public:
+    uint64_t	stat_megs() const {	// return how many megabytes is the file in MB?
+	return stat_bytes / ONE_MEGABYTE;
+    }
     static const size_t MD5DEEP_IDEAL_BLOCK_SIZE = 8192;
-    static const size_t MAX_ALGORITHM_CONTEXT_SIZE = 256;
-    static const size_t MAX_ALGORITHM_RESIDUE_SIZE = 256;
     file_data_hasher_t(class display *ocb_):
 	ocb(ocb_),			// where we put results
 	handle(0),
 	fd(0),
 	base(0),bounds(0),		// for mmap
-	file_number(0),start_time(0),last_time(0),eof(false){
+	file_number(0),timestamp(0),stat_bytes(0),
+	start_time(0),last_time(0),eof(false){
 	file_number = ++next_file_number;
     };
     virtual ~file_data_hasher_t(){
@@ -227,18 +240,14 @@ public:
 	}
 	if(fd){
 #ifdef HAVE_MMAP
-	    if(base){
-		munmap((void *)base,bounds);
-	    }
+	    if(base) munmap((void *)base,bounds);
 #endif
 	    close(fd);
 	    fd = 0;
 	}
     }
 
-    bool is_stdin(){
-	return handle==stdin;
-    }
+    bool is_stdin(){ return handle==stdin; }
 
     /* The actual file to hash */
     filename_t file_name_to_hash;
@@ -246,37 +255,40 @@ public:
     /* Where the results go */
     class display *ocb;
     
-    /* The actual hashing */
-    void multihash_initialize();
-    void multihash_update(const unsigned char *buffer,size_t bufsize);
-    void multihash_finalize();
-
     /* How we read the data */
     FILE        *handle;		// the file we are reading
     int		fd;			// fd used for unbuffered and mmap
     const unsigned char *base;		// base of mapped file
     size_t	bounds;			// size of the mapped file
 
-    /* Information for the hashing underway */
-    uint8_t     hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 
-    std::string	triage_info;		// if true, must print on output
-    std::string	dfxml_hash;		// the DFXML hash digest for the piece just hashed;
+    std::string		triage_info;	// if true, must print on output
+    std::stringstream	dfxml_hash;	// the DFXML hash digest for the piece just hashed;
 					// used to build piecewise
     uint64_t	file_number;
     void	append_dfxml_for_byterun();
     void	compute_dfxml(bool known_hash);
 
-    /* When we started the hashing, and when was the last time a display was printed? */
-    time_t	start_time, last_time;
-    bool	eof;			// end of file?
+    timestamp_t	timestamp;
 
+    // How many bytes (and megs) we think are in the file, via stat(2)
+    // and how many bytes we've actually read in the file
+    uint64_t    stat_bytes;		// how much stat returned
+
+    /* When we started the hashing, and when was the last time a display was printed,
+     * for printing status updates.
+     */
+    time_t	start_time, last_time;
+    bool	eof;			// end of file encountered while reading
+
+    hash_context_obj hc_file;		// the primary hash_context
 
     /* multithreaded hash implementation is these functions in hash.cpp.
      * hash() is called to hash each file and record the results.
-     * Return codes are now both stored in display return_code and returned
+     * Return codes are both stored in display return_code and returned
      * 0 - for success, -1 for error
      */
     // called to actually do the computation; returns true if successful
+    // and fills in the read_offset and read_len
     bool compute_hash(uint64_t request_start,uint64_t request_len);
     void hash();	// called to hash each file and record results
 };

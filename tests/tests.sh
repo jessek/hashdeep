@@ -95,8 +95,6 @@ do
     38) cmd="$BASE/md5deep $S -sm ../testfiles/known.txt .svn" ;;
     39) cmd="$BASE/md5deep    /dev/null ";;
     40) cmd="$BASE/hashdeep   /dev/null ";;
-    41) cmd="$BASE/md5deep  < /dev/null ";;
-    42) cmd="$BASE/hashdeep < /dev/null ";;
    esac
    if [ x"$cmd" = "x" ]
    then 

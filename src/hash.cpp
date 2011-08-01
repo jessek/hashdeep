@@ -99,9 +99,9 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
      * at a time.
      */
 
-    this->read_offset = request_start;
-    this->read_len    = 0;		// so far
-    this->multihash_initialize();
+    this->hc_file.read_offset = request_start;
+    this->hc_file.read_len    = 0;		// so far
+    this->hc_file.multihash_initialize();
 
     while (request_len>0){
 	// Clear the buffer in case we hit an error and need to pad the hash 
@@ -127,7 +127,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 	    if(this->base){
 		buffer = this->base + request_start;
 		current_read_bytes = min(toread,this->bounds - request_start); // can't read more than this
-		if(this->read_offset+current_read_bytes==this->bounds){
+		if(this->hc_file.read_offset+current_read_bytes==this->bounds){
 		    this->eof = true;	// we hit the end
 		}
 	    } else {
@@ -157,8 +157,8 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 	/* Update the pointers and the hash */
 	if(current_read_bytes>0){
 	    this->file_bytes   += current_read_bytes;
-	    this->read_len     += current_read_bytes;
-	    this->multihash_update(buffer,current_read_bytes); // hash in the non-error
+	    this->hc_file.read_len     += current_read_bytes;
+	    this->hc_file.multihash_update(buffer,current_read_bytes); // hash in the non-error
 	}
       
 	// If we are printing estimates, update the time
@@ -181,7 +181,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 	request_len   -= toread;
     }
     if (ocb->opt_estimate) ocb->clear_realtime_stats();
-    this->multihash_finalize();
+    this->hc_file.multihash_finalize(this->hash_hex);			// finalize and save the results
     if (this->file_bytes == this->stat_bytes) this->eof = true; // end of the file
     return true;			// done hashing!
 }
@@ -363,7 +363,7 @@ void file_data_hasher_t::hash()
 	 * still need to display a hash.
 	 */
 
-	if (fdht->read_len > 0 || fdht->stat_bytes==0 || fdht->is_stdin()) {
+	if (fdht->hc_file.read_len > 0 || fdht->stat_bytes==0 || fdht->is_stdin()) {
 	    if(md5deep_mode){
 		/**
 		 * Under not matched mode, we only display those known hashes that

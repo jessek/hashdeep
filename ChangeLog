@@ -1,5 +1,10 @@
 2011-08-01  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
+	* src/main.h (class file_data_hasher_t): moved read_offset and read_len from file_data_t to file_data_hasher_t
+	(class file_data_hasher_t): moved timestamp from file_data_t to file_data_hasher_t
+
+	* src/display.cpp (file_data_hasher_t::compute_dfxml): fdht->dfxml_hash is now a string stream
+
 	* src/hash.cpp (file_data_hasher_t::hash): whoops; dfxml had old bytes=; replaced with len=;
 
 2011-07-31  Simson Garfinkel  <simsong@alphonse-mucha.local>

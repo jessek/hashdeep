@@ -275,11 +275,12 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
     // If we've read less than one MB, then the computed value for mb_read 
     // will be zero. Later on we may need to divide the total file size, 
     // total_megs, by mb_read. Dividing by zero can create... problems 
-    if (fdht->read_len < ONE_MEGABYTE){
+
+    if (fdht->hc_file.read_len < ONE_MEGABYTE){
 	mb_read = 1;
     }
     else {
-	mb_read = fdht->read_len / ONE_MEGABYTE;
+	mb_read = fdht->hc_file.read_len / ONE_MEGABYTE;
     }
 
     if (fdht->stat_megs()==0 || opt_estimate==false)  {
@@ -336,24 +337,20 @@ void display::display_banner_if_needed()
 void file_data_hasher_t::compute_dfxml(bool known_hash)
 {
     if(this->ocb->piecewise_size>0){
-	this->dfxml_hash +=
-	    std::string("<byte_run file_offset='")
-	    + itos(this->read_offset)
-	    + std::string("' len='")
-	    + itos(this->read_len) + std::string("'>\n   ");
+	this->dfxml_hash << "<byte_run file_offset='" << this->hc_file.read_offset << "'" 
+			 << " len='" << this->hc_file.read_len << "'>\n   ";
     }
     for(int i=0;i<NUM_ALGORITHMS;i++){
 	if(hashes[i].inuse){
-	    this->dfxml_hash += "<hashdigest type='";
-	    this->dfxml_hash += makeupper(hashes[i].name);
-	    this->dfxml_hash += std::string("'>") + this->hash_hex[i] + std::string("</hashdigest>\n");
+	    this->dfxml_hash << "<hashdigest type='" << makeupper(hashes[i].name)
+			     << "'>" << this->hash_hex[i] <<"</hashdigest>\n";
 	}
     }
     if(known_hash){
-	this->dfxml_hash += std::string("<matched>1</matched>");
+	this->dfxml_hash << "<matched>1</matched>";
     }
     if(this->ocb->piecewise_size){
-	this->dfxml_hash += "</byte_run>\n";
+	this->dfxml_hash << "</byte_run>\n";
     }
 }
 
@@ -696,9 +693,9 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht)
     }
     if(fdht->ocb->piecewise_size > 0){
 	std::stringstream ss;
-	uint64_t len = (fdht->read_offset+fdht->read_len-1);
-	if(fdht->read_offset==0 && fdht->read_len==0) len=0;
-	ss << " offset " << fdht->read_offset << "-" << len;
+	uint64_t len = (fdht->hc_file.read_offset+fdht->hc_file.read_len-1);
+	if(fdht->hc_file.read_offset==0 && fdht->hc_file.read_len==0) len=0;
+	ss << " offset " << fdht->hc_file.read_offset << "-" << len;
 	line += ss.str();
     }
     writeln(out,line);
@@ -737,7 +734,7 @@ void display::display_hash_simple(file_data_hasher_t *fdht)
     std::string line;
 
     char buf[1024];
-    snprintf(buf,sizeof(buf),"%"PRIu64",", fdht->read_len);
+    snprintf(buf,sizeof(buf),"%"PRIu64",", fdht->hc_file.read_len);
     line = std::string(buf);
 
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
@@ -748,9 +745,9 @@ void display::display_hash_simple(file_data_hasher_t *fdht)
     line += fmt_filename(fdht);
     if(fdht->ocb->piecewise_size > 0){
 	std::stringstream ss;
-	uint64_t len = (fdht->read_offset+fdht->read_len-1);
-	if(fdht->read_offset==0 && fdht->read_len==0) len=0;
-	ss << " offset " << fdht->read_offset << "-" << len;
+	uint64_t len = (fdht->hc_file.read_offset+fdht->hc_file.read_len-1);
+	if(fdht->hc_file.read_offset==0 && fdht->hc_file.read_len==0) len=0;
+	ss << " offset " << fdht->hc_file.read_offset << "-" << len;
 	line += ss.str();
     }
     writeln(out,line);
@@ -810,7 +807,7 @@ void display::dfxml_write(file_data_hasher_t *fdht)
 	lock();
 	dfxml->push("fileobject");
 	dfxml->xmlout("filename",fdht->file_name);
-	dfxml->writexml(fdht->dfxml_hash);
+	dfxml->writexml(fdht->dfxml_hash.str());
 	dfxml->pop();
 	unlock();
     }
