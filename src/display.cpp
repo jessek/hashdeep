@@ -250,7 +250,7 @@ void display::clear_realtime_stats()
 // won't be many updates. The counter doesn't change often enough
 // to indicate progress. Using MB is a reasonable compromise. 
 
-void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elapsed)
+void display::display_realtime_stats(const file_data_hasher_t *fdht, const hash_context_obj *hc,time_t elapsed)
 {
     uint64_t mb_read=0;
     bool shorten = false;
@@ -276,11 +276,11 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
     // will be zero. Later on we may need to divide the total file size, 
     // total_megs, by mb_read. Dividing by zero can create... problems 
 
-    if (fdht->hc_file.read_len < ONE_MEGABYTE){
+    if (hc->read_len < ONE_MEGABYTE){
 	mb_read = 1;
     }
     else {
-	mb_read = fdht->hc_file.read_len / ONE_MEGABYTE;
+	mb_read = hc->read_len / ONE_MEGABYTE;
     }
 
     if (fdht->stat_megs()==0 || opt_estimate==false)  {
@@ -313,9 +313,7 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, time_t elap
 	snprintf(msg,sizeof(msg),"%02"PRIu64":%02"PRIu64":%02"PRIu64" left", hour, min, seconds);
 	ss << msg;
     }
-    
     ss << "\r";
-
     lock();
     std::cerr << ss.str() << "\r";
     unlock();
@@ -333,23 +331,32 @@ void display::display_banner_if_needed()
     unlock();
 }
 
-
-void file_data_hasher_t::compute_dfxml(bool known_hash)
+void file_data_hasher_t::dfxml_write_hashes(std::string hex_hashes[],int indent)
 {
-    if(this->ocb->piecewise_size>0){
-	this->dfxml_hash << "<byte_run file_offset='" << this->hc_file.read_offset << "'" 
-			 << " len='" << this->hc_file.read_len << "'>\n   ";
-    }
     for(int i=0;i<NUM_ALGORITHMS;i++){
 	if(hashes[i].inuse){
-	    this->dfxml_hash << "<hashdigest type='" << makeupper(hashes[i].name)
-			     << "'>" << this->hash_hex[i] <<"</hashdigest>\n";
+	    for(int j=0;j<indent;j++){
+		this->dfxml_hash << ' ';
+	    }
+	    this->dfxml_hash << "<hashdigest type='" << makeupper(hashes[i].name) << "'>"
+			     << hex_hashes[i] <<"</hashdigest>\n";
 	}
     }
+}
+
+
+void file_data_hasher_t::compute_dfxml(bool known_hash,const hash_context_obj *hc)
+{
+    if(hc && this->ocb->piecewise_size>0){
+	this->dfxml_hash << "<byte_run file_offset='" << hc->read_offset << "'" 
+			 << " len='" << hc->read_len << "'>   \n";
+    }
+    
+    this->dfxml_write_hashes(this->hash_hex,2);
     if(known_hash){
 	this->dfxml_hash << "<matched>1</matched>";
     }
-    if(this->ocb->piecewise_size){
+    if(hc && this->ocb->piecewise_size){
 	this->dfxml_hash << "</byte_run>\n";
     }
 }
@@ -443,7 +450,7 @@ std::string display::fmt_size(const file_data_t *fdt) const
 
 
 /* The old display_match_result from md5deep */
-void display::md5deep_display_match_result(file_data_hasher_t *fdht)
+void display::md5deep_display_match_result(file_data_hasher_t *fdht,const hash_context_obj *hc)
 {  
     lock();
     const file_data_t *fs = known.find_hash(opt_md5deep_mode_algorithm,
@@ -451,42 +458,39 @@ void display::md5deep_display_match_result(file_data_hasher_t *fdht)
 					    fdht->file_number);
     unlock();
 
-    //if(fs) std::cerr << "fdht->file_name=" << fdht->file_name << " fs->file_name=" << fs->file_name << "\n";
-
     int known_hash = fs ? 1 : 0;
-
     if ((known_hash && opt_mode_match) || (!known_hash && opt_mode_match_neg)) {
 	if(dfxml){
-	    fdht->compute_dfxml(opt_show_matched || known_hash);
+	    fdht->compute_dfxml(opt_show_matched || known_hash,hc);
 	    return ;
 	}
 
-	std::string line;
+	std::stringstream line;
 
-	line = fmt_size(fdht);
+	line << fmt_size(fdht);
 	if (opt_display_hash) {
-	    line += fdht->hash_hex[opt_md5deep_mode_algorithm];
+	    line << fdht->hash_hex[opt_md5deep_mode_algorithm];
 	    if (opt_csv) {
-		line += ",";
+		line << ",";
 	    } else if (opt_asterisk) {
-		line += " *";
+		line << " *";
 	    } else {
-		line += "  ";
+		line << "  ";
 	    }
 	}
 	    
 	if (opt_show_matched) 	    {
 	    if (known_hash && (opt_mode_match)) {
-		line += fdht->file_name + " matched " + fs->file_name;
+		line << fdht->file_name << " matched " << fs->file_name;
 	    }
 	    else {
-		line += fdht->file_name + " does NOT match";
+		line << fdht->file_name << " does NOT match";
 	    }
 	}
 	else{
-	    line += fdht->file_name;
+	    line << fdht->file_name;
 	}
-	writeln(out,line);
+	writeln(out,line.str());
     }
 }
 
@@ -494,7 +498,7 @@ void display::md5deep_display_match_result(file_data_hasher_t *fdht)
  * This should probably be merged with the function above.
  * This function is very similar to audit_update(), which follows
  */
-void display::display_match_result(file_data_hasher_t *fdht)
+void display::display_match_result(file_data_hasher_t *fdht,const hash_context_obj *hc)
 {
     file_data_t *matched_fdt = NULL;
     int should_display = (primary_match_neg == primary_function);
@@ -503,7 +507,7 @@ void display::display_match_result(file_data_hasher_t *fdht)
     hashlist::searchstatus_t m = known.search(fdht,&matched_fdt);
     unlock();
 
-    std::string line;
+    std::stringstream line1;
 
     switch(m){
 	// If only the name is different, it's still really a match
@@ -514,33 +518,35 @@ void display::display_match_result(file_data_hasher_t *fdht)
 	break;
 	  
     case hashlist::status_file_size_mismatch:
-	line = fmt_filename(fdht) + ": Hash collision with " + fmt_filename(matched_fdt);
-	writeln(&std::cerr,line);
+	line1 << fmt_filename(fdht) << ": Hash collision with " << fmt_filename(matched_fdt);
+	writeln(&std::cerr,line1.str());
 	break;
 	
     case hashlist::status_partial_match:
-	line = fmt_filename(fdht) + ": partial hash match with " + fmt_filename(matched_fdt);
-	writeln(&std::cerr,line);
+	line1 << fmt_filename(fdht) << ": partial hash match with " << fmt_filename(matched_fdt);
+	writeln(&std::cerr,line1.str());
 	break;
 	
     default:
 	break;
     }
     if (should_display) {
+	std::stringstream line2;
+
 	if (opt_display_hash){
-	    display_hash_simple(fdht);
+	    display_hash_simple(fdht,hc);
 	}
 	else {
-	    line = fmt_filename(fdht);
+	    line2 << fmt_filename(fdht);
 	    if (opt_show_matched && primary_match == primary_function) {
-		line += " matches ";
+		line2 << " matches ";
 		if (NULL == matched_fdt) {
-		    line += "(unknown file)";
+		    line2 << "(unknown file)";
 		} else {
-		    line += fmt_filename(matched_fdt);
+		    line2 << fmt_filename(matched_fdt);
 		}
 	    }
-	    writeln(out,line);
+	    writeln(out,line2.str());
 	}
     }
 }
@@ -625,7 +631,7 @@ void display::finalize_matching()
  * needs hasher because of triage mode
  */
 
-void  display::md5deep_display_hash(file_data_hasher_t *fdht) 
+void  display::md5deep_display_hash(file_data_hasher_t *fdht,const hash_context_obj *hc) 
 {
     /**
      * We can't call display_size here because we don't know if we're
@@ -633,24 +639,24 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht)
      * have to evaluate if there was a match first.
      */
     if (opt_mode_match || opt_mode_match_neg){
-	md5deep_display_match_result(fdht);
+	md5deep_display_match_result(fdht,hc);
 	return;
     }
     
     if(this->dfxml){
-	fdht->compute_dfxml(opt_show_matched);
+	fdht->compute_dfxml(opt_show_matched,hc);
 	return;
     }
 
-    std::string line;
+    std::stringstream line;
 
     if (mode_triage) {
-	line += fdht->triage_info + "\t";
+	line << fdht->triage_info << "\t";
     }
-    line += fmt_size(fdht) + fdht->hash_hex[opt_md5deep_mode_algorithm];
+    line << fmt_size(fdht) << fdht->hash_hex[opt_md5deep_mode_algorithm];
 
     if (mode_quiet){
-	line += "  ";
+	line << "  ";
     }
     else  {
 	if ((fdht->ocb->piecewise_size) || (fdht->is_stdin()==false))    {
@@ -658,7 +664,7 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht)
 		struct tm my_time;
 		memset(&my_time,0,sizeof(my_time)); // clear it out
 #ifdef HAVE__GMTIME64
-		// This is not threadsafe, hence the lock //
+		// This is not threadsafe, hence the lock 
 		lock();
 		my_time = *_gmtime64(&fdht->timestamp);
 		unlock();
@@ -676,39 +682,36 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht)
 		// two digit hour, two digit minute, two digit second
 		strftime(time_str, sizeof(time_str), "%Y:%m:%d:%H:%M:%S", &my_time);
 
-		line += (opt_csv ? ",":" ");
-		line += time_str;
+		line << (opt_csv ? ",":" ") << time_str;
 	    }
 	    if (opt_csv) {
-		line += ",";
+		line << ",";
 	    } else if (opt_asterisk) {
-		line += " *";
+		line << " *";
 	    } else if (mode_triage) {
-		line += "\t";
+		line << "\t";
 	    } else {
-		line += "  ";
+		line << "  ";
 	    }
-	    line += fmt_filename(fdht);
+	    line << fmt_filename(fdht);
 	}
     }
-    if(fdht->ocb->piecewise_size > 0){
-	std::stringstream ss;
-	uint64_t len = (fdht->hc_file.read_offset+fdht->hc_file.read_len-1);
-	if(fdht->hc_file.read_offset==0 && fdht->hc_file.read_len==0) len=0;
-	ss << " offset " << fdht->hc_file.read_offset << "-" << len;
-	line += ss.str();
+    if(hc && fdht->ocb->piecewise_size > 0){
+	uint64_t len = (hc->read_offset+hc->read_len-1);
+	if(hc->read_offset==0 && hc->read_len==0) len=0;
+	line << " offset " << hc->read_offset << "-" << len;
     }
-    writeln(out,line);
+    writeln(out,line.str());
 }
 
 
 /*
  * Externally called to display a simple hash
  */
-void display::display_hash_simple(file_data_hasher_t *fdht)
+void display::display_hash_simple(file_data_hasher_t *fdht,const hash_context_obj *hc)
 {
     if(this->dfxml){
-	fdht->compute_dfxml(opt_show_matched);
+	fdht->compute_dfxml(opt_show_matched,hc);
 	return;
     }
 
@@ -723,34 +726,29 @@ void display::display_hash_simple(file_data_hasher_t *fdht)
      * In piecewise mode its the size of the piece,
      * In normal mode it's the size of the file.
      * 
-     *
      * NOTE: Ignore the warning in the format when running on mingw with GCC-4.3.0
      * see http://lists.gnu.org/archive/html/qemu-devel/2009-01/msg01979.html
      *
-     
      */
      
     display_banner_if_needed();
-    std::string line;
+    std::stringstream line;
 
-    char buf[1024];
-    snprintf(buf,sizeof(buf),"%"PRIu64",", fdht->hc_file.read_len);
-    line = std::string(buf);
+    line << hc->read_len << ",";
 
     for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
 	if (hashes[i].inuse){
-	    line += fdht->hash_hex[i] + std::string(",");
+	    line << fdht->hash_hex[i] << ",";
 	}
     }
-    line += fmt_filename(fdht);
+    line << fmt_filename(fdht);
     if(fdht->ocb->piecewise_size > 0){
 	std::stringstream ss;
-	uint64_t len = (fdht->hc_file.read_offset+fdht->hc_file.read_len-1);
-	if(fdht->hc_file.read_offset==0 && fdht->hc_file.read_len==0) len=0;
-	ss << " offset " << fdht->hc_file.read_offset << "-" << len;
-	line += ss.str();
+	uint64_t len = (hc->read_offset+hc->read_len-1);
+	if(hc->read_offset==0 && hc->read_len==0) len=0;
+	line << " offset " << hc->read_offset << "-" << len;
     }
-    writeln(out,line);
+    writeln(out,line.str());
 }
 
 
@@ -758,15 +756,15 @@ void display::display_hash_simple(file_data_hasher_t *fdht)
  * Called by hash() in hash.c when the hashing operation is complete.
  * Display the hash and perform any auditing steps.
  */ 
-void display::display_hash(file_data_hasher_t *fdht)
+void display::display_hash(file_data_hasher_t *fdht,const hash_context_obj *hc)
 {
     switch (primary_function) {
     case primary_compute: 
-	display_hash_simple(fdht);
+	display_hash_simple(fdht,hc);
 	break;
     case primary_match: 
     case primary_match_neg: 
-	display_match_result(fdht);
+	display_match_result(fdht,hc);
 	break;
     case primary_audit: 
 	audit_update(fdht);

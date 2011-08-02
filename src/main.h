@@ -266,7 +266,7 @@ public:
 					// used to build piecewise
     uint64_t	file_number;
     void	append_dfxml_for_byterun();
-    void	compute_dfxml(bool known_hash);
+    void	compute_dfxml(bool known_hash,const hash_context_obj *hc);
 
     timestamp_t	timestamp;
 
@@ -280,8 +280,6 @@ public:
     time_t	start_time, last_time;
     bool	eof;			// end of file encountered while reading
 
-    hash_context_obj hc_file;		// the primary hash_context
-
     /* multithreaded hash implementation is these functions in hash.cpp.
      * hash() is called to hash each file and record the results.
      * Return codes are both stored in display return_code and returned
@@ -289,7 +287,8 @@ public:
      */
     // called to actually do the computation; returns true if successful
     // and fills in the read_offset and read_len
-    bool compute_hash(uint64_t request_start,uint64_t request_len);
+    void dfxml_write_hashes(std::string hex_hashes[],int indent);
+    bool compute_hash(uint64_t request_start,uint64_t request_len,hash_context_obj *segment,hash_context_obj *file);
     void hash();	// called to hash each file and record results
 };
 
@@ -597,9 +596,15 @@ public:
     }
 
     void	try_msg(void);
+
     void	display_banner_if_needed();
-    void	display_hash(file_data_hasher_t *fdht);
-    void	display_hash_simple(file_data_hasher_t *fdt);
+    void	display_match_result(file_data_hasher_t *fdht,const hash_context_obj *hc);
+
+    void	md5deep_display_match_result(file_data_hasher_t *fdht,const hash_context_obj *hc);
+    void	md5deep_display_hash(file_data_hasher_t *fdht,const hash_context_obj *hc);
+
+    void	display_hash(file_data_hasher_t *fdht,const hash_context_obj *hc);
+    void	display_hash_simple(file_data_hasher_t *fdt,const hash_context_obj *hc);
 
     /* The following routines are for printing and outputing filenames.
      * 
@@ -652,13 +657,9 @@ public:
 	return ret;
     }
     void	clear_realtime_stats();
-    void	display_realtime_stats(const file_data_hasher_t *fdht,time_t elapsed);
+    void	display_realtime_stats(const file_data_hasher_t *fdht,const hash_context_obj *hc,time_t elapsed);
     bool	hashes_loaded() const{ lock(); bool ret = known.size()>0; unlock(); return ret; }
     void	add_fdt(file_data_t *fdt){ lock(); known.add_fdt(fdt); unlock(); }
-
-    void	display_match_result(file_data_hasher_t *fdht);
-    void	md5deep_display_match_result(file_data_hasher_t *fdht);
-    void	md5deep_display_hash(file_data_hasher_t *fdht);
 
     /* audit mode */
     int		audit_update(file_data_hasher_t *fdt);

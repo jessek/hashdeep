@@ -67,31 +67,13 @@ static inline uint64_t max(uint64_t a,uint64_t b){
  * Doesn't need to seek because the caller handles it. 
  */
 
-#if 0
-    size_t read_size = request_len;
-
-    if (this->block_size < ){
-	mysize = this->block_size;
-    }
-
-    uint64_t remaining = this->block_size;
-
-    // Seek if necessary...
-	if(this->read_start != request_start){
-	    fseek(this->handle,
-	}
-    }
-    this->read_end   = this->read_start;
-#endif
-
-
-	
 
 /**
  * compute_hash is where the data gets read and hashed.
  */
 
-bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_len)
+bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_len,
+				      hash_context_obj *hc1,hash_context_obj *hc2)
 {
     /*
      * We may need to read multiple times; don't read more than
@@ -99,9 +81,8 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
      * at a time.
      */
 
-    this->hc_file.read_offset = request_start;
-    this->hc_file.read_len    = 0;		// so far
-    this->hc_file.multihash_initialize();
+    hc1->read_offset = request_start;
+    hc1->read_len    = 0;		// so far
 
     while (request_len>0){
 	// Clear the buffer in case we hit an error and need to pad the hash 
@@ -117,8 +98,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 	    memset(buffer_,0,sizeof(buffer_));
 	}
 
-	// read the data into buffer
-	ssize_t current_read_bytes = 0;
+	ssize_t current_read_bytes = 0;	// read the data into buffer
 
 	if(this->handle){
 	    current_read_bytes = fread(buffer_, 1, toread, this->handle);
@@ -127,7 +107,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 	    if(this->base){
 		buffer = this->base + request_start;
 		current_read_bytes = min(toread,this->bounds - request_start); // can't read more than this
-		if(this->hc_file.read_offset+current_read_bytes==this->bounds){
+		if(hc1->read_offset+current_read_bytes==this->bounds){
 		    this->eof = true;	// we hit the end
 		}
 	    } else {
@@ -157,8 +137,9 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 	/* Update the pointers and the hash */
 	if(current_read_bytes>0){
 	    this->file_bytes   += current_read_bytes;
-	    this->hc_file.read_len     += current_read_bytes;
-	    this->hc_file.multihash_update(buffer,current_read_bytes); // hash in the non-error
+	    hc1->read_len     += current_read_bytes;
+	    hc1->multihash_update(buffer,current_read_bytes); // hash in the non-error
+	    if(hc2) hc2->multihash_update(buffer,current_read_bytes); // hash in the non-error
 	}
       
 	// If we are printing estimates, update the time
@@ -167,7 +148,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 	    // We only update the display only if a full second has elapsed 
 	    if (this->last_time != current_time) {
 		this->last_time = current_time;
-		ocb->display_realtime_stats(this,current_time - this->start_time);
+		ocb->display_realtime_stats(this,hc1,current_time - this->start_time);
 	    }
 	}
 	// If we are at the end of the file, break
@@ -181,7 +162,6 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 	request_len   -= toread;
     }
     if (ocb->opt_estimate) ocb->clear_realtime_stats();
-    this->hc_file.multihash_finalize(this->hash_hex);			// finalize and save the results
     if (this->file_bytes == this->stat_bytes) this->eof = true; // end of the file
     return true;			// done hashing!
 }
@@ -277,7 +257,6 @@ void file_data_hasher_t::hash()
 	    assert(0);			// invalid setting of iomode
 	}
 
-
 	/*
 	 * If this file is above the size threshold set by the user, skip it
 	 * and set the hash to be stars
@@ -290,9 +269,9 @@ void file_data_hasher_t::hash()
 		    }
 		}
 		if(md5deep_mode){
-		    fdht->ocb->md5deep_display_hash(fdht);
+		    fdht->ocb->md5deep_display_hash(fdht,0); // no hash
 		} else {
-		    fdht->ocb->display_hash(fdht);
+		    fdht->ocb->display_hash(fdht,0);
 		}
 	    }
 	    return ;			// close will happend when the fdht is killed
@@ -312,10 +291,15 @@ void file_data_hasher_t::hash()
 	 * 512 bytes of the file. But we'll have to remove piecewise mode
 	 * before returning to the main hashing code.
 	 *
+	 * Triage mode is only available for md5deep series programs.
+	 *
 	 * Disabled for stdin becuase we can't seek back and search again.
 	 */
 	
-	bool success = fdht->compute_hash(0,512);
+	hash_context_obj hc_triage;
+	hc_triage.multihash_initialize();
+	bool success = fdht->compute_hash(0,512,&hc_triage,0);
+	hc_triage.multihash_finalize(this->hash_hex);			// finalize and save the results
 
 	if(success){
 	    std::stringstream ss;
@@ -340,6 +324,13 @@ void file_data_hasher_t::hash()
      */
 
     uint64_t request_start = 0;
+    hash_context_obj *hc_file= 0;	// if we are doing picewise hashing, this stores the file
+
+    if(fdht->ocb->piecewise_size>0){
+	hc_file = new hash_context_obj();
+	hc_file->multihash_initialize();
+    }
+
     while (fdht->eof==false)  {
 	
 	uint64_t request_len = fdht->stat_bytes; // by default, hash the file
@@ -351,7 +342,12 @@ void file_data_hasher_t::hash()
 	 * call compute_hash(), which computes the hash of the full file, or next next piecewise hashe.
 	 * It returns FALSE if there is a failure.
 	 */
-	if (fdht->compute_hash(request_start,request_len)==false) {
+	hash_context_obj hc_piece;
+	hc_piece.multihash_initialize();
+	bool r = fdht->compute_hash(request_start,request_len,&hc_piece,hc_file);
+	hc_piece.multihash_finalize(this->hash_hex);			// finalize and save the results
+
+	if (r==false) {
 	    break;
 	}
 	request_start += request_len;
@@ -363,7 +359,7 @@ void file_data_hasher_t::hash()
 	 * still need to display a hash.
 	 */
 
-	if (fdht->hc_file.read_len > 0 || fdht->stat_bytes==0 || fdht->is_stdin()) {
+	if (hc_piece.read_len > 0 || fdht->stat_bytes==0 || fdht->is_stdin()) {
 	    if(md5deep_mode){
 		/**
 		 * Under not matched mode, we only display those known hashes that
@@ -377,19 +373,27 @@ void file_data_hasher_t::hash()
 				   fdht->file_number);
 		}
 		else {
-		    ocb->md5deep_display_hash(this);
+		    ocb->md5deep_display_hash(this,&hc_piece);
 		}
 	    } else {
-		ocb->display_hash(fdht);
+		ocb->display_hash(fdht,&hc_piece);
 	    }
 	}
     }
+
 
     /**
      * If we are in dfxml mode, output the DFXML, which may optionally include
      * all of the piecewise information.
      */
+    if(hc_file){
+	std::string file_hashes[NUM_ALGORITHMS];
+	hc_file->multihash_finalize(file_hashes);
+	this->dfxml_write_hashes(file_hashes,0);
+    }
+
     ocb->dfxml_write(this);
+    if(hc_file) delete hc_file;
 }
 
 
