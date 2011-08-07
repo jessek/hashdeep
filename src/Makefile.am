@@ -19,10 +19,12 @@ hashdeep_SOURCES = main.cpp hashlist.cpp multihash.cpp display.cpp \
 
 # This magic creates md5deep, etc from hashdeep on Windows with LN
 ${OTHERS}: hashdeep$(EXEEXT)
-	/bin/rm -f $@ ; ln hashdeep$(EXEEXT) $@
+	/bin/rm -f $@ 
+	ln hashdeep$(EXEEXT) $@ )
 
 ${OTHERS64_EXE}: hashdeep64.exe
-	/bin/rm -f $@ ; ln hashdeep64.exe $@
+	/bin/rm -f $@ 
+	ln hashdeep64.exe $@
 
 all: ${OTHERS}
 
