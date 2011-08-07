@@ -6,6 +6,8 @@
 	
 	* src/Makefile.am: Corrected typo in the symbolic linking
 
+	* src/ui.cpp: Vestigial file removed
+
 2011-08-01  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* src/main.h (class file_data_hasher_t): moved read_offset and read_len from file_data_t to file_data_hasher_t
