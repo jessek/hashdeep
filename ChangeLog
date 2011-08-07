@@ -1,3 +1,11 @@
+2011-08-07 Jesse Kornblum 
+	
+	* man/md5deep.1: Updated version number
+	* man/hashdeep.1: Restored to earlier version
+	* man/Makefile.am: Corrected clobbering of hashdeep man page
+	
+	* src/Makefile.am: Corrected typo in the symbolic linking
+
 2011-08-01  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* src/main.h (class file_data_hasher_t): moved read_offset and read_len from file_data_t to file_data_hasher_t

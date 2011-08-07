@@ -517,10 +517,12 @@ uninstall-am: uninstall-binPROGRAMS
 
 # This magic creates md5deep, etc from hashdeep on Windows with LN
 ${OTHERS}: hashdeep$(EXEEXT)
-	/bin/rm -f $@ ; ln hashdeep$(EXEEXT) $@
+	/bin/rm -f $@ 
+	ln hashdeep$(EXEEXT) $@
 
 ${OTHERS64_EXE}: hashdeep64.exe
-	/bin/rm -f $@ ; ln hashdeep64.exe $@
+	/bin/rm -f $@ 
+	ln hashdeep64.exe $@
 
 all: ${OTHERS}
 

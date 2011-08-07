@@ -421,7 +421,6 @@ update-manpages: md5deep.1
 	$(INSTALL) $< sha256deep.1
 	$(INSTALL) $< tigerdeep.1
 	$(INSTALL) $< whirlpooldeep.1
-	$(INSTALL) $< hashdeep.1
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

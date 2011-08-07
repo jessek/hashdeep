@@ -13,7 +13,6 @@ update-manpages: md5deep.1
 	$(INSTALL) $< sha256deep.1
 	$(INSTALL) $< tigerdeep.1
 	$(INSTALL) $< whirlpooldeep.1
-	$(INSTALL) $< hashdeep.1
 
 EXTRA_DIST=${man_MANS} 
 
