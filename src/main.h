@@ -494,7 +494,7 @@ public:
 	mode_barename(false),
 	mode_size(false),mode_size_all(false),
 	opt_silent(false),
-	opt_verbose(false),
+	opt_verbose(0),
 	opt_estimate(false),
 	opt_relative(false),
 	opt_unicode_escape(false),
@@ -537,7 +537,7 @@ public:
     bool	mode_size_all;
     std::string	opt_outfilename;
     bool	opt_silent;
-    bool	opt_verbose;
+    int		opt_verbose;
     bool	opt_estimate;
     bool	opt_relative;
     bool	opt_unicode_escape;
