@@ -73,7 +73,7 @@ do
 done
 echo Successfully compiled 64-bit windows code: $have64
 
-if [ $1 = "x64" ]; then
+if [ x"$1" = x"x64" ] ; then
   echo Only compile x64
   exit 0
 fi
