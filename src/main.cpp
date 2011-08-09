@@ -940,7 +940,7 @@ int main(int argc, char **argv)
     algorithm_t::load_hashing_algorithms();		
     state *s = new state();
 
-    return s->main(argc,argv);
+    exit(s->main(argc,argv));
 }
 
 int state::main(int _argc,char **_argv)
@@ -1043,7 +1043,6 @@ int state::main(int _argc,char **_argv)
 	    std::wstring wstr;
 	    utf8::utf8to16(line.begin(),line.end(),back_inserter(wstr));
 	    dig_win32(wstr);
-	    exit(1);
 #else
 	    dig_normal(line.c_str());
 #endif
@@ -1075,22 +1074,13 @@ int state::main(int _argc,char **_argv)
   
     /* If we are multi-threading, wait for all threads to finish */
 #ifdef HAVE_PTHREAD
-    if(ocb.tp){
-	while(ocb.tp->all_free()==false){
-#ifdef HAVE_USLEEP
-	    usleep(50);
-#else	    
-	    sleep(1);
-#endif
-	}
-    }
+    if(ocb.tp) ocb.tp->wait_till_all_free();
 #endif
 
     if(opt_debug>2){
 	std::cout << "\ndump hashlist after matching:\n";
 	ocb.dump_hashlist();
     }
-
 
     /* If we were auditing, display the audit results */
     if (ocb.primary_function == primary_audit){
@@ -1108,7 +1098,29 @@ int state::main(int _argc,char **_argv)
     }
 
     /* If we were generating DFXML, finish the job */
+    if(opt_debug>1) std::cerr << "*** main calling dfxml_shutdown\n";
     ocb.dfxml_shutdown();
+
+
+
+    /* On windows, do a hard exit
+     *
+     * "If one of the terminated threads in the process holds a lock
+     * and the DLL detach code in one of the loaded DLLs attempts to
+     * acquire the same lock, then calling ExitProcess results in a
+     * deadlock. In contrast, if a process terminates by calling
+     * TerminateProcess, the DLLs that the process is attached to are
+     * not notified of the process termination. Therefore, if you do
+     * not know the state of all threads in your process, it is better
+     * to call TerminateProcess than ExitProcess. Note that returning
+     * from the main function of an application results in a call to
+     * ExitProcess."
+     *
+     * http://msdn.microsoft.com/en-us/library/ms682658(v=vs.85).aspx
+     */
+#if defined(_WIN32) 
+    TerminateProcess(GetCurrentProcess(),ocb.get_return_code());
+#endif
     return ocb.get_return_code();
 }
 

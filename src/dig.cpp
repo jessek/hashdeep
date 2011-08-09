@@ -324,7 +324,7 @@ void state::process_dir(const tstring &fn)
     _TDIR *current_dir;
     struct _tdirent *entry;
 
-    if(opt_debug) std::cerr << "process_dir(" << main::make_utf8(fn) << ")\n";
+    if(opt_debug) std::cerr << "*** process_dir(" << main::make_utf8(fn) << ")\n";
 
     if (have_processed_dir(fn)) {
 	ocb.error_filename(fn,"symlink creates cycle");
@@ -590,7 +590,7 @@ void state::dig_win32(const std::wstring &fn)
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind;
 
-    //  print_status("Called process_win32(%S)", fn);
+    if(opt_debug) ocb.status("*** state::dig_win32(%s)\n",main::make_utf8(fn).c_str());
 
     if (is_win32_device_file(fn)){
 	ocb.hash_file(fn);
@@ -658,7 +658,7 @@ void state::dig_win32(const std::wstring &fn)
     if (0 == rc)  {
 	ocb.error_filename(fn,"Unknown error while cleaning up wildcard expansion");
     }
-    return;
+    if(opt_debug) ocb.status("state::dig_win32(%s)",main::make_utf8(fn).c_str());
 }
 #endif
 

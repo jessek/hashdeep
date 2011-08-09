@@ -3,9 +3,9 @@
  ****************************************************************/
 
 #include "main.h"
+
 #ifdef HAVE_PTHREAD
 #include "threadpool.h"
-
 
 /**
  * http://stackoverflow.com/questions/4264460/wait-for-one-of-several-threads-to-finish
@@ -121,15 +121,25 @@ threadpool::~threadpool()
      * So we just leave them floating around now. Doesn't matter much, because
      * the main process will die soon enough.
      */
-#if 0
-    for(int i=0;i<num_threads;i++){
-	this->schedule_work(0);
-    }
-#endif
+    kill_all_workers();
     /* Release our resources */
     pthread_mutex_destroy(&M);
     pthread_cond_destroy(&TOMAIN);
     pthread_cond_destroy(&TOWORKER);
+}
+
+/*
+ * Send the message to kill the workers through
+ */
+void threadpool::kill_all_workers()
+{
+    pthread_mutex_lock(&M);
+    int worker_count = numworkers;
+    pthread_mutex_unlock(&M);
+    while(worker_count>0){
+	this->schedule_work(0);
+	worker_count--;
+    }
 }
 
 /** 
@@ -190,11 +200,35 @@ void *worker::run()
 	pthread_cond_signal(&master->TOMAIN); // tell the master that we are free!
 	pthread_mutex_unlock(&master->M);     // should wake up the master
     }
+    pthread_mutex_lock(&master->M);
+    master->numworkers--;
+    pthread_mutex_unlock(&master->M);
     return 0;
 }
 
-bool threadpool::all_free()
+bool threadpool::all_free() 
 {
     return numworkers == get_free_count();
 }
+
+unsigned int threadpool::num_workers() 
+{
+    pthread_mutex_lock(&M);
+    unsigned int ret = numworkers;
+    pthread_mutex_unlock(&M);
+    return ret;
+}
+
+void threadpool::wait_till_all_free()
+{
+    while(all_free()==false){
+#ifdef HAVE_USLEEP
+	usleep(50);
+#else	    
+	sleep(1);
+#endif
+    }
+}
+
+
 #endif

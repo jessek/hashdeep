@@ -71,7 +71,12 @@ do
     have64='yes'
   fi
 done
+echo Successfully compiled 64-bit windows code: $have64
 
+if [ $1 = "x64" ]; then
+  echo Only compile x64
+  exit 0
+fi
 
 echo Trying to make the 32-bit windows
 have32='no'
@@ -86,10 +91,7 @@ do
     have32='yes'
   fi
 done
-
-
 echo Successfully compiled 32-bit windows code: $have32
-echo Successfully compiled 64-bit windows code: $have64
 
 VERSION=`grep PACKAGE_VERSION config.h | awk '{print $3}' | sed s/\"//g`
 echo Creating md5deep-$VERSION.zip
