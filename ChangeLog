@@ -1,3 +1,7 @@
+2011-08-09  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/main.h (std::vector): changed hashmap from a map to a multimap
+
 2011-08-07 Jesse Kornblum 
 	
 	* man/md5deep.1: Updated version number

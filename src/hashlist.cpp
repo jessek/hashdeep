@@ -35,90 +35,90 @@ void hashlist::add_fdt(file_data_t *fi)
 }
 
 /** 
- * search for a hash
+ * search for a hash with an (optional) given filename.
+ * Return the first hash that matches the filename.
+ * If nothing matches the filename, return the first hash that matches.
+ * If a match is found, set file_number in the hash that is found.
+ * Not sure I like modifying the store, but it's okay for now.
  */
-const file_data_t *hashlist::find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number)
+file_data_t *hashlist::find_hash(hashid_t alg,const std::string &hash_hex,
+				       const std::string &file_name,uint64_t file_number)
 {
-    //std::cerr << "searching for " << hash_hex << "\n";
-
-    std::map<std::string,file_data_t *>::iterator it = hashmaps[alg].find(hash_hex);
-    if(it==hashmaps[alg].end()) return 0;
-
-    //std::cerr << "  found " << (*it).second->file_name << " " << (*it).second->hash_hex[alg] << "\n";
-
-    (*it).second->matched_file_number = file_number;	// note that it's used!
-    return (*it).second;
+    std::pair<hashmap::iterator,hashmap::iterator> match = this->hashmaps[alg].equal_range(hash_hex);
+    if(match.first==match.second) return 0; // nothing found
+    for(hashmap::iterator it = match.first; it!=match.second; ++it){
+	if((*it).second->file_name == file_name){
+	    if(file_number) (*it).second->matched_file_number = file_number;
+	    return (*it).second;
+	}
+    }
+    /* No exact matches; return the first match */
+    if(file_number) (*match.first).second->matched_file_number = file_number;
+    return(*match.first).second;
 }
 
 
 /**
  * Search for the provided fdt in the hashlist and return the status of the match.
+ * Match on name if possible; otherwise match on just the hash codes.
  */
-hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,file_data_t **matched) 
+hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,file_data_t ** matched_) 
 {
-    bool file_size_mismatch = false;
-    bool file_name_mismatch = false;
-    bool did_match = false;
-  
     /* Iterate through each of the hashes in the haslist until we find a match.
      */
-    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
+    for (int alg = 0 ; alg < NUM_ALGORITHMS ; ++alg)  {
 	/* Only search hash functions that are in use and hashes that are in the fdt */
-	if (hashes[i].inuse && fdht->hash_hex[i].size()){
-	    hashmap::iterator it = hashmaps[i].find(fdht->hash_hex[i]);
-	    if(it != hashmaps[i].end()){
-		/* found a match*/
+	if (hashes[alg].inuse==0 || fdht->hash_hex[alg].size()==0){
+	    continue;
+	}
 
-		did_match = true;
+	/* Find the best match using find_hash */
+	file_data_t *matched = find_hash((hashid_t)alg,
+					       fdht->hash_hex[alg],fdht->file_name,fdht->file_number);
 
-		file_data_t *match = it->second;
-		if(matched){
-		    (*matched)   = it->second; // make a copy
-		    it->second->matched_file_number = fdht->file_number;
-		}
+	if(!matched){
+	    continue;			// no match
+	}
+	if(matched_) *matched_ = matched; // note the match
 
-		/* Verify that all of the other hash functions for *it match fdt as well,
-		 * but only for the cases when we have a hash for both the master file
-		 * and the target file. */
-		for(int j=0;j<NUM_ALGORITHMS;j++){
-		    if(hashes[j].inuse && j!=i
-		       && fdht->hash_hex[j].size()
-		       && match->hash_hex[j].size()){
-			if(fdht->hash_hex[j] != match->hash_hex[j]){
-			    /* Amazing. We found a match on one hash a a non-match on another.
-			     * Call the newspapers! This is a newsorthy event.
-			     */
-			    return status_partial_match;
-			}
-		    }
-		}
-		/* If we got here we matched on all of the hashes.
-		 * Which is to be expected.
-		 * Check to see if the sizes are the same.
-		 */
-		if(fdht->file_bytes != match->file_bytes){
-		    /* Amazing. We found two files that have the same hash but different
-		     * file sizes. This has never happened before in the history of the world.
-		     * Call the newspapers!
+	/* Verify that all of the other hash functions for *it match fdt as well,
+	 * but only for the cases when we have a hash for both the master file
+	 * and the target file. */
+	for(int j=0;j<NUM_ALGORITHMS;j++){
+	    if(hashes[j].inuse && j!=alg
+	       && fdht->hash_hex[j].size()
+	       && matched->hash_hex[j].size()){
+		if(fdht->hash_hex[j] != matched->hash_hex[j]){
+		    /* Amazing. We found a match on one hash a a non-match on another.
+		     * Call the newspapers! This is a newsorthy event.
 		     */
-		    file_size_mismatch = true;
-		}
-		/* See if the hashes are the same but the name changed.
-		 */
-		if(fdht->file_name != match->file_name){
-		    file_name_mismatch = true;
+		    return status_partial_match;
 		}
 	    }
 	}
+	/* If we got here we matched on all of the hashes.
+	 * Which is to be expected.
+	 * Check to see if the sizes are the same.
+	 */
+	if(fdht->file_bytes != matched->file_bytes){
+	    /* Amazing. We found two files that have the same hash but different
+	     * file sizes. This has never happened before in the history of the world.
+	     * Call the newspapers!
+	     */
+	    return status_file_size_mismatch;
+	}
+	/* See if the hashes are the same but the name changed.
+	 */
+	if(fdht->file_name != matched->file_name){
+	    return status_file_name_mismatch;
+	}
+	/* If we get here, then all of the hash matches for all of the algorithms have been
+	 * checked and found to be equal if present.
+	 */
+	return status_match;
     }
-    if(did_match==false) return status_no_match;
-
-    /* If we get here, then all of the hash matches for all of the algorithms have been
-     * checked and found to be equal if present.
-     */
-    if(file_size_mismatch) return status_file_size_mismatch;
-    if(file_name_mismatch) return status_file_name_mismatch;
-    return status_match;
+    /* If we get here, nothing ever matched. Kind of sad. */
+    return status_no_match;
 }
 
 

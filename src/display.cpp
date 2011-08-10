@@ -455,6 +455,7 @@ void display::md5deep_display_match_result(file_data_hasher_t *fdht,const hash_c
     lock();
     const file_data_t *fs = known.find_hash(opt_md5deep_mode_algorithm,
 					    fdht->hash_hex[opt_md5deep_mode_algorithm],
+					    fdht->file_name,
 					    fdht->file_number);
     unlock();
 

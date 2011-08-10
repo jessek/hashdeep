@@ -369,6 +369,7 @@ void file_data_hasher_t::hash()
 		if (ocb->mode_not_matched){
 		    ocb->find_hash(opt_md5deep_mode_algorithm,
 				   fdht->hash_hex[opt_md5deep_mode_algorithm],
+				   fdht->file_name,
 				   fdht->file_number);
 		}
 		else {

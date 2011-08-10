@@ -356,23 +356,42 @@ public:;
 	file_unknown
     } hashfile_format; 
 
-    class hashmap : public  std::map<std::string,file_data_t *> {
+    class hashmap : public  std::multimap<std::string,file_data_t *> {
     public:;
 	void add_file(file_data_t *fi,int alg_num);
     };
     hashmap		hashmaps[NUM_ALGORITHMS];
-    //
-    // look up a fdt by hash code(s) and return if it is present or not.
-    // optionally return a pointer to it as well.
-    searchstatus_t	search(const file_data_hasher_t *fdht, file_data_t **matched) ; 
-    uint64_t		total_matched(); // return the total matched
+
+    /****************************************************************
+     ** Search functions follow
+     ** It's not entirely clear why we have two search functions, but we do.
+     ** Perhaps one is from md5deep and the other is from hashdeep
+     ****************************************************************/
+
+    /**
+     * hashlist.cpp
+     * find_hash finds the 'best match', which ideally is a match for both the hash and the filename.
+     */
+    file_data_t	*find_hash(hashid_t alg,const std::string &hash_hex,
+				   const std::string &file_name,
+				   uint64_t file_number); 
+
+    /**
+     * look up a fdt by hash code(s) and return if it is present or not.
+     * optionally return a pointer to it as well.
+     */
+    searchstatus_t	search(const file_data_hasher_t *fdht, file_data_t ** matched) ; 
+    uint64_t		total_matched(); // return the total matched from all calls to search()
+
+    /****************************************************************/
 
     /**
      * Figure out the format of a hashlist file and load it.
      * Both of these functions take the file name and the open handle.
      * They read from the handle and just use the filename for printing error messages.
      */
-    void		enable_hashing_algorithms_from_hashdeep_file(class display *ocb,const std::string &fn,std::string val);
+    void		enable_hashing_algorithms_from_hashdeep_file(class display *ocb,
+								     const std::string &fn,std::string val);
 
     std::string		last_enabled_algorithms; // a string with the algorithms that were enabled last
     hashid_t		hash_column[NUM_ALGORITHMS]; // maps a column number to a hashid;
@@ -381,11 +400,10 @@ public:;
     hashfile_format	identify_format(class display *ocb,const std::string &fn,FILE *handle);
     loadstatus_t	load_hash_file(class display *ocb,const std::string &fn); // not tstring! always ASCII
 
-    const file_data_t	*find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number); 
     void		dump_hashlist(); // send contents to stdout
     
     /**
-     * add_fdt adds a file_data_t record to the hashlist, and its hashes to the hashmaps.
+     * add_fdt adds a file_data_t record to the hashlist, and its hashes to all the hashmaps.
      * @param fi - a file_data_t to add. Don't erase it; we're going to use it (and modify it)
      */
     void add_fdt(file_data_t *fi);
@@ -650,9 +668,11 @@ public:
 	unlock();
 	return ret;
     }
-    const file_data_t *find_hash(hashid_t alg,std::string &hash_hex,uint64_t file_number){
+    const file_data_t *find_hash(hashid_t alg,const std::string &hash_hex,
+				 const std::string &file_name,
+				 uint64_t file_number){
 	lock();
-	const file_data_t *ret = known.find_hash(alg,hash_hex,file_number);
+	const file_data_t *ret = known.find_hash(alg,hash_hex,file_name,file_number);
 	unlock();
 	return ret;
     }
