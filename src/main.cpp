@@ -68,19 +68,21 @@ uint64_t file_data_hasher_t::next_file_number = 0; // needs to live somewhere
 /* This is the one place we allow a printf, becuase we are about to exit, and we call it before we multithread */
 static void try_msg(void)
 {
-    fprintf(stderr,"Try `%s -h` for more information.", __progname);
+  fprintf(stderr,"Try `%s -h` for more information.%s", __progname,NEWLINE);
 }
 
 
 void state::sanity_check(int condition, const char *msg)
 {
-    if (condition) {
-	if (!ocb.opt_silent) {
-	    fprintf(stderr,"%s: %s", __progname, msg);
-	    try_msg();
-	}
-	exit (status_t::STATUS_USER_ERROR);
+  if (condition) 
+  {
+    if (!ocb.opt_silent) 
+    {
+      ocb.error("%s: %s", __progname, msg);
+      try_msg();
     }
+    exit (status_t::STATUS_USER_ERROR);
+  }
 }
 
 static int is_absolute_path(const TCHAR *fn)
@@ -143,9 +145,9 @@ void state::usage()
 	
 	/* Make a list of the hashes */
 	ocb.status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
-	fprintf(stderr,"     legal values: ");
+	fprintf(stdout,"     legal values: ");
 	for (int i = 0 ; i < NUM_ALGORITHMS ; i++){
-	    fprintf(stderr,"%s%s",hashes[i].name.c_str(),(i+1<NUM_ALGORITHMS) ? "," : NEWLINE);
+	    fprintf(stdout,"%s%s",hashes[i].name.c_str(),(i+1<NUM_ALGORITHMS) ? "," : NEWLINE);
 	}
 	
 	ocb.status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
@@ -223,11 +225,11 @@ void state::check_flags_okay()
 		 (ocb.primary_function & primary_match_neg) ||
 		 (ocb.primary_function & primary_audit)) &&
 		!hashes_loaded()),
-	       "Unable to load any matching files");
+	       "Unable to load any matching files.");
 
   sanity_check(
 	       (ocb.opt_relative) && (ocb.mode_barename),
-	       "Relative paths and bare filenames are mutally exclusive");
+	       "Relative paths and bare filenames are mutally exclusive.");
   
   /* Additional sanity checks will go here as needed... */
 }
@@ -364,7 +366,11 @@ void algorithm_t::enable_hashing_algorithms(std::string var)
 		return;
 	    }
 	    /* No idea what this algorithm is. */
-	    fprintf(stderr,"%s: Unknown algorithm: %s", __progname, (*it).c_str());
+	    fprintf(stderr,
+		    "%s: Unknown algorithm: %s%s", 
+		    __progname, 
+		    (*it).c_str(),
+		    NEWLINE);
 	    try_msg();
 	    exit(EXIT_FAILURE);
 	}
@@ -486,7 +492,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	    break;
 	    
 	default:
-	    fprintf(stderr,"%s: %s: unknown error, skipping", __progname, optarg);
+	  fprintf(stderr,"%s: %s: unknown error, skipping%s", __progname, optarg, NEWLINE);
 	  break;
 	}
       break;
@@ -681,24 +687,24 @@ void state::md5deep_check_flags_okay()
 {
   sanity_check(((ocb.opt_mode_match) || (ocb.opt_mode_match_neg)) &&
 	       hashes_loaded()==0,
-	       "Unable to load any matching files");
+	       "Unable to load any matching files.");
 
   sanity_check((ocb.opt_relative) && (ocb.mode_barename),
-	       "Relative paths and bare filenames are mutally exclusive");
+	       "Relative paths and bare filenames are mutally exclusive.");
   
   sanity_check((ocb.piecewise_size>0) && (ocb.opt_display_size),
-	       "Piecewise mode and file size display is just plain silly");
+	       "Piecewise mode and file size display is just plain silly.");
 
 
   /* If we try to display non-matching files but haven't initialized the
      list of matching files in the first place, bad things will happen. */
   sanity_check((ocb.mode_not_matched) && 
 	       ! ((ocb.opt_mode_match) || (ocb.opt_mode_match_neg)),
-	       "Matching or negative matching must be enabled to display non-matching files");
+	       "Matching or negative matching must be enabled to display non-matching files.");
 
   sanity_check(ocb.opt_show_matched && 
 	       ! ((ocb.opt_mode_match) || (ocb.opt_mode_match_neg)), 
-	       "Matching or negative matching must be enabled to display which file matched");
+	       "Matching or negative matching must be enabled to display which file matched.");
 }
 
 
@@ -727,7 +733,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	    ocb.mode_size=true;
 	    ocb.size_threshold = find_block_size(optarg);
 	    if (ocb.size_threshold==0) {
-		ocb.print_error("%s: Requested size threshold implies not hashing anything",
+		ocb.print_error("%s: Requested size threshold implies not hashing anything.",
 			    __progname);
 		exit(status_t::STATUS_USER_ERROR);
 	    }
@@ -904,7 +910,7 @@ uint64_t state::find_block_size(std::string input_str)
 	input_str.erase(input_str.size()-1,1); // erase the last character
 	break;
     default:
-	ocb.print_error("%s: Improper piecewise multiplier ignored", __progname);
+	ocb.print_error("%s: Improper piecewise multiplier ignored.", __progname);
 	break;
     case '0':case '1':case '2':case '3':case '4':
     case '5':case '6':case '7':case '8':case '9':

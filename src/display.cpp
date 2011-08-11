@@ -96,9 +96,10 @@ void display::error(const char *fmt,...)
     va_list(ap); 
     va_start(ap,fmt); 
     char *ret = 0;
-    if(vasprintf(&ret,fmt,ap) < 0){
-	(*out) << __progname << ": " << strerror(errno);
-	exit(EXIT_FAILURE);
+    if (vasprintf(&ret,fmt,ap) < 0)
+    {
+      (*out) << __progname << ": " << strerror(errno);
+      exit(EXIT_FAILURE);
     }
     writeln(&std::cerr,ret);
     free(ret);
