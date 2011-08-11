@@ -655,13 +655,17 @@ public:
     /* these versions extract the filename and the annotation if it is present.
      */
 
-    /* known hash database and realtime stats */
+    /* known hash database and realtime stats.
+     * Note that this is not locked() and unlocked().
+     * It can only be run from the main thread before fork.
+     */
     hashlist::loadstatus_t load_hash_file(const std::string &fn){
-	lock();
 	hashlist::loadstatus_t ret = known.load_hash_file(this,fn);
-	unlock();
 	return ret;
     }
+
+    /** These are multi-threaded */
+
     uint64_t known_size() const {
 	lock();
 	uint64_t ret= known.size();

@@ -179,15 +179,11 @@ inline std::string makeupper(const std::string &a)
     return ret;
 }
 
-inline bool STRINGS_EQUAL(const char *a,const char *b)
+inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 {
-    return strcmp(a,b)==0;
+    return a==b;
 }
 
-//inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
-//{
-//    return a==b;
-//}
 #endif
 
 

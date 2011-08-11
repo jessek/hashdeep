@@ -27,14 +27,16 @@ std::string itos(uint64_t i)
 // Remove the newlines, if any. Works on both DOS and *nix newlines
 void chop_line(char *s)
 {
-    size_t pos = strlen(s);
-    
-    if (s[pos - 2] == '\r' && s[pos - 1] == '\n'){
-	s[pos - 2] = 0;
-	return;
-    }
-    if (s[pos-1] == '\n'){
-	s[pos - 1] = 0;
+    while(true){
+	size_t pos = strlen(s);
+	if(pos>0){
+	    if(s[pos-1]=='\r' || s[pos-1]=='\n'){
+		s[pos-1]='\000';
+		continue;
+	    }
+	    return;
+	}
+	if(pos==0) break;
     }
 }
 

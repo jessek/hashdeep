@@ -13,9 +13,6 @@
 void hashlist::hashmap::add_file(file_data_t *fi,int alg_num)
 {
     if(fi->hash_hex[alg_num].size()){
-
-	//std::cerr << "insert hash=" << fi->hash_hex[alg_num] << " file=" << fi->file_name << "\n";
-
 	insert(std::pair<std::string,file_data_t *>(fi->hash_hex[alg_num],fi));
     }
 }
@@ -163,6 +160,7 @@ hashlist::hashfile_format hashlist::identify_format(class display *ocb,const std
     // Skip the "%%%% size," when parsing the list of hashes 
     enable_hashing_algorithms_from_hashdeep_file(ocb,fn,buf + 10);
     
+
     // If the set of hashes now in use doesn't match those previously in use,
     // give a warning.
     if (previously_enabled_algorithms.size()>0

@@ -5,8 +5,8 @@
 
 make distclean
 ./configure CFLAGS="-Wall -W -g -ggdb -O0"
-make windist
 make dist
+make windist
 
 
 
