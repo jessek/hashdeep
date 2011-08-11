@@ -3,8 +3,10 @@ SUBDIRS = src tests man testfiles
 CROSS_PREFIX = i586-mingw32msvc
 CROSS64_PREFIX = x86_64-w64-mingw32
 
-EXTRA_DIST = FILEFORMAT config.guess config.sub  
+# on Mac, you may want this instead:
+# CROSS_PREFIX = i386-mingw32
 
+EXTRA_DIST = FILEFORMAT config.guess config.sub  
 
 nice:
 	rm -f *~ man/*~ src/*~
@@ -22,9 +24,6 @@ win32: distclean
 	./configure --host=$(CROSS_PREFIX)
 	make
 
-strip32:
-	$(CROSS_PREFIX)-strip src/*.exe src/*.exe
-
 win64: distclean
 	./configure --host=$(CROSS64_PREFIX)
 	make
@@ -35,19 +34,19 @@ win64: distclean
 	mv src/whirlpooldeep.exe src/whirlpooldeep64.exe
 	mv src/hashdeep.exe     src/hashdeep64.exe
 
+strip32:
+	$(CROSS_PREFIX)-strip src/*.exe src/*.exe
 strip64:
 	$(CROSS64_PREFIX)-strip src/*64.exe 
 
-#man/hashdeep.txt: man/hashdeep.1
-#man/md5deep.txt: man/md5deep.1
-
-world: dist 
-	rm -rf $(distdir).zip $(distdir) src/*.exe src/*.exe
-	mkdir $(distdir)
+windist: 
 	@echo 
 	@echo Making win32 
-	make win32
-	make strip32
+	@echo
+	rm -rf $(distdir).zip $(distdir) src/*.exe
+	mkdir $(distdir)
+	make win32 
+	make strip32 
 	cp src/*.exe src/*.exe $(distdir)
 	@echo ====================================
 	@echo 
@@ -72,12 +71,11 @@ world: dist
 	echo "*************************"
 	echo "*** THE WORLD IS MADE ***"
 	echo ""
-	ls -l $(distdir).{zip,tar.gz}
+	ls -l $(distdir).*
 	echo ""
 	@unzip -l $(distdir).zip
 
 CLEANFILES = man/md5deep.txt man/hashdeep.txt
-
 SUFFIXES = .txt .1
 
 .1.txt:

@@ -17,6 +17,8 @@
 
 # See http://www.gnu.org/s/hello/manual/automake/EXEEXT.html
 
+# The algorithms:
+
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -36,6 +38,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+bin_PROGRAMS = hashdeep$(EXEEXT) md5deep$(EXEEXT) sha1deep$(EXEEXT) \
+	sha256deep$(EXEEXT) whirlpooldeep$(EXEEXT) tigerdeep$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -51,26 +55,27 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__objects_1 = md5.$(OBJEXT) sha1.$(OBJEXT) sha256.$(OBJEXT) \
 	whirlpool.$(OBJEXT) tiger.$(OBJEXT)
-am_hashdeep_OBJECTS = main.$(OBJEXT) hashlist.$(OBJEXT) \
+am__objects_2 = $(am__objects_1) main.$(OBJEXT) hashlist.$(OBJEXT) \
 	multihash.$(OBJEXT) display.$(OBJEXT) hash.$(OBJEXT) \
 	dig.$(OBJEXT) helpers.$(OBJEXT) xml.$(OBJEXT) files.$(OBJEXT) \
-	threadpool.$(OBJEXT) $(am__objects_1)
+	threadpool.$(OBJEXT)
+am_hashdeep_OBJECTS = $(am__objects_2)
 hashdeep_OBJECTS = $(am_hashdeep_OBJECTS)
 hashdeep_LDADD = $(LDADD)
-md5deep_SOURCES = md5deep.c
-md5deep_OBJECTS = md5deep.$(OBJEXT)
+am_md5deep_OBJECTS = $(am__objects_2)
+md5deep_OBJECTS = $(am_md5deep_OBJECTS)
 md5deep_LDADD = $(LDADD)
-sha1deep_SOURCES = sha1deep.c
-sha1deep_OBJECTS = sha1deep.$(OBJEXT)
+am_sha1deep_OBJECTS = $(am__objects_2)
+sha1deep_OBJECTS = $(am_sha1deep_OBJECTS)
 sha1deep_LDADD = $(LDADD)
-sha256deep_SOURCES = sha256deep.c
-sha256deep_OBJECTS = sha256deep.$(OBJEXT)
+am_sha256deep_OBJECTS = $(am__objects_2)
+sha256deep_OBJECTS = $(am_sha256deep_OBJECTS)
 sha256deep_LDADD = $(LDADD)
-tigerdeep_SOURCES = tigerdeep.c
-tigerdeep_OBJECTS = tigerdeep.$(OBJEXT)
+am_tigerdeep_OBJECTS = $(am__objects_2)
+tigerdeep_OBJECTS = $(am_tigerdeep_OBJECTS)
 tigerdeep_LDADD = $(LDADD)
-whirlpooldeep_SOURCES = whirlpooldeep.c
-whirlpooldeep_OBJECTS = whirlpooldeep.$(OBJEXT)
+am_whirlpooldeep_OBJECTS = $(am__objects_2)
+whirlpooldeep_OBJECTS = $(am_whirlpooldeep_OBJECTS)
 whirlpooldeep_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -85,10 +90,12 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
-SOURCES = $(hashdeep_SOURCES) md5deep.c sha1deep.c sha256deep.c \
-	tigerdeep.c whirlpooldeep.c
-DIST_SOURCES = $(hashdeep_SOURCES) md5deep.c sha1deep.c sha256deep.c \
-	tigerdeep.c whirlpooldeep.c
+SOURCES = $(hashdeep_SOURCES) $(md5deep_SOURCES) $(sha1deep_SOURCES) \
+	$(sha256deep_SOURCES) $(tigerdeep_SOURCES) \
+	$(whirlpooldeep_SOURCES)
+DIST_SOURCES = $(hashdeep_SOURCES) $(md5deep_SOURCES) \
+	$(sha1deep_SOURCES) $(sha256deep_SOURCES) $(tigerdeep_SOURCES) \
+	$(whirlpooldeep_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -194,20 +201,18 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-HASHDEEP = hashdeep$(EXEEXT)
-OTHERS = md5deep$(EXEEXT) sha1deep$(EXEEXT) sha256deep$(EXEEXT) tigerdeep$(EXEEXT) whirlpooldeep$(EXEEXT)
-
-# These are for the 64-bit versions:
-OTHERS64_EXE = md5deep64.exe sha1deep64.exe sha256deep64.exe tigerdeep64.exe whirlpooldeep64.exe
 ALGS = md5.c md5.h sha1.c sha1.h sha256.c sha256.h whirlpool.c whirlpool.h tiger.c tiger.h
-bin_PROGRAMS = $(HASHDEEP) $(OTHERS)
-hashdeep_SOURCES = main.cpp hashlist.cpp multihash.cpp display.cpp \
+all_sources = $(ALGS) main.cpp hashlist.cpp multihash.cpp display.cpp \
 	hash.cpp dig.cpp helpers.cpp xml.cpp xml.h files.cpp common.h main.h \
 	utf8.h utf8/checked.h utf8/core.h utf8/unchecked.h \
-	threadpool.h threadpool.cpp \
-	${ALGS}
+	threadpool.h threadpool.cpp 
 
-CLEANFILES = hashdeep64.exe $(OTHERS) $(OTHERS64_EXE)
+hashdeep_SOURCES = $(all_sources)
+md5deep_SOURCES = $(all_sources)
+sha1deep_SOURCES = $(all_sources)
+sha256deep_SOURCES = $(all_sources)
+whirlpooldeep_SOURCES = $(all_sources)
+tigerdeep_SOURCES = $(all_sources)
 all: all-am
 
 .SUFFIXES:
@@ -282,6 +287,21 @@ clean-binPROGRAMS:
 hashdeep$(EXEEXT): $(hashdeep_OBJECTS) $(hashdeep_DEPENDENCIES) 
 	@rm -f hashdeep$(EXEEXT)
 	$(CXXLINK) $(hashdeep_OBJECTS) $(hashdeep_LDADD) $(LIBS)
+md5deep$(EXEEXT): $(md5deep_OBJECTS) $(md5deep_DEPENDENCIES) 
+	@rm -f md5deep$(EXEEXT)
+	$(CXXLINK) $(md5deep_OBJECTS) $(md5deep_LDADD) $(LIBS)
+sha1deep$(EXEEXT): $(sha1deep_OBJECTS) $(sha1deep_DEPENDENCIES) 
+	@rm -f sha1deep$(EXEEXT)
+	$(CXXLINK) $(sha1deep_OBJECTS) $(sha1deep_LDADD) $(LIBS)
+sha256deep$(EXEEXT): $(sha256deep_OBJECTS) $(sha256deep_DEPENDENCIES) 
+	@rm -f sha256deep$(EXEEXT)
+	$(CXXLINK) $(sha256deep_OBJECTS) $(sha256deep_LDADD) $(LIBS)
+tigerdeep$(EXEEXT): $(tigerdeep_OBJECTS) $(tigerdeep_DEPENDENCIES) 
+	@rm -f tigerdeep$(EXEEXT)
+	$(CXXLINK) $(tigerdeep_OBJECTS) $(tigerdeep_LDADD) $(LIBS)
+whirlpooldeep$(EXEEXT): $(whirlpooldeep_OBJECTS) $(whirlpooldeep_DEPENDENCIES) 
+	@rm -f whirlpooldeep$(EXEEXT)
+	$(CXXLINK) $(whirlpooldeep_OBJECTS) $(whirlpooldeep_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -297,17 +317,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5deep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multihash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1deep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha256.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha256deep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threadpool.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tiger.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tigerdeep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/whirlpool.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/whirlpooldeep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xml.Po@am__quote@
 
 .c.o:
@@ -444,7 +459,6 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
-	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -537,33 +551,6 @@ uninstall-am: uninstall-binPROGRAMS
 	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
 	uninstall-am uninstall-binPROGRAMS
 
-
-# Due to a bug in autoconf, each of these need to be listed explicitly.
-md5deep$(EXEEXT): $(HASHDEEP)
-	/bin/rm -f $@
-	ln $(HASHDEEP) $@
-
-sha1deep$(EXEEXT): $(HASHDEEP)
-	/bin/rm -f $@
-	ln $(HASHDEEP) $@
-
-sha256deep$(EXEEXT): $(HASHDEEP)
-	/bin/rm -f $@
-	ln $(HASHDEEP) $@
-
-tigerdeep$(EXEEXT): $(HASHDEEP)
-	/bin/rm -f $@
-	ln $(HASHDEEP) $@
-
-whirlpooldeep$(EXEEXT): $(HASHDEEP)
-	/bin/rm -f $@
-	ln $(HASHDEEP) $@
-
-${OTHERS64_EXE}: hashdeep64.exe
-	/bin/rm -f $@ 
-	ln hashdeep64.exe $@
-
-all: ${OTHERS}
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
