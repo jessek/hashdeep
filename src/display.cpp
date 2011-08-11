@@ -495,6 +495,9 @@ void display::md5deep_display_match_result(file_data_hasher_t *fdht,const hash_c
 	}
 	else{
 	    line << fdht->file_name;
+	    if(piecewise_size) {
+		line << " offset " << hc->read_offset << "-" << hc->read_offset + hc->read_len - 1;
+	    }
 	}
 	writeln(out,line.str());
     }

@@ -554,8 +554,10 @@ uninstall-am: uninstall-binPROGRAMS
 	uninstall-am uninstall-binPROGRAMS
 
 
-# Yes, this is gross; it would be better to make them all with hard links. But this works.
-# That didn't.
+# Yes, this is gross; it would be better to make them all with hard links.
+# But this works. That didn't.
+# A better approach is to define install-exec-hook and uninstall-exec-hook. See extending in the automake manual
+# http://www.gnu.org/s/hello/manual/automake/Extending.html
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

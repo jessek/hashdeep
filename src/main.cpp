@@ -202,10 +202,8 @@ void state::md5deep_usage(void)
 	ocb.status("-a and -A add a single hash to the positive or negative matching set");
 	ocb.status("-b  - prints only the bare name of files; all path information is omitted");
 	ocb.status("-l  - print relative paths for filenames");
-	ocb.status("-k  - print asterisk before filename; -0 - use a NULL for newline.");
 	ocb.status("-t  - print GMT timestamp");
 	ocb.status("-i/I- only process files smaller than the given threshold");
-	ocb.status("-o  - only process certain types of files. See README/manpage");
 	ocb.status("-v  - display version number and exit");
 	ocb.status("-d  - output in DFXML; -u - Escape Unicode; -W FILE - write to FILE.");
 #ifdef HAVE_PTHREAD
@@ -213,6 +211,13 @@ void state::md5deep_usage(void)
 #else
 	ocb.status("-jnn ignored (compiled without pthreads)");
 #endif	
+	ocb.status("-Z - traige mode;   -h - help;   -hh - full help");
+    }
+    if(usage_count==1){
+	ocb.status("-k  - print asterisk before filename; -0 - use a NULL for newline.");
+	ocb.status("-o[bcpflsd] - only process certain types of files:");
+	ocb.status("            b=block dev; c=character dev; p=named pipe");
+	ocb.status("            f=regular file; l=symlink; s=socket; d=door");
     }
     usage_count++;
 }
@@ -408,6 +413,7 @@ void state::setup_expert_mode(char *arg)
 
 int state::hashdeep_process_command_line(int argc, char **argv)
 {
+    bool did_usage = false;
   int i;
   
   while ((i=getopt(argc,argv,"abc:deF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
@@ -515,7 +521,8 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 
     case 'h':
 	usage();
-	exit(EXIT_SUCCESS);
+	did_usage = true;
+	break;
       
     case 'D': opt_debug = atoi(optarg);break;
     default:
@@ -524,6 +531,8 @@ int state::hashdeep_process_command_line(int argc, char **argv)
     }            
   }
   
+  if(did_usage ) exit(EXIT_SUCCESS);
+
   check_flags_okay();
   return FALSE;
 }
@@ -717,6 +726,7 @@ void state::md5deep_check_matching_modes()
 
 int state::md5deep_process_command_line(int argc, char **argv)
 {
+    bool did_usage = false;
     int i;
 
     while ((i = getopt(argc,
@@ -811,7 +821,8 @@ int state::md5deep_process_command_line(int argc, char **argv)
 
 	case 'h':
 	    md5deep_usage();
-	    exit (EXIT_SUCCESS);
+	    did_usage = true;
+	    break;
 
 	case 'v':
 	    ocb.status("%s",VERSION);
@@ -827,6 +838,8 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	    exit (status_t::STATUS_USER_ERROR);
 	}
     }
+    if(did_usage) exit (EXIT_SUCCESS);
+
     md5deep_check_flags_okay();
     return EXIT_SUCCESS;
 }

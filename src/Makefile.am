@@ -19,6 +19,7 @@ tigerdeep_SOURCES = $(all_sources)
 
 bin_PROGRAMS = hashdeep md5deep sha1deep sha256deep whirlpooldeep tigerdeep
 
-# Yes, this is gross; it would be better to make them all with hard links. But this works.
-# That didn't.
-
+# Yes, this is gross; it would be better to make them all with hard links.
+# But this works. That didn't.
+# A better approach is to define install-exec-hook and uninstall-exec-hook. See extending in the automake manual
+# http://www.gnu.org/s/hello/manual/automake/Extending.html
