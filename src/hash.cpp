@@ -150,6 +150,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 		this->last_time = current_time;
 		ocb->display_realtime_stats(this,hc1,current_time - this->start_time);
 	    }
+
 	}
 	// If we are at the end of the file, break
 	if((current_read_bytes==0) || (this->handle && feof(this->handle))){

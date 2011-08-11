@@ -278,8 +278,6 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 
 #define NEWLINE "\r\n"			// for Windows, make newline \r\n
 #define LINE_LENGTH 72
-#define BLANK_LINE \
-"                                                                        "
 #define ftello   ftell
 #define fseeko   fseek
 #define tlstat64(path,buf)   _wstat64(path,buf) // on windows, use _wstat64
@@ -323,8 +321,7 @@ typedef std::string tstring;
 #  define DIR_SEPARATOR   '/'
 #  define NEWLINE		"\n"
 #  define LINE_LENGTH	74
-#  define BLANK_LINE \
-"                                                                          "
+
 
 #  ifndef HAVE_FSEEKO
 #    define fseeko fseek

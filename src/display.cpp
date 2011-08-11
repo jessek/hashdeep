@@ -241,7 +241,11 @@ void display::error_filename(const std::wstring &fn,const char *fmt, ...)
 void display::clear_realtime_stats()
 {
     lock();
-    std::cerr << "\r" << BLANK_LINE;
+    std::cerr << "\r";
+    for(int i=0;i<LINE_LENGTH;i++){
+	std::cerr << ' ';
+    }
+    std::cerr << "\r";
     unlock();
 }
 
