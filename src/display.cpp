@@ -269,9 +269,9 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, const hash_
     std::stringstream ss;
 
     std::string fn = fdht->file_name;
-    if (fn.size() < MAX_FILENAME_LENGTH){
+    if (fn.size() > MAX_FILENAME_LENGTH){
 	/* Shorten from the middle */
-	size_t half = MAX_FILENAME_LENGTH/2;
+	size_t half = (MAX_FILENAME_LENGTH)/2;
 	fn = fn.substr(0,half) + "..." + fn.substr(fn.size()-half,half);
     }
 
