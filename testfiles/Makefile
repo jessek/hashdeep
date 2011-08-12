@@ -55,9 +55,9 @@ AUTOMAKE = ${SHELL} /Users/simsong/md5deep/branches/version4/missing --run autom
 AWK = awk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -I/opt/local/include -I/usr/local/include  -D_FORTIFY_SOURCE=2 -Wall -g -D_THREAD_SAFE -pthread
+CFLAGS = -I/opt/local/include  -D_FORTIFY_SOURCE=2 -Wall -g -D_THREAD_SAFE -pthread
 CPP = gcc -E
-CPPFLAGS = -I/opt/local/include -I/usr/local/include  -D_THREAD_SAFE -pthread
+CPPFLAGS = -I/opt/local/include  -D_THREAD_SAFE -pthread
 CXX = g++
 CXXDEPMODE = depmode=gcc3
 CXXFLAGS =  -D_FORTIFY_SOURCE=2 -Wall -g
@@ -70,17 +70,17 @@ ECHO_T =
 EGREP = /usr/bin/grep -E
 EXEEXT = 
 GREP = /usr/bin/grep
-INSTALL = /usr/bin/install -c
+INSTALL = /opt/local/bin/ginstall -c
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-LDFLAGS = -L/opt/local/lib -L/usr/local/lib 
+LDFLAGS = -L/opt/local/lib 
 LIBOBJS =  ${LIBOBJDIR}lstat$U.o
 LIBS = -pthread 
 LTLIBOBJS =  ${LIBOBJDIR}lstat$U.lo
 MAKEINFO = ${SHELL} /Users/simsong/md5deep/branches/version4/missing --run makeinfo
-MKDIR_P = .././install-sh -c -d
+MKDIR_P = /opt/local/bin/gmkdir -p
 OBJEXT = o
 PACKAGE = md5deep
 PACKAGE_BUGREPORT = research@jessekornblum.com
@@ -135,7 +135,7 @@ libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
 localstatedir = ${prefix}/var
 mandir = ${datarootdir}/man
-mkdir_p = $(top_builddir)/./install-sh -c -d
+mkdir_p = /opt/local/bin/gmkdir -p
 oldincludedir = /usr/include
 pdfdir = ${docdir}
 prefix = /usr/local
