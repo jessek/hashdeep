@@ -890,7 +890,7 @@ extern hashid_t opt_md5deep_mode_algorithm;	// for when we are in MD5DEEP mode
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);
 void lowercase(std::string &s);
-extern char *__progname;
+extern std::string progname;		// formerly const char *__progname 
 
 // ------------------------------------------------------------------
 // HELPER FUNCTIONS

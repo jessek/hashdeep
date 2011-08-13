@@ -1,13 +1,15 @@
+2011-08-12  Simson Garfinkel  <simsong@t.nitroba.org>
+
+	* src/display.cpp (error): always puts progname on error now. removed explicit "%s: " and progname from practially every place error was called.
+
 2011-08-09  Simson Garfinkel  <simsong@imac3.home>
 
 	* src/main.h (std::vector): changed hashmap from a map to a multimap
 
 2011-08-07 Jesse Kornblum 
-	
 	* man/md5deep.1: Updated version number
 	* man/hashdeep.1: Restored to earlier version
 	* man/Makefile.am: Corrected clobbering of hashdeep man page
-	
 	* src/Makefile.am: Corrected typo in the symbolic linking
 
 	* src/ui.cpp: Vestigial file removed

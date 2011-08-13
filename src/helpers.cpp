@@ -109,7 +109,7 @@ off_t find_file_size(FILE *f,class display *ocb)
   // have been caught before we got here. 
 
   if (fstat(fd, &info)) {
-      if(ocb) ocb->status("%s: %s", __progname,strerror(errno));
+      if(ocb) ocb->status("%s: %s", progname.c_str(),strerror(errno));
       return 0;
   }
 

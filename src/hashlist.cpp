@@ -165,7 +165,8 @@ hashlist::hashfile_format hashlist::identify_format(class display *ocb,const std
     // give a warning.
     if (previously_enabled_algorithms.size()>0
 	&& previously_enabled_algorithms != last_enabled_algorithms){
-	if(ocb) ocb->print_error("%s: %s: Hashes not in same format as previously loaded",__progname, fn.c_str());
+	if(ocb) ocb->print_error("%s: Hashes not in same format as previously loaded",
+				 fn.c_str());
     }
     return file_hashdeep_10;
 }
@@ -191,7 +192,7 @@ void hashlist::enable_hashing_algorithms_from_hashdeep_file(class display *ocb,c
 	hashid_t id = algorithm_t::get_hashid_for_name(name);
 	if(id==alg_unknown){
 	    if(ocb){
-		ocb->print_error("%s: %s: Badly formatted file", __progname, fn.c_str());
+		ocb->print_error("%s: Badly formatted file", fn.c_str());
 		ocb->try_msg();
 	    }
 	    exit(EXIT_FAILURE);
@@ -234,13 +235,13 @@ hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &
 
     FILE *hl_handle = fopen(fn.c_str(),"rb");
     if (NULL == hl_handle) {
-	if(ocb) ocb->print_error("%s: %s: %s", __progname, fn.c_str(), strerror(errno));
+	if(ocb) ocb->print_error("%s: %s", fn.c_str(), strerror(errno));
 	return status_file_error;
     }
   
     type = identify_format(ocb,fn,hl_handle);
     if (file_unknown == type)  {
-	if(ocb) ocb->print_error("%s: %s: Unable to identify file format", __progname, fn.c_str());
+	if(ocb) ocb->print_error("%s: Unable to identify file format", fn.c_str());
 	fclose(hl_handle);
 	hl_handle = 0;
 	return status_unknown_filetype;
@@ -269,8 +270,8 @@ hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &
 	// http://www.cplusplus.com/reference/std/new/nothrow/
 	file_data_t *t = new (std::nothrow) file_data_t(); // C++ new fails with a bad_a
 	if (NULL == t){
-	    ocb->fatal_error("%s: %s: Out of memory in line %"PRIu64, 
-			__progname, fn.c_str(), line_number);
+	    ocb->fatal_error("%s: Out of memory in line %"PRIu64, 
+			fn.c_str(), line_number);
 	}
 
 	chop_line(line);
@@ -293,7 +294,7 @@ hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &
 
 	    // All other columns should contain a valid hash in hex
 	    if ( !algorithm_t::valid_hash(hash_column[column_number],word)){
-		if(ocb) ocb->print_error("%s: %s: Invalid %s hash in line %"PRIu64,__progname, fn.c_str(), 
+		if(ocb) ocb->print_error("%s: Invalid %s hash in line %"PRIu64,fn.c_str(), 
 					 hashes[hash_column[column_number]].name.c_str(),
 					 line_number);
 		contains_bad_lines = TRUE;

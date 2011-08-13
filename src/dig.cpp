@@ -33,7 +33,7 @@ void state::done_processing_dir(const tstring &fn_)
     tstring fn = main::get_realpath(fn_);
     dir_table_t::iterator pos = dir_table.find(fn);
     if(pos==dir_table.end()){
-	ocb.internal_error("%s: Directory %s not found in done_processing_dir", __progname, fn.c_str());
+	ocb.internal_error("%s: Directory %s not found in done_processing_dir", progname.c_str(), fn.c_str());
 	// will not be reached.
     }
     dir_table.erase(pos);
@@ -44,7 +44,7 @@ void state::processing_dir(const tstring &fn_)
 {
     tstring fn = main::get_realpath(fn_);
     if(dir_table.find(fn)!=dir_table.end()){
-	ocb.internal_error("%s: Attempt to add existing %s in processing_dir", __progname, fn.c_str());
+	ocb.internal_error("%s: Attempt to add existing %s in processing_dir", progname.c_str(), fn.c_str());
 	// will not be reached.
     }
     dir_table.insert(fn);
@@ -612,8 +612,8 @@ void state::dig_win32(const std::wstring &fn)
 	return;
     }
   
-#define FATAL_ERROR_UNK(A) if (NULL == A) fatal_error("%s: %s", __progname, strerror(errno));
-#define FATAL_ERROR_MEM(A) if (NULL == A) fatal_error("%s: Out of memory", __progname);
+#define FATAL_ERROR_UNK(A) if (NULL == A) fatal_error("%s: %s", progname.c_str(), strerror(errno));
+#define FATAL_ERROR_MEM(A) if (NULL == A) fatal_error("%s: Out of memory",progname.c_str());
   
     tstring dirname = win32_dirname(fn);
     if(dirname.size()>0) dirname += _TEXT(DIR_SEPARATOR);

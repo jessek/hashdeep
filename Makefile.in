@@ -712,11 +712,13 @@ todo:
 	@echo From TODO file:
 	@cat TODO
 
-win32: distclean
+win32: 
+	make distclean
 	./configure --host=$(CROSS_PREFIX)
 	make
 
-win64: distclean
+win64: 
+	make distclean
 	./configure --host=$(CROSS64_PREFIX)
 	make
 	mv src/md5deep.exe       src/md5deep64.exe

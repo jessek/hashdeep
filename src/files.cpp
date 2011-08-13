@@ -620,7 +620,7 @@ void state::md5deep_load_match_file(const char *fn)
 	if (!find_hash_in_line(buf,file_type,known_fn)) {
 	    if ((!ocb.opt_silent) || (mode_warn_only)) {
 		fprintf(stderr,"%s: %s: No hash found in line %" PRIu64 "%s", 
-			__progname,fn,line_number,NEWLINE);
+			progname.c_str(),fn,line_number,NEWLINE);
 	    }
 	} else {
 	    // Invalid hashes are caught above

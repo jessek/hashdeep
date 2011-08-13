@@ -31,11 +31,7 @@
 
 using namespace std;
 
-#if defined(HAVE_EXTERN_PROGNAME) 
-extern char *__progname;
-#else
-char *__progname;
-#endif
+std::string progname;
 
 #define AUTHOR      "Jesse Kornblum and Simson Garfinkel"
 #define COPYRIGHT   "This program is a work of the US Government. "\
@@ -68,7 +64,7 @@ uint64_t file_data_hasher_t::next_file_number = 0; // needs to live somewhere
 /* This is the one place we allow a printf, becuase we are about to exit, and we call it before we multithread */
 static void try_msg(void)
 {
-  fprintf(stderr,"Try `%s -h` for more information.%s", __progname,NEWLINE);
+  fprintf(stderr,"Try `%s -h` for more information.%s", progname.c_str(),NEWLINE);
 }
 
 
@@ -78,7 +74,7 @@ void state::sanity_check(int condition, const char *msg)
   {
     if (!ocb.opt_silent) 
     {
-      ocb.error("%s: %s", __progname, msg);
+      ocb.error("%s",msg);
       try_msg();
     }
     exit (status_t::STATUS_USER_ERROR);
@@ -139,9 +135,9 @@ tstring state::generate_filename(const TCHAR *input)
 void state::usage()
 {
     if(usage_count==0){
-	ocb.status("%s version %s by %s.",__progname,VERSION,AUTHOR);
+	ocb.status("%s version %s by %s.",progname.c_str(),VERSION,AUTHOR);
 	ocb.status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-jnn] [-V|-h] [-o <mode>] [FILES]",
-		     CMD_PROMPT,__progname);
+		     CMD_PROMPT,progname.c_str());
 	
 	/* Make a list of the hashes */
 	ocb.status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
@@ -186,8 +182,8 @@ void state::usage()
 void state::md5deep_usage(void) 
 {
     if(usage_count==0){
-	ocb.status("%s version %s by %s.",__progname,VERSION,AUTHOR);
-	ocb.status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,__progname);
+	ocb.status("%s version %s by %s.",progname.c_str(),VERSION,AUTHOR);
+	ocb.status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,progname.c_str());
 	ocb.status("See the man page or README.txt file for the full list of options");
 	ocb.status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
 	ocb.status("-r  - recursive mode. All subdirectories are traversed");
@@ -373,7 +369,7 @@ void algorithm_t::enable_hashing_algorithms(std::string var)
 	    /* No idea what this algorithm is. */
 	    fprintf(stderr,
 		    "%s: Unknown algorithm: %s%s", 
-		    __progname, 
+		    progname.c_str(), 
 		    (*it).c_str(),
 		    NEWLINE);
 	    try_msg();
@@ -403,7 +399,7 @@ void state::setup_expert_mode(char *arg)
 	case 'd': // Door (Solaris)
 	    mode_door=true;      break;
 	default:
-	    ocb.print_error("%s: Unrecognized file type: %c", __progname,arg[i]);
+	    ocb.print_error("%s: Unrecognized file type: %c", progname.c_str(),arg[i]);
 	}
     }
 }
@@ -433,8 +429,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	ocb.mode_size = true;
 	ocb.size_threshold = find_block_size(optarg);
 	if (ocb.size_threshold==0) {
-	    ocb.print_error("%s: Requested size threshold implies not hashing anything",
-			__progname);
+	    ocb.print_error("Requested size threshold implies not hashing anything");
 	    exit(status_t::STATUS_USER_ERROR);
 	}
 	break;
@@ -467,7 +462,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
     case 'p':
 	ocb.piecewise_size = find_block_size(optarg);
       if (ocb.piecewise_size==0)
-	  ocb.fatal_error("%s: Piecewise blocks of zero bytes are impossible",__progname);
+	  ocb.fatal_error("Piecewise blocks of zero bytes are impossible");
       
       break;
       
@@ -477,8 +472,8 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	switch (ocb.load_hash_file(optarg)) {
 	case hashlist::loadstatus_ok: 
 	    if(ocb.opt_verbose>=MORE_VERBOSE){
-		ocb.print_error("%s: %s: Match file loaded %d known hash values.",
-			    __progname,optarg,ocb.known_size());
+		ocb.print_error("%s: Match file loaded %d known hash values.",
+				optarg,ocb.known_size());
 	    }
 	    break;
 	  
@@ -488,8 +483,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	  break;
 	  
       case hashlist::status_contains_bad_hashes:
-	  ocb.print_error("%s: %s: contains some bad hashes, using anyway", 
-		      __progname, optarg);
+	  ocb.print_error("%s: contains some bad hashes, using anyway",optarg);
 	  break;
 	  
       case hashlist::status_unknown_filetype:
@@ -498,14 +492,14 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	    break;
 	    
 	default:
-	  fprintf(stderr,"%s: %s: unknown error, skipping%s", __progname, optarg, NEWLINE);
+	    ocb.print_error("%s: unknown error, skipping%s", optarg, NEWLINE);
 	  break;
 	}
       break;
       
     case 'v':
 	if(++ocb.opt_verbose > INSANELY_VERBOSE){
-	    ocb.print_error("%s: User request for insane verbosity denied", __progname);
+	    ocb.print_error("User request for insane verbosity denied");
 	}
 	break;
       
@@ -679,8 +673,8 @@ void state::check_wow64()
     }
     
     if (result) {
-	ocb.print_error("%s: WARNING: You are running a 32-bit program on a 64-bit system.", __progname);
-	ocb.print_error("%s: You probably want to use the 64-bit version of this program.", __progname);
+	ocb.print_error("WARNING: You are running a 32-bit program on a 64-bit system.");
+	ocb.print_error("You probably want to use the 64-bit version of this program.");
     }
 }
 #endif   // ifdef _WIN32
@@ -743,8 +737,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	    ocb.mode_size=true;
 	    ocb.size_threshold = find_block_size(optarg);
 	    if (ocb.size_threshold==0) {
-		ocb.print_error("%s: Requested size threshold implies not hashing anything.",
-			    __progname);
+		ocb.print_error("Requested size threshold implies not hashing anything.");
 		exit(status_t::STATUS_USER_ERROR);
 	    }
 	    break;
@@ -752,7 +745,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	case 'p':
 	    ocb.piecewise_size = find_block_size(optarg);
 	    if (ocb.piecewise_size==0) {
-		ocb.print_error("%s: Illegal size value for piecewise mode.", __progname);
+		ocb.print_error("Illegal size value for piecewise mode.");
 		exit(status_t::STATUS_USER_ERROR);
 	    }
 
@@ -923,7 +916,7 @@ uint64_t state::find_block_size(std::string input_str)
 	input_str.erase(input_str.size()-1,1); // erase the last character
 	break;
     default:
-	ocb.print_error("%s: Improper piecewise multiplier ignored.", __progname);
+	ocb.print_error("Improper piecewise multiplier ignored.");
 	break;
     case '0':case '1':case '2':case '3':case '4':
     case '5':case '6':case '7':case '8':case '9':
@@ -946,14 +939,6 @@ int main(int argc, char **argv)
      * of the argc and argv values.
      */ 
 
-#if !defined(HAVE_EXTERN_PROGNAME)
-#if defined(HAVE_GETPROGNAME)
-    __progname  = getprogname();
-#else
-    __progname  = basename(argv[0]);
-#endif
-#endif
-
     // Initialize the plugable algorithm system and create the state object!
 
     algorithm_t::load_hashing_algorithms();		
@@ -964,17 +949,25 @@ int main(int argc, char **argv)
 
 int state::main(int _argc,char **_argv)
 {
-#ifdef HAVE_PTHREAD
-    ocb.opt_threadcount = threadpool::numCPU(); // be sure it's set
-#endif
-
     /**
      * Originally this program was two sets of progarms:
      * 'hashdeep' with the new interface, and 'md5deep', 'sha1deep', etc
      * with the old interface. Now we are a single program and we figure out
      * which interface to use based on how we are started.
      */
-    std::string progname(__progname);
+
+    /* Get the program name */
+    progname = _argv[0];		// default
+#ifdef HAVE_GETPROGNAME
+    progname = getprogname();		// possibly better
+#endif
+#ifdef HAVE_PROGRAM_INVOCATION_NAME
+    progname = program_invocation_name;	// possibly better
+#endif
+
+    /* There are two versions of basename, so use our own */
+    size_t delim = progname.find(DIR_SEPARATOR);
+    if(delim!=std::string::npos) progname.erase(0,delim+1);
 
     /* Convert progname to lower case */
     std::transform(progname.begin(), progname.end(), progname.begin(), ::tolower);
@@ -1000,10 +993,15 @@ int state::main(int _argc,char **_argv)
 	md5deep_process_command_line(_argc,_argv);
     }
 
+#ifdef HAVE_PTHREAD
+    ocb.opt_threadcount = threadpool::numCPU(); // be sure it's set
+#endif
+
     if(opt_debug==1){
 	printf("self-test...\n");
 	state::dig_self_test();
     }
+
 
     /* See if we can open a regular file output, if requested */
     /* Set up the DFXML output if requested */
@@ -1011,7 +1009,7 @@ int state::main(int _argc,char **_argv)
    
 #ifdef _WIN32
     if (prepare_windows_command_line()){
-	ocb.fatal_error("%s: Unable to process command line arguments", __progname);
+	ocb.fatal_error("Unable to process command line arguments");
     }
     check_wow64();
 #else
@@ -1021,7 +1019,7 @@ int state::main(int _argc,char **_argv)
 
     /* Verify that we can get the current working directory. */
     if(main::getcwd().size()==0){
-	ocb.fatal_error("%s: %s", __progname, strerror(errno));
+	ocb.fatal_error("%s", strerror(errno));
     }
 
     /* Make the banner if we are not in md5deep mode */

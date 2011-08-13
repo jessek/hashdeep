@@ -63,7 +63,7 @@ AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h malloc.h stdint.h stdlib.
 			   sys/ioctl.h sys/mmap.h sys/mman.h sys/param.h sys/resource.h wchar.h unistd.h sys/stat.h sys/disk.h])
 
 # These functions not available everywhere
-AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r mmap usleep mkstemp vasprintf getrusage])
+AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r mmap usleep mkstemp vasprintf getrusage getprogname])
 
 # These includes are required on FreeBSD
 AC_CHECK_HEADERS([sys/mount.h],[],[],
@@ -108,15 +108,18 @@ AC_FUNC_MEMCMP
 AC_FUNC_STAT
 AC_FUNC_VPRINTF
 
-# See if __progname is defined on this system
-AC_TRY_COMPILE([extern char *__progname;],
-	[const char *progname = __progname;],
-	extern_progname=yes,
-	extern_progname=no)
-if test x"${extern_progname}" = x"yes"; then
-  AC_MSG_NOTICE([__progname is external])
-  AC_DEFINE(HAVE_EXTERN_PROGNAME,1,[define to 1 if __progname is available])
+# See if program_invocation_name is defined on this system
+AC_TRY_COMPILE([#include <errno.h>],
+			[const char *progname = program_invocation_name;],
+			extern_program_invocation_name=yes,
+			extern_program_invocation_name=no)
+if test x"${extern_program_invocation_name}" = x"yes"; then
+  AC_MSG_NOTICE([extern program_invocation_name in errno.h])
+  AC_DEFINE(HAVE_PROGRAM_INVOCATION_NAME,1,[define to 1 if program_invocation_name is available])
 fi
+
+
+
 
 ################################################################
 # PTHREAD support

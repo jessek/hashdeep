@@ -10,14 +10,14 @@
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 #undef HAVE_DOPRNT
 
-/* define to 1 if __progname is available */
-#undef HAVE_EXTERN_PROGNAME
-
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
 #undef HAVE_FSEEKO
+
+/* Define to 1 if you have the `getprogname' function. */
+#undef HAVE_GETPROGNAME
 
 /* Define to 1 if you have the `getrusage' function. */
 #undef HAVE_GETRUSAGE
@@ -52,6 +52,9 @@
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
+
+/* define to 1 if program_invocation_name is available */
+#undef HAVE_PROGRAM_INVOCATION_NAME
 
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD

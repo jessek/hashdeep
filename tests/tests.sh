@@ -48,8 +48,7 @@ do
     S="-j0"			# Single threaded
   fi
   fails=0
-  done=0
-  for ((i=1;$done==0;i++))
+  for ((i=1;$i>0;i++))
   do 
    /bin/echo -n Test $i ...
    /bin/rm -f /tmp/test$i.out

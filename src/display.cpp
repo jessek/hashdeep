@@ -83,7 +83,7 @@ void display::status(const char *fmt,...)
 
     char *ret = 0;
     if(vasprintf(&ret,fmt,ap) < 0){
-	(*out) << __progname << ": " << strerror(errno);
+	(*out) << progname << ": " << strerror(errno);
 	exit(EXIT_FAILURE);
     }
     writeln(out,ret);
@@ -91,24 +91,42 @@ void display::status(const char *fmt,...)
     va_end(ap);
 }
 
+/* Is display::error different from display::print_error ? */
 void display::error(const char *fmt,...)
 {
     va_list(ap); 
     va_start(ap,fmt); 
     char *ret = 0;
-    if (vasprintf(&ret,fmt,ap) < 0)
-    {
-      (*out) << __progname << ": " << strerror(errno);
+    if (vasprintf(&ret,fmt,ap) < 0)    {
+      (*out) << progname << ": " << strerror(errno);
       exit(EXIT_FAILURE);
     }
-    writeln(&std::cerr,ret);
+    writeln(&std::cerr,progname + ": " + ret);
     free(ret);
     va_end(ap);
 }
 
+void display::print_error(const char *fmt, ...)
+{
+    if(opt_silent) return;
+    va_list(ap);
+    va_start(ap,fmt);
+    char *ret = 0;
+    if(vasprintf(&ret,fmt,ap) < 0){
+	std::cerr << progname << ": " << strerror(errno);
+	exit(EXIT_FAILURE);
+    }
+    lock();
+    std::cerr << progname << ": " << ret << std::endl;
+    unlock();
+    free(ret);
+    va_end(ap);
+}
+
+
 void display::try_msg(void)
 {
-    writeln(&std::cerr,std::string("Try `") + __progname + " -h` for more information.");
+    writeln(&std::cerr,std::string("Try `") + progname + " -h` for more information.");
 }
 
 
@@ -119,10 +137,10 @@ void display::fatal_error(const char *fmt,...)
 
     char *ret = 0;
     if(vasprintf(&ret,fmt,ap) < 0){
-	(*out) << __progname << ": " << strerror(errno);
+	(*out) << progname << ": " << strerror(errno);
 	exit(EXIT_FAILURE);
     }
-    writeln(&std::cerr,ret);
+    writeln(&std::cerr,progname + ": " + ret);
     free(ret);
     va_end(ap);
     exit(1);
@@ -135,11 +153,11 @@ void display::internal_error(const char *fmt,...)
 
     char *ret = 0;
     if(vasprintf(&ret,fmt,ap) < 0){
-	(*out) << __progname << ": " << strerror(errno);
+	(*out) << progname << ": " << strerror(errno);
 	exit(EXIT_FAILURE);
     }
     writeln(&std::cerr,ret);
-    writeln(&std::cerr,std::string(__progname)+": Internal error. Contact developer!");
+    writeln(&std::cerr,progname+": Internal error. Contact developer!");
     va_end(ap);
     free(ret);
     exit(1);
@@ -152,7 +170,7 @@ void display::print_debug(const char *fmt, ... )
     va_start(ap,fmt); 
     char *ret = 0;
     if(vasprintf(&ret,fmt,ap) < 0){
-	(*out) << __progname << ": " << strerror(errno);
+	(*out) << progname << ": " << strerror(errno);
 	exit(EXIT_FAILURE);
     }
     writeln(&std::cerr,std::string("DEBUG:" ) + ret);
@@ -186,23 +204,6 @@ std::string display::fmt_filename(const std::wstring &fn) const
 #endif
 
 
-void display::print_error(const char *fmt, ...)
-{
-    if(opt_silent) return;
-    va_list(ap);
-    va_start(ap,fmt);
-    char *ret = 0;
-    if(vasprintf(&ret,fmt,ap) < 0){
-	std::cerr << __progname << ": " << strerror(errno);
-	exit(EXIT_FAILURE);
-    }
-    lock();
-    std::cerr << ret << NEWLINE;
-    unlock();
-    free(ret);
-    va_end(ap);
-}
-
 
 void display::error_filename(const std::string &fn,const char *fmt, ...)
 {
@@ -212,7 +213,7 @@ void display::error_filename(const std::string &fn,const char *fmt, ...)
     va_start(ap,fmt); 
     char *ret = 0;
     if(vasprintf(&ret,fmt,ap) < 0){
-	(*out) << __progname << ": " << strerror(errno);
+	(*out) << progname << ": " << strerror(errno);
 	exit(EXIT_FAILURE);
     }
     writeln(&std::cerr,fmt_filename(fn) + ": " + ret);
@@ -229,7 +230,7 @@ void display::error_filename(const std::wstring &fn,const char *fmt, ...)
     va_start(ap,fmt); 
     char *ret = 0;
     if(vasprintf(&ret,fmt,ap) < 0){
-	(*out) << __progname << ": " << strerror(errno);
+	(*out) << progname << ": " << strerror(errno);
 	exit(EXIT_FAILURE);
     }
     writeln(&std::cerr,fmt_filename(fn) + ": " + ret);
@@ -417,11 +418,11 @@ int display::audit_check()
 void display::display_audit_results()
 {
     if (audit_check()==0) {
-	status("%s: Audit failed", __progname);
+	status("%s: Audit failed", progname.c_str());
 	set_return_code(status_t::status_EXIT_FAILURE);
     }
     else {
-	status("%s: Audit passed", __progname);
+	status("%s: Audit passed", progname.c_str());
     }
   
     if (opt_verbose)    {
