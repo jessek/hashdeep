@@ -640,16 +640,22 @@ public:
     std::string fmt_filename(const file_data_t *fdt) const {
 	return fmt_filename(fdt->file_name);
     }
-    void	writeln(std::ostream *s,const std::string &str);    // writes a line with NEWLINE
-    void	status(const char *fmt, ...);// Display an ordinary message with newline added
-    void	error(const char *fmt, ...);// Display an error message if not in silent mode 
+    void	writeln(std::ostream *s,const std::string &str);    // writes a line with NEWLINE and locking
+
+    // Display an ordinary message with newline added
+    void	status(const char *fmt, ...) __attribute__((format(printf, 2, 0))); // note that 1 is 'self'
+
+    // Display an error message if not in silent mode 
+    void	error(const char *fmt, ...) __attribute__((format(printf, 2, 0)));
+
     // Display an error message if not in silent mode and exit
-    void	fatal_error(const char *fmt, ...) __attribute__ ((__noreturn__));
-    void	internal_error(const char *fmt, ...);// Display an error message, ask user to contact the developer, 
-    void	print_debug(const char *fmt, ...);
-    void	error_filename(const std::string &fn, const char *fmt, ...);
+    void	fatal_error(const char *fmt, ...) __attribute__((format(printf, 2, 0))) __attribute__ ((__noreturn__));
+    // Display an error message, ask user to contact the developer, 
+    void	internal_error(const char *fmt, ...) __attribute__((format(printf, 2, 0))) ;
+    void	print_debug(const char *fmt, ...) __attribute__((format(printf, 2, 0)));
+    void	error_filename(const std::string &fn, const char *fmt, ...) __attribute__((format(printf, 3, 0))) ;
 #ifdef _WIN32
-    void	error_filename(const std::wstring &fn, const char *fmt, ...);
+    void	error_filename(const std::wstring &fn, const char *fmt, ...) __attribute__((format(printf, 3, 0)));
 #endif
 
     /* these versions extract the filename and the annotation if it is present.

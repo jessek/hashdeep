@@ -1,5 +1,7 @@
 2011-08-14  Simson Garfinkel  <simsong@t.nitroba.org>
 
+	* src/main.h (d): added __attribute__ ((format(printf))) to all printf-like functions
+
 	* src/display.cpp (error): removed print_error(), since it did the same thing that error() did.
 
 	* src/main.h (d): added __attribute__ ((__noreturn__)) to fatal_error
