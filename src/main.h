@@ -643,10 +643,10 @@ public:
     void	writeln(std::ostream *s,const std::string &str);    // writes a line with NEWLINE
     void	status(const char *fmt, ...);// Display an ordinary message with newline added
     void	error(const char *fmt, ...);// Display an error message if not in silent mode 
-    void	fatal_error(const char *fmt, ...);// Display an error message if not in silent mode and exit
+    // Display an error message if not in silent mode and exit
+    void	fatal_error(const char *fmt, ...) __attribute__ ((__noreturn__));
     void	internal_error(const char *fmt, ...);// Display an error message, ask user to contact the developer, 
     void	print_debug(const char *fmt, ...);
-    void	print_error(const char *fmt, ...);// Display an error message if not in silent mode
     void	error_filename(const std::string &fn, const char *fmt, ...);
 #ifdef _WIN32
     void	error_filename(const std::wstring &fn, const char *fmt, ...);

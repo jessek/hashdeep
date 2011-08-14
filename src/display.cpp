@@ -91,9 +91,9 @@ void display::status(const char *fmt,...)
     va_end(ap);
 }
 
-/* Is display::error different from display::print_error ? */
 void display::error(const char *fmt,...)
 {
+    if(opt_silent) return;
     va_list(ap); 
     va_start(ap,fmt); 
     char *ret = 0;
@@ -101,25 +101,9 @@ void display::error(const char *fmt,...)
       (*out) << progname << ": " << strerror(errno);
       exit(EXIT_FAILURE);
     }
-    writeln(&std::cerr,progname + ": " + ret);
-    free(ret);
-    va_end(ap);
-}
-
-void display::print_error(const char *fmt, ...)
-{
-    if(opt_silent) return;
-    va_list(ap);
-    va_start(ap,fmt);
-    char *ret = 0;
-    if(vasprintf(&ret,fmt,ap) < 0){
-	std::cerr << progname << ": " << strerror(errno);
-	exit(EXIT_FAILURE);
-    }
     lock();
     std::cerr << progname << ": " << ret << std::endl;
     unlock();
-    free(ret);
     va_end(ap);
 }
 

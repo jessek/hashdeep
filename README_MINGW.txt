@@ -1,6 +1,6 @@
 This file discusses how to cross-compile on Linux for Windows.
 
-Outline:
+Outline of this document:
 
 1. Installing the 64-bit cross-compiler on Ubuntu (includes pthreads)
 2. Installing the 32-bit cross-compiler on Ubuntu (does not include pthreads)

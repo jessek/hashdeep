@@ -518,7 +518,7 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
     // as fread will append an extra \0 to the string 
 
     if (fseeko(handle,ENCASE_START_HASHES,SEEK_SET))  {
-	ocb.print_error("%s: Unable to seek to start of hashes", fn);
+	ocb.error("%s: Unable to seek to start of hashes", fn);
 	return status_t::STATUS_USER_ERROR;
     }
         
@@ -529,8 +529,8 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
         
 	    // Users expect the line numbers to start at one, not zero.
 	    if ((!ocb.opt_silent) || (mode_warn_only)) {
-		ocb.print_error("%s: No hash found in line %"PRIu32, fn, count + 1);
-		ocb.print_error("%s: %s", fn, strerror(errno));
+		ocb.error("%s: No hash found in line %"PRIu32, fn, count + 1);
+		ocb.error("%s: %s", fn, strerror(errno));
 		return status_t::STATUS_USER_ERROR;
 	    }
 	}
@@ -562,7 +562,7 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
     }
 
     if (expected_hashes != count){
-	ocb.print_error("%s: Expecting %"PRIu32" hashes, found %"PRIu32"\n", 
+	ocb.error("%s: Expecting %"PRIu32" hashes, found %"PRIu32"\n", 
 			fn, expected_hashes, count);
     }
     return status_t::status_ok;
@@ -584,13 +584,13 @@ void state::md5deep_load_match_file(const char *fn)
 
     FILE *f= fopen(fn,"rb");
     if (f == NULL) {
-	ocb.print_error("%s: %s", fn,strerror(errno));
+	ocb.error("%s: %s", fn,strerror(errno));
 	return;
     }
 
     int file_type = identify_hash_file_type(f,&expected_hashes);
     if (file_type == TYPE_UNKNOWN)  {
-	ocb.print_error("%s: Unable to find any hashes in file, skipped.", fn);
+	ocb.error("%s: Unable to find any hashes in file, skipped.", fn);
 	fclose(f); f = 0;
 	return;
     }

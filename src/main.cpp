@@ -399,7 +399,7 @@ void state::setup_expert_mode(char *arg)
 	case 'd': // Door (Solaris)
 	    mode_door=true;      break;
 	default:
-	    ocb.print_error("%s: Unrecognized file type: %c", progname.c_str(),arg[i]);
+	    ocb.error("%s: Unrecognized file type: %c", progname.c_str(),arg[i]);
 	}
     }
 }
@@ -429,7 +429,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	ocb.mode_size = true;
 	ocb.size_threshold = find_block_size(optarg);
 	if (ocb.size_threshold==0) {
-	    ocb.print_error("Requested size threshold implies not hashing anything");
+	    ocb.error("Requested size threshold implies not hashing anything");
 	    exit(status_t::STATUS_USER_ERROR);
 	}
 	break;
@@ -472,7 +472,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	switch (ocb.load_hash_file(optarg)) {
 	case hashlist::loadstatus_ok: 
 	    if(ocb.opt_verbose>=MORE_VERBOSE){
-		ocb.print_error("%s: Match file loaded %d known hash values.",
+		ocb.error("%s: Match file loaded %d known hash values.",
 				optarg,ocb.known_size());
 	    }
 	    break;
@@ -483,7 +483,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	  break;
 	  
       case hashlist::status_contains_bad_hashes:
-	  ocb.print_error("%s: contains some bad hashes, using anyway",optarg);
+	  ocb.error("%s: contains some bad hashes, using anyway",optarg);
 	  break;
 	  
       case hashlist::status_unknown_filetype:
@@ -492,14 +492,14 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	    break;
 	    
 	default:
-	    ocb.print_error("%s: unknown error, skipping%s", optarg, NEWLINE);
+	    ocb.error("%s: unknown error, skipping%s", optarg, NEWLINE);
 	  break;
 	}
       break;
       
     case 'v':
 	if(++ocb.opt_verbose > INSANELY_VERBOSE){
-	    ocb.print_error("User request for insane verbosity denied");
+	    ocb.error("User request for insane verbosity denied");
 	}
 	break;
       
@@ -673,8 +673,8 @@ void state::check_wow64()
     }
     
     if (result) {
-	ocb.print_error("WARNING: You are running a 32-bit program on a 64-bit system.");
-	ocb.print_error("You probably want to use the 64-bit version of this program.");
+	ocb.error("WARNING: You are running a 32-bit program on a 64-bit system.");
+	ocb.error("You probably want to use the 64-bit version of this program.");
     }
 }
 #endif   // ifdef _WIN32
@@ -737,7 +737,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	    ocb.mode_size=true;
 	    ocb.size_threshold = find_block_size(optarg);
 	    if (ocb.size_threshold==0) {
-		ocb.print_error("Requested size threshold implies not hashing anything.");
+		ocb.error("Requested size threshold implies not hashing anything.");
 		exit(status_t::STATUS_USER_ERROR);
 	    }
 	    break;
@@ -745,7 +745,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	case 'p':
 	    ocb.piecewise_size = find_block_size(optarg);
 	    if (ocb.piecewise_size==0) {
-		ocb.print_error("Illegal size value for piecewise mode.");
+		ocb.error("Illegal size value for piecewise mode.");
 		exit(status_t::STATUS_USER_ERROR);
 	    }
 
@@ -916,7 +916,7 @@ uint64_t state::find_block_size(std::string input_str)
 	input_str.erase(input_str.size()-1,1); // erase the last character
 	break;
     default:
-	ocb.print_error("Improper piecewise multiplier ignored.");
+	ocb.error("Improper piecewise multiplier ignored.");
 	break;
     case '0':case '1':case '2':case '3':case '4':
     case '5':case '6':case '7':case '8':case '9':
