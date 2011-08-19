@@ -39,7 +39,8 @@ We thoughtfully include a copy of the win32 pthreads implementation.
 
 $ tar xfv dist/pthreads-w32-2-8-0-release.tar.gz
 $ cd pthreads-w32-2-8-0-release
-$ make CROSS=i586-mingw32msvc- clean GC-inlined
+$ make clean
+$ make CROSS=i586-mingw32msvc- clean GC-static
 $ sudo install libpthreadGC2.a /usr/i586-mingw32msvc/lib/
 $ sudo install implement.h  need_errno.h  pthread.h sched.h  semaphore.h /usr/i586-mingw32msvc/include/
 

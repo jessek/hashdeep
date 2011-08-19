@@ -25,6 +25,7 @@ AC_CANONICAL_HOST
 # Windows XP WINVER=0x501 _WIN32_WINNT=0x0501
 # Windows Server 2003 WINVER=0x502 _WIN32_WINNT=0x0502
 
+mingw32="no"
 case $host in
   *-*-*linux*-*) AC_DEFINE([__LINUX__],1,[Linux operating system functions])
   		 ;;
@@ -34,6 +35,7 @@ case $host in
   		 CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 $CPPFLAGS"
 		 CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
 		 CXXFLAGS="$CXXFLAGS --static"
+		 mingw32="yes"
      		 ;;		 		     
 
 esac
@@ -122,13 +124,25 @@ fi
 
 ################################################################
 # PTHREAD support
+# first check for mingw32 pthread library (might be useful)
 AC_CHECK_HEADERS([pthread.h])
+AC_CHECK_LIB([pthreadGC2],[pthread_attr_init])
 m4_include([ax_pthread.m4])
 AX_PTHREAD()
-LIBS="$PTHREAD_LIBS $LIBS"
-CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
-CC="$PTHREAD_CC"
+
+if test  x"$mingw32" = x"yes";  then
+  CFLAGS="$CFLAGS -mthreads "
+  CXXFLAGS="$CXXFLAGS -mthreads "
+  pthread_done="yes"
+fi
+if test x"$pthread_done" != x"yes" ; then
+  # And finally, run the m4 script
+  echo Using PTHREAD output
+  LIBS="$PTHREAD_LIBS $LIBS"
+  CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+  CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
+  CC="$PTHREAD_CC"
+fi
 ################################################################
 
 
