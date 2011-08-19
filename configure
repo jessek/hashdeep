@@ -6597,9 +6597,9 @@ fi
 
 done
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for _imp__pthread_join in -lpthreadGC2" >&5
-$as_echo_n "checking for _imp__pthread_join in -lpthreadGC2... " >&6; }
-if test "${ac_cv_lib_pthreadGC2__imp__pthread_join+set}" = set; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_attr_init in -lpthreadGC2" >&5
+$as_echo_n "checking for pthread_attr_init in -lpthreadGC2... " >&6; }
+if test "${ac_cv_lib_pthreadGC2_pthread_attr_init+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -6613,27 +6613,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char _imp__pthread_join ();
+char pthread_attr_init ();
 int
 main ()
 {
-return _imp__pthread_join ();
+return pthread_attr_init ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_pthreadGC2__imp__pthread_join=yes
+  ac_cv_lib_pthreadGC2_pthread_attr_init=yes
 else
-  ac_cv_lib_pthreadGC2__imp__pthread_join=no
+  ac_cv_lib_pthreadGC2_pthread_attr_init=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pthreadGC2__imp__pthread_join" >&5
-$as_echo "$ac_cv_lib_pthreadGC2__imp__pthread_join" >&6; }
-if test "x$ac_cv_lib_pthreadGC2__imp__pthread_join" = x""yes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pthreadGC2_pthread_attr_init" >&5
+$as_echo "$ac_cv_lib_pthreadGC2_pthread_attr_init" >&6; }
+if test "x$ac_cv_lib_pthreadGC2_pthread_attr_init" = x""yes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_LIBPTHREADGC2 1
 _ACEOF
@@ -7096,14 +7096,11 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 if test  x"$mingw32" = x"yes";  then
-  if test x"$ac_cv_lib_pthreadGC2__imp__pthread_join" = x"yes" ; then
-    echo We seem to be running on i586-mingw32msvc with pthreads installed
-    CFLAGS="$CFLAGS -mthreads "
-    CXXFLAGS="$CXXFLAGS -mthreads "
-    go_pthread="yes"
-  fi
+  CFLAGS="$CFLAGS -mthreads "
+  CXXFLAGS="$CXXFLAGS -mthreads "
+  pthread_done="yes"
 fi
-if test x"$go_pthread" != x"yes" ; then
+if test x"$pthread_done" != x"yes" ; then
   # And finally, run the m4 script
   echo Using PTHREAD output
   LIBS="$PTHREAD_LIBS $LIBS"

@@ -966,7 +966,7 @@ int state::main(int _argc,char **_argv)
 #endif
 
     /* There are two versions of basename, so use our own */
-    size_t delim = progname.find(DIR_SEPARATOR);
+    size_t delim = progname.rfind(DIR_SEPARATOR);
     if(delim!=std::string::npos) progname.erase(0,delim+1);
 
     /* Convert progname to lower case */
