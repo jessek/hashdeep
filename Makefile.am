@@ -77,6 +77,14 @@ windist:
 	echo ""
 	@unzip -l $(distdir).zip
 
+world:
+	@echo meta-build system. 
+	@echo Making both Linux and Windows distributions
+	make distclean
+	./configure CFLAGS="-Wall -W -g -ggdb -O0"
+	make dist
+	make windist
+
 CLEANFILES = man/md5deep.txt man/hashdeep.txt
 SUFFIXES = .txt .1
 

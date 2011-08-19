@@ -769,6 +769,14 @@ windist:
 	echo ""
 	@unzip -l $(distdir).zip
 
+world:
+	@echo meta-build system. 
+	@echo Making both Linux and Windows distributions
+	make distclean
+	./configure CFLAGS="-Wall -W -g -ggdb -O0"
+	make dist
+	make windist
+
 .1.txt:
 	/usr/bin/tbl $< | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > $@
 

@@ -30,7 +30,7 @@ using namespace std;
 #include <sys/param.h>
 #include <assert.h>
 #include <fcntl.h>
-
+#include <sys/stat.h>
 
 // Implementation of mkstemp for windows found on pan-devel mailing
 // list archive
