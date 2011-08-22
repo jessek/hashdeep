@@ -1,4 +1,4 @@
-SUBDIRS = src tests man testfiles
+SUBDIRS = src man tests tests/testfiles
 
 CROSS_PREFIX = i586-mingw32msvc
 CROSS64_PREFIX = x86_64-w64-mingw32

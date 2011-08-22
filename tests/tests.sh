@@ -1,13 +1,29 @@
 #!/bin/sh
 # TEST_DIR is where the executable is that we are testing:
 TEST_DIR=../src
+
 # GOOD_DIR is the executable that is known to be good
+if [ x$GOOD_DIR = x ] ; then GOOD_DIR=$1 ; fi
+if [ x$GOOD_DIR = x ] ; then
+  TMP=`which md5deep`
+  GOOD_DIR=`dirname $TMP`
+fi
+if [ x$GOOD_DIR = x ] ; then
+  echo Unable to locate installed md5deep executable.
+  echo Define GOOD_DIR or specify the directory with the known good executables
+  echo on the command line.
+  exit 1
+fi
+
+
 GOOD_DIR=/opt/local/bin
+
+TESTDIR=testfiles
 
 echo Installing test files in /tmp/test
 /bin/rm -rf /tmp/test
 mkdir /tmp/test
-cp -p ../testfiles/* /tmp/test
+cp -p $TESTDIR/* /tmp/test
 
 echo Creating hashlist files with no-match-em and two files with installed program
 
@@ -41,17 +57,15 @@ do
   then
     # generate mode uses the known good code
     BASE=$GOOD_DIR
-    S=""			# no single threading code
+    S=""			# nothing extra
   else
     # test mode uses the version we are developing
     BASE=$TEST_DIR
-    S="-j0"			# Single threaded
+    S=""			# nothing extra
   fi
   fails=0
-  for ((i=1;$i>0;i++))
+  for ((i=1;;i++))
   do 
-   /bin/echo -n Test $i ...
-   /bin/rm -f /tmp/test$i.out
    cmd=""
    case $i in
      1) cmd="$BASE/md5deep $S -r    /tmp/test                       " ;;
@@ -89,9 +103,9 @@ do
     33) cmd="echo README.txt | $BASE/sha256deep "    ;;
     34) cmd="echo README.txt | $BASE/whirlpooldeep " ;;
     35) cmd="$BASE/md5deep $S -Z /tmp/test/*.txt "      ;; 
-    36) cmd="$BASE/md5deep $S -m  ../testfiles/known.txt .svn" ;;	  
-    37) cmd="$BASE/md5deep $S -Sm ../testfiles/known.txt .svn" ;;	  
-    38) cmd="$BASE/md5deep $S -sm ../testfiles/known.txt .svn" ;;
+    36) cmd="$BASE/md5deep $S -m  $TESTDIR/known.txt .svn" ;;	  
+    37) cmd="$BASE/md5deep $S -Sm $TESTDIR/known.txt .svn" ;;	  
+    38) cmd="$BASE/md5deep $S -sm $TESTDIR/known.txt .svn" ;;
     39) cmd="$BASE/md5deep    /dev/null ";;
     40) cmd="$BASE/hashdeep   /dev/null ";;
    esac
@@ -99,7 +113,14 @@ do
    then 
      break
    fi
-   $cmd | sed s+$BASE/++ | sed "s/-j0 //" > /tmp/test$i.out
+   ###
+   ### run the test!
+   ###
+   
+   /bin/echo -n Test $i ...
+   /bin/rm -f /tmp/test$i.out
+
+   $cmd | sed s+$BASE/++ | sort  > /tmp/test$i.out
    if [ $mode = "generate" ]
    then
      echo ""

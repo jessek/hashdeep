@@ -1,3 +1,7 @@
+2011-08-22  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/display.cpp (display::error_filename): moved lock to around dfxml
+
 2011-08-17  Simson Garfinkel  <simsong@mncrnpsedu.local>
 
 	* src/display.cpp (display::error_filename): error_filename now properly prints to DFXML

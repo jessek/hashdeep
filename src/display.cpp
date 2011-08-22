@@ -200,16 +200,16 @@ void display::error_filename(const std::string &fn,const char *fmt, ...)
 	(*out) << progname << ": " << strerror(errno);
 	exit(EXIT_FAILURE);
     }
-    lock();
     if(dfxml){
+	lock();
 	dfxml->push("fileobject");
 	dfxml->xmlout("filename",fn);
 	dfxml->xmlout("error",ret);
 	dfxml->pop();
+	unlock();
     } else {
 	writeln(&std::cerr,fmt_filename(fn) + ": " + ret);
     }
-    unlock();
     free(ret);
     va_end(ap);
 }
