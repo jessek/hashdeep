@@ -1,3 +1,7 @@
+2011-08-22 Jesse Kornblum
+
+	* bootstrap-mingw.sh: Added support for mingw on Ubuntu
+
 2011-08-22  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* src/display.cpp (display::error_filename): moved lock to around dfxml
