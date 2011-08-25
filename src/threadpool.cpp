@@ -95,9 +95,28 @@ void ERR(int val,const char *msg)
 /**
  * Create the thread pool.
  * Each thread has its own feature_recorder_set.
+ *
+ * From the pthreads readme for mingw:
+ * Define PTW32_STATIC_LIB when building your application. Also, your
+ * application must call a two non-portable routines to initialise the
+ * some state on startup and cleanup before exit. One other routine needs
+ * to be called to cleanup after any Win32 threads have called POSIX API
+ * routines. See README.NONPORTABLE or the html reference manual pages for
+ * details on these routines:
+ * 
+ * BOOL pthread_win32_process_attach_np (void);
+ * BOOL pthread_win32_process_detach_np (void);
+ * BOOL pthread_win32_thread_attach_np (void); // Currently a no-op
+ * BOOL pthread_win32_thread_detach_np (void);
  */
+
 threadpool::threadpool(int numworkers_)
 {
+#ifdef WIN32
+    pthread_win32_process_attach_np();
+    pthread_win32_thread_attach_np();
+#endif
+
     numworkers		= numworkers_;
     freethreads		= numworkers;
     if(pthread_mutex_init(&M,NULL))	  ERR(1,"pthread_mutex_init failed");
@@ -126,6 +145,13 @@ threadpool::~threadpool()
     pthread_mutex_destroy(&M);
     pthread_cond_destroy(&TOMAIN);
     pthread_cond_destroy(&TOWORKER);
+
+#ifdef WIN32
+    pthread_win32_process_detach_np();
+    pthread_win32_thread_detach_np();
+#endif
+
+
 }
 
 /*

@@ -130,19 +130,32 @@ AC_CHECK_LIB([pthreadGC2],[pthread_attr_init])
 m4_include([ax_pthread.m4])
 AX_PTHREAD()
 
-if test  x"$mingw32" = x"yes";  then
-  CFLAGS="$CFLAGS -mthreads "
-  CXXFLAGS="$CXXFLAGS -mthreads "
-  pthread_done="yes"
-fi
-if test x"$pthread_done" != x"yes" ; then
-  # And finally, run the m4 script
-  echo Using PTHREAD output
-  LIBS="$PTHREAD_LIBS $LIBS"
-  CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-  CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
-  CC="$PTHREAD_CC"
-fi
+AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np])
+						
+# On mingw, be sure to use the static version
+CPPFLAGS="-DPTW32_STATIC_LIB"
+
+#if test  x"$mingw32" = x"yes";  then
+#  CFLAGS="$CFLAGS -mthreads "
+#  CXXFLAGS="$CXXFLAGS -mthreads "
+#  pthread_done="yes"
+#fi
+#if test x"$pthread_done" != x"yes" ; then
+#  # And finally, run the m4 script
+#  echo Using PTHREAD output
+#  LIBS="$PTHREAD_LIBS $LIBS"
+#  CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+#  CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
+#  CC="$PTHREAD_CC"
+#fi
+
+LIBS="$LIBS $PTHREAD_LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
+CC="$PTHREAD_CC"
+
+
+
 ################################################################
 
 
