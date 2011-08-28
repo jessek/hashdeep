@@ -6,6 +6,7 @@ AC_PREREQ(2.57)
 AC_INIT([MD5DEEP],[4.0.0_alpha_006],[research@jessekornblum.com])
 AC_CONFIG_FILES([Makefile src/Makefile man/Makefile tests/Makefile tests/testfiles/Makefile ])
 AM_INIT_AUTOMAKE
+AC_CONFIG_HEADERS([config.h])
 
 ################################################################
 ### I am a glutten for punishment and this is security-critical software
@@ -44,7 +45,6 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
 
-AM_CONFIG_HEADER([config.h])
 
 # Bring additional directories where things might be found into our
 # search path. I don't know why autoconf doesn't do this by default
