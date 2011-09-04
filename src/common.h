@@ -217,7 +217,7 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
  * (Perhaps some poor soul was forced to port this project to VC++.)
  */
 #ifndef __MSVCRT_VERSION__ 
-# define __MSVCRT_VERSION__ 0x0601
+#define __MSVCRT_VERSION__ 0x0601
 #endif
 
 /* For reasons I don't understand we typedef wchar_t TCHAR doesn't

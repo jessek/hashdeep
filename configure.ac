@@ -3,7 +3,7 @@
 #
 
 AC_PREREQ(2.57)
-AC_INIT([MD5DEEP],[4.0.0_alpha_006],[research@jessekornblum.com])
+AC_INIT([MD5DEEP],[4.0.0_alpha_007],[research@jessekornblum.com])
 AC_CONFIG_FILES([Makefile src/Makefile man/Makefile tests/Makefile tests/testfiles/Makefile ])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -28,16 +28,17 @@ AC_CANONICAL_HOST
 
 mingw32="no"
 case $host in
-  *-*-*linux*-*) AC_DEFINE([__LINUX__],1,[Linux operating system functions])
-  		 ;;
+  *-*-*linux*-*) 
+     AC_DEFINE([__LINUX__],1,[Linux operating system functions])
+     ;;
 
   *-*-mingw32*)   
-                 LIBS="-liberty $LIBS" 
-  		 CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 $CPPFLAGS"
-		 CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
-		 CXXFLAGS="$CXXFLAGS --static"
-		 mingw32="yes"
-     		 ;;		 		     
+     LIBS="-lws2_32 -lgdi32 -liberty $LIBS" 
+     CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 $CPPFLAGS"
+     CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
+     CXXFLAGS="$CXXFLAGS --static"
+     mingw32="yes"
+     ;;		 		     
 
 esac
 
@@ -126,14 +127,13 @@ fi
 # PTHREAD support
 # first check for mingw32 pthread library (might be useful)
 AC_CHECK_HEADERS([pthread.h])
-AC_CHECK_LIB([pthreadGC2],[pthread_attr_init])
 m4_include([ax_pthread.m4])
 AX_PTHREAD()
 
 AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np])
 						
 # On mingw, be sure to use the static version
-CPPFLAGS="-DPTW32_STATIC_LIB"
+CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
 
 #if test  x"$mingw32" = x"yes";  then
 #  CFLAGS="$CFLAGS -mthreads "

@@ -808,7 +808,7 @@ public:;
     /* main.cpp */
     uint64_t	find_block_size(std::string input_str);
     int		usage_count;
-    tstring	generate_filename(const TCHAR *input);
+    tstring	generate_filename(const tstring &input);
     void	usage();
     std::string	make_banner();
     void	md5deep_usage();

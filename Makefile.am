@@ -49,7 +49,7 @@ windist:
 	mkdir $(distdir)
 	make win32 
 	make strip32 
-	cp src/*.exe src/*.exe $(distdir)
+	cp src/*.exe $(distdir)
 	@echo ====================================
 	@echo 
 	@echo Making win32 

@@ -31,9 +31,6 @@
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
-/* Define to 1 if you have the `pthreadGC2' library (-lpthreadGC2). */
-#undef HAVE_LIBPTHREADGC2
-
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
@@ -64,6 +61,21 @@
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
+
+/* Have PTHREAD_PRIO_INHERIT. */
+#undef HAVE_PTHREAD_PRIO_INHERIT
+
+/* Define to 1 if you have the `pthread_win32_process_attach_np' function. */
+#undef HAVE_PTHREAD_WIN32_PROCESS_ATTACH_NP
+
+/* Define to 1 if you have the `pthread_win32_process_detach_np' function. */
+#undef HAVE_PTHREAD_WIN32_PROCESS_DETACH_NP
+
+/* Define to 1 if you have the `pthread_win32_thread_attach_np' function. */
+#undef HAVE_PTHREAD_WIN32_THREAD_ATTACH_NP
+
+/* Define to 1 if you have the `pthread_win32_thread_detach_np' function. */
+#undef HAVE_PTHREAD_WIN32_THREAD_DETACH_NP
 
 /* Define to 1 if `stat' has the bug that it succeeds when given the
    zero-length file name argument. */

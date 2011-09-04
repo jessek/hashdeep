@@ -81,12 +81,12 @@ void state::sanity_check(int condition, const char *msg)
   }
 }
 
-static int is_absolute_path(const TCHAR *fn)
+static int is_absolute_path(const tstring &fn)
 {
 #ifdef _WIN32
   return FALSE;
 #endif
-  return (DIR_SEPARATOR == fn[0]);
+  return (fn.size()>0 && fn[0] == DIR_SEPARATOR);
 }
 
 
@@ -94,14 +94,10 @@ static int is_absolute_path(const TCHAR *fn)
  * return the full pathname for a filename.
  */
  
-tstring state::generate_filename(const TCHAR *input)
+tstring state::generate_filename(const tstring &input)
 {
     if ((ocb.opt_relative) || is_absolute_path(input)){
-#ifdef _WIN32
-	return tstring((const wchar_t *)input);
-#else
 	return tstring(input);
-#endif
     }
     // Windows systems don't have symbolic links, so we don't
     // have to worry about carefully preserving the paths
@@ -111,7 +107,7 @@ tstring state::generate_filename(const TCHAR *input)
 #ifdef _WIN32
     wchar_t fn[PATH_MAX];
     memset(fn,0,sizeof(fn));
-    _wfullpath(fn,(const wchar_t *)input,PATH_MAX);
+    _wfullpath(fn,input.c_str(),PATH_MAX);
     return tstring(fn);
 #else	  
     char buf[PATH_MAX+1];
@@ -120,7 +116,7 @@ tstring state::generate_filename(const TCHAR *input)
 	// If we can't get the current working directory, we're not
 	// going to be able to build the relative path to this file anyway.
 	// So we just call realpath and make the best of things 
-	if (realpath(input,buf)==0){
+	if (realpath(input.c_str(),buf)==0){
 	    ocb.internal_error("Error calling realpath in generate_filename");
 	}
 	return string(buf);
