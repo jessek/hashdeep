@@ -26,6 +26,8 @@ AC_CANONICAL_HOST
 # Windows XP WINVER=0x501 _WIN32_WINNT=0x0501
 # Windows Server 2003 WINVER=0x502 _WIN32_WINNT=0x0502
 
+# mingw32 includes  i686-w64-mingw32 and  x86_64-w64-mingw32
+
 mingw32="no"
 case $host in
   *-*-*linux*-*) 
@@ -37,7 +39,7 @@ case $host in
      CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 $CPPFLAGS"
      CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
      CXXFLAGS="$CXXFLAGS --static"
-     mingw32="yes"
+     mingw="yes"
      ;;		 		     
 
 esac
@@ -127,19 +129,22 @@ fi
 # PTHREAD support
 # first check for mingw32 pthread library (might be useful)
 AC_CHECK_HEADERS([pthread.h])
+AC_DEFINE([INCLUDE_NP],1,[Include non-portable functions for statically linking pthreads in mingw])
 m4_include([ax_pthread.m4])
 AX_PTHREAD()
 
 AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np])
 						
-# On mingw, be sure to use the static version
-CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
+# On mingw, be sure to use the static version and be sure we are using mthread option
+# (which should be a no-op on later version of G++ anyway)
 
-#if test  x"$mingw32" = x"yes";  then
-#  CFLAGS="$CFLAGS -mthreads "
-#  CXXFLAGS="$CXXFLAGS -mthreads "
-#  pthread_done="yes"
-#fi
+if test  x"$mingw" = x"yes";  then
+  CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
+  CFLAGS="$CFLAGS -mthreads "
+  CXXFLAGS="$CXXFLAGS -mthreads "
+  pthread_done="yes"
+fi
+
 #if test x"$pthread_done" != x"yes" ; then
 #  # And finally, run the m4 script
 #  echo Using PTHREAD output

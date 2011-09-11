@@ -579,7 +579,6 @@ void state::md5deep_load_match_file(const char *fn)
 {
     uint64_t line_number = 0;
     char known_fn[PATH_MAX+1];
-    int status;
     uint32_t expected_hashes=0;
 
     FILE *f= fopen(fn,"rb");
@@ -598,7 +597,7 @@ void state::md5deep_load_match_file(const char *fn)
     if (TYPE_ENCASE == file_type)  {
 	// We can't use the normal file reading code which is based on
 	// a one-line-at-a-time approach. Encase files are binary records 
-	status = parse_encase_file(fn,f,expected_hashes);
+        parse_encase_file(fn,f,expected_hashes);
 	fclose(f); f = 0;
 	return;
     }

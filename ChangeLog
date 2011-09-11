@@ -1,3 +1,13 @@
+2011-09-11  Simson Garfinkel  <simsong@FC15>
+
+	* configure.ac (INCLUDE_NP): added define for INCLUDE_NP
+
+	* src/display.cpp (display_realtime_stats): removed setting shorten variable, since now we simply shorten where it is needed, rather than setting a variable and checking it elsewhere.
+
+	* src/xml.cpp: moved defines of O_BINARY, et all, out of #ifdef
+
+	* src/files.cpp (md5deep_load_match_file): removed setting status, because return code is now ignored. (errors in parse_encase_file are no longer reported)
+
 2011-08-24  User  <user@ubuntu>
 
 	* configure.ac: AM_CONFIG_HEADER changes to AC_CONFIG_HEADERS

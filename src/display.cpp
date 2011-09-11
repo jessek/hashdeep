@@ -252,7 +252,6 @@ void display::clear_realtime_stats()
 void display::display_realtime_stats(const file_data_hasher_t *fdht, const hash_context_obj *hc,time_t elapsed)
 {
     uint64_t mb_read=0;
-    bool shorten = false;
 
     /*
      * This is the only place where filenames are shortened.
@@ -283,7 +282,6 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, const hash_
     }
 
     if (fdht->stat_megs()==0 || opt_estimate==false)  {
-	shorten = true;
 	ss << mb_read << "MB done. Unable to estimate remaining time.";
     }
     else {
@@ -306,7 +304,6 @@ void display::display_realtime_stats(const file_data_hasher_t *fdht, const hash_
 	uint64_t min = seconds/60;
 	seconds -= min * 60;
 
-	shorten = 1;
 	ss << mb_read << "MB of " << fdht->stat_megs() << "MB done, ";
 	char msg[64];
 	snprintf(msg,sizeof(msg),"%02"PRIu64":%02"PRIu64":%02"PRIu64" left", hour, min, seconds);

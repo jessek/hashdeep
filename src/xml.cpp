@@ -35,7 +35,6 @@ using namespace std;
 // Implementation of mkstemp for windows found on pan-devel mailing
 // list archive
 // @http://www.mail-archive.com/pan-devel@nongnu.org/msg00294.html
-#if defined(__MINGW_H)
 #ifndef _S_IREAD
 #define _S_IREAD 256
 #endif
@@ -50,7 +49,6 @@ using namespace std;
 
 #ifndef _O_SHORT_LIVED
 #define _O_SHORT_LIVED 0
-#endif
 
 #endif
 
