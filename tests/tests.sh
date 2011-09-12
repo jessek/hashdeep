@@ -47,7 +47,7 @@ fi
 
 if [ ! -r hashlist-md5deep-full.txt ] ;
 then
-  md5deep -l -r /tmp/test > hashlist-md5dee-full.txt
+  md5deep -l -r /tmp/test > hashlist-md5deep-full.txt
 fi
 
 for mode in generate test

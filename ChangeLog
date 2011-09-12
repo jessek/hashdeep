@@ -1,3 +1,8 @@
+2011-09-12 Jesse Kornblum
+
+	* tests/tests.sh: Fixed typo
+	
+
 2011-09-11  Simson Garfinkel  <simsong@FC15>
 
 	* configure.ac (INCLUDE_NP): added define for INCLUDE_NP

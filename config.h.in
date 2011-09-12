@@ -161,6 +161,9 @@
 /* Define to 1 if you have the `_gmtime64_s' function. */
 #undef HAVE__GMTIME64_S
 
+/* Include non-portable functions for statically linking pthreads in mingw */
+#undef INCLUDE_NP
+
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
 #undef LSTAT_FOLLOWS_SLASHED_SYMLINK
