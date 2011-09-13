@@ -422,7 +422,6 @@ void worker::do_work(file_data_hasher_t *fdht)
 void display::hash_file(const tstring &fn)
 {
     file_data_hasher_t *fdht = new file_data_hasher_t(this);
-
     fdht->file_name_to_hash = fn;
 
     /**
@@ -441,7 +440,11 @@ void display::hash_file(const tstring &fn)
 }
 
 
-/* Hashing stdin can only be done with buffered */
+/* Hashing stdin can only be done with buffered I/O.
+ * Note that it is only hashed in the main thread.
+ * No reason to hash stdin in other threads, since we
+ * are only hashing one file.
+ */
 void display::hash_stdin()
 {
     file_data_hasher_t *fdht = new file_data_hasher_t(this);
@@ -454,4 +457,5 @@ void display::hash_stdin()
     fdht->stat_bytes = 0x7fffffffffffffffLL;
 #endif
     fdht->hash();
+    delete fdht;
 }
