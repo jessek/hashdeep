@@ -1,8 +1,13 @@
 #!/bin/sh
 # TEST_DIR is where the executable is that we are testing:
-TEST_DIR=../src
+# GOOD_DIR is the directory containing the executable that is known to be good
+# You can set this environment variable in your startup scripts.
+# TESTFILES_DIR is where the test files are located. They are 
+# installed in /tmp so that names will be consistent.
 
-# GOOD_DIR is the executable that is known to be good
+TEST_DIR=../src
+TESTFILES_DIR=testfiles
+
 if [ x$GOOD_DIR = x ] ; then GOOD_DIR=$1 ; fi
 if [ x$GOOD_DIR = x ] ; then
   TMP=`which md5deep`
@@ -15,40 +20,40 @@ if [ x$GOOD_DIR = x ] ; then
   exit 1
 fi
 
-
-GOOD_DIR=/opt/local/bin
-
-TESTDIR=testfiles
-
-echo Installing test files in /tmp/test
-/bin/rm -rf /tmp/test
-mkdir /tmp/test
-cp -p $TESTDIR/* /tmp/test
+if [ ! -d /tmp/test/ ]; then
+  echo Installing test files in /tmp/test
+  mkdir /tmp/test
+  (cd $TESTFILES_DIR ; tar cf -) | (cd /tmp/test;tar xpBfv -)
+else
+  echo Test files already installed in /tmp/test
+fi
 
 echo Creating hashlist files with no-match-em and two files with installed program
 
 if [ ! -r hashlist-hashdeep-partial.txt ] ;
 then
-  hashdeep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-hashdeep-partial.txt
+  $GOOD_DIR/hashdeep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-hashdeep-partial.txt
   tail -1 hashlist-hashdeep-partial.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-hashdeep-partial.txt
 fi
 
 if [ ! -r hashlist-md5deep-partial.txt ] ;
 then
-  md5deep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-md5deep-partial.txt
+  $GOOD_DIR/md5deep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-md5deep-partial.txt
   tail -1 hashlist-md5deep-partial.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-md5deep-partial.txt
 fi
 
 echo creating the full list from /tmp/test
 if [ ! -r hashlist-hashdeep-full.txt ] ;
 then
-  hashdeep -l -r /tmp/test > hashlist-hashdeep-full.txt
+  $GOOD_DIR/hashdeep -l -r /tmp/test > hashlist-hashdeep-full.txt
 fi
 
 if [ ! -r hashlist-md5deep-full.txt ] ;
 then
-  md5deep -l -r /tmp/test > hashlist-md5deep-full.txt
+  $GOOD_DIR/md5deep -l -r /tmp/test > hashlist-md5deep-full.txt
 fi
+
+# Now run the tests!
 
 for mode in generate test
 do
@@ -103,9 +108,9 @@ do
     33) cmd="echo README.txt | $BASE/sha256deep "    ;;
     34) cmd="echo README.txt | $BASE/whirlpooldeep " ;;
     35) cmd="$BASE/md5deep $S -Z /tmp/test/*.txt "      ;; 
-    36) cmd="$BASE/md5deep $S -m  $TESTDIR/known.txt .svn" ;;	  
-    37) cmd="$BASE/md5deep $S -Sm $TESTDIR/known.txt .svn" ;;	  
-    38) cmd="$BASE/md5deep $S -sm $TESTDIR/known.txt .svn" ;;
+    36) cmd="$BASE/md5deep $S -m  $TESTFILES_DIR/known.txt .svn" ;;	  
+    37) cmd="$BASE/md5deep $S -Sm $TESTFILES_DIR/known.txt .svn" ;;	  
+    38) cmd="$BASE/md5deep $S -sm $TESTFILES_DIR/known.txt .svn" ;;
     39) cmd="$BASE/md5deep    /dev/null ";;
     40) cmd="$BASE/hashdeep   /dev/null ";;
    esac
@@ -115,23 +120,36 @@ do
    fi
    ###
    ### run the test!
-   ###
+   ### Standard output gets sorted to deal with multi-threading issues
+   ### Standard error simply gets captured
    
    /bin/echo -n Test $i ...
    /bin/rm -f /tmp/test$i.out
 
-   $cmd | sed s+$BASE/++ | sort  > /tmp/test$i.out
+   $cmd 2>/tmp/test$i.err | sed s+$BASE/++ | sort  > /tmp/test$i.out
    if [ $mode = "generate" ]
    then
      echo ""
-     cp /tmp/test$i.out test$i.out
+     mv -f /tmp/test$i.out test$i.out
+     mv -f /tmp/test$i.err test$i.err
    fi
    if [ $mode = "test" ]
    then
+     fail=no
      if ! diff /tmp/test$i.out test$i.out ; 
      then 
-       echo TEST $i FAILED.
+       echo TEST $i FAILED --- STDOUT DIFFERENT
        echo COMMAND: $cmd
+       fail=yes
+     fi
+     if ! diff /tmp/test$i.err test$i.err ; 
+     then 
+       echo TEST $i FAILED --- STDERR DIFFERENT
+       echo COMMAND: $cmd
+       fail=yes
+     fi
+     if [ $fail = "yes" ]
+     then
        ((fails++))
      else
        echo passes.
