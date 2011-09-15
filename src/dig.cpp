@@ -331,30 +331,41 @@ void state::process_dir(const tstring &fn)
 	return ;
     }
 
-    processing_dir(fn);			// note that we are now processing a directory
   
     if ((current_dir = _topendir(fn.c_str())) == NULL)   {
 	ocb.error_filename(fn,"%s", strerror(errno));
 	return ;
     }    
 
+    /* 2011-SEP-15 New logic:
+     * 1. Open directory.
+     * 2. Get a list of all the dir entries.
+     * 3. Close the directory.
+     * 4. Process them.
+     */
+    std::vector<tstring> dir_entries;
     while ((entry = _treaddir(current_dir)) != NULL)   {
 	if (is_special_dir(entry->d_name)) continue; // ignore . and ..
     
 	// compute full path
-	tstring new_file = fn;
-	new_file.push_back(DIR_SEPARATOR);
-	new_file.append(entry->d_name); 
+	//tstring new_file = fn;
+	//new_file.push_back(DIR_SEPARATOR);
+	//new_file.append(entry->d_name);
+	dir_entries.push_back(fn + DIR_SEPARATOR + entry->d_name);
 
 #ifdef _WIN32
 	if (is_junction_point(new_file)){		       // whatever this is, ignore it
 	    continue;
 	}
 #endif
-	dig_normal(new_file);
 
     }
     _tclosedir(current_dir);		// done with this directory
+
+    processing_dir(fn);			// note that we are now processing a directory
+    for(std::vector<tstring>::const_iterator it = dir_entries.begin();it!=dir_entries.end();it++){
+	dig_normal(*it);
+    }
     done_processing_dir(fn);		// note that we are done with this directory
     return ;
 }

@@ -195,7 +195,7 @@ void state::md5deep_usage(void)
 	ocb.status("-b  - prints only the bare name of files; all path information is omitted");
 	ocb.status("-l  - print relative paths for filenames");
 	ocb.status("-t  - print GMT timestamp");
-	ocb.status("-i/I- only process files smaller than the given threshold");
+	ocb.status("-iSIZE/-ISIZE - only process files smaller/larger than SIZE");
 	ocb.status("-v  - display version number and exit");
 	ocb.status("-d  - output in DFXML; -u - Escape Unicode; -W FILE - write to FILE.");
 #ifdef HAVE_PTHREAD
@@ -206,10 +206,13 @@ void state::md5deep_usage(void)
 	ocb.status("-Z - traige mode;   -h - help;   -hh - full help");
     }
     if(usage_count==1){
-	ocb.status("-k  - print asterisk before filename; -0 - use a NULL for newline.");
+	ocb.status("-k  - print asterisk before filename");
+	ocb.status("-0 - use a NULL for newline.");
+	ocb.status("-ffilename - take list of files to hash from filename");
 	ocb.status("-o[bcpflsd] - only process certain types of files:");
 	ocb.status("            b=block dev; c=character dev; p=named pipe");
 	ocb.status("            f=regular file; l=symlink; s=socket; d=door");
+	ocb.status("-Dnn - set debug level to nn");
     }
     usage_count++;
 }

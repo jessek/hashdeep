@@ -25,7 +25,7 @@ echo Removing files in /tmp/test
 
 echo Installing test files in /tmp/test
 mkdir /tmp/test
-(cd $TESTFILES_DIR >/dev/null; tar cf - .) | (cd /tmp/test;tar xpBfv - )
+(cd $TESTFILES_DIR >/dev/null; tar cf - .) | (cd /tmp/test;tar xpBf - )
 
 echo Erasing the hashlist database files in the current directory
 /bin/rm -f hashlist-*.txt
@@ -38,7 +38,6 @@ $GOOD_DIR/md5deep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-md5dee
 tail -1 hashlist-md5deep-partial.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-md5deep-partial.txt
 
 $GOOD_DIR/hashdeep -l -r /tmp/test > hashlist-hashdeep-full.txt
-
 $GOOD_DIR/md5deep -l -r /tmp/test > hashlist-md5deep-full.txt
 
 

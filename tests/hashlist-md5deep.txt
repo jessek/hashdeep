@@ -1,3 +1,0 @@
-        12  deadbeefb303ba89ae055ad0234eb7e8  /tmp/test/deadbeef.txt
-        44  d472f529689b334bc4896828854e84ed  /tmp/test/foo.txt
-        00  01010101010101010101010101010101  /no/match/em/ever
