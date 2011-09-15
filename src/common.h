@@ -11,11 +11,12 @@
 #ifndef __COMMON_H
 #define __COMMON_H
 
+#include "config.h"
+
 #define TRUE   1
 #define FALSE  0
 #define ONE_MEGABYTE  1048576
 
-#include "config.h"
 
 #ifdef _WIN32
 /* For some reason this doesn't work properly with mingw */
@@ -204,8 +205,6 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
  *
  */
 
-
-
 /*
  * __MSVCRT_VERSION__ specifies which version of Microsoft's DLL we require.
  * Mingw defines this to be 0x0600 by default.
@@ -229,8 +228,6 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 #define _TCHAR_DEFINED
 #endif
 
-
-
 #include <windows.h>
 #include <windowsx.h>
 #include <tchar.h>
@@ -244,7 +241,6 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
  * ON POSIX: we get a std::string.
  */ 
 
-//typedef std::wstring tstring; 
 #define tstring std::wstring 
 #endif
 
@@ -278,8 +274,9 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 
 #define NEWLINE "\r\n"			// for Windows, make newline \r\n
 #define LINE_LENGTH 72
-#define ftello   ftell
-#define fseeko   fseek
+#define ftello   ftello64	/* use the 64-bit version */
+#define fseeko   fseeko64	/* use the 64-bit version */
+#define off_t    off64_t
 #define tlstat64(path,buf)   _wstat64(path,buf) // on windows, use _wstat64
 #endif
 

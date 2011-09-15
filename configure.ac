@@ -7,6 +7,7 @@ AC_INIT([MD5DEEP],[4.0.0_alpha_007],[research@jessekornblum.com])
 AC_CONFIG_FILES([Makefile src/Makefile man/Makefile tests/Makefile tests/testfiles/Makefile ])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
+AC_DEFINE([_FILE_OFFSET_BITS],64,[Make sure we are using 64-bit offsets])
 
 ################################################################
 ### I am a glutten for punishment and this is security-critical software
@@ -112,6 +113,9 @@ AC_FUNC_MEMCMP
 AC_FUNC_STAT
 AC_FUNC_VPRINTF
 
+# More permutations of fseek/ftell lossage
+AC_CHECK_FUNCS([fseeko64 ftello64])
+
 # See if program_invocation_name is defined on this system
 AC_TRY_COMPILE([#include <errno.h>],
 			[const char *progname = program_invocation_name;],
@@ -127,23 +131,21 @@ fi
 
 ################################################################
 # PTHREAD support
-# first check for mingw32 pthread library (might be useful)
+# With special nods to compiling under mingw
+
+if test  x"$mingw" = x"yes";  then
+  AC_DEFINE([HAVE_STRUCT_TIMESPEC],1,[Required for mingw])
+  CFLAGS="$CFLAGS -mthreads "
+  CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
+  CXXFLAGS="$CXXFLAGS -mthreads "
+fi
+
+
 AC_CHECK_HEADERS([pthread.h])
-AC_DEFINE([INCLUDE_NP],1,[Include non-portable functions for statically linking pthreads in mingw])
 m4_include([ax_pthread.m4])
 AX_PTHREAD()
 
-AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np])
-						
-# On mingw, be sure to use the static version and be sure we are using mthread option
-# (which should be a no-op on later version of G++ anyway)
-
-if test  x"$mingw" = x"yes";  then
-  CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
-  CFLAGS="$CFLAGS -mthreads "
-  CXXFLAGS="$CXXFLAGS -mthreads "
-  pthread_done="yes"
-fi
+AC_CHECK_LIB([pthreadGC2],[pthread_create])
 
 #if test x"$pthread_done" != x"yes" ; then
 #  # And finally, run the m4 script
@@ -154,11 +156,18 @@ fi
 #  CC="$PTHREAD_CC"
 #fi
 
+AC_DEFINE([INCLUDE_NP],1,[Include non-portable functions for statically linking pthreads in mingw])
+
 LIBS="$LIBS $PTHREAD_LIBS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
 CC="$PTHREAD_CC"
 
+# On mingw, be sure to use the static version and be sure we are using mthread option
+# (which should be a no-op on later version of G++ anyway)
+
+AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np])
+						
 
 
 ################################################################

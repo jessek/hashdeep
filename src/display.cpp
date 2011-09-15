@@ -55,7 +55,10 @@ extern "C" {
 #endif    
 	
 
-#ifndef HAVE_VASPRINTF
+/*
+ * on mingw the have_vasprintf check succedes, but it really isn't there
+ */
+#if !defined(HAVE_VASPRINTF) || defined(_WIN32)
 extern "C" {
     /**
      * We do not have vasprintf.

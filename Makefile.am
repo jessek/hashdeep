@@ -1,6 +1,7 @@
 SUBDIRS = src man tests tests/testfiles
 
-CROSS_PREFIX = i586-mingw32msvc
+# These prefixes are for compiling on FC15
+CROSS32_PREFIX = i686-w64-mingw32
 CROSS64_PREFIX = x86_64-w64-mingw32
 
 # on Mac, you may want this instead:
@@ -22,13 +23,19 @@ todo:
 
 win32: 
 	make distclean
-	./configure --host=$(CROSS_PREFIX)
+	./configure --host=$(CROSS32_PREFIX) 
 	make
+	/bin/rm -f /tmp/strings.txt
+	strings src/md5deep.exe > /tmp/strings.txt
+	if grep pthreadGC2.dll /tmp/strings.txt ; then echo not statically linked ; exit 1; fi
 
 win64: 
 	make distclean
-	./configure --host=$(CROSS64_PREFIX)
+	./configure --host=$(CROSS64_PREFIX) 
 	make
+	/bin/rm -f /tmp/strings.txt
+	strings src/md5deep.exe > /tmp/strings.txt
+	if grep pthreadGC2.dll /tmp/strings.txt ; then echo not statically linked ; exit 1; fi
 	mv src/md5deep.exe       src/md5deep64.exe
 	mv src/sha1deep.exe      src/sha1deep64.exe
 	mv src/sha256deep.exe    src/sha256deep64.exe
@@ -37,7 +44,7 @@ win64:
 	mv src/hashdeep.exe     src/hashdeep64.exe
 
 strip32:
-	$(CROSS_PREFIX)-strip src/*.exe src/*.exe
+	$(CROSS32_PREFIX)-strip src/*.exe src/*.exe
 strip64:
 	$(CROSS64_PREFIX)-strip src/*64.exe 
 
@@ -70,11 +77,11 @@ windist:
 	cp man/hashdeep.txt	$(distdir)/MD5DEEP.txt
 	zip --to-crlf $(distdir).zip $(distdir)/*.txt
 	rm -rf $(distdir) $(WINDOWSDOCS) MD5DEEP.1 HASHDEEP.1
-	echo "*************************"
-	echo "*** THE WORLD IS MADE ***"
-	echo ""
+	@echo "*************************"
+	@echo "*** THE WORLD IS MADE ***"
+	@echo ""
 	ls -l $(distdir).*
-	echo ""
+	@echo ""
 	@unzip -l $(distdir).zip
 
 world:

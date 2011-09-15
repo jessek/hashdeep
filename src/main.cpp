@@ -126,6 +126,14 @@ tstring state::generate_filename(const tstring &input)
 }
 
 
+void state::usage_debug()
+{
+  if(opt_debug){
+    ocb.status("sizeof(off_t)= %d",sizeof(off_t));
+  }
+
+}
+
 // So that the usage message fits in a standard DOS window, this
 // function should produce no more than 22 lines of text.
 void state::usage()
@@ -168,6 +176,7 @@ void state::usage()
     }
     if(usage_count==1){
 	ocb.status("-u  - escape Unicode");
+	usage_debug();
     }
     usage_count++;
 }
@@ -213,6 +222,7 @@ void state::md5deep_usage(void)
 	ocb.status("            b=block dev; c=character dev; p=named pipe");
 	ocb.status("            f=regular file; l=symlink; s=socket; d=door");
 	ocb.status("-Dnn - set debug level to nn");
+	usage_debug();
     }
     usage_count++;
 }
