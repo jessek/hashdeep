@@ -20,38 +20,27 @@ if [ x$GOOD_DIR = x ] ; then
   exit 1
 fi
 
-if [ ! -d /tmp/test/ ]; then
-  echo Installing test files in /tmp/test
-  mkdir /tmp/test
-  (cd $TESTFILES_DIR ; tar cf -) | (cd /tmp/test;tar xpBfv -)
-else
-  echo Test files already installed in /tmp/test
-fi
+echo Removing files in /tmp/test
+/bin/rm -rf /tmp/test/
+
+echo Installing test files in /tmp/test
+mkdir /tmp/test
+(cd $TESTFILES_DIR >/dev/null; tar cf - .) | (cd /tmp/test;tar xpBfv - )
+
+echo Erasing the hashlist database files in the current directory
+/bin/rm -f hashlist-*.txt
 
 echo Creating hashlist files with no-match-em and two files with installed program
+$GOOD_DIR/hashdeep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-hashdeep-partial.txt
+tail -1 hashlist-hashdeep-partial.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-hashdeep-partial.txt
 
-if [ ! -r hashlist-hashdeep-partial.txt ] ;
-then
-  $GOOD_DIR/hashdeep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-hashdeep-partial.txt
-  tail -1 hashlist-hashdeep-partial.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-hashdeep-partial.txt
-fi
+$GOOD_DIR/md5deep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-md5deep-partial.txt
+tail -1 hashlist-md5deep-partial.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-md5deep-partial.txt
 
-if [ ! -r hashlist-md5deep-partial.txt ] ;
-then
-  $GOOD_DIR/md5deep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-md5deep-partial.txt
-  tail -1 hashlist-md5deep-partial.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-md5deep-partial.txt
-fi
+$GOOD_DIR/hashdeep -l -r /tmp/test > hashlist-hashdeep-full.txt
 
-echo creating the full list from /tmp/test
-if [ ! -r hashlist-hashdeep-full.txt ] ;
-then
-  $GOOD_DIR/hashdeep -l -r /tmp/test > hashlist-hashdeep-full.txt
-fi
+$GOOD_DIR/md5deep -l -r /tmp/test > hashlist-md5deep-full.txt
 
-if [ ! -r hashlist-md5deep-full.txt ] ;
-then
-  $GOOD_DIR/md5deep -l -r /tmp/test > hashlist-md5deep-full.txt
-fi
 
 # Now run the tests!
 
