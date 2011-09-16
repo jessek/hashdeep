@@ -18,7 +18,42 @@
 /* $Id$ */
 
 #include "md5.h"
+#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
+#include <CommonCrypto/CommonDigest.h>
+#endif
 
+/* don't use this for now. For reasons that aren't clear,
+ * it's 3x slower that our version!
+ */
+#undef HAVE_CC_MD5_INIT
+
+#if defined(HAVE_CC_MD5_INIT) 
+/* Use the Apple Common Crypto */
+
+#define HAVE_INIT_MD5
+int hash_init_md5(void * ctx)
+{
+    assert(sizeof(struct CC_MD5state_st)<MAX_ALGORITHM_CONTEXT_SIZE);
+    CC_MD5_Init((CC_MD5_CTX *)ctx);
+    return FALSE;
+}
+
+int hash_update_md5(void *ctx, const unsigned char *buf, size_t len)
+{
+    CC_MD5_Update((CC_MD5_CTX *)ctx,buf,len);
+    return FALSE;
+}
+
+int hash_final_md5(void *ctx, unsigned char *digest)
+{
+    CC_MD5_Final(digest,(CC_MD5_CTX *)ctx);
+    return FALSE;
+}
+#endif
+
+
+/* If we haven't brought in an accelerated MD5, use our own */
+#if !defined(HAVE_INIT_MD5)
 #ifndef WORDS_BIGENDIAN
 # define byteReverse(buf, len)	/* Nothing */
 #else
@@ -41,27 +76,6 @@ void byteReverse(unsigned char *buf, unsigned longs)
 #endif  // ifndef ASM_MD5
 #endif  // ifndef WORDS_BIGENDIAN
 
-
-
-
-
-int hash_init_md5(void * ctx)
-{
-  MD5Init(ctx);
-  return FALSE;
-}
-
-int hash_update_md5(void *ctx, const unsigned char *buf, size_t len)
-{
-  MD5Update(ctx,buf,len);
-  return FALSE;
-}
-
-int hash_final_md5(void *ctx, unsigned char *digest)
-{
-  MD5Final(digest,ctx);
-  return FALSE;
-}
 
 
 
@@ -357,3 +371,25 @@ void MD5Transform(uint32_t buf[4], uint32_t const in[16])
 }
 
 #endif
+
+
+int hash_init_md5(void * ctx)
+{
+    MD5Init((context_md5_t *)ctx);
+    return FALSE;
+}
+
+int hash_update_md5(void *ctx, const unsigned char *buf, size_t len)
+{
+  MD5Update((context_md5_t *)ctx,buf,len);
+  return FALSE;
+}
+
+int hash_final_md5(void *ctx, unsigned char *digest)
+{
+  MD5Final(digest,(context_md5_t *)ctx);
+  return FALSE;
+}
+#endif
+
+

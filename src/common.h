@@ -18,6 +18,10 @@
 #define ONE_MEGABYTE  1048576
 
 
+#define MAX_ALGORITHM_RESIDUE_SIZE 256
+#define MAX_ALGORITHM_CONTEXT_SIZE 256
+
+
 #ifdef _WIN32
 /* For some reason this doesn't work properly with mingw */
 #undef HAVE_EXTERN_PROGNAME

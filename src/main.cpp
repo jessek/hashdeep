@@ -285,11 +285,16 @@ int sha1_init(void * md);
 void algorithm_t::load_hashing_algorithms()
 {
     /* The DEFAULT_ENABLE variables are in main.h */
-    add_algorithm(alg_md5,    "md5", 128, hash_init_md5, hash_update_md5, hash_final_md5, DEFAULT_ENABLE_MD5);
-    add_algorithm(alg_sha1,   "sha1",160, hash_init_sha1, hash_update_sha1, hash_final_sha1, DEFAULT_ENABLE_SHA1);
-    add_algorithm(alg_sha256, "sha256", 256, hash_init_sha256, hash_update_sha256, hash_final_sha256, DEFAULT_ENABLE_SHA256);
-    add_algorithm(alg_tiger,  "tiger", 192, hash_init_tiger, hash_update_tiger, hash_final_tiger, DEFAULT_ENABLE_TIGER);
-    add_algorithm(alg_whirlpool, "whirlpool", 512, hash_init_whirlpool, hash_update_whirlpool, hash_final_whirlpool,
+    add_algorithm(alg_md5,    "md5", 128, hash_init_md5,
+		  hash_update_md5, hash_final_md5, DEFAULT_ENABLE_MD5);
+    add_algorithm(alg_sha1,   "sha1",160, hash_init_sha1, hash_update_sha1,
+		  hash_final_sha1, DEFAULT_ENABLE_SHA1);
+    add_algorithm(alg_sha256, "sha256", 256, hash_init_sha256,
+		  hash_update_sha256, hash_final_sha256, DEFAULT_ENABLE_SHA256);
+    add_algorithm(alg_tiger,  "tiger", 192, hash_init_tiger,
+		  hash_update_tiger, hash_final_tiger, DEFAULT_ENABLE_TIGER);
+    add_algorithm(alg_whirlpool, "whirlpool", 512, hash_init_whirlpool,
+		  hash_update_whirlpool, hash_final_whirlpool,
 		  DEFAULT_ENABLE_WHIRLPOOL);
 }
 
@@ -1126,8 +1131,6 @@ int state::main(int _argc,char **_argv)
     /* If we were generating DFXML, finish the job */
     if(opt_debug>1) std::cerr << "*** main calling dfxml_shutdown\n";
     ocb.dfxml_shutdown();
-
-
 
     /* On windows, do a hard exit
      *

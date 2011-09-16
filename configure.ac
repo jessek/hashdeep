@@ -17,6 +17,28 @@ CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
 AC_GNU_SOURCE
 AC_CANONICAL_HOST
 
+# This magic is from PhotoRec; see which options we can use. 
+# These I don't like:
+# -Wdeclaration-after-statement -Wconversion
+# doesn't work: -Wunreachable-code 
+# causes warnings with unistd.h:  -Wnested-externs 
+for option in -Wall -MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wshadow -Wwrite-strings -W -Wcast-align -Waggregate-return -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wsign-compare-Winline -Wdisabled-optimization -Wfloat-equal -Wmissing-format-attribute -Wmultichar -Wc++-compat -Wmissing-noreturn -fast
+do
+  SAVE_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS $option"
+  AC_MSG_CHECKING([whether gcc understands $option])
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+      [has_option=yes],
+      [has_option=no; CFLAGS="$SAVE_CFLAGS"])
+  AC_MSG_RESULT($has_option)
+  unset has_option
+  unset SAVE_CFLAGS
+done
+unset option
+# end photorec magic
+
+
+
 # http://osdir.com/ml/gnu.mingw.devel/2003-09/msg00040.html
 # Note: Windows 95 WINVER=0x400
 # Windows 98 WINVER=0x400  _WIN32_WINDOWS=0x0410
@@ -64,11 +86,17 @@ done
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h malloc.h stdint.h stdlib.h string.h sys/cdefs.h sys/types.h \
-			   sys/ioctl.h sys/mmap.h sys/mman.h sys/param.h sys/resource.h wchar.h unistd.h sys/stat.h sys/disk.h])
+AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h malloc.h stdint.h stdlib.h string.h \
+			   sys/cdefs.h sys/types.h sys/ioctl.h sys/mmap.h sys/mman.h sys/param.h \
+			   sys/resource.h wchar.h unistd.h sys/stat.h sys/disk.h\
+			   CommonCrypto/CommonDigest.h
+			   ])
 
 # These functions not available everywhere
 AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r mmap usleep mkstemp vasprintf getrusage getprogname])
+
+# This is for Apple's new CommonCrypto (which is FIPS validated)
+AC_CHECK_FUNCS([CC_MD5_Init CC_SHA1_Init CC_SHA256_Init])
 
 # These includes are required on FreeBSD
 AC_CHECK_HEADERS([sys/mount.h],[],[],
@@ -172,7 +200,6 @@ AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np 
 
 ################################################################
 
-
 # This allows us to easily disable optimizations for debugging
 AC_ARG_WITH([noopt], AC_HELP_STRING([--with-noopt],[Drop -O C flags]))
 if test x"${AFF_NOOPT}" != "x" ; then
@@ -180,8 +207,9 @@ if test x"${AFF_NOOPT}" != "x" ; then
 fi
 
 if test "${with_noopt}" = "yes" ; then
-  CFLAGS=`echo "$CFLAGS" | sed s/-O[[0-9]]//`             # note the double quoting! 
-  CXXFLAGS=`echo "$CXXFLAGS" | sed s/-O[[0-9]]//`
+  AC_MSG_NOTICE([XXXXXXXX DROPPING OPTIMIZATION FLAGS XXXXXXXX])
+  CFLAGS=`echo "$CFLAGS" | sed s/-O[[0-9]]// | sed s/-fast//`             # note the double quoting! 
+  CXXFLAGS=`echo "$CXXFLAGS" | sed s/-O[[0-9]]// | sed s/-fast//`
 fi
 
 AC_OUTPUT

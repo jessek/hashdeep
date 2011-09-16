@@ -15,18 +15,16 @@ void hash_context_obj::multihash_initialize()
 
 void hash_context_obj::multihash_update(const unsigned char *buf, size_t len)
 {
-  // We have to copy the data being hashed from the buffer we were
-  // passed into another structure because the SHA-1 update 
-  // routine modifies it.
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
-    if (hashes[i].inuse)    {
-	//	memcpy(this->buffer,buf,len);
-	//hashes[i].f_update(this->hash_context[i],this->buffer,len);
-
-	// new LTC implementation means no need to copy
-	hashes[i].f_update(this->hash_context[i],buf,len);
+    /*
+     * We no longer have to copy the data being hashed from the buffer we were
+     * passed into another structure because the SHA-1 update 
+     * routine now copies its own data.
+     */
+    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
+	if (hashes[i].inuse)    {
+	    hashes[i].f_update(this->hash_context[i],buf,len);
+	}
     }
-  }
 }
 
 

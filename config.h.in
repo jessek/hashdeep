@@ -3,6 +3,18 @@
 /* Define to 1 if the `closedir' function returns void instead of `int'. */
 #undef CLOSEDIR_VOID
 
+/* Define to 1 if you have the `CC_MD5_Init' function. */
+#undef HAVE_CC_MD5_INIT
+
+/* Define to 1 if you have the `CC_SHA1_Init' function. */
+#undef HAVE_CC_SHA1_INIT
+
+/* Define to 1 if you have the `CC_SHA256_Init' function. */
+#undef HAVE_CC_SHA256_INIT
+
+/* Define to 1 if you have the <CommonCrypto/CommonDigest.h> header file. */
+#undef HAVE_COMMONCRYPTO_COMMONDIGEST_H
+
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
 #undef HAVE_DIRENT_H

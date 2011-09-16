@@ -19,19 +19,19 @@
 
 int hash_init_sha256(void * ctx)
 {
-  sha256_starts(ctx);
+    sha256_starts((context_sha256_t *)ctx);
   return FALSE;
 }
 
 int hash_update_sha256(void * ctx, const unsigned char *buf, size_t len)
 {
-  sha256_update(ctx,buf,(uint32_t) len);
+  sha256_update((context_sha256_t *)ctx,buf,(uint32_t) len);
   return FALSE;
 }
 
 int hash_final_sha256(void * ctx, unsigned char *digest)
 {
-  sha256_finish(ctx, digest);
+  sha256_finish((context_sha256_t *)ctx, digest);
   return FALSE;
 }
 
@@ -68,6 +68,7 @@ void sha256_starts( context_sha256_t *ctx )
   ctx->state[7] = 0x5BE0CD19;
 }
 
+void sha256_process( context_sha256_t *ctx, const uint8_t data[64] );
 void sha256_process( context_sha256_t *ctx, const uint8_t data[64] )
 {
   uint32_t temp1, temp2, W[64];
@@ -217,7 +218,7 @@ void sha256_update( context_sha256_t *ctx, const uint8_t *input, uint32_t length
   if( left && length >= fill )
     {
       memcpy( (void *) (ctx->buffer + left),
-	      (void *) input, fill );
+	      (const void *) input, fill );
       sha256_process( ctx, ctx->buffer );
       length -= fill;
       input  += fill;
@@ -234,7 +235,7 @@ void sha256_update( context_sha256_t *ctx, const uint8_t *input, uint32_t length
   if( length )
     {
       memcpy( (void *) (ctx->buffer + left),
-	      (void *) input, length );
+	      (const void *) input, length );
     }
 }
 

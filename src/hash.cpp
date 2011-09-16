@@ -221,6 +221,7 @@ void file_data_hasher_t::hash()
 
 	switch(ocb->opt_iomode){
 	case iomode::buffered:
+	    assert(fdht->handle==0);
 	    fdht->handle = _tfopen(file_name_to_hash.c_str(),_TEXT("rb"));
 	    if(fdht->handle==0){
 		ocb->error_filename(fdht->file_name_to_hash,"%s", strerror(errno));
@@ -231,6 +232,7 @@ void file_data_hasher_t::hash()
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
+	    assert(fdht->fd==-1);
 	    fdht->fd    = _topen(file_name_to_hash.c_str(),O_BINARY|O_RDONLY,0);
 	    if(fdht->fd<0){
 		ocb->error_filename(fdht->file_name_to_hash,"%s", strerror(errno));

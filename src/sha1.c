@@ -63,26 +63,29 @@ A million repetitions of "a"
 
 int hash_init_sha1(void *ctx)
 {
-  SHA1Init(ctx);
+    SHA1Init((SHA1_CTX *)ctx);
   return FALSE;
 }
 
 int hash_update_sha1(void * ctx, const unsigned char *buf, size_t len)
 {
-  SHA1Update(ctx, buf, len);
+  SHA1Update((SHA1_CTX *)ctx, buf, len);
   return FALSE;
 }
 
 int hash_final_sha1(void * ctx, unsigned char *digest)
 {
-  SHA1Final(digest,ctx);
+  SHA1Final(digest,(SHA1_CTX *)ctx);
   return FALSE;
 }
 
 
 
-/* Hash a single 512-bit block. This is the core of the algorithm. */
+/* Hash a single 512-bit block. This is the core of the algorithm.
+ * This version damages the input.
+ */
 
+#define SHA1HANDSOFF			/* do not modify the contents */
 void SHA1Transform(uint32_t state[5], const unsigned char buffer[64])
 {
   uint32_t a, b, c, d, e;
@@ -91,13 +94,15 @@ void SHA1Transform(uint32_t state[5], const unsigned char buffer[64])
     uint32_t l[16];
   } CHAR64LONG16;
   CHAR64LONG16* block;
+
 #ifdef SHA1HANDSOFF
   static unsigned char workspace[64];
   block = (CHAR64LONG16*)workspace;
   memcpy(block, buffer, 64);
 #else
-  block = (CHAR64LONG16*)buffer;
+  block = (CHAR64LONG16*)buffer;	/* this is where the const is lost */
 #endif
+
   /* Copy context->state[] to working vars */
   a = state[0];
   b = state[1];
@@ -156,11 +161,9 @@ void SHA1Init(SHA1_CTX* context)
  * For reasons we do not understand, this function corrupts data.
  * We deal with that by making a local copy.
  */
-void SHA1Update(SHA1_CTX* context, const unsigned char * _data, size_t len)
+void SHA1Update(SHA1_CTX* context, const unsigned char * data, size_t len)
 {
     unsigned int i, j;
-    unsigned char *data = alloca(len);
-    memcpy(data,_data,len);
 
   j = (context->count[0] >> 3) & 63;
 
@@ -195,9 +198,9 @@ void SHA1Final(unsigned char digest[20], SHA1_CTX* context)
     finalcount[i] = (unsigned char)((context->count[(i >= 4 ? 0 : 1)]
 				     >> ((3-(i & 3)) * 8) ) & 255);  /* Endian independent */
   }
-  SHA1Update(context, (unsigned char *)"\200", 1);
+  SHA1Update(context, (const unsigned char *)"\200", 1);
   while ((context->count[0] & 504) != 448) {
-    SHA1Update(context, (unsigned char *)"\0", 1);
+    SHA1Update(context, (const unsigned char *)"\0", 1);
   }
   SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
   for (i = 0; i < 20; i++) {

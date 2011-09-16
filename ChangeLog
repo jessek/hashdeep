@@ -1,3 +1,20 @@
+2011-09-16  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/sha256.c (hash_init_sha256): added casts
+
+	* configure.ac: added -fast and a ton of more warnings
+
+	* configure.ac: now removes -fast flag if not optimizing
+
+	* src/sha256.c (hash_update_sha256): added casts to avoid void *.
+
+	* src/md5.c (hash_final_md5): added casts to avoid void *.
+
+	* src/sha1.h: noted that SHA1Transform now takes a const buffer.
+
+	* src/sha1.c (SHA1Final): added #define SHA1HANDSOFF so that it won't modify the buffer passed in.
+	(hash_final_sha1): added casts to avoid void *.
+
 2011-09-12 Jesse Kornblum
 
 	* tests/tests.sh: Fixed typo

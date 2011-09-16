@@ -20,6 +20,7 @@
 #define __MAIN_H
 
 #include "common.h"
+
 #include "xml.h"
 
 #ifdef HAVE_PTHREAD
@@ -28,6 +29,7 @@
 
 #include <map>
 #include <vector>
+
 
 #define VERBOSE		 1
 #define MORE_VERBOSE	 2
@@ -48,7 +50,7 @@
   * Add your new code to Makefile.am under hashdeep_SOURCES
   * Add a call to insert the algorithm in state::load_hashing_algorithms
   * See if you need to increase MAX_ALGORITHM_NAME_LENGTH or
-    MAX_ALGORITHM_CONTEXT_SIZE for your algorithm.
+    MAX_ALGORITHM_CONTEXT_SIZE for your algorithm in common.h
   * Update the usage function and man page to include the function
   */
 
@@ -75,7 +77,7 @@ typedef enum {
 
 class iomode {
 public:;
-    static const int buffered=0;				// use fopen, fread, fclose
+    static const int buffered=0;			// use fopen, fread, fclose
     static const int unbuffered=1;			// use open, read, close
     static const int mmapped=2;				// use open, mmap, close
     static int toiomode(const std::string &str){
@@ -198,8 +200,6 @@ public:;
     hash_context_obj():read_offset(0),read_len(0){}
 
     /* Information for the hashing underway */
-    static const size_t MAX_ALGORITHM_CONTEXT_SIZE = 256;
-    static const size_t MAX_ALGORITHM_RESIDUE_SIZE = 256;
     uint8_t	hash_context[NUM_ALGORITHMS][MAX_ALGORITHM_CONTEXT_SIZE];	 
 
     /* The actual hashing */
@@ -227,7 +227,7 @@ public:
     file_data_hasher_t(class display *ocb_):
 	ocb(ocb_),			// where we put results
 	handle(0),
-	fd(0),
+	fd(-1),
 	base(0),bounds(0),		// for mmap
 	file_number(0),timestamp(0),stat_bytes(0),
 	start_time(0),last_time(0),eof(false){
@@ -524,7 +524,7 @@ public:
 	opt_display_size(false),
 	opt_display_hash(false),
 	opt_show_matched(false),
-	opt_iomode(iomode::buffered),	// by default, use FILE
+	opt_iomode(iomode::mmapped),	// by default, use memory-mapped
 #ifdef HAVE_PTRHEAD
 	opt_threadcount(threadpool::numCPU()),
 	tp(0),
