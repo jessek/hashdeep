@@ -67,17 +67,23 @@ bool state::have_processed_dir(const tstring &fn_)
  ****************************************************************/
 
 
-// On Win32 systems directories are handled... differently
-// Attempting to process d: causes an error, but d:\ does not.
-// Conversely, if you have a directory "foo",
-// attempting to process d:\foo\ causes an error, but d:\foo does not.
-// The following turns d: into d:\ and d:\foo\ into d:\foo 
+/*
+ * On Win32 systems directories are handled... differently
+ * Attempting to process d: causes an error, but d:\ does not.
+ * Conversely, if you have a directory "foo",
+ * attempting to process d:\foo\ causes an error, but d:\foo does not.
+ * The following turns d: into d:\ and d:\foo\ into d:\foo 
+ * It also leaves d:\ as d:\
+ */
 
 static void clean_name_win32(std::wstring &fn)
 {
     if (fn.size()<2) return;
     if (fn.size()==2 && fn[1]==_TEXT(':')){
 	fn.push_back(_TEXT(DIR_SEPARATOR));
+	return;
+    }
+    if (fn.size()==3 && fn[1]==_TEXT(':')){
 	return;
     }
     if (fn[fn.size()-1] == _TEXT(DIR_SEPARATOR)){
@@ -330,7 +336,6 @@ void state::process_dir(const tstring &fn)
 	ocb.error_filename(fn,"symlink creates cycle");
 	return ;
     }
-
   
     if ((current_dir = _topendir(fn.c_str())) == NULL)   {
 	ocb.error_filename(fn,"%s", strerror(errno));
@@ -348,10 +353,13 @@ void state::process_dir(const tstring &fn)
 	if (is_special_dir(entry->d_name)) continue; // ignore . and ..
     
 	// compute full path
-	//tstring new_file = fn;
-	//new_file.push_back(DIR_SEPARATOR);
-	//new_file.append(entry->d_name);
-	dir_entries.push_back(fn + DIR_SEPARATOR + entry->d_name);
+	// don't append if the DIR_SEPARATOR if there is already one there
+	tstring new_file = fn;
+	if(new_file.size()==0 || new_file[new_file.size()-1]!=DIR_SEPARATOR){
+	    new_file.push_back(DIR_SEPARATOR);
+	}
+	new_file.append(entry->d_name);
+	dir_entries.push_back(new_file);
 
 #ifdef _WIN32
 	if (is_junction_point(new_file)){		       // whatever this is, ignore it
@@ -529,6 +537,11 @@ bool state::should_hash_expert(const tstring &fn, file_types type)
 }
 
 
+/*
+ * should_hash confusingly returns true if a file should be hashed,
+ * but if it is called with a directory it recursively hashes it.
+ */
+
 bool state::should_hash(const tstring &fn)
 {
     file_types  type = state::file_type(fn,&ocb,0,0);
@@ -560,12 +573,13 @@ bool state::should_hash(const tstring &fn)
 void state::dig_normal(const tstring &fn_)
 {
     tstring fn(fn_);			// local copy will be modified
+    if (opt_debug) ocb.status("*** state::dig_normal(%s)",main::make_utf8(fn).c_str());
 #ifdef _WIN32
     clean_name_win32(fn);
 #else
     clean_name_posix(fn);
 #endif
-
+    if (opt_debug) ocb.status("*** cleaned:%s",main::make_utf8(fn).c_str());
     if (should_hash(fn)){
 	ocb.hash_file(fn);
     }
@@ -601,7 +615,8 @@ void state::dig_win32(const std::wstring &fn)
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind;
 
-    if(opt_debug) ocb.status("*** state::dig_win32(%s)\n",main::make_utf8(fn).c_str());
+    if(opt_debug) ocb.status("*** state::dig_win32(%s)",
+			     main::make_utf8(fn).c_str());
 
     if (is_win32_device_file(fn)){
 	ocb.hash_file(fn);
