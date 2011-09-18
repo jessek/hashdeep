@@ -10,7 +10,7 @@ if [ ! -r /etc/redhat-release ]; then
   exit 1
 fi
 
-if grep 'Fedora.release.15' ; then
+if grep 'Fedora.release.15' /etc/redhat-release ; then
   echo Fedora Release 15 detected
 else
   echo This script is only tested for Fedora Release 15
