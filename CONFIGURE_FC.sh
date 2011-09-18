@@ -42,7 +42,6 @@ echo
 echo Now updating yum packages.
 yum -y update
 
-exit 0
 
 
 if [ ! -r pthreads-w32-2-8-0-release.tar.gz ]; then
