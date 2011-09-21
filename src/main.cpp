@@ -955,6 +955,7 @@ int main(int argc, char **argv)
 
     // Initialize the plugable algorithm system and create the state object!
 
+    assert(sizeof(off_t)==8);		// be sure that we were compiled correctly
     algorithm_t::load_hashing_algorithms();		
     state *s = new state();
 
