@@ -56,22 +56,19 @@
 */
 
 
-int hash_init_tiger(void * ctx)
+void hash_init_tiger(void * ctx)
 {
     tiger_init((TIGER_CONTEXT *)ctx);
-  return FALSE;
 }
 
-int hash_update_tiger(void * ctx, const unsigned char *buf, size_t len)
+void hash_update_tiger(void * ctx, const unsigned char *buf, size_t len)
 {
   tiger_update((TIGER_CONTEXT *)ctx,buf,(size_t)len);
-  return FALSE;
 }
 
-int hash_final_tiger(void * ctx, unsigned char *sum)
+void hash_final_tiger(void * ctx, unsigned char *sum)
 {
   tiger_final(sum,(TIGER_CONTEXT *)ctx);
-  return FALSE;
 }
 
 

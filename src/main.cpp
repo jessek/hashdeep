@@ -258,9 +258,9 @@ void algorithm_t::add_algorithm(
 	      hashid_t pos,
 	      const char *name, 
 	      uint16_t bits, 
-	      int ( *func_init)(void *ctx),
-	      int ( *func_update)(void *ctx, const unsigned char *buf, size_t buflen),
-	      int ( *func_finalize)(void *ctx, unsigned char *),
+	      void ( *func_init)(void *ctx),
+	      void ( *func_update)(void *ctx, const unsigned char *buf, size_t buflen),
+	      void ( *func_finalize)(void *ctx, unsigned char *),
 	      int inuse)
 {
     hashes[pos].name		= name;
@@ -279,6 +279,25 @@ int sha1_init(void * md);
     int sha1_done(void * md, unsigned char *out);
     };
 
+
+#ifdef POLARSSL_SHA1_H
+void hash_init_sha1(void * ctx)
+{
+    assert(sizeof(sha1_context) < MAX_ALGORITHM_CONTEXT_SIZE);
+    sha1_starts((sha1_context *)ctx);
+}
+
+void hash_update_sha1(void * ctx, const unsigned char *buf, size_t len)
+{
+    sha1_update((sha1_context *)ctx,buf,len);
+}
+
+void hash_final_sha1(void * ctx, unsigned char *sum)
+{
+    sha1_finish((sha1_context *)ctx,sum);
+}
+#endif
+
 /*
  * Load the hashing algorithms array.
  */
@@ -287,8 +306,11 @@ void algorithm_t::load_hashing_algorithms()
     /* The DEFAULT_ENABLE variables are in main.h */
     add_algorithm(alg_md5,    "md5", 128, hash_init_md5,
 		  hash_update_md5, hash_final_md5, DEFAULT_ENABLE_MD5);
-    add_algorithm(alg_sha1,   "sha1",160, hash_init_sha1, hash_update_sha1,
+
+    /* Legacy SHA1 */
+    add_algorithm(alg_sha1, "sha1",160, hash_init_sha1, hash_update_sha1,
 		  hash_final_sha1, DEFAULT_ENABLE_SHA1);
+
     add_algorithm(alg_sha256, "sha256", 256, hash_init_sha256,
 		  hash_update_sha256, hash_final_sha256, DEFAULT_ENABLE_SHA256);
     add_algorithm(alg_tiger,  "tiger", 192, hash_init_tiger,

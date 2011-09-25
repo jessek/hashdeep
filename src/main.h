@@ -20,7 +20,6 @@
 #define __MAIN_H
 
 #include "common.h"
-
 #include "xml.h"
 
 #ifdef HAVE_PTHREAD
@@ -30,6 +29,9 @@
 #include <map>
 #include <vector>
 
+#if !defined(VERSION) && defined(PACKAGE_VERSION)
+#define VERSION PACKAGE_VERSION
+#endif
 
 #define VERBOSE		 1
 #define MORE_VERBOSE	 2
@@ -109,15 +111,15 @@ public:
     hashid_t		id;		// usually the position in the array...
 
     /* The hashing functions */
-    int ( *f_init)(void *ctx);
-    int ( *f_update)(void *ctx, const unsigned char *buf, size_t len );
-    int ( *f_finalize)(void *ctx, unsigned char *);
+    void ( *f_init)(void *ctx);
+    void ( *f_update)(void *ctx, const unsigned char *buf, size_t len );
+    void ( *f_finalize)(void *ctx, unsigned char *);
 
     /* The methods */
     static void add_algorithm(hashid_t pos, const char *name, uint16_t bits, 
-			      int ( *func_init)(void *ctx),
-			      int ( *func_update)(void *ctx, const unsigned char *buf, size_t len ),
-			      int ( *func_finalize)(void *ctx, unsigned char *),
+			      void ( *func_init)(void *ctx),
+			      void ( *func_update)(void *ctx, const unsigned char *buf, size_t len ),
+			      void ( *func_finalize)(void *ctx, unsigned char *),
 			      int inuse);
     static void load_hashing_algorithms();
     static void clear_algorithms_inuse();

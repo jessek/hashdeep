@@ -17,22 +17,19 @@
 #include "sha256.h"
 
 
-int hash_init_sha256(void * ctx)
+void hash_init_sha256(void * ctx)
 {
     sha256_starts((context_sha256_t *)ctx);
-  return FALSE;
 }
 
-int hash_update_sha256(void * ctx, const unsigned char *buf, size_t len)
+void hash_update_sha256(void * ctx, const unsigned char *buf, size_t len)
 {
   sha256_update((context_sha256_t *)ctx,buf,(uint32_t) len);
-  return FALSE;
 }
 
-int hash_final_sha256(void * ctx, unsigned char *digest)
+void hash_final_sha256(void * ctx, unsigned char *digest)
 {
   sha256_finish((context_sha256_t *)ctx, digest);
-  return FALSE;
 }
 
 

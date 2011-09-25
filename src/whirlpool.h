@@ -150,9 +150,9 @@ void NESSIEfinalize(struct NESSIEstruct * const structpointer,
 
 #define context_whirlpool_t NESSIEstruct
 
-int hash_init_whirlpool(void * ctx);
-int hash_update_whirlpool(void * ctx, const unsigned char *buf, size_t len);
-int hash_final_whirlpool(void * ctx, unsigned char *digest);
+void hash_init_whirlpool(void * ctx);
+void hash_update_whirlpool(void * ctx, const unsigned char *buf, size_t len);
+void hash_final_whirlpool(void * ctx, unsigned char *digest);
 
 #endif   /* PORTABLE_C__ */
 

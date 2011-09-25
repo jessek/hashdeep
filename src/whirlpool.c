@@ -62,22 +62,19 @@
 #include "whirlpool.h"
 
 
-int hash_init_whirlpool(void * ctx)
+void hash_init_whirlpool(void * ctx)
 {
     NESSIEinit((struct NESSIEstruct *)ctx);
-  return FALSE;
 }
 
-int hash_update_whirlpool(void * ctx, const unsigned char *buf, size_t len)
+void hash_update_whirlpool(void * ctx, const unsigned char *buf, size_t len)
 {
   NESSIEadd(buf,len * 8,(struct NESSIEstruct *)ctx);
-  return FALSE;
 }
 
-int hash_final_whirlpool(void * ctx, unsigned char *digest)
+void hash_final_whirlpool(void * ctx, unsigned char *digest)
 {
   NESSIEfinalize((struct NESSIEstruct *)ctx,digest);
-  return FALSE;
 }
 
 

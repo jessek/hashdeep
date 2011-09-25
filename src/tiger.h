@@ -36,9 +36,9 @@ extern void tiger_init(TIGER_CONTEXT *hd);
 extern void tiger_update(TIGER_CONTEXT *hd, const unsigned char *inbuf, size_t inlen);
 extern void tiger_final(unsigned char hash[24], TIGER_CONTEXT *hd);
 
-int hash_init_tiger(void * ctx);
-int hash_update_tiger(void * ctx, const unsigned char  *buf, size_t len);
-int hash_final_tiger(void * ctx, unsigned char *sum);
+void hash_init_tiger(void * ctx);
+void hash_update_tiger(void * ctx, const unsigned char  *buf, size_t len);
+void hash_final_tiger(void * ctx, unsigned char *sum);
 
 #define context_tiger_t TIGER_CONTEXT
 

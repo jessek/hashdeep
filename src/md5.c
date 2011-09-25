@@ -31,23 +31,20 @@
 /* Use the Apple Common Crypto */
 
 #define HAVE_INIT_MD5
-int hash_init_md5(void * ctx)
+void hash_init_md5(void * ctx)
 {
     assert(sizeof(struct CC_MD5state_st)<MAX_ALGORITHM_CONTEXT_SIZE);
     CC_MD5_Init((CC_MD5_CTX *)ctx);
-    return FALSE;
 }
 
-int hash_update_md5(void *ctx, const unsigned char *buf, size_t len)
+void hash_update_md5(void *ctx, const unsigned char *buf, size_t len)
 {
     CC_MD5_Update((CC_MD5_CTX *)ctx,buf,len);
-    return FALSE;
 }
 
-int hash_final_md5(void *ctx, unsigned char *digest)
+void hash_final_md5(void *ctx, unsigned char *digest)
 {
     CC_MD5_Final(digest,(CC_MD5_CTX *)ctx);
-    return FALSE;
 }
 #endif
 
@@ -373,22 +370,19 @@ void MD5Transform(uint32_t buf[4], uint32_t const in[16])
 #endif
 
 
-int hash_init_md5(void * ctx)
+void hash_init_md5(void * ctx)
 {
     MD5Init((context_md5_t *)ctx);
-    return FALSE;
 }
 
-int hash_update_md5(void *ctx, const unsigned char *buf, size_t len)
+void hash_update_md5(void *ctx, const unsigned char *buf, size_t len)
 {
   MD5Update((context_md5_t *)ctx,buf,len);
-  return FALSE;
 }
 
-int hash_final_md5(void *ctx, unsigned char *digest)
+void hash_final_md5(void *ctx, unsigned char *digest)
 {
   MD5Final(digest,(context_md5_t *)ctx);
-  return FALSE;
 }
 #endif
 

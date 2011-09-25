@@ -1,3 +1,15 @@
+2011-09-25  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* src/tiger.c (hash_init_tiger): changed all functions to return void rather than int.
+
+	* src/md5.c (hash_init_md5): all functions now return void rather than int.
+
+	* src/whirlpool.c (hash_init_whirlpool): all functions now return void rather than int.
+
+	* src/sha256.c (hash_final_sha256): all functions now return void rather than int
+
+	* src/main.h (class algorithm_t): hashing functions modified to return void rather than int
+
 2011-09-16  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* src/sha256.c (hash_init_sha256): added casts

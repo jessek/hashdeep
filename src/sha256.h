@@ -32,9 +32,9 @@ void sha256_update( context_sha256_t *ctx, const uint8_t *input, uint32_t length
 
 void sha256_finish( context_sha256_t *ctx, uint8_t digest[32] );
 
-int hash_init_sha256(void * ctx);
-int hash_update_sha256(void * ctx, const unsigned char *buf, size_t len);
-int hash_final_sha256(void * ctx, unsigned char *digest);
+void hash_init_sha256(void * ctx);
+void hash_update_sha256(void * ctx, const unsigned char *buf, size_t len);
+void hash_final_sha256(void * ctx, unsigned char *digest);
 
 __END_DECLS
 
