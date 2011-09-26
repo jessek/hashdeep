@@ -298,26 +298,61 @@ void hash_final_sha1(void * ctx, unsigned char *sum)
 }
 #endif
 
+#if defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+#include <CommonCrypto/CommonDigest.h>
+#endif
+
+#ifdef HAVE_CC_SHA1_INIT
+/* These are to overcome C++ cast issues */
+void cc_md5_init(void * ctx) { CC_MD5_Init((CC_MD5_CTX *)ctx); }
+void cc_md5_update(void *ctx, const unsigned char *buf, size_t len){ CC_MD5_Update((CC_MD5_CTX *)ctx,buf,len); }
+void cc_sha1_init(void * ctx) { CC_SHA1_Init((CC_SHA1_CTX *)ctx); }
+void cc_sha1_update(void *ctx, const unsigned char *buf, size_t len){ CC_SHA1_Update((CC_SHA1_CTX *)ctx,buf,len); }
+void cc_sha256_init(void * ctx) { CC_SHA256_Init((CC_SHA256_CTX *)ctx); }
+void cc_sha256_update(void *ctx, const unsigned char *buf, size_t len){ CC_SHA256_Update((CC_SHA256_CTX *)ctx,buf,len); }
+
+
+
+/* These swap argument orders, which are different for Apple and our implementation */
+void cc_md5_final(void *ctx, unsigned char *digest)
+{
+    CC_MD5_Final(digest,(CC_MD5_CTX *)ctx);
+}
+
+void cc_sha1_final(void *ctx, unsigned char *digest)
+{
+    CC_SHA1_Final(digest,(CC_SHA1_CTX *)ctx);
+}
+
+void cc_sha256_final(void *ctx, unsigned char *digest)
+{
+    CC_SHA256_Final(digest,(CC_SHA256_CTX *)ctx);
+}
+#endif
+
+
+
 /*
  * Load the hashing algorithms array.
  */
 void algorithm_t::load_hashing_algorithms()
 {
     /* The DEFAULT_ENABLE variables are in main.h */
-    add_algorithm(alg_md5,    "md5", 128, hash_init_md5,
-		  hash_update_md5, hash_final_md5, DEFAULT_ENABLE_MD5);
-
-    /* Legacy SHA1 */
-    add_algorithm(alg_sha1, "sha1",160, hash_init_sha1, hash_update_sha1,
-		  hash_final_sha1, DEFAULT_ENABLE_SHA1);
-
-    add_algorithm(alg_sha256, "sha256", 256, hash_init_sha256,
-		  hash_update_sha256, hash_final_sha256, DEFAULT_ENABLE_SHA256);
-    add_algorithm(alg_tiger,  "tiger", 192, hash_init_tiger,
-		  hash_update_tiger, hash_final_tiger, DEFAULT_ENABLE_TIGER);
-    add_algorithm(alg_whirlpool, "whirlpool", 512, hash_init_whirlpool,
-		  hash_update_whirlpool, hash_final_whirlpool,
-		  DEFAULT_ENABLE_WHIRLPOOL);
+#if defined(HAVE_CC_SHA1_INIT) 
+    /* Use the Apple's validated Common Crypto for SHA1 and SHA256 */
+    assert(sizeof(struct CC_MD5state_st)<MAX_ALGORITHM_CONTEXT_SIZE);
+    assert(sizeof(struct CC_SHA1state_st)<MAX_ALGORITHM_CONTEXT_SIZE);
+    assert(sizeof(struct CC_SHA256state_st)<MAX_ALGORITHM_CONTEXT_SIZE);
+    add_algorithm(alg_md5,       "md5",       128, cc_md5_init,         cc_md5_update,         cc_md5_final,         DEFAULT_ENABLE_MD5);
+    add_algorithm(alg_sha1,      "sha1",      160, cc_sha1_init,        cc_sha1_update,        cc_sha1_final,        DEFAULT_ENABLE_SHA1);
+    add_algorithm(alg_sha256,    "sha256",    256, cc_sha256_init,      cc_sha256_update,      cc_sha256_final,      DEFAULT_ENABLE_SHA256);
+#else
+    add_algorithm(alg_md5,       "md5",       128, hash_init_md5,       hash_update_md5,       hash_final_md5,       DEFAULT_ENABLE_MD5);
+    add_algorithm(alg_sha1,      "sha1",      160, hash_init_sha1,      hash_update_sha1,      hash_final_sha1,      DEFAULT_ENABLE_SHA1);
+    add_algorithm(alg_sha256,    "sha256",    256, hash_init_sha256,    hash_update_sha256,    hash_final_sha256,    DEFAULT_ENABLE_SHA256);
+#endif
+    add_algorithm(alg_tiger,     "tiger",     192, hash_init_tiger,     hash_update_tiger,     hash_final_tiger,     DEFAULT_ENABLE_TIGER);
+    add_algorithm(alg_whirlpool, "whirlpool", 512, hash_init_whirlpool, hash_update_whirlpool, hash_final_whirlpool, DEFAULT_ENABLE_WHIRLPOOL);
 }
 
 
@@ -451,8 +486,8 @@ int state::hashdeep_process_command_line(int argc, char **argv)
   while ((i=getopt(argc,argv,"abc:deF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
     switch (i) {
     case 'a': ocb.primary_function = primary_audit;      break;
-    case 'd': ocb.xml_open(stdout); break;
-    case 'f': opt_input_list = optarg;break;
+    case 'd': ocb.xml_open(stdout);	break;
+    case 'f': opt_input_list = optarg;	break;
     case 'o':
       mode_expert=true; 
       setup_expert_mode(optarg);
@@ -763,9 +798,9 @@ int state::md5deep_process_command_line(int argc, char **argv)
 		       argv,
 		       "A:a:bcdeF:f:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) { 
 	switch (i) {
-	case 'D': opt_debug = atoi(optarg);break;
-	case 'd': ocb.xml_open(stdout); break;
-	case 'f': opt_input_list = optarg;break;
+	case 'D': opt_debug = atoi(optarg);	break;
+	case 'd': ocb.xml_open(stdout);		break;
+	case 'f': opt_input_list = optarg;	break;
 	case 'I':
 	    ocb.mode_size_all=true;
 	    // Note that there is no break here
@@ -787,11 +822,11 @@ int state::md5deep_process_command_line(int argc, char **argv)
 
 	    break;
 
-	case 'Z': ocb.mode_triage	= true; break;
-	case 't': ocb.mode_timestamp	= true; break;
-	case 'n': ocb.mode_not_matched	= true; break;
-	case 'w': ocb.opt_show_matched	= true; break; 	// display which known hash generated match
-	case 'j': ocb.opt_threadcount	= atoi(optarg);break;
+	case 'Z': ocb.mode_triage	= true;		break;
+	case 't': ocb.mode_timestamp	= true;		break;
+	case 'n': ocb.mode_not_matched	= true;		break;
+	case 'w': ocb.opt_show_matched	= true;		break; 	// display which known hash generated match
+	case 'j': ocb.opt_threadcount	= atoi(optarg);	break;
 	case 'F': ocb.opt_iomode	= iomode::toiomode(optarg);break;
 
 	case 'a':
@@ -830,7 +865,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
 
 	case 'c': ocb.opt_csv = true;		break;
 	case 'z': ocb.opt_display_size = true;	break;
-	case '0': ocb.opt_zero = true;	break;
+	case '0': ocb.opt_zero = true;		break;
 
 	case 'S':
 	    mode_warn_only=true;
@@ -839,12 +874,12 @@ int state::md5deep_process_command_line(int argc, char **argv)
 
 	case 's': ocb.opt_silent = true;	break;
 	case 'e': ocb.opt_estimate = true;	break;
-	case 'r': mode_recursive = true; break;
+	case 'r': mode_recursive = true;	break;
 	case 'k': ocb.opt_asterisk = true;      break;
-	case 'b': ocb.mode_barename=true; break;
+	case 'b': ocb.mode_barename=true;	break;
       
 	case 'l': ocb.opt_relative = true;      break;
-	case 'q': ocb.mode_quiet = true; break;
+	case 'q': ocb.mode_quiet = true;	break;
 	case 'W': ocb.set_outfilename(optarg);	break;
 	case 'u': ocb.opt_unicode_escape = 1;	break;
 

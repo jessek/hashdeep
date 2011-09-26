@@ -15,44 +15,11 @@
  * will fill a supplied 16-byte array with the digest.
  */
 
-/* $Id$ */
-
 #include "md5.h"
-#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
-#include <CommonCrypto/CommonDigest.h>
-#endif
-
-/* don't use this for now. For reasons that aren't clear,
- * it's 3x slower that our version!
- */
-#undef HAVE_CC_MD5_INIT
-
-#if defined(HAVE_CC_MD5_INIT) 
-/* Use the Apple Common Crypto */
-
-#define HAVE_INIT_MD5
-void hash_init_md5(void * ctx)
-{
-    assert(sizeof(struct CC_MD5state_st)<MAX_ALGORITHM_CONTEXT_SIZE);
-    CC_MD5_Init((CC_MD5_CTX *)ctx);
-}
-
-void hash_update_md5(void *ctx, const unsigned char *buf, size_t len)
-{
-    CC_MD5_Update((CC_MD5_CTX *)ctx,buf,len);
-}
-
-void hash_final_md5(void *ctx, unsigned char *digest)
-{
-    CC_MD5_Final(digest,(CC_MD5_CTX *)ctx);
-}
-#endif
-
 
 /* If we haven't brought in an accelerated MD5, use our own */
-#if !defined(HAVE_INIT_MD5)
 #ifndef WORDS_BIGENDIAN
-# define byteReverse(buf, len)	/* Nothing */
+#define byteReverse(buf, len)	       /* Nothing */
 #else
 void byteReverse(unsigned char *buf, unsigned longs);
 
@@ -384,6 +351,5 @@ void hash_final_md5(void *ctx, unsigned char *digest)
 {
   MD5Final(digest,(context_md5_t *)ctx);
 }
-#endif
 
 
