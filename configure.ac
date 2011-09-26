@@ -21,8 +21,9 @@ AC_CANONICAL_HOST
 # These I don't like:
 # -Wdeclaration-after-statement -Wconversion
 # doesn't work: -Wunreachable-code 
+# causes configure to crash on gcc-4.2.1: -Wsign-compare-Winline 
 # causes warnings with unistd.h:  -Wnested-externs 
-for option in -Wall -MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wshadow -Wwrite-strings -W -Wcast-align -Waggregate-return -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wsign-compare-Winline -Wdisabled-optimization -Wfloat-equal -Wmissing-format-attribute -Wmultichar -Wc++-compat -Wmissing-noreturn -fast
+for option in -Wall -MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wshadow -Wwrite-strings -W -Wcast-align -Waggregate-return -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmissing-format-attribute -Wmultichar -Wc++-compat -Wmissing-noreturn -fast
 do
   SAVE_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $option"
@@ -30,7 +31,7 @@ do
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
       [has_option=yes],
       [has_option=no; CFLAGS="$SAVE_CFLAGS"])
-  AC_MSG_RESULT($has_option)
+  AC_MSG_RESULT([has_option=$has_option; CFLAGS=$CFLAGS])
   unset has_option
   unset SAVE_CFLAGS
 done
