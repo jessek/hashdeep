@@ -2,8 +2,8 @@
  *** THREADING SUPPORT
  ****************************************************************/
 
-#ifndef THREADING_H
-#define THREADING_H
+#ifndef THREADPOOL_H
+#define THREADPOOL_H
 
 #include <pthread.h>
 #include <algorithm>
