@@ -1,4 +1,4 @@
-SUBDIRS = src man tests tests/testfiles
+SUBDIRS = src tests man tests/testfiles
 
 # These prefixes are for compiling on FC15
 CROSS32_PREFIX = i686-w64-mingw32

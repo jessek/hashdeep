@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # TEST_DIR is where the executable is that we are testing:
 # GOOD_DIR is the directory containing the executable that is known to be good
 # You can set this environment variable in your startup scripts.
@@ -33,7 +33,7 @@ mkdir /tmp/test
 (cd $TESTFILES_DIR >/dev/null; tar cf - .) | (cd /tmp/test;tar xpBf - )
 
 echo Removing any '.svn' files that might have gotten into /tmp/test by accident
-find -d /tmp/test -name '.svn' -exec rm -rf {} \;
+find /tmp/test -depth -name '.svn' -exec rm -rf {} \;
 
 echo Erasing the hashlist database files in the current directory
 /bin/rm -f hashlist-*.txt
