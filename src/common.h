@@ -21,7 +21,6 @@
 #define MAX_ALGORITHM_RESIDUE_SIZE 256
 #define MAX_ALGORITHM_CONTEXT_SIZE 256
 
-
 #ifdef _WIN32
 /* For some reason this doesn't work properly with mingw */
 #undef HAVE_EXTERN_PROGNAME
@@ -60,18 +59,6 @@
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif
-
-/* this creates problems on some kinds of mingw */
-//#ifdef TIME_WITH_SYS_TIME
-//# include <sys/time.h>
-//# include <time.h>
-//#else
-//# ifdef HAVE_SYS_TIME_H
-//#  include <sys/time.h>
-//# else
-//#  include <time.h>
-//# endif
-//#endif
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -153,10 +140,10 @@
 #ifdef HAVE_MMAP_H
 #include <mmap.h>
 #endif
+
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-
 
 #if defined(__cplusplus)
 #include <string>
@@ -188,7 +175,6 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 {
     return a==b;
 }
-
 #endif
 
 

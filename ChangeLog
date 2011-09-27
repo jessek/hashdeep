@@ -1,3 +1,7 @@
+2011-09-27  Simson Garfinkel  <simsong@FC15>
+
+	* src/sha1.c (sha1_finish): added const to avoid casting warnings.
+
 2011-09-25  Simson Garfinkel  <simsong@alphonse-mucha.home>
 
 	* src/tiger.c (hash_init_tiger): changed all functions to return void rather than int.

@@ -113,6 +113,7 @@ void ERR(int val,const char *msg)
 threadpool::threadpool(int numworkers_)
 {
 #ifdef WIN32
+    /* Run non-portable pthread win32 startup */
     pthread_win32_process_attach_np();
     pthread_win32_thread_attach_np();
 #endif
