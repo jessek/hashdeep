@@ -1,5 +1,9 @@
 2011-09-27  Simson Garfinkel  <simsong@FC15>
 
+	* src/display.cpp (dfxml_write): now writes workerid as an attribute in the fileobject output.
+
+	* src/main.h (file_data_t): added worker_id to fdht
+
 	* src/sha1.c (sha1_finish): added const to avoid casting warnings.
 
 2011-09-25  Simson Garfinkel  <simsong@alphonse-mucha.home>
