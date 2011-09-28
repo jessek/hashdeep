@@ -805,8 +805,12 @@ void display::dfxml_startup(int argc,char **argv)
 void display::dfxml_write(file_data_hasher_t *fdht)
 {
     if(dfxml){
+	std::string attrs;
+	if(fdht->workerid>=0){
+	    attrs = "workerid='"+itos(fdht->workerid)+"'";
+	}
 	lock();
-	dfxml->push("fileobject");
+	dfxml->push("fileobject",attrs);
 	dfxml->xmlout("filename",fdht->file_name);
 	dfxml->writexml(fdht->dfxml_hash.str());
 	dfxml->pop();

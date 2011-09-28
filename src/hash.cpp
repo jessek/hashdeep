@@ -405,6 +405,7 @@ void file_data_hasher_t::hash()
  */
 void worker::do_work(file_data_hasher_t *fdht)
 {
+    fdht->set_workerid(workerid);
     fdht->hash();
     delete fdht;
 }

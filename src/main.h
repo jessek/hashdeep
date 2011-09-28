@@ -232,7 +232,7 @@ public:
 	fd(-1),
 	base(0),bounds(0),		// for mmap
 	file_number(0),timestamp(0),stat_bytes(0),
-	start_time(0),last_time(0),eof(false){
+	start_time(0),last_time(0),eof(false),workerid(-1){
 	file_number = ++next_file_number;
     };
     virtual ~file_data_hasher_t(){
@@ -281,6 +281,8 @@ public:
      */
     time_t	start_time, last_time;
     bool	eof;			// end of file encountered while reading
+    int		workerid;		// my worker id, or -1 if there is none
+    void	set_workerid(int id){workerid=id;}
 
     /* multithreaded hash implementation is these functions in hash.cpp.
      * hash() is called to hash each file and record the results.
