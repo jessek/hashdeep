@@ -1,3 +1,10 @@
+2011-09-29 Jesse Kornblum
+
+	* match.c: Fixed wacky typo in memset
+	* files.c: Fixed bug to add support for hashes with no
+	filename information, bug 3392154.
+
+
 2011-07-04 Jesse Kornblum
 
 	* Fixed minor bugs regarding wide characters in 

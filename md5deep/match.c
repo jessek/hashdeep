@@ -181,7 +181,7 @@ int load_match_file(state *s, char *fn)
   while (fgets(buf,MAX_STRING_LENGTH,f)) 
   {
     ++line_number;
-    memset(known_fn,sizeof(char),PATH_MAX);
+    memset(known_fn,0,PATH_MAX);
 
     if (find_hash_in_line(s,buf,file_type,known_fn) != TRUE) 
     {

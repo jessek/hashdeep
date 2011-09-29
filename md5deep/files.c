@@ -80,6 +80,7 @@ int valid_hash(state *s, char *buf)
   for (pos = 0 ; pos < HASH_STRING_LENGTH ; pos++) 
     if (!isxdigit(buf[pos]))
       return FALSE;
+
   return TRUE;
 }
 
@@ -91,25 +92,38 @@ int find_plain_hash(state *s, char *buf, char *known_fn)
   if (buf == NULL)
     return FALSE;
 
-  if ((strlen(buf) < HASH_STRING_LENGTH) || 
-      (buf[HASH_STRING_LENGTH] != ' '))
+  if (strlen(buf) < HASH_STRING_LENGTH)
     return FALSE;
-
-  if (known_fn != NULL)
+  
+  // Is there any file information here?
+  if (strlen(buf) == HASH_STRING_LENGTH)
   {
-    strncpy(known_fn,buf,PATH_MAX);
+    // No. Copy default filename
+    snprintf(known_fn,PATH_MAX,"(unknown)");
+  }
+  else
+  {
+    // Yes, there is something which should be a filename. Validate it
+    // and copy it if necessary
+    if (buf[HASH_STRING_LENGTH] != ' ')
+      return FALSE;
 
-    // Starting at the end of the hash, find the start of the filename
-    while(p < strlen(known_fn) && isspace(known_fn[p]))
-      ++p;
-    shift_string(known_fn,0,p);
-    chop_line(known_fn);
+    if (known_fn != NULL)
+    {
+      strncpy(known_fn,buf,PATH_MAX);
+
+      // Starting at the end of the hash, find the start of the filename
+      while(p < strlen(known_fn) && isspace(known_fn[p]))
+	++p;
+      shift_string(known_fn,0,p);
+      chop_line(known_fn);
+    }
+
+    buf[HASH_STRING_LENGTH] = 0;
   }
 
-  buf[HASH_STRING_LENGTH] = 0;
-
-  /* We have to include a validity check here so that we don't
-     mistake SHA-1 hashes for MD5 hashes, among other things */
+  // We have to include a validity check here so that we don't
+  // mistake SHA-1 hashes for MD5 hashes, among other things 
   return (valid_hash(s,buf));
 }  
 
@@ -190,6 +204,12 @@ int find_bsd_hash(state *s, char *buf, char *fn)
   shift_string(temp,0,second_paren+4);
 
   int status = valid_hash(s,temp);
+
+  // Okay, this is a valid hash. Go ahead and modify the original buffer
+  strncpy(buf,temp,strlen(temp));
+
+  chop_line(buf);
+
   free(temp);
 
   return status;
@@ -302,7 +322,6 @@ int hash_file_type(state *s, FILE *f)
   
   if (strlen(buf) > HASH_STRING_LENGTH)
   {
-
     chop_line(buf);
 
     if (s->h_hashkeeper)
@@ -382,6 +401,8 @@ int hash_file_type(state *s, FILE *f)
    is valid before returning! */
 int find_hash_in_line(state *s, char *buf, int fileType, char *fn) 
 {
+  chop_line(buf);
+
   switch(fileType) {
 
   case TYPE_PLAIN:
