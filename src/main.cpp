@@ -483,9 +483,10 @@ int state::hashdeep_process_command_line(int argc, char **argv)
     bool did_usage = false;
   int i;
   
-  while ((i=getopt(argc,argv,"abc:deF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
+  while ((i=getopt(argc,argv,"abcC:deF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
     switch (i) {
     case 'a': ocb.primary_function = primary_audit;      break;
+    case 'C': opt_enable_mac_cc = true; break;
     case 'd': ocb.xml_open(stdout);	break;
     case 'f': opt_input_list = optarg;	break;
     case 'o':

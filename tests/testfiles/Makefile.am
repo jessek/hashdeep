@@ -6,7 +6,7 @@
 # Note that dot_file_⦿.txt has a Unicode character in its name.
 #
 
-FILES := 1072-at.txt \
+FILES = 1072-at.txt \
 	1072-plus.txt\
 	copying.txt \
 	deadbeef.txt \
