@@ -55,7 +55,6 @@ echo Now updating yum packages.
 yum -y update
 
 echo Getting pthreads
-
 if [ ! -r pthreads-w32-2-8-0-release.tar.gz ]; then
   wget ftp://sourceware.org/pub/pthreads-win32/pthreads-w32-2-8-0-release.tar.gz
 fi
