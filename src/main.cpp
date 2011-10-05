@@ -302,31 +302,90 @@ void hash_final_sha1(void * ctx, unsigned char *sum)
 #include <CommonCrypto/CommonDigest.h>
 #endif
 
+bool opt_enable_mac_cc=false;	// enable mac common crypto
+
 #ifdef HAVE_CC_SHA1_INIT
 /* These are to overcome C++ cast issues */
-void cc_md5_init(void * ctx) { CC_MD5_Init((CC_MD5_CTX *)ctx); }
-void cc_md5_update(void *ctx, const unsigned char *buf, size_t len){ CC_MD5_Update((CC_MD5_CTX *)ctx,buf,len); }
-void cc_sha1_init(void * ctx) { CC_SHA1_Init((CC_SHA1_CTX *)ctx); }
-void cc_sha1_update(void *ctx, const unsigned char *buf, size_t len){ CC_SHA1_Update((CC_SHA1_CTX *)ctx,buf,len); }
-void cc_sha256_init(void * ctx) { CC_SHA256_Init((CC_SHA256_CTX *)ctx); }
-void cc_sha256_update(void *ctx, const unsigned char *buf, size_t len){ CC_SHA256_Update((CC_SHA256_CTX *)ctx,buf,len); }
+void cc_md5_init(void * ctx)
+{
+    if(opt_enable_mac_cc){
+	CC_MD5_Init((CC_MD5_CTX *)ctx);
+    } else {
+	hash_init_md5(ctx);
+    }
+}
 
+void cc_sha1_init(void * ctx)
+{
+    if(opt_enable_mac_cc){
+	CC_SHA1_Init((CC_SHA1_CTX *)ctx);
+    } else {
+	hash_init_sha1(ctx);
+    }
+}
+    
+void cc_sha256_init(void * ctx)
+{
+    if(opt_enable_mac_cc){
+	CC_SHA256_Init((CC_SHA256_CTX *)ctx);
+    } else {
+	hash_init_sha256(ctx);
+    }
+}
 
+void cc_md5_update(void *ctx, const unsigned char *buf, size_t len)
+{
+    if(opt_enable_mac_cc){
+	CC_MD5_Update((CC_MD5_CTX *)ctx,buf,len);
+    } else {
+	hash_update_md5(ctx,buf,len);
+    }
+}
+
+void cc_sha1_update(void *ctx, const unsigned char *buf, size_t len)
+{
+    if(opt_enable_mac_cc){
+	CC_SHA1_Update((CC_SHA1_CTX *)ctx,buf,len);
+    } else {
+	hash_update_sha1(ctx,buf,len);
+    }
+}
+    
+void cc_sha256_update(void *ctx, const unsigned char *buf, size_t len)
+{
+    if(opt_enable_mac_cc){
+	CC_SHA256_Update((CC_SHA256_CTX *)ctx,buf,len);
+    } else {
+	hash_update_sha256(ctx,buf,len);
+    }
+}
 
 /* These swap argument orders, which are different for Apple and our implementation */
 void cc_md5_final(void *ctx, unsigned char *digest)
 {
-    CC_MD5_Final(digest,(CC_MD5_CTX *)ctx);
+    if(opt_enable_mac_cc){
+	CC_MD5_Final(digest,(CC_MD5_CTX *)ctx);
+    } else {
+	hash_final_md5(ctx,digest);
+    }
 }
 
 void cc_sha1_final(void *ctx, unsigned char *digest)
 {
-    CC_SHA1_Final(digest,(CC_SHA1_CTX *)ctx);
+    if(opt_enable_mac_cc){
+	CC_SHA1_Final(digest,(CC_SHA1_CTX *)ctx);
+    } else {
+	hash_final_sha1(ctx,digest);
+    }
 }
 
 void cc_sha256_final(void *ctx, unsigned char *digest)
 {
-    CC_SHA256_Final(digest,(CC_SHA256_CTX *)ctx);
+    if(opt_enable_mac_cc){
+	CC_SHA256_Final(digest,(CC_SHA256_CTX *)ctx);
+    } else {
+	hash_final_sha256(ctx,digest);
+    }
 }
 #endif
 
@@ -797,8 +856,9 @@ int state::md5deep_process_command_line(int argc, char **argv)
 
     while ((i = getopt(argc,
 		       argv,
-		       "A:a:bcdeF:f:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) { 
+		       "A:a:bcCdeF:f:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) { 
 	switch (i) {
+	case 'C': opt_enable_mac_cc = true; break;
 	case 'D': opt_debug = atoi(optarg);	break;
 	case 'd': ocb.xml_open(stdout);		break;
 	case 'f': opt_input_list = optarg;	break;

@@ -771,8 +771,7 @@ public:;
 	    h_plain(0),h_bsd(0),
 	    h_md5deep_size(0),
 	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),h_nsrl20(0), h_encase(0),
-	    usage_count(0),		// allows -hh to print extra help
-	    opt_enable_mac_cc(false)	// enable mac common crypto
+	    usage_count(0)		// allows -hh to print extra help
 	    {};
 
     bool	mode_recursive;
