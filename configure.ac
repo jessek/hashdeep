@@ -3,7 +3,7 @@
 #
 
 AC_PREREQ(2.57)
-AC_INIT([MD5DEEP],[4.0.0_alpha_008],[research@jessekornblum.com])
+AC_INIT([MD5DEEP],[4.0.0_alpha_009],[research@jessekornblum.com])
 AC_CONFIG_FILES([Makefile src/Makefile man/Makefile tests/Makefile tests/testfiles/Makefile ])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -166,17 +166,18 @@ if test  x"$mingw" = x"yes";  then
   CFLAGS="$CFLAGS -mthreads "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
   CXXFLAGS="$CXXFLAGS -mthreads "
+  AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
+else
+  m4_include([m4/ax_pthread.m4])
+  AX_PTHREAD([
+    echo Using settings from AX_PTHREAD Macor
+    LIBS="$PTHREAD_LIBS $LIBS"
+    CFLAGS="  $PTHREAD_CFLAGS $CFLAGS"
+    CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
+    CPPFLAGS="$PTHREAD_CFLAGS $CPPFLAGS "
+    CC="$PTHREAD_CC"
+  ])
 fi
-
-m4_include([m4/ax_pthread.m4])
-AX_PTHREAD([
-  echo Using settings from AX_PTHREAD Macor
-  LIBS="$PTHREAD_LIBS $LIBS"
-  CFLAGS="  $PTHREAD_CFLAGS $CFLAGS"
-  CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
-  CPPFLAGS="$PTHREAD_CFLAGS $CPPFLAGS "
-  CC="$PTHREAD_CC"
-])
 
 AC_CHECK_HEADERS([pthread.h])
 AC_CHECK_LIB([pthreadGC2],[pthread_create])
