@@ -1,4 +1,33 @@
 #!/bin/sh
+cat <<EOF
+****************************************************************
+Configuring FC15 for cross-compiling multi-threaded 32-bit and
+		 64-bit Windows programs with mingw.
+****************************************************************
+
+This script will configure a fresh Fedora Core14 system to compile
+with mingw32 and 64.  It requires:
+
+1. FC15 installed and running. Typically you will do this by
+   downloading the ISO and running it in a new virtual machine or new
+   hardware. Follow the directions and install.
+
+2. This script. Put it in your home directory.
+
+3. Root access. This script must be run as root.
+
+Also recommended:
+
+4. Disable the screen saver (not needed on a VM).
+
+EOF
+read
+
+if [ $USER != "root" ]; then
+  echo This script must be run as root
+  exit 1
+fi
+
 if [ ! -r /etc/redhat-release ]; then
   echo This requires Fedora Linux
   echo Please download Fedora-15-x86_64-Live-Desktop.iso.

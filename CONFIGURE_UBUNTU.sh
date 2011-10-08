@@ -1,38 +1,5 @@
 #!/bin/sh
 #
-cat <<EOF
-****************************************************************
-Configuring UBUNUT for cross-compiling multi-threaded 32-bit and
-		 64-bit Windows programs with mingw.
-****************************************************************
-
-This script will configure a fresh Ubuntu 11.04 system to compile
-with mingw32 and 64.  It requires:
-
-1. Ubuntu 64-bit 11.04 installed and running. Typically you will do
-   this by downloading the ubuntu-11.04-desktop-amd64.iso and running
-   it in a new virtual machine or new hardware. Boot the DVD and then
-   click 'install Ubuntu.' 
-       >> For best results, click 'download updates while installing'
-
-2. This script. Put it in your home directory.
-
-3. Root access. This script must be run as root.
-
-Also recommended:
-
-Press return to proceed....
-
-4. Disable the screen saver (not needed on a VM).
-
-EOF
-read
-
-if [ $USER != "root" ]; then
-  echo This script must be run as root
-  exit 1
-fi
-
 ##
 ## Here's what's available to install:
 ##  user@ubuntu:~$ apt-cache search mingw
