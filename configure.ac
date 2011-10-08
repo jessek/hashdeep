@@ -168,27 +168,18 @@ if test  x"$mingw" = x"yes";  then
   CXXFLAGS="$CXXFLAGS -mthreads "
 fi
 
-AC_CHECK_HEADERS([pthread.h])
-m4_include([ax_pthread.m4])
-AX_PTHREAD()
-
-AC_CHECK_LIB([pthreadGC2],[pthread_create])
-
-if test x"$pthread_done" != x"yes" ; then
-  # And finally, run the m4 script
-  echo Using PTHREAD output
+m4_include([m4/ax_pthread.m4])
+AX_PTHREAD([
+  echo Using settings from AX_PTHREAD Macor
   LIBS="$PTHREAD_LIBS $LIBS"
-  CFLAGS="$PTHREAD_CFLAGS $CFLAGS"
+  CFLAGS="  $PTHREAD_CFLAGS $CFLAGS"
   CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
+  CPPFLAGS="$PTHREAD_CFLAGS $CPPFLAGS "
   CC="$PTHREAD_CC"
-fi
+])
 
-AC_DEFINE([INCLUDE_NP],1,[Include non-portable functions for statically linking pthreads in mingw])
-
-LIBS="$LIBS $PTHREAD_LIBS"
-CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
-CC="$PTHREAD_CC"
+AC_CHECK_HEADERS([pthread.h])
+AC_CHECK_LIB([pthreadGC2],[pthread_create])
 
 # On mingw, be sure to use the static version and be sure we are using mthread option
 # (which should be a no-op on later version of G++ anyway)

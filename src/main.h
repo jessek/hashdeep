@@ -813,7 +813,6 @@ public:;
     int		usage_count;
     bool	opt_enable_mac_cc;
     tstring	generate_filename(const tstring &input);
-    void	usage_debug();
     void	usage();
     std::string	make_banner();
     void	md5deep_usage();

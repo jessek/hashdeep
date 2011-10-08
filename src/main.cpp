@@ -126,19 +126,12 @@ tstring state::generate_filename(const tstring &input)
 }
 
 
-void state::usage_debug()
-{
-  if(opt_debug){
-    ocb.status("sizeof(off_t)= %d",sizeof(off_t));
-  }
-
-}
 
 // So that the usage message fits in a standard DOS window, this
 // function should produce no more than 22 lines of text.
 void state::usage()
 {
-    if(usage_count==0){
+    if(usage_count==1){
 	ocb.status("%s version %s by %s.",progname.c_str(),VERSION,AUTHOR);
 	ocb.status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-jnn] [-V|-h] [-o <mode>] [FILES]",
 		     CMD_PROMPT,progname.c_str());
@@ -174,11 +167,21 @@ void state::usage()
 #endif	
 
     }
-    if(usage_count==1){
+    if(usage_count==2){
 	ocb.status("-u  - escape Unicode");
-	usage_debug();
     }
-    usage_count++;
+    if(usage_count==3){
+	ocb.status("sizeof(off_t)= %d",sizeof(off_t));
+#ifdef HAVE_PTHREAD
+	ocb.status("HAVE_PTHREAD");
+#endif
+#ifdef HAVE_PTHREAD_H
+	ocb.status("HAVE_PTHREAD_H");
+#endif
+#ifdef HAVE_PTHREAD_WIN32_PROCESS_ATTACH_NP
+	ocb.status("HAVE_PTHREAD_WIN32_PROCESS_ATTACH_NP");
+#endif
+    }
 }
 
 
@@ -186,7 +189,7 @@ void state::usage()
 // function should produce no more than 22 lines of text. 
 void state::md5deep_usage(void) 
 {
-    if(usage_count==0){
+    if(usage_count==1){
 	ocb.status("%s version %s by %s.",progname.c_str(),VERSION,AUTHOR);
 	ocb.status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,progname.c_str());
 	ocb.status("See the man page or README.txt file for the full list of options");
@@ -214,7 +217,7 @@ void state::md5deep_usage(void)
 #endif	
 	ocb.status("-Z - traige mode;   -h - help;   -hh - full help");
     }
-    if(usage_count==1){
+    if(usage_count==2){
 	ocb.status("-k  - print asterisk before filename");
 	ocb.status("-0 - use a NULL for newline.");
 	ocb.status("-ffilename - take list of files to hash from filename");
@@ -222,9 +225,19 @@ void state::md5deep_usage(void)
 	ocb.status("            b=block dev; c=character dev; p=named pipe");
 	ocb.status("            f=regular file; l=symlink; s=socket; d=door");
 	ocb.status("-Dnn - set debug level to nn");
-	usage_debug();
     }
-    usage_count++;
+    if(usage_count==3){
+	ocb.status("sizeof(off_t)= %d",sizeof(off_t));
+#ifdef HAVE_PTHREAD
+	ocb.status("HAVE_PTHREAD");
+#endif
+#ifdef HAVE_PTHREAD_H
+	ocb.status("HAVE_PTHREAD_H");
+#endif
+#ifdef HAVE_PTHREAD_WIN32_PROCESS_ATTACH_NP
+	ocb.status("HAVE_PTHREAD_WIN32_PROCESS_ATTACH_NP");
+#endif
+    }
 }
 
 
@@ -645,6 +658,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
     case 'F': ocb.opt_iomode = iomode::toiomode(optarg);break;
 
     case 'h':
+	usage_count++;
 	usage();
 	did_usage = true;
 	break;
@@ -945,6 +959,7 @@ int state::md5deep_process_command_line(int argc, char **argv)
 	case 'u': ocb.opt_unicode_escape = 1;	break;
 
 	case 'h':
+	usage_count++;
 	    md5deep_usage();
 	    did_usage = true;
 	    break;
