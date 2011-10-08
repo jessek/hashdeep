@@ -84,6 +84,12 @@ windist:
 	@echo ""
 	@unzip -l $(distdir).zip
 
+wintest:
+	@echo Will create md5deep-wintest.zip, a zip file that
+	@echo provides for full testing on Microsoft Windows with Cygwin installed.
+	make windist
+	zip md5deep-wintest.zip -9 $(distdir).zip tests/* tests/*.zip tests/*.sh tests/testfiles/ tests/testfiles/*txt tests/testfiles/*/*txt tests/testfiles/*/*/*txt
+
 world:
 	@echo meta-build system. 
 	@echo Making both Linux and Windows distributions
@@ -94,7 +100,6 @@ world:
 
 CLEANFILES = man/md5deep.txt man/hashdeep.txt
 SUFFIXES = .txt .1
-
 .1.txt:
 	/usr/bin/tbl $< | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > $@
 

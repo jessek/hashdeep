@@ -1,17 +1,53 @@
 #!/bin/bash
 # TEST_DIR is where the executable is that we are testing:
 # GOOD_DIR is the directory containing the executable that is known to be good
-# You can set this environment variable in your startup scripts.
-# TESTFILES_DIR is where the test files are located. They are 
-# installed in /tmp so that names will be consistent.
+# TESTFILES_DIR is where the test files are located.
+# TMP is where the testfiles are installed for testing.
+# HTMP is the location of the testfiles to be passed to the hashing programs
+#  this matters on windows, where bash (and the Unix utilities) will have a 
+#  different set of paths than cygwin-compiled executables.
 
-TEST_DIR=../src
+# to deal with newline issues, we just always remove \r from the output
+
 TESTFILES_DIR=testfiles
 
+case `uname -s` in 
+  CYGWIN*WOW64)
+    echo You are running on 64-bit Windows
+    EXE="64.exe"
+    TMP='/cygdrive/c/tmp'
+    HTMP='c:/tmp'
+    windows=1
+    ;;
+  CYGWIN*)
+    echo You are running on 32-bit Windows
+    EXE=".exe"
+    TMP='/cygdrive/c/tmp'
+    WTMP='c:/tmp'
+    windows=1
+    ;;
+  *)
+    echo You are running on Linux or Mac.
+    EXE=""
+    TMP='/tmp'
+    HTMP='/tmp'
+    windows=""
+    ;;
+esac
+
+# TEST_DIR is the program under test
+if [ x$TEST_DIR = x ] ; then TEST_DIR=../src; fi
+if [ ! -r $TEST_DIR/md5deep$EXE ] ; then
+  echo cannot find md5deep$EXE in $TEST_DIR
+  echo Please set TEST_DIR and try again
+  exit 1
+fi
+
+# GOOD_DIR is the program that is known to be good
 if [ x$GOOD_DIR = x ] ; then GOOD_DIR=$1 ; fi
 if [ x$GOOD_DIR = x ] ; then
-  TMP=`which md5deep`
-  GOOD_DIR=`dirname $TMP`
+  WHERE=`which md5deep`
+  GOOD_DIR=`dirname $WHERE`
 fi
 if [ x$GOOD_DIR = x ] ; then
   echo Unable to locate installed md5deep executable.
@@ -20,33 +56,45 @@ if [ x$GOOD_DIR = x ] ; then
   exit 1
 fi
 
+if [ ! -d $TMP ]; then
+  echo No $TMP directory detected. Will try to create.
+  mkdir $TMP
+  if [ ! -d $TMP ]; then
+    echo Cannot create $TMP.
+    echo Finished.
+    exit 1
+  fi
+fi
+
+
+
 echo Reference output will go to ref/
 echo Test output will go to tst/
 /bin/rm -rf ref tst
 mkdir ref tst
 
-echo Removing files in /tmp/test
-/bin/rm -rf /tmp/test/
+echo Removing files in $TMP/test
+/bin/rm -rf $TMP/test/
 
-echo Installing test files in /tmp/test
-mkdir /tmp/test
-(cd $TESTFILES_DIR >/dev/null; tar cf - .) | (cd /tmp/test;tar xpBf - )
+echo Installing test files in $TMP/test
+mkdir $TMP/test
+(cd $TESTFILES_DIR >/dev/null; tar cf - .) | (cd $TMP/test;tar xpBf - )
 
-echo Removing any '.svn' files that might have gotten into /tmp/test by accident
-find /tmp/test -depth -name '.svn' -exec rm -rf {} \;
+echo Removing any '.svn' files that might have gotten into $TMP/test by accident
+find $TMP/test -depth -name '.svn' -exec rm -rf {} \;
 
 echo Erasing the hashlist database files in the current directory
 /bin/rm -f hashlist-*.txt
 
 echo Creating hashlist files with no-match-em and two files with installed program
-$GOOD_DIR/hashdeep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-hashdeep-partial.txt
-tail -1 hashlist-hashdeep-partial.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-hashdeep-partial.txt
+$GOOD_DIR/hashdeep$EXE -l $HTMP/test/deadbeef.txt  $HTMP/test/foo.txt > hashlist-hashdeep-partial.txt
+tail -1 hashlist-hashdeep-partial.txt | sed s+$HTMP/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-hashdeep-partial.txt
 
-$GOOD_DIR/md5deep -l /tmp/test/deadbeef.txt  /tmp/test/foo.txt > hashlist-md5deep-partial.txt
-tail -1 hashlist-md5deep-partial.txt | sed s+/tmp/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-md5deep-partial.txt
+$GOOD_DIR/md5deep$EXE -l $HTMP/test/deadbeef.txt  $HTMP/test/foo.txt > hashlist-md5deep-partial.txt
+tail -1 hashlist-md5deep-partial.txt | sed s+$HTMP/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-md5deep-partial.txt
 
-$GOOD_DIR/hashdeep -l -r /tmp/test > hashlist-hashdeep-full.txt
-$GOOD_DIR/md5deep -l -r /tmp/test > hashlist-md5deep-full.txt
+$GOOD_DIR/hashdeep$EXE -l -r $HTMP/test > hashlist-hashdeep-full.txt
+$GOOD_DIR/md5deep$EXE -l -r $HTMP/test > hashlist-md5deep-full.txt
 
 
 # Now run the tests!
@@ -71,63 +119,63 @@ do
    case $i in
    # try lots of different versions of md5deep
 
-     1) cmd="$BASE/md5deep $S -r    /tmp/test                       " ;;
-     2) cmd="$BASE/md5deep $S -p512 /tmp/test/deadbeef.txt          " ;;
-     3) cmd="$BASE/md5deep $S -zr   /tmp/test                       " ;;
-     4) cmd="$BASE/md5deep $S -b    /tmp/test/deadbeef.txt          " ;;
-     5) cmd="$BASE/md5deep $S -m hashlist-md5deep-partial.txt -r /tmp/test  " ;;
-     6) cmd="$BASE/md5deep $S -x hashlist-md5deep-partial.txt -r /tmp/test  " ;;
-     7) cmd="$BASE/md5deep $S -M hashlist-md5deep-partial.txt -r /tmp/test  " ;;
-     8) cmd="$BASE/md5deep $S -X hashlist-md5deep-partial.txt -r /tmp/test  " ;;
-     9) cmd="$BASE/md5deep $S -m hashlist-md5deep-partial.txt -w -r /tmp/test  " ;;
-    10) cmd="$BASE/md5deep $S -m hashlist-md5deep-partial.txt -n -r /tmp/test  " ;;
-    11) cmd="$BASE/md5deep $S -w -a deadbeefb303ba89ae055ad0234eb7e8  -r /tmp/test  " ;;
-    12) cmd="$BASE/md5deep $S -w -A deadbeefb303ba89ae055ad0234eb7e8  -r /tmp/test  " ;;
-    13) cmd="$BASE/md5deep $S -k    /tmp/test/deadbeef.txt         " ;;
-    14) cmd="$BASE/md5deep $S -i1000 -r /tmp/test                  " ;;
-    15) cmd="$BASE/md5deep $S -I1000 -r /tmp/test                  " ;;
-    16) cmd="$BASE/md5deep $S  -p512 -r /tmp/test                  " ;;
-    17) cmd="$BASE/md5deep $S -Z /tmp/test/*.txt "      ;; 
-    18) cmd="$BASE/md5deep $S -m  $TESTFILES_DIR/known.txt .svn" ;;	  
-    19) cmd="$BASE/md5deep $S -Sm $TESTFILES_DIR/known.txt .svn" ;;	  
-    20) cmd="$BASE/md5deep $S -sm $TESTFILES_DIR/known.txt .svn" ;;
-    21) cmd="$BASE/md5deep    /dev/null ";;
+     1) cmd="$BASE/md5deep$EXE $S -r    $HTMP/test                       " ;;
+     2) cmd="$BASE/md5deep$EXE $S -p512 $HTMP/test/deadbeef.txt          " ;;
+     3) cmd="$BASE/md5deep$EXE $S -zr   $HTMP/test                       " ;;
+     4) cmd="$BASE/md5deep$EXE $S -b    $HTMP/test/deadbeef.txt          " ;;
+     5) cmd="$BASE/md5deep$EXE $S -m hashlist-md5deep-partial.txt -r $HTMP/test  " ;;
+     6) cmd="$BASE/md5deep$EXE $S -x hashlist-md5deep-partial.txt -r $HTMP/test  " ;;
+     7) cmd="$BASE/md5deep$EXE $S -M hashlist-md5deep-partial.txt -r $HTMP/test  " ;;
+     8) cmd="$BASE/md5deep$EXE $S -X hashlist-md5deep-partial.txt -r $HTMP/test  " ;;
+     9) cmd="$BASE/md5deep$EXE $S -m hashlist-md5deep-partial.txt -w -r $HTMP/test  " ;;
+    10) cmd="$BASE/md5deep$EXE $S -m hashlist-md5deep-partial.txt -n -r $HTMP/test  " ;;
+    11) cmd="$BASE/md5deep$EXE $S -w -a deadbeefb303ba89ae055ad0234eb7e8  -r $HTMP/test  " ;;
+    12) cmd="$BASE/md5deep$EXE $S -w -A deadbeefb303ba89ae055ad0234eb7e8  -r $HTMP/test  " ;;
+    13) cmd="$BASE/md5deep$EXE $S -k    $HTMP/test/deadbeef.txt         " ;;
+    14) cmd="$BASE/md5deep$EXE $S -i1000 -r $HTMP/test                  " ;;
+    15) cmd="$BASE/md5deep$EXE $S -I1000 -r $HTMP/test                  " ;;
+    16) cmd="$BASE/md5deep$EXE $S  -p512 -r $HTMP/test                  " ;;
+    17) cmd="$BASE/md5deep$EXE $S -Z $HTMP/test/*.txt "      ;; 
+    18) cmd="$BASE/md5deep$EXE $S -m  $TESTFILES_DIR/known.txt .svn" ;;	  
+    19) cmd="$BASE/md5deep$EXE $S -Sm $TESTFILES_DIR/known.txt .svn" ;;	  
+    20) cmd="$BASE/md5deep$EXE $S -sm $TESTFILES_DIR/known.txt .svn" ;;
+    21) cmd="$BASE/md5deep$EXE    /dev/null ";;
 
     # Now try all of the different deeps in regular mode and piecewise hashing mode
-    22) cmd="$BASE/md5deep $S -r /tmp/test                  " ;;
-    23) cmd="$BASE/md5deep $S -p512 -r /tmp/test                  " ;;
+    22) cmd="$BASE/md5deep$EXE $S -r $HTMP/test                  " ;;
+    23) cmd="$BASE/md5deep$EXE $S -p512 -r $HTMP/test                  " ;;
 
-    24) cmd="$BASE/sha1deep $S -r /tmp/test                  " ;;
-    25) cmd="$BASE/sha1deep $S -p512 -r /tmp/test                  " ;;
+    24) cmd="$BASE/sha1deep$EXE $S -r $HTMP/test                  " ;;
+    25) cmd="$BASE/sha1deep$EXE $S -p512 -r $HTMP/test                  " ;;
 
-    26) cmd="$BASE/sha256deep $S -r /tmp/test                  " ;;
-    27) cmd="$BASE/sha256deep $S -p512 -r /tmp/test                  " ;;
+    26) cmd="$BASE/sha256deep$EXE $S -r $HTMP/test                  " ;;
+    27) cmd="$BASE/sha256deep$EXE $S -p512 -r $HTMP/test                  " ;;
 
-    28) cmd="$BASE/tigerdeep $S -r /tmp/test                  " ;;
-    29) cmd="$BASE/tigerdeep $S -p512 -r /tmp/test                  " ;;
+    28) cmd="$BASE/tigerdeep$EXE $S -r $HTMP/test                  " ;;
+    29) cmd="$BASE/tigerdeep$EXE $S -p512 -r $HTMP/test                  " ;;
 
-    30) cmd="$BASE/whirlpooldeep $S -r /tmp/test                  " ;;
-    31) cmd="$BASE/whirlpooldeep $S -p512 -r /tmp/test                  " ;;
+    30) cmd="$BASE/whirlpooldeep$EXE $S -r $HTMP/test                  " ;;
+    31) cmd="$BASE/whirlpooldeep$EXE $S -p512 -r $HTMP/test                  " ;;
 
-    32) cmd="$BASE/hashdeep $S -r   /tmp/test                      " ;;
-    33) cmd="$BASE/hashdeep $S -p512 -r /tmp/test                  " ;;
+    32) cmd="$BASE/hashdeep$EXE $S -r   $HTMP/test                      " ;;
+    33) cmd="$BASE/hashdeep$EXE $S -p512 -r $HTMP/test                  " ;;
 
-    34) cmd="$BASE/hashdeep $S -m -k hashlist-hashdeep-partial.txt /tmp/test/*.txt  " ;;
-    35) cmd="$BASE/hashdeep $S -M -k hashlist-hashdeep-partial.txt /tmp/test/*.txt  " ;;
-    36) cmd="$BASE/hashdeep $S -w -m -k hashlist-hashdeep-partial.txt /tmp/test/*.txt  " ;;
-    37) cmd="$BASE/hashdeep $S -x -k hashlist-hashdeep-partial.txt /tmp/test/*.txt  " ;;
-    38) cmd="$BASE/hashdeep $S -x -w -k hashlist-hashdeep-partial.txt /tmp/test/*.txt  " ;;
-    39) cmd="$BASE/hashdeep $S -r -a -k hashlist-hashdeep-full.txt /tmp/test " ;;
-    40) cmd="$BASE/hashdeep $S -v -r -a -k hashlist-hashdeep-full.txt /tmp/test "  ;;
-    41) cmd="$BASE/hashdeep   /dev/null ";;
+    34) cmd="$BASE/hashdeep$EXE $S -m -k hashlist-hashdeep-partial.txt $HTMP/test/*.txt  " ;;
+    35) cmd="$BASE/hashdeep$EXE $S -M -k hashlist-hashdeep-partial.txt $HTMP/test/*.txt  " ;;
+    36) cmd="$BASE/hashdeep$EXE $S -w -m -k hashlist-hashdeep-partial.txt $HTMP/test/*.txt  " ;;
+    37) cmd="$BASE/hashdeep$EXE $S -x -k hashlist-hashdeep-partial.txt $HTMP/test/*.txt  " ;;
+    38) cmd="$BASE/hashdeep$EXE $S -x -w -k hashlist-hashdeep-partial.txt $HTMP/test/*.txt  " ;;
+    39) cmd="$BASE/hashdeep$EXE $S -r -a -k hashlist-hashdeep-full.txt $HTMP/test " ;;
+    40) cmd="$BASE/hashdeep$EXE $S -v -r -a -k hashlist-hashdeep-full.txt $HTMP/test "  ;;
+    41) cmd="$BASE/hashdeep$EXE   /dev/null ";;
 
      # Finally, the stdin tests
 
-    42) cmd="echo README.txt | $BASE/hashdeep"       ;;
-    43) cmd="echo README.txt | $BASE/md5deep "      ;;
-    44) cmd="echo README.txt | $BASE/sha1deep "      ;;
-    45) cmd="echo README.txt | $BASE/sha256deep "    ;;
-    46) cmd="echo README.txt | $BASE/whirlpooldeep " ;;
+    42) cmd="echo README.txt | $BASE/hashdeep$EXE"      ;;
+    43) cmd="echo README.txt | $BASE/md5deep$EXE"       ;;
+    44) cmd="echo README.txt | $BASE/sha1deep$EXE"      ;;
+    45) cmd="echo README.txt | $BASE/sha256deep$EXE"    ;;
+    46) cmd="echo README.txt | $BASE/whirlpooldeep$EXE" ;;
    esac
    if [ x"$cmd" = "x" ]
    then 
@@ -138,21 +186,22 @@ do
    ### Standard output gets sorted to deal with multi-threading issues
    ### Standard error simply gets captured
    
-   /bin/echo -n Test $i ...
-   /bin/rm -f /tmp/test$i.out
+   /bin/echo $mode $i ...
+   /bin/rm -f $HTMP/test$i.out
 
-   $cmd 2>/tmp/test$i.err | sed s+$BASE/++ | sort  > /tmp/test$i.out
-   if [ $mode = "generate" ]
-   then
-     echo ""
-     mv -f /tmp/test$i.out ref/test$i.out
-     mv -f /tmp/test$i.err ref/test$i.err
+   $cmd 2>test$i.err | sed s+$BASE/++ | sort  > test$i.out
+   if [ $mode = "generate" ]; then
+     tr -d \\r < test$i.out > ref/test$i.out
+     tr -d \\r < test$i.err > ref/test$i.err
+   else
+     tr -d \\r < test$i.out > hold; mv hold test$i.out
+     tr -d \\r < test$i.err > hold; mv hold test$i.err
    fi
    if [ $mode = "test" ]
    then
      fail=no
-     mv -f /tmp/test$i.out tst/test$i.out
-     mv -f /tmp/test$i.err tst/test$i.err
+     mv -f test$i.out tst/test$i.out
+     mv -f test$i.err tst/test$i.err
      if ! diff ref/test$i.out tst/test$i.out ; 
      then 
        echo TEST $i FAILED --- STDOUT DIFFERENT

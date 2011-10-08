@@ -52,7 +52,7 @@ unset option
 
 # mingw32 includes  i686-w64-mingw32 and  x86_64-w64-mingw32
 
-mingw32="no"
+mingw="no"
 case $host in
   *-*-*linux*-*) 
      AC_DEFINE([__LINUX__],1,[Linux operating system functions])
@@ -75,14 +75,15 @@ AC_PROG_INSTALL
 
 # Bring additional directories where things might be found into our
 # search path. I don't know why autoconf doesn't do this by default
-for spfx in /usr/local /opt/local /sw ; do
+if test x"${mingw}" == "xno" ; then
+  for spfx in /usr/local /opt/local /sw ; do
     echo checking ${spfx}/include
     if test -d ${spfx}/include; then
-        CFLAGS="-I${spfx}/include $CFLAGS"
         CPPFLAGS="-I${spfx}/include $CPPFLAGS"
         LDFLAGS="-L${spfx}/lib $LDFLAGS"
     fi
-done
+  done
+fi
 
 # Checks for header files.
 AC_HEADER_DIRENT
@@ -156,8 +157,6 @@ if test x"${extern_program_invocation_name}" = x"yes"; then
 fi
 
 
-
-
 ################################################################
 # PTHREAD support
 # With special nods to compiling under mingw
@@ -195,9 +194,7 @@ CC="$PTHREAD_CC"
 # (which should be a no-op on later version of G++ anyway)
 
 AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np])
-						
-
-
+# end PTHREAD SUPPORT
 ################################################################
 
 # This allows us to easily disable optimizations for debugging
