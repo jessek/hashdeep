@@ -52,6 +52,7 @@ windist:
 	@echo 
 	@echo Making win32 
 	@echo
+	svn update
 	rm -rf $(distdir).zip $(distdir) src/*.exe
 	mkdir $(distdir)
 	make win32 
@@ -91,6 +92,7 @@ wintest:
 	zip md5deep-wintest.zip -9 $(distdir).zip tests/* tests/*.zip tests/*.sh tests/testfiles/ tests/testfiles/*txt tests/testfiles/*/*txt tests/testfiles/*/*/*txt
 
 world:
+	svn update
 	@echo meta-build system. 
 	@echo Making both Linux and Windows distributions
 	make distclean

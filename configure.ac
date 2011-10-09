@@ -17,12 +17,13 @@ CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
 AC_GNU_SOURCE
 AC_CANONICAL_HOST
 
-# This magic is from PhotoRec; see which options we can use. 
-# These I don't like:
-# -Wdeclaration-after-statement -Wconversion
-# doesn't work: -Wunreachable-code 
-# causes configure to crash on gcc-4.2.1: -Wsign-compare-Winline 
-# causes warnings with unistd.h:  -Wnested-externs 
+# See which compiler options can be used, as -Wall doesn't actually warn for all
+# These options I don't use:
+#    -Wdeclaration-after-statement -Wconversion
+# These compiler errors cause problems when used with earlier versions of GCC:
+#   -Wunreachable-code 
+#   -Wsign-compare-Winline  ---  causes configure to crash on gcc-4.2.1: 
+#   -Wnested-externs  --- causes warnings with unistd.h:  
 for option in -Wall -MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wshadow -Wwrite-strings -W -Wcast-align -Waggregate-return -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmissing-format-attribute -Wmultichar -Wc++-compat -Wmissing-noreturn -fast
 do
   SAVE_CFLAGS="$CFLAGS"
@@ -30,13 +31,18 @@ do
   AC_MSG_CHECKING([whether gcc understands $option])
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
       [has_option=yes],
-      [has_option=no; CFLAGS="$SAVE_CFLAGS"])
+      [has_option=no; CFLAGS="$SAVE_CFLAGS" ])
   AC_MSG_RESULT([has_option=$has_option; CFLAGS=$CFLAGS])
   unset has_option
   unset SAVE_CFLAGS
 done
 unset option
-# end photorec magic
+
+# Sadly, this mostly ignored for this project, which is almost entirely on C++ now.
+CPPFLAGS="$CPPFLAGS -Wall"
+CXXFLAGS="$CXXFLAGS -Wall"
+# 
+#
 
 
 
@@ -170,7 +176,7 @@ if test  x"$mingw" = x"yes";  then
 else
   m4_include([m4/ax_pthread.m4])
   AX_PTHREAD([
-    echo Using settings from AX_PTHREAD Macor
+    echo Using settings from [AX_PTHREAD] macro
     LIBS="$PTHREAD_LIBS $LIBS"
     CFLAGS="  $PTHREAD_CFLAGS $CFLAGS"
     CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
@@ -202,3 +208,15 @@ if test "${with_noopt}" = "yes" ; then
 fi
 
 AC_OUTPUT
+
+echo ============================
+echo $0 finished at `date`
+echo PACKAGE_NAME:     $PACKAGE_NAME
+echo PACKAGE_VERSION:  $PACKAGE_VERSION
+echo CC:               $CC
+echo CXX:              $CXX
+echo CPPFLAGS:         $CPPFLAGS
+echo CFLAGS:           $CFLAGS
+echo CXXFLAGS:         $CXXFLAGS
+echo LIBS:             $LIBS
+echo LDFLAGS:          $LDFLAGS

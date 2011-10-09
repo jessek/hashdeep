@@ -1,3 +1,45 @@
+2011-10-09  Simson Garfinkel  <simsong@new-host-2.home>
+
+	* configure.ac (HAVE_PTHREAD): quoted AX_PTHREAD in the configure script
+
+2011-10-09  Simson Garfinkel  <simsong@new-host-3.home>
+
+	* configure.ac: version number increased to 4.0.0_beta_001
+
+	* src/main.cpp (md5deep_usage): 
+
+	All programs now have a -C option that enables Common Crypto on
+	Mac. It is disabled by default. You can use it if you want.
+
+	Windows - All tests now pass, with the exception that the windows
+	files now have proper UTF-8 in them rather than the question-mark
+	escaping. You can escape the UTF-8 by providing the flags. You can
+	run the tests.sh script with "--nounicode" to remove the filenames
+	with unicode in them.  Tests must be run within cygwin to get the
+	bash script to work, but the md5deep/hashdeep executables
+	themselves do not require cygwin and, in fact, ignore the DLL.
+
+	Threading now works on windows again. I think that I finally got the configure script right.
+
+	I have tested the CONFIGURE_FC.sh with a virgin FC15 ISO. You boot
+	the ISO in VMWare and it creates a user called 'user'.  You have
+	to create a user that has root access. Once you do this and become
+	root, run CONFIGURE_FC.sh. It will update the yum repository,
+	download the mingw32 and mingw64 compilers, download and build
+	pthreads, and then, just for kicks, it download the SVN repository
+	and build the 32-bit and 64-bit executables.
+
+	You can now run the executables with the '-hhh' option to print
+	information about the build configuration and environment as well.
+
+	I've added -B as a verbose flag for both md5deep and hashdeep. (-v
+	is verbose in hashdeep but prints the version number in md5deep)
+
+	Now, if you are in verbose mode, the DFXML will include the
+	workerid= of the thread that created the results. This is useful
+	for debugging to verify that each thread is actually hashing.
+
+
 2011-09-27  Simson Garfinkel  <simsong@FC15>
 
 	* src/display.cpp (dfxml_write): now writes workerid as an attribute in the fileobject output.

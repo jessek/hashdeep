@@ -168,7 +168,9 @@ void state::usage()
 
     }
     if(usage_count==2){
-	ocb.status("-u  - escape Unicode");
+	ocb.status("-C - On MAC only --- use Common Crypto hash functions");
+	ocb.status("-B - verbose mode; repeat for more verbosity");
+	ocb.status("-u - escape Unicode");
     }
     if(usage_count==3){
 	ocb.status("sizeof(off_t)= %d",sizeof(off_t));
@@ -218,7 +220,9 @@ void state::md5deep_usage(void)
 	ocb.status("-Z - traige mode;   -h - help;   -hh - full help");
     }
     if(usage_count==2){
-	ocb.status("-k  - print asterisk before filename");
+	ocb.status("-B - verbose mode; repeat for more verbosity");
+	ocb.status("-C - On MAC only --- use Common Crypto hash functions");
+	ocb.status("-k - print asterisk before filename");
 	ocb.status("-0 - use a NULL for newline.");
 	ocb.status("-ffilename - take list of files to hash from filename");
 	ocb.status("-o[bcpflsd] - only process certain types of files:");
@@ -555,7 +559,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
     bool did_usage = false;
   int i;
   
-  while ((i=getopt(argc,argv,"abcC:deF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
+  while ((i=getopt(argc,argv,"abBcC:deF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
     switch (i) {
     case 'a': ocb.primary_function = primary_audit;      break;
     case 'C': opt_enable_mac_cc = true; break;
@@ -641,6 +645,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
 	}
       break;
       
+    case 'B': /* Intentional Fall-Through */
     case 'v':
 	if(++ocb.opt_verbose > INSANELY_VERBOSE){
 	    ocb.error("User request for insane verbosity denied");
@@ -870,8 +875,13 @@ int state::md5deep_process_command_line(int argc, char **argv)
 
     while ((i = getopt(argc,
 		       argv,
-		       "A:a:bcCdeF:f:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) { 
+		       "A:a:bBcCdeF:f:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) { 
 	switch (i) {
+	case 'B': /* Intentional Fall-Through */
+	    if(++ocb.opt_verbose > INSANELY_VERBOSE){
+		ocb.error("User request for insane verbosity denied");
+	    }
+	    break;
 	case 'C': opt_enable_mac_cc = true; break;
 	case 'D': opt_debug = atoi(optarg);	break;
 	case 'd': ocb.xml_open(stdout);		break;
