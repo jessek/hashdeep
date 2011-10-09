@@ -7,7 +7,7 @@ CROSS64_PREFIX = x86_64-w64-mingw32
 # on Mac, you may want this instead:
 # CROSS_PREFIX = i386-mingw32
 
-EXTRA_DIST = FILEFORMAT config.guess config.sub  
+EXTRA_DIST = FILEFORMAT config.guess config.sub  m4/ax_pthread.m4 CONFIGURE_FH.sh
 
 nice:
 	rm -f *~ man/*~ src/*~

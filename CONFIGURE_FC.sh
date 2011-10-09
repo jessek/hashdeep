@@ -5,21 +5,30 @@ Configuring FC15 for cross-compiling multi-threaded 32-bit and
 		 64-bit Windows programs with mingw.
 ****************************************************************
 
-This script will configure a fresh Fedora Core14 system to compile
-with mingw32 and 64.  It requires:
+This script will configure a fresh Fedora 15 system to compile with
+mingw32 and 64.  It requires:
 
-1. FC15 installed and running. Typically you will do this by
-   downloading the ISO and running it in a new virtual machine or new
-   hardware. Follow the directions and install.
+1. FC15 installed and running. Typically you will do this by:
 
-2. This script. Put it in your home directory.
+   1a - download the ISO for the 64-bit DVD (not the live media) from:
+        http://fedoraproject.org/en/get-fedora-options#formats
+   1b - Create a new VM using this ISO as the boot. The ISO will
+        install off of its packages on your machine.
+   1c - Create an administrative user called 'uroot'. Log in as
+        uroot and su to root.
+   1d - Start up Terminal; Chose Terminal's 
+        Edit/Profile Preferences/Scrolling and check 'Unlimited' scrollback. 
+   1e - Chose Applications/System Tools/System Settings/Screen.
+        Select brightness 1 hour and Uncheck lock.
+       
+   NOTE: The first time you log in, the system will block the yum 
+   system as it downloads updates. This is annoying.
+
+2. This script. Put it in the users home directory.
 
 3. Root access. This script must be run as root.
 
-Also recommended:
-
-4. Disable the screen saver (not needed on a VM).
-
+press any key to continue...
 EOF
 read
 
@@ -50,6 +59,8 @@ if [ $USER != "root" ]; then
   echo This script must be run as root
   exit 1
 fi
+
+echo Will now try to install 
 
 echo wget is required for updating fedora
 yum -y install wget
@@ -106,3 +117,16 @@ do
   fi
   make clean
 done
+
+echo Press return to download and make md5deep windows executables
+read
+echo Now downloading md5deep SVN repository
+svn co https://xchatty@md5deep.svn.sourceforge.net/svnroot/md5deep
+if [ ! -d md5deep/branches/version4 ] ; then
+  echo md5deep subversion repository was not downloaded.
+  exit 1
+fi
+cd md5deep/branches/version4
+sh bootstrap.sh
+./configure
+make windist
