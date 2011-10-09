@@ -76,6 +76,7 @@ windist:
 	cp FILEFORMAT		$(distdir)/FILEFORMAT.txt
 	cp man/md5deep.txt	$(distdir)/HASHDEEP.txt
 	cp man/hashdeep.txt	$(distdir)/MD5DEEP.txt
+	rm man/md5deep.txt man/hashdeep.txt
 	zip --to-crlf $(distdir).zip $(distdir)/*.txt
 	rm -rf $(distdir) $(WINDOWSDOCS) MD5DEEP.1 HASHDEEP.1
 	@echo "*************************"
