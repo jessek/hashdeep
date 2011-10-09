@@ -619,7 +619,7 @@ int state::hashdeep_process_command_line(int argc, char **argv)
     case 'k':
 	switch (ocb.load_hash_file(optarg)) {
 	case hashlist::loadstatus_ok: 
-	    if(ocb.opt_verbose>=MORE_VERBOSE){
+	    if(opt_debug){
 		ocb.error("%s: Match file loaded %d known hash values.",
 				optarg,ocb.known_size());
 	    }

@@ -1,3 +1,7 @@
+2011-10-09  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* tests/tests.sh (TMP): renamed TEST_DIR to TEST_BIN and GOOD_DIR to GOOD_BIN
+
 2011-10-09  Simson Garfinkel  <simsong@new-host-2.home>
 
 	* configure.ac (HAVE_PTHREAD): quoted AX_PTHREAD in the configure script
