@@ -18,20 +18,18 @@ verbose="no"
 # Process args
 # http://www.zanecorp.com/wiki/index.php/Processing_Options_in_Bash
 prog=$0
-TMP=`getopt --name=$0 -a --longoptions=nounicode,help,verbose -o n,h,v -- $@`
-eval set -- $TMP
-until [ $1 == -- ]; do
+until [ x$1 == x ]; do
     case $1 in
         -n|--nounicode)
             unicode="no";;
 	-v|--verbose)
 	    verbose="yes";;
 	-h|--help|*)
-	    echo usage: $prog [options]
-	    echo   -h, --help      -- print this message
-	    echo   -n, --nounicode -- delete any test file that begin 
-            echo                      with \"unicode\*\" in its file name.
-	    echo   -v, --verbose   -- print commands when run
+	    echo "usage: $prog [options]"
+	    echo " -h, --help      -- print this message"
+	    echo " -n, --nounicode -- delete any test file that begin "
+            echo "                    with \"unicode\*\" in its file name."
+	    echo " -v, --verbose   -- print commands when run"
 	    exit 0
     esac
     shift # move the arg list to the next option or '--'
