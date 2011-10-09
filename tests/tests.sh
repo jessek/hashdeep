@@ -9,7 +9,34 @@
 
 # to deal with newline issues, we just always remove \r from the output
 
+
 TESTFILES_DIR=testfiles
+
+unicode="yes"
+verbose="no"
+
+# Process args
+# http://www.zanecorp.com/wiki/index.php/Processing_Options_in_Bash
+prog=$0
+TMP=`getopt --name=$0 -a --longoptions=nounicode,help,verbose -o n,h,v -- $@`
+eval set -- $TMP
+until [ $1 == -- ]; do
+    case $1 in
+        -n|--nounicode)
+            unicode="no";;
+	-v|--verbose)
+	    verbose="yes";;
+	-h|--help|*)
+	    echo usage: $prog [options]
+	    echo   -h, --help      -- print this message
+	    echo   -n, --nounicode -- delete any test file that begin 
+            echo                      with \"unicode\*\" in its file name.
+	    echo   -v, --verbose   -- print commands when run
+	    exit 0
+    esac
+    shift # move the arg list to the next option or '--'
+done
+shift # remove the '--', now $1 positioned at first argument if any
 
 case `uname -s` in 
   CYGWIN*WOW64)
@@ -56,6 +83,7 @@ if [ x$GOOD_DIR = x ] ; then
   exit 1
 fi
 
+
 if [ ! -d $TMP ]; then
   echo No $TMP directory detected. Will try to create.
   mkdir $TMP
@@ -66,10 +94,10 @@ if [ ! -d $TMP ]; then
   fi
 fi
 
-
-
 echo Reference output will go to ref/
 echo Test output will go to tst/
+echo Files to test will go in $TMP/test
+echo 
 /bin/rm -rf ref tst
 mkdir ref tst
 
@@ -80,8 +108,16 @@ echo Installing test files in $TMP/test
 mkdir $TMP/test
 (cd $TESTFILES_DIR >/dev/null; tar cf - .) | (cd $TMP/test;tar xpBf - )
 
+
 echo Removing any '.svn' files that might have gotten into $TMP/test by accident
 find $TMP/test -depth -name '.svn' -exec rm -rf {} \;
+
+
+if [ $unicode = "no" ] ; then
+  echo Removing filenames beginning with unicode
+  find $TMP/test -name 'unicode*.txt' -exec rm {} \;
+fi
+
 
 echo Erasing the hashlist database files in the current directory
 /bin/rm -f hashlist-*.txt
@@ -93,9 +129,8 @@ tail -1 hashlist-hashdeep-partial.txt | sed s+$HTMP/test/foo.txt+/no/match/em+ |
 $GOOD_DIR/md5deep$EXE -l $HTMP/test/deadbeef.txt  $HTMP/test/foo.txt > hashlist-md5deep-partial.txt
 tail -1 hashlist-md5deep-partial.txt | sed s+$HTMP/test/foo.txt+/no/match/em+ | sed s/[012345]/6/g >> hashlist-md5deep-partial.txt
 
-$GOOD_DIR/hashdeep$EXE -l -r $HTMP/test > hashlist-hashdeep-full.txt
-$GOOD_DIR/md5deep$EXE -l -r $HTMP/test > hashlist-md5deep-full.txt
-
+$GOOD_DIR/hashdeep$EXE -l -r $HTMP/test > hashlist-hashdeep-full.txt 2>/dev/null
+$GOOD_DIR/md5deep$EXE -l -r $HTMP/test > hashlist-md5deep-full.txt   2>/dev/null
 
 # Now run the tests!
 
@@ -142,23 +177,23 @@ do
     21) cmd="$BASE/md5deep$EXE    /dev/null ";;
 
     # Now try all of the different deeps in regular mode and piecewise hashing mode
-    22) cmd="$BASE/md5deep$EXE $S -r $HTMP/test                  " ;;
-    23) cmd="$BASE/md5deep$EXE $S -p512 -r $HTMP/test                  " ;;
+    22) cmd="$BASE/md5deep$EXE $S -r $HTMP/test            " ;;
+    23) cmd="$BASE/md5deep$EXE $S -p512 -r $HTMP/test	" ;;
 
-    24) cmd="$BASE/sha1deep$EXE $S -r $HTMP/test                  " ;;
-    25) cmd="$BASE/sha1deep$EXE $S -p512 -r $HTMP/test                  " ;;
+    24) cmd="$BASE/sha1deep$EXE $S -r $HTMP/test	" ;;
+    25) cmd="$BASE/sha1deep$EXE $S -p512 -r $HTMP/test  " ;;
 
-    26) cmd="$BASE/sha256deep$EXE $S -r $HTMP/test                  " ;;
-    27) cmd="$BASE/sha256deep$EXE $S -p512 -r $HTMP/test                  " ;;
+    26) cmd="$BASE/sha256deep$EXE $S -r $HTMP/test	" ;;
+    27) cmd="$BASE/sha256deep$EXE $S -p512 -r $HTMP/test" ;;
 
-    28) cmd="$BASE/tigerdeep$EXE $S -r $HTMP/test                  " ;;
-    29) cmd="$BASE/tigerdeep$EXE $S -p512 -r $HTMP/test                  " ;;
+    28) cmd="$BASE/tigerdeep$EXE $S -r $HTMP/test	" ;;
+    29) cmd="$BASE/tigerdeep$EXE $S -p512 -r $HTMP/test " ;;
 
-    30) cmd="$BASE/whirlpooldeep$EXE $S -r $HTMP/test                  " ;;
-    31) cmd="$BASE/whirlpooldeep$EXE $S -p512 -r $HTMP/test                  " ;;
+    30) cmd="$BASE/whirlpooldeep$EXE $S -r $HTMP/test	" ;;
+    31) cmd="$BASE/whirlpooldeep$EXE $S -p512 -r $HTMP/test " ;;
 
-    32) cmd="$BASE/hashdeep$EXE $S -r   $HTMP/test                      " ;;
-    33) cmd="$BASE/hashdeep$EXE $S -p512 -r $HTMP/test                  " ;;
+    32) cmd="$BASE/hashdeep$EXE $S -r   $HTMP/test	" ;;
+    33) cmd="$BASE/hashdeep$EXE $S -p512 -r $HTMP/test	" ;;
 
     34) cmd="$BASE/hashdeep$EXE $S -m -k hashlist-hashdeep-partial.txt $HTMP/test/*.txt  " ;;
     35) cmd="$BASE/hashdeep$EXE $S -M -k hashlist-hashdeep-partial.txt $HTMP/test/*.txt  " ;;
@@ -167,7 +202,7 @@ do
     38) cmd="$BASE/hashdeep$EXE $S -x -w -k hashlist-hashdeep-partial.txt $HTMP/test/*.txt  " ;;
     39) cmd="$BASE/hashdeep$EXE $S -r -a -k hashlist-hashdeep-full.txt $HTMP/test " ;;
     40) cmd="$BASE/hashdeep$EXE $S -v -r -a -k hashlist-hashdeep-full.txt $HTMP/test "  ;;
-    41) cmd="$BASE/hashdeep$EXE   /dev/null ";;
+    41) cmd="$BASE/hashdeep$EXE   /dev/null		";;
 
      # Finally, the stdin tests
 
@@ -186,13 +221,17 @@ do
    ### Standard output gets sorted to deal with multi-threading issues
    ### Standard error simply gets captured
    
-   /bin/echo $mode $i ...
+   /bin/echo -n $mode $i ...
    /bin/rm -f $HTMP/test$i.out
 
+   if [ $verbose = "yes" ]; then
+     echo $cmd
+   fi
    $cmd 2>test$i.err | sed s+$BASE/++ | sort  > test$i.out
    if [ $mode = "generate" ]; then
      tr -d \\r < test$i.out > ref/test$i.out
      tr -d \\r < test$i.err > ref/test$i.err
+     echo ok
    else
      tr -d \\r < test$i.out > hold; mv hold test$i.out
      tr -d \\r < test$i.err > hold; mv hold test$i.err

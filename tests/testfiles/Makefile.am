@@ -10,7 +10,8 @@ FILES = 1072-at.txt \
 	1072-plus.txt\
 	copying.txt \
 	deadbeef.txt \
-	dot_file_⦿.txt \
+	unicode_circled_bullet_⦿.txt \
+	unicode_snowman_☃.txt \
 	foo.txt \
 	install.txt \
 	one-byte-file\
