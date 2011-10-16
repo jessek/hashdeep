@@ -1,3 +1,9 @@
+2011-10-15  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/display.cpp: removed #include <sstream>
+
+	* src/main.cpp: removed #include <sstream>
+
 2011-10-09  Simson Garfinkel  <simsong@alphonse-mucha.home>
 
 	* tests/tests.sh (TMP): renamed TEST_DIR to TEST_BIN and GOOD_DIR to GOOD_BIN

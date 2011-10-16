@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
-#include <sstream>
 #include "utf8.h"
 
 #include "md5.h"
