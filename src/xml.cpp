@@ -312,6 +312,7 @@ void XML::pop()
     spaces();
     tagout("/"+tag,"");
     fputc('\n',out);
+    fflush(out);			
 }
 
 void XML::printf(const char *format,...)

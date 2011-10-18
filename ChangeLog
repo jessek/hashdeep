@@ -1,3 +1,7 @@
+2011-10-17  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/xml.cpp (pop): added flush to out to make it easier for people to undestand status.
+
 2011-10-15  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* src/display.cpp: removed #include <sstream>
