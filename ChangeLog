@@ -1,3 +1,17 @@
+2011-10-25  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/dig.cpp (state::dig_self_test): added explicit cast to ft to avoid compiler warning.
+
+	* src/main.h (class global): renamed class main to class global so that main() doesn't shadow main::main() (which doesn't exist)
+
+	* src/main.cpp (state::hashdeep_process_command_line): renamed argc and argv to argc_ and argv_ so as not to shadow instance variables.
+
+	* src/display.cpp (display::finalize_matching): removed known_size() as a local, since we have a function that does it.
+	(display::compute_unused): renamed parameter from display to show_display to avoid compiler warning.
+
+	* src/main.h (class display): renamed out to out_ so as not to shadow parameter.
+	(std::vector): removed num_columns, as it wasn't being used outside the local function.
+
 2011-10-17  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* src/xml.cpp (pop): added flush to out to make it easier for people to undestand status.

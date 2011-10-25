@@ -110,7 +110,7 @@ tstring state::generate_filename(const tstring &input)
     return tstring(fn);
 #else	  
     char buf[PATH_MAX+1];
-    std::string cwd = main::getcwd();
+    std::string cwd = global::getcwd();
     if (cwd=="") {
 	// If we can't get the current working directory, we're not
 	// going to be able to build the relative path to this file anyway.
@@ -553,12 +553,12 @@ void state::setup_expert_mode(char *arg)
 
 
 
-int state::hashdeep_process_command_line(int argc, char **argv)
+int state::hashdeep_process_command_line(int argc_, char **argv_)
 {
     bool did_usage = false;
   int i;
   
-  while ((i=getopt(argc,argv,"abBcC:deF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
+  while ((i=getopt(argc_,argv_,"abBcC:deF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
     switch (i) {
     case 'a': ocb.primary_function = primary_audit;      break;
     case 'C': opt_enable_mac_cc = true; break;
@@ -694,7 +694,7 @@ int state::prepare_windows_command_line()
 
 class uni32str:public vector<uint32_t> {};
     
-std::string main::escape_utf8(const std::string &utf8)
+std::string global::escape_utf8(const std::string &utf8)
 {
     uni32str utf32_line;
     std::string ret;
@@ -716,7 +716,7 @@ std::string main::escape_utf8(const std::string &utf8)
  * We only need make_utf8 on windows because on POSIX systems
  * all filenames are assumed to be UTF8.
  */
-std::string main::make_utf8(const tstring &str) 
+std::string global::make_utf8(const tstring &str) 
 {
     if(str.size()==0) return std::string(); // nothing to convert
 
@@ -748,7 +748,7 @@ std::string main::make_utf8(const tstring &str)
 #endif
 
 
-tstring main::getcwd()
+tstring global::getcwd()
 {
 #ifdef _WIN32
     wchar_t buf[MAX_PATH];
@@ -765,7 +765,7 @@ tstring main::getcwd()
 }
 
 /* Return the canonicalized absolute pathname in UTF-8 on Windows and POSIX systems */
-tstring main::get_realpath(const tstring &fn)
+tstring global::get_realpath(const tstring &fn)
 {
 #ifdef _WIN32    
     /*
@@ -778,14 +778,14 @@ tstring main::get_realpath(const tstring &fn)
 #else
     char resolved_name[PATH_MAX];	//
     if(realpath(fn.c_str(),resolved_name)==0) return "";
-    if(opt_debug) std::cout << "main::get_realpath(" << fn << ")=" << resolved_name << "\n";
+    if(opt_debug) std::cout << "global::get_realpath(" << fn << ")=" << resolved_name << "\n";
     return tstring(resolved_name);
 #endif
 }
 
-std::string main::get_realpath8(const tstring &fn)
+std::string global::get_realpath8(const tstring &fn)
 {
-    return main::make_utf8(main::get_realpath(fn));
+    return global::make_utf8(global::get_realpath(fn));
 }
 
 
@@ -867,13 +867,13 @@ void state::md5deep_check_matching_modes()
 }
 
 
-int state::md5deep_process_command_line(int argc, char **argv)
+int state::md5deep_process_command_line(int argc_, char **argv_)
 {
     bool did_usage = false;
     int i;
 
-    while ((i = getopt(argc,
-		       argv,
+    while ((i = getopt(argc_,
+		       argv_,
 		       "A:a:bBcCdeF:f:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) { 
 	switch (i) {
 	case 'B': /* Intentional Fall-Through */
@@ -1010,11 +1010,11 @@ std::string state::make_banner()
 	}
     }  
     utf8_banner += std::string("filename") + NEWLINE;
-    utf8_banner += "## Invoked from: " + main::make_utf8(main::getcwd()) + NEWLINE;
+    utf8_banner += "## Invoked from: " + global::make_utf8(global::getcwd()) + NEWLINE;
     utf8_banner += "## ";
 #ifdef _WIN32
-    std::wstring cwd = main::getcwd();
-    std::string  cwd8 = main::make_utf8(cwd);
+    std::wstring cwd = global::getcwd();
+    std::string  cwd8 = global::make_utf8(cwd);
 
     utf8_banner += cwd8 + ">";
 #else
@@ -1031,7 +1031,7 @@ std::string state::make_banner()
 	// We are going to print the string. It's either ASCII or UTF16
 	// convert it to a tstring and then to UTF8 string.
 	tstring arg_t = tstring(this->argv[largc]);
-	std::string arg_utf8 = main::make_utf8(arg_t);
+	std::string arg_utf8 = global::make_utf8(arg_t);
 	size_t current_bytes = arg_utf8.size();
     
 	// The extra 32 bytes is a fudge factor
@@ -1175,7 +1175,7 @@ int state::main(int _argc,char **_argv)
 #endif
 
     /* Verify that we can get the current working directory. */
-    if(main::getcwd().size()==0){
+    if(global::getcwd().size()==0){
 	ocb.fatal_error("%s", strerror(errno));
     }
 

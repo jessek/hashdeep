@@ -170,7 +170,7 @@ void display::print_debug(const char *fmt, ... )
 std::string display::fmt_filename(const std::string &fn) const
 {
     if(opt_unicode_escape){
-	return main::escape_utf8(fn);
+	return global::escape_utf8(fn);
     } else {
 	return fn;			// assumed to be utf8
     }
@@ -181,9 +181,9 @@ std::string display::fmt_filename(const std::string &fn) const
 std::string display::fmt_filename(const std::wstring &fn) const
 {
     if(opt_unicode_escape){
-	return main::escape_utf8(main::make_utf8(fn));
+	return global::escape_utf8(global::make_utf8(fn));
     } else {
-	return main::make_utf8(fn);
+	return global::make_utf8(fn);
     }
 }
 #endif
@@ -362,7 +362,7 @@ void file_data_hasher_t::compute_dfxml(bool known_hash,const hash_context_obj *h
  * Return the number of entries in the hashlist that have used==0
  * Optionally display them, optionally with additional output.
  */
-uint64_t display::compute_unused(bool display, std::string annotation)
+uint64_t display::compute_unused(bool show_display, std::string annotation)
 {
     uint64_t count=0;
 
@@ -376,7 +376,7 @@ uint64_t display::compute_unused(bool display, std::string annotation)
     for(hashlist::const_iterator i = known.begin(); i != known.end(); i++){
 	if((*i)->matched_file_number==0){
 	    count++;
-	    if (display || opt_verbose >= MORE_VERBOSE) {
+	    if (show_display || opt_verbose >= MORE_VERBOSE) {
 		filelist.push_back((*i)->file_name);
 	    }
 	}
@@ -610,10 +610,9 @@ void display::finalize_matching()
     /* Could the total matched */
     lock();
     uint64_t total_matched = known.total_matched();
-    uint64_t known_size    = known.size();
     unlock();
 
-    if (total_matched!=known_size){
+    if (total_matched!=known_size()){
 	return_code.add(status_t::STATUS_UNUSED_HASHES); // were there any unmatched?
     }
     if (total_matched==0){

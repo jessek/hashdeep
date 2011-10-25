@@ -201,7 +201,7 @@ void file_data_hasher_t::hash()
 	if(ocb->opt_verbose>=MORE_VERBOSE){
 	    errno = 0;			// no error
 	}
-	fdht->file_name	= main::make_utf8(fdht->file_name_to_hash);
+	fdht->file_name	= global::make_utf8(fdht->file_name_to_hash);
 	fdht->file_bytes = 0;		// actual number of bytes we have read
 
 	if (ocb->mode_barename)  {

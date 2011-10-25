@@ -400,7 +400,6 @@ public:;
     std::string		last_enabled_algorithms; // a string with the algorithms that were enabled last
     hashid_t		hash_column[NUM_ALGORITHMS]; // maps a column number to a hashid;
 						     // the order columns appear in the file being loaded.
-    int			num_columns;		     // number of columns in file being loaded
     hashfile_format	identify_format(class display *ocb,const std::string &fn,FILE *handle);
     loadstatus_t	load_hash_file(class display *ocb,const std::string &fn); // not tstring! always ASCII
 
@@ -600,9 +599,9 @@ public:
 
     /* DFXML support */
 
-    void	xml_open(FILE *out){
+    void	xml_open(FILE *out_){
 	lock();
-	dfxml = new XML(out);
+	dfxml = new XML(out_);
 	unlock();
     }
     void dfxml_startup(int argc,char **argv);
@@ -612,7 +611,7 @@ public:
 
     /* Known hash database interface */
     /* Display the unused files and return the count */
-    uint64_t	compute_unused(bool display,std::string annotation);
+    uint64_t	compute_unused(bool show_display,std::string annotation);
     void	set_utf8_banner(std::string utf8_banner_){
 	utf8_banner = utf8_banner_;
     }
@@ -716,7 +715,7 @@ public:
  */
 
 
-class main {
+class global {
 public:
     static tstring getcwd();			// returns the current directory
     static tstring get_realpath(const tstring &fn); // returns the full path
@@ -731,7 +730,7 @@ public:
 /* On Win32, allow output of wstr's by converting them to UTF-8 */
 #ifdef _WIN32
 inline std::ostream & operator <<(std::ostream &os,const std::wstring &wstr) {
-    os << main::make_utf8(wstr);
+    os << global::make_utf8(wstr);
     return os;
 }
 #endif

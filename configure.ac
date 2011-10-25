@@ -9,43 +9,11 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 AC_DEFINE([_FILE_OFFSET_BITS],64,[Make sure we are using 64-bit offsets])
 
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_INSTALL
+
 ################################################################
-### I am a glutten for punishment and this is security-critical software
-CFLAGS="$CFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
-CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 -Wall -g"
-
-AC_GNU_SOURCE
-AC_CANONICAL_HOST
-
-# See which compiler options can be used, as -Wall doesn't actually warn for all
-# These options I don't use:
-#    -Wdeclaration-after-statement -Wconversion
-# These compiler errors cause problems when used with earlier versions of GCC:
-#   -Wunreachable-code 
-#   -Wsign-compare-Winline  ---  causes configure to crash on gcc-4.2.1: 
-#   -Wnested-externs  --- causes warnings with unistd.h:  
-for option in -Wall -MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wshadow -Wwrite-strings -W -Wcast-align -Waggregate-return -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmissing-format-attribute -Wmultichar -Wc++-compat -Wmissing-noreturn -fast
-do
-  SAVE_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS $option"
-  AC_MSG_CHECKING([whether gcc understands $option])
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-      [has_option=yes],
-      [has_option=no; CFLAGS="$SAVE_CFLAGS" ])
-  AC_MSG_RESULT([has_option=$has_option; CFLAGS=$CFLAGS])
-  unset has_option
-  unset SAVE_CFLAGS
-done
-unset option
-
-# Sadly, this mostly ignored for this project, which is almost entirely on C++ now.
-CPPFLAGS="$CPPFLAGS -Wall"
-CXXFLAGS="$CXXFLAGS -Wall"
-# 
-#
-
-
-
 # http://osdir.com/ml/gnu.mingw.devel/2003-09/msg00040.html
 # Note: Windows 95 WINVER=0x400
 # Windows 98 WINVER=0x400  _WIN32_WINDOWS=0x0410
@@ -71,12 +39,7 @@ case $host in
      CXXFLAGS="$CXXFLAGS --static"
      mingw="yes"
      ;;		 		     
-
 esac
-
-AC_PROG_CC
-AC_PROG_CXX
-AC_PROG_INSTALL
 
 
 # Bring additional directories where things might be found into our
@@ -90,6 +53,80 @@ if test x"${mingw}" == "xno" ; then
     fi
   done
 fi
+#
+#
+################################################################
+
+AC_GNU_SOURCE
+AC_CANONICAL_HOST
+
+################################################################
+### I am a glutten for punishment and this is security-critical software
+# Check GCC
+WARNINGS_TO_TEST="-MD -D_FORTIFY_SOURCE=2 -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes \
+    -Wshadow -Wwrite-strings -Wcast-align -Waggregate-return \
+    -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization \
+    -Wfloat-equal -Wmissing-format-attribute -Wmultichar -Wc++-compat -Wmissing-noreturn "
+
+if test $mingw = "no" ; then
+  # add the warnings we don't want to do on mingw
+  $WARNINGS_TO_TEST="$WARNINGS_TO_TEST -Wall -Wstrict-prototypes  -Weffc++"
+fi
+
+for option in $WARNINGS_TO_TEST
+do
+  SAVE_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS $option"
+  AC_MSG_CHECKING([whether gcc understands $option])
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+      [has_option=yes],
+      [has_option=no; CFLAGS="$SAVE_CFLAGS"])
+  AC_MSG_RESULT($has_option)
+  unset has_option
+  unset SAVE_CFLAGS
+done
+unset option
+
+
+# Check G++
+# We don't use these warnings:
+# -Waggregate-return -- aggregate returns are GOOD; they simplify code design
+# We can use these warnings after ZLIB gets upgraded:
+# -Wundef  --- causes problems with zlib
+# -Wcast-qual 
+# -Wmissing-format-attribute  - can't get this one right
+AC_LANG_PUSH(C++)
+WARNINGS_TO_TEST="-Wall -MD -D_FORTIFY_SOURCE=2 -Wpointer-arith \
+    -Wshadow -Wwrite-strings -Wcast-align  \
+    -Wredundant-decls -Wdisabled-optimization \
+    -Wfloat-equal -Wmultichar -Wmissing-noreturn \
+    -Wstrict-null-sentinel -Woverloaded-virtual -Wsign-promo"
+
+if test $mingw = "no" ; then
+  # add the warnings we don't want to do on mingw
+  $WARNINGS_TO_TEST="$WARNINGS_TO_TEST  -Weffc++"
+fi
+
+for option in $WARNINGS_TO_TEST
+do
+  SAVE_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $option"
+  AC_MSG_CHECKING([whether g++ understands $option])
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+      [has_option=yes],
+      [has_option=no; CXXFLAGS="$SAVE_CXXFLAGS"])
+  AC_MSG_RESULT($has_option)
+  unset has_option
+  unset SAVE_CXXFLAGS
+done
+unset option
+AC_LANG_POP()    
+#
+################################################################
+
+
+# Determine UTC date offset
+CPPFLAGS="$CPPFLAGS -DUTC_OFFSET=`date +%z`"
 
 # Checks for header files.
 AC_HEADER_DIRENT

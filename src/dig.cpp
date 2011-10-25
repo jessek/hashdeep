@@ -30,7 +30,7 @@
 
 void state::done_processing_dir(const tstring &fn_)
 {
-    tstring fn = main::get_realpath(fn_);
+    tstring fn = global::get_realpath(fn_);
     dir_table_t::iterator pos = dir_table.find(fn);
     if(pos==dir_table.end()){
 	ocb.internal_error("%s: Directory %s not found in done_processing_dir", progname.c_str(), fn.c_str());
@@ -42,7 +42,7 @@ void state::done_processing_dir(const tstring &fn_)
 
 void state::processing_dir(const tstring &fn_)
 {
-    tstring fn = main::get_realpath(fn_);
+    tstring fn = global::get_realpath(fn_);
     if(dir_table.find(fn)!=dir_table.end()){
 	ocb.internal_error("%s: Attempt to add existing %s in processing_dir", progname.c_str(), fn.c_str());
 	// will not be reached.
@@ -53,7 +53,7 @@ void state::processing_dir(const tstring &fn_)
 
 bool state::have_processed_dir(const tstring &fn_)
 {
-    tstring fn = main::get_realpath(fn_);
+    tstring fn = global::get_realpath(fn_);
     return dir_table.find(fn)!=dir_table.end();
 }
 
@@ -322,7 +322,7 @@ void state::clean_name_posix(std::string &fn)
 // Returns TRUE if the directory is '.' or '..', otherwise FALSE
 static bool is_special_dir(const tstring &d)
 {
-    return main::make_utf8(d)=="." || main::make_utf8(d)=="..";
+    return global::make_utf8(d)=="." || global::make_utf8(d)=="..";
 }
 
 void state::process_dir(const tstring &fn)
@@ -330,7 +330,7 @@ void state::process_dir(const tstring &fn)
     _TDIR *current_dir;
     struct _tdirent *entry;
 
-    if(opt_debug) std::cerr << "*** process_dir(" << main::make_utf8(fn) << ")\n";
+    if(opt_debug) std::cerr << "*** process_dir(" << global::make_utf8(fn) << ")\n";
 
     if (have_processed_dir(fn)) {
 	ocb.error_filename(fn,"symlink creates cycle");
@@ -573,13 +573,13 @@ bool state::should_hash(const tstring &fn)
 void state::dig_normal(const tstring &fn_)
 {
     tstring fn(fn_);			// local copy will be modified
-    if (opt_debug) ocb.status("*** state::dig_normal(%s)",main::make_utf8(fn).c_str());
+    if (opt_debug) ocb.status("*** state::dig_normal(%s)",global::make_utf8(fn).c_str());
 #ifdef _WIN32
     clean_name_win32(fn);
 #else
     clean_name_posix(fn);
 #endif
-    if (opt_debug) ocb.status("*** cleaned:%s",main::make_utf8(fn).c_str());
+    if (opt_debug) ocb.status("*** cleaned:%s",global::make_utf8(fn).c_str());
     if (should_hash(fn)){
 	ocb.hash_file(fn);
     }
@@ -616,7 +616,7 @@ void state::dig_win32(const std::wstring &fn)
     HANDLE hFind;
 
     if(opt_debug) ocb.status("*** state::dig_win32(%s)",
-			     main::make_utf8(fn).c_str());
+			     global::make_utf8(fn).c_str());
 
     if (is_win32_device_file(fn)){
 	ocb.hash_file(fn);
@@ -660,7 +660,7 @@ void state::dig_win32(const std::wstring &fn)
 
 	    new_fn = dirname + FindFileData.cFileName;
 	    if (!ocb.opt_relative) {
-		new_fn = main::get_realpath(new_fn);
+		new_fn = global::get_realpath(new_fn);
 	    }
       
 	    if (!(is_junction_point(new_fn))) dig_normal(new_fn); 
@@ -684,7 +684,7 @@ void state::dig_win32(const std::wstring &fn)
     if (0 == rc)  {
 	ocb.error_filename(fn,"Unknown error while cleaning up wildcard expansion");
     }
-    if(opt_debug) ocb.status("state::dig_win32(%s)",main::make_utf8(fn).c_str());
+    if(opt_debug) ocb.status("state::dig_win32(%s)",global::make_utf8(fn).c_str());
 }
 #endif
 
@@ -761,6 +761,6 @@ void state::dig_self_test()
 	timestamp_t timestamp;
 	file_types ft = s.file_type(names[i],&s.ocb,&stat_bytes,&timestamp);
 	std::cerr << "file_type(" << names[i] << ")="
-		  << ft << " size=" << stat_bytes << " ctime=" << timestamp << "\n";
+		  << (int)ft << " size=" << stat_bytes << " ctime=" << timestamp << "\n";
     }
 }
