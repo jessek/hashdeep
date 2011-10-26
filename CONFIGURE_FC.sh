@@ -125,8 +125,9 @@ pushd pthreads-w32-2-8-0-release
   done
 popd
 
-echo Press return to download and make md5deep windows executables
-read
+echo ================================================================
+echo ================================================================
+echo
 echo Now downloading md5deep SVN repository
 svn co https://xchatty@md5deep.svn.sourceforge.net/svnroot/md5deep
 if [ ! -d md5deep/branches/version4 ] ; then
