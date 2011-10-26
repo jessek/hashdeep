@@ -86,8 +86,8 @@ int threadpool::numCPU()
 
 void ERR(int val,const char *msg) __attribute__ ((__noreturn__))
 {
-    cerr << msg << "\n";
-    cerr.flush();
+    std::cerr << msg << "\n";
+    std::cerr.flush();
     exit(val);
 }
 
