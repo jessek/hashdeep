@@ -1,5 +1,7 @@
 2011-10-26  Simson Garfinkel  <simsong@imac3.home>
 
+	* configure.ac: beta counter incremented to beta2
+
 	* src/common.h (tstring): somehow we got a ; before the wstring. Removed it.
 
 2011-10-25  Simson Garfinkel  <simsong@imac3.home>

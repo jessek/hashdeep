@@ -133,7 +133,9 @@ if [ ! -d md5deep/branches/version4 ] ; then
   echo md5deep subversion repository was not downloaded.
   exit 1
 fi
+here=`pwd`
 cd md5deep/branches/version4
 sh bootstrap.sh
 ./configure
 make windist
+mv *.zip "$here"
