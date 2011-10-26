@@ -269,6 +269,15 @@ do
    if [ $mode = "generate" ]; then
      tr -d \\r < test$i.out > ref/test$i.out
      tr -d \\r < test$i.err > ref/test$i.err
+
+     # extra addition for test 47
+     if [ $i = 47 ]; then
+       echo "   Input files examined: 0" >> ref/test$i.out
+       echo "  Known files expecting: 0" >> ref/test$i.out
+       sort ref/test$i.out > ref/test$i.out2
+       mv ref/test$i.out2 ref/test$i.out
+     fi
+
      echo ok
    else
      tr -d \\r < test$i.out > hold; mv hold test$i.out

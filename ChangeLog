@@ -2,6 +2,20 @@
 
 	* configure.ac: beta counter incremented to beta2
 
+	* tests/tests.sh: added code for test 47 to cover new audit mode generating more output.
+
+	* src/display.cpp (display::audit_update): audit output was going to cerr; should go to cout.
+
+	* src/threadpool.cpp (ERR): changed from fprintf to cerr; added __noreturn__ attribute.
+
+	* src/files.cpp (state::md5deep_load_match_file): file_type no longer shadows member of this.
+
+	* src/xml.cpp (XML::comment): comment no longer shadows local member
+
+	* src/dig.cpp (print_last_error): now uses cerr instead of fprintf; turns pszMessage into UTF8
+
+	* src/main.h (class display): added __attribute__ ((__noreturn__)) to internal_error().
+
 	* src/common.h (tstring): somehow we got a ; before the wstring. Removed it.
 
 2011-10-25  Simson Garfinkel  <simsong@imac3.home>

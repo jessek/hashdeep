@@ -587,14 +587,14 @@ void state::md5deep_load_match_file(const char *fn)
 	return;
     }
 
-    int file_type = identify_hash_file_type(f,&expected_hashes);
-    if (file_type == TYPE_UNKNOWN)  {
+    int ftype = identify_hash_file_type(f,&expected_hashes);
+    if (ftype == TYPE_UNKNOWN)  {
 	ocb.error("%s: Unable to find any hashes in file, skipped.", fn);
 	fclose(f); f = 0;
 	return;
     }
 
-    if (TYPE_ENCASE == file_type)  {
+    if (TYPE_ENCASE == ftype)  {
 	// We can't use the normal file reading code which is based on
 	// a one-line-at-a-time approach. Encase files are binary records 
         parse_encase_file(fn,f,expected_hashes);
@@ -604,7 +604,7 @@ void state::md5deep_load_match_file(const char *fn)
 
     // We skip the first line in every file type except plain files. 
     // All other file types have a header line that we need to ignore.
-    if (file_type_without_header(file_type)){
+    if (file_type_without_header(ftype)){
 	rewind(f);
     }
     else {
@@ -616,7 +616,7 @@ void state::md5deep_load_match_file(const char *fn)
 	++line_number;
 	memset(known_fn,0,PATH_MAX);
 
-	if (!find_hash_in_line(buf,file_type,known_fn)) {
+	if (!find_hash_in_line(buf,ftype,known_fn)) {
 	    if ((!ocb.opt_silent) || (mode_warn_only)) {
 		fprintf(stderr,"%s: %s: No hash found in line %" PRIu64 "%s", 
 			progname.c_str(),fn,line_number,NEWLINE);

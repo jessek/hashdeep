@@ -323,10 +323,10 @@ void XML::printf(const char *format,...)
     va_end(ap);
 }
 
-void XML::comment(const string &comment)
+void XML::comment(const string &comment_)
 {
     fputs("<!-- ",out);
-    fputs(comment.c_str(),out);
+    fputs(comment_.c_str(),out);
     fputs(" -->\n",out);
 }
 

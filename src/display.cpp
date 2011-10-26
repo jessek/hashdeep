@@ -420,7 +420,6 @@ void display::display_audit_results()
 	if(opt_verbose >= MORE_VERBOSE){
 	    status("   Input files examined: %"PRIu64, this->match.total);
 	    status("  Known files expecting: %"PRIu64, this->match.expect);
-	    status(" ");
 	}
 	status("          Files matched: %"PRIu64, this->match.exact);
 	status("Files partially matched: %"PRIu64, this->match.partial);
@@ -595,7 +594,7 @@ int display::audit_update(file_data_hasher_t *fdht)
 	line = fmt_filename(fdht) + ": Hash collision with " + fmt_filename(matched_fdht);
     }
     if(line.size()>0){
-	writeln(&std::cerr,line);
+	writeln(&std::cout,line);
     }
     return FALSE;
 }

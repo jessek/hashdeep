@@ -654,7 +654,7 @@ public:
     // Display an error message if not in silent mode and exit
     void	fatal_error(const char *fmt, ...) __attribute__((format(printf, 2, 0))) __attribute__ ((__noreturn__));
     // Display an error message, ask user to contact the developer, 
-    void	internal_error(const char *fmt, ...) __attribute__((format(printf, 2, 0))) ;
+    void	internal_error(const char *fmt, ...) __attribute__((format(printf, 2, 0))) __attribute__ ((__noreturn__));
     void	print_debug(const char *fmt, ...) __attribute__((format(printf, 2, 0)));
     void	error_filename(const std::string &fn, const char *fmt, ...) __attribute__((format(printf, 3, 0))) ;
 #ifdef _WIN32
