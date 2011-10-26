@@ -134,8 +134,8 @@ void print_last_error(char *function_name)
 		  0, NULL );
   
     // Display the error message and exit the process
-    cerr << function_name << "failed with error " << dwLastError
-	 << ":" << global::make_utf8(pszMessage) << "\n";
+    std::cerr << function_name << "failed with error " << dwLastError
+	      << ":" << global::make_utf8(pszMessage) << "\n";
     LocalFree(pszMessage);
 }
 // An NTFS Junction Point is like a hard link on *nix but only works
