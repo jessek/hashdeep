@@ -84,7 +84,8 @@ int threadpool::numCPU()
  * ERR prints an error message, gets it out and then quits.
  */
 
-void ERR(int val,const char *msg) __attribute__ ((__noreturn__))
+void ERR(int val,const char *msg) __attribute__ ((__noreturn__));
+void ERR(int val,const char *msg)
 {
     std::cerr << msg << "\n";
     std::cerr.flush();
