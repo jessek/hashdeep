@@ -1,3 +1,7 @@
+2011-10-26  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/common.h (tstring): somehow we got a ; before the wstring. Removed it.
+
 2011-10-25  Simson Garfinkel  <simsong@imac3.home>
 
 	* src/dig.cpp (state::dig_self_test): added explicit cast to ft to avoid compiler warning.

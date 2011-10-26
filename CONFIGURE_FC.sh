@@ -14,19 +14,26 @@ mingw32 and 64.  It requires:
         http://fedoraproject.org/en/get-fedora-options#formats
    1b - Create a new VM using this ISO as the boot. The ISO will
         install off of its packages on your machine.
-   1c - Create an administrative user called 'uroot'. Log in as
-        uroot and su to root.
-   1d - Start up Terminal; Chose Terminal's 
+   1c - Run Applications/Other/Users and Groups from the Applications menu.
+   1d - Type user user password.
+   1e - Click your username / Properties / Groups.
+   1f - Add yourself to the wheel group.
+   1g - Type your password again.
+   1h - Close the user manager
+   
+   1i - Start up Terminal; Chose Terminal's 
         Edit/Profile Preferences/Scrolling and check 'Unlimited' scrollback. 
-   1e - Chose Applications/System Tools/System Settings/Screen.
+   1j - Chose Applications/System Tools/System Settings/Screen.
         Select brightness 1 hour and Uncheck lock.
        
    NOTE: The first time you log in, the system will block the yum 
    system as it downloads updates. This is annoying.
 
-2. This script. Put it in the users home directory.
+2. This script. Put it in your home directory.
 
-3. Root access. This script must be run as root.
+3. Root access. This script must be run as root. You can do that 
+   by typing:
+          sudo sh CONFIGURE_FC.sh
 
 press any key to continue...
 EOF
@@ -73,8 +80,7 @@ if [ ! -d /etc/yum.repos.d ]; then
   exit 1
 fi
 if [ ! -r /etc/yum.repos.d/fedora-cross.repo ] ; then
-  cd /etc/yum.repos.d
-  if wget http://build1.openftd.org/fedora-cross/fedora-cross.repo ; then
+  if wget --directory-prefix=/etc/yum.repos.d  http://build1.openftd.org/fedora-cross/fedora-cross.repo ; then
     echo Successfully downloaded
   else
     echo Cannot download the file.
@@ -100,23 +106,24 @@ if [ ! -r pthreads-w32-2-8-0-release.tar.gz ]; then
 fi
 /bin/rm -rf pthreads-w32-2-8-0-release 
 tar xfvz pthreads-w32-2-8-0-release.tar.gz
-cd pthreads-w32-2-8-0-release
 
-for CROSS in i686-w64-mingw32 x86_64-w64-mingw32 
-do
-  make CROSS=$CROSS- CFLAGS="-DHAVE_STRUCT_TIMESPEC -I." clean GC-static
-  install implement.h need_errno.h pthread.h sched.h semaphore.h /usr/$CROSS/sys-root/mingw/include/
-  if [ $? != 0 ]; then
-    echo "Unable to install include files for $CROSS"
-    exit 1
-  fi
-  install *.a /usr/$CROSS/sys-root/mingw/lib/
-  if [ $? != 0 ]; then
-    echo "Unable to install library for $CROSS"
-    exit 1
-  fi
-  make clean
-done
+pushd pthreads-w32-2-8-0-release
+  for CROSS in i686-w64-mingw32 x86_64-w64-mingw32 
+  do
+    make CROSS=$CROSS- CFLAGS="-DHAVE_STRUCT_TIMESPEC -I." clean GC-static
+    install implement.h need_errno.h pthread.h sched.h semaphore.h /usr/$CROSS/sys-root/mingw/include/
+    if [ $? != 0 ]; then
+      echo "Unable to install include files for $CROSS"
+      exit 1
+    fi
+    install *.a /usr/$CROSS/sys-root/mingw/lib/
+    if [ $? != 0 ]; then
+      echo "Unable to install library for $CROSS"
+      exit 1
+    fi
+    make clean
+  done
+popd
 
 echo Press return to download and make md5deep windows executables
 read

@@ -231,7 +231,7 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
  * ON POSIX: we get a std::string.
  */ 
 
-#define tstring std::;wstring 
+#define tstring std::wstring 
 #endif
 
 // The current cross compiler for OS X->Windows does not support a few
