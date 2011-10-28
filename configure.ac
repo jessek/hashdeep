@@ -205,6 +205,7 @@ fi
 # With special nods to compiling under mingw
 
 if test  x"$mingw" = x"yes";  then
+  AC_MSG_NOTICE([Checking for pthreads under mingw])
   AC_DEFINE([HAVE_STRUCT_TIMESPEC],1,[Required for mingw])
   CFLAGS="$CFLAGS -mthreads "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
@@ -219,7 +220,8 @@ else
     CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
     CPPFLAGS="$PTHREAD_CFLAGS $CPPFLAGS "
     CC="$PTHREAD_CC"
-  ])
+    AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
+  ],[AC_MSG_NOTICE([pthreads not found by ax_pthread macro])])
 fi
 
 AC_CHECK_HEADERS([pthread.h])

@@ -1,3 +1,7 @@
+2011-10-28  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac (HAVE_PTHREAD): fixed for multithreading error on macos and linux (it wasn't turning on)
+
 2011-10-26  Simson Garfinkel  <simsong@imac3.home>
 
 	* configure.ac: beta counter incremented to beta2
