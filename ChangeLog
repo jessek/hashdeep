@@ -1,3 +1,7 @@
+2011-11-01 Jesse Kornblum <research@jessekornblum.com>
+
+	* configure.ac: Version bump to 4.0 beta1
+
 2011-10-28  Simson Garfinkel  <simsong@imac3.home>
 
 	* configure.ac (HAVE_PTHREAD): fixed for multithreading error on macos and linux (it wasn't turning on)
