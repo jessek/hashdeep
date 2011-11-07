@@ -2,10 +2,15 @@
 
 * New Features
 
-      Removed ten character limit on file size mode
+      	Rewrote most of the program in C++.
+
+	Enabled multiprocessor support on all platforms.
+
+	Removed ten character limit on file size mode
 
 * Bug Fixes
 
+	Too numerous to count!
 
 
 
