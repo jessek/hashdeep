@@ -1,3 +1,7 @@
+2011-11-07 Jesse Kornblum <research@jessekornblum.com>
+
+	* tests/Makefile.am: Corrected test filenames to make dist
+
 2011-11-01 Jesse Kornblum <research@jessekornblum.com>
 
 	* configure.ac: Version bump to 4.0 beta1

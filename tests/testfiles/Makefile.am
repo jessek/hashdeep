@@ -14,12 +14,10 @@ FILES = 1072-at.txt \
 	unicode_snowman_☃.txt \
 	foo.txt \
 	install.txt \
-	one-byte-file\
-	zero-byte-file\
+	one-byte-file.txt\
+	zero-byte-file.txt\
 	dir_a/web2 \
-	dir_a/dir_b/web2a \
-	dir_c/Declaration_Engrav_Pg1of1_AC.jpg \
-	dir_c/Declaration_Pg1of1_AC.jpg 
+	dir_a/dir_b/web2a 
 
 EXTRA_DIST = $(FILES) symlinktest.tar.gz testfiles.zip
 
