@@ -1,4 +1,4 @@
-EXTRA_DIST=README.txt 
+EXTRA_DIST=README.txt tests.sh
 TESTS=tests.sh
 
 executable:
