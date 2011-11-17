@@ -1,3 +1,7 @@
+2011-11-17  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/main.cpp (state::main): -j default was being set after option processing. Moved to before. -j0 now disables threading, -j1 is just one thread.
+
 2011-11-07 Jesse Kornblum <research@jessekornblum.com>
 
 	* tests/Makefile.am: Corrected test filenames to make dist

@@ -1122,6 +1122,10 @@ int state::main(int _argc,char **_argv)
     progname = program_invocation_name;	// possibly better
 #endif
 
+#ifdef HAVE_PTHREAD
+    ocb.opt_threadcount = threadpool::numCPU(); // be sure it's set
+#endif
+
     /* There are two versions of basename, so use our own */
     size_t delim = progname.rfind(DIR_SEPARATOR);
     if(delim!=std::string::npos) progname.erase(0,delim+1);
@@ -1150,9 +1154,6 @@ int state::main(int _argc,char **_argv)
 	md5deep_process_command_line(_argc,_argv);
     }
 
-#ifdef HAVE_PTHREAD
-    ocb.opt_threadcount = threadpool::numCPU(); // be sure it's set
-#endif
 
     if(opt_debug==1){
 	printf("self-test...\n");
