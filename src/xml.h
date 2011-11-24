@@ -158,8 +158,15 @@ public:
 #ifdef UNAMES
 	xmlout("os_sysname",UNAMES,"",false);
 #endif
+#ifdef HAVE_GETHOSTNAME
+	{
+	    const char hostname[1024];
+	    if(gethostname(hostname,sizeof(hostname))==0){
+		xmlout("host",hostname);
+	    }
+	}
+#endif
 #endif	
-
 	xmlout("command_line", command_line); // quote it!
 #ifdef HAVE_GETUID
 	xmlprintf("uid","","%d",getuid());

@@ -137,6 +137,8 @@ AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h malloc.h stdint.h stdlib.
 			   CommonCrypto/CommonDigest.h
 			   ])
 
+
+
 # These functions not available everywhere
 AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r mmap usleep mkstemp vasprintf getrusage getprogname])
 
@@ -165,6 +167,11 @@ AC_CHECK_HEADERS([sys/mount.h],[],[],
 AC_CHECK_HEADERS([time.h sys/time.h])
 AC_HEADER_TIME
 
+
+################################################################
+# DFXML support
+AC_CHECK_HEADERS([sys/cdefs.h sys/resource.h pwd.h sys/utsname.h])
+AC_CHECK_FUNCS([localtime_r getuid gethostname getwpuid getrusage])
 
 # Don't think we need this anymore.
 # AC_C_BIGENDIAN
