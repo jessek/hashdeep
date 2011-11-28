@@ -1,6 +1,7 @@
 2011-11-27 Jesse Kornblum <research@jessekornblum.com>:
 
 	* src/main.cpp (hashdeep_process_command_line): Fixed getopt command so that -c mode takes an argument, but -C does not. The former caused a crash.
+	* src/xml.h: Removed spurrious 'const'
 
 2011-11-17  Simson Garfinkel  <simsong@imac3.home>
 

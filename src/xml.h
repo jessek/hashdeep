@@ -160,7 +160,7 @@ public:
 #endif
 #ifdef HAVE_GETHOSTNAME
 	{
-	    const char hostname[1024];
+	    char hostname[1024];
 	    if(gethostname(hostname,sizeof(hostname))==0){
 		xmlout("host",hostname);
 	    }
