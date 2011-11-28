@@ -1,3 +1,7 @@
+2011-11-27 Jesse Kornblum <research@jessekornblum.com>:
+
+	* src/main.cpp (hashdeep_process_command_line): Fixed getopt command so that -c mode takes an argument, but -C does not. The former caused a crash.
+
 2011-11-17  Simson Garfinkel  <simsong@imac3.home>
 
 	* src/main.cpp (state::main): -j default was being set after option processing. Moved to before. -j0 now disables threading, -j1 is just one thread.
