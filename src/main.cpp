@@ -158,7 +158,7 @@ void state::usage()
 	ocb.status("-i  - only process files smaller than the given threshold");
 	ocb.status("-o  - only process certain types of files. See README/manpage");
 	ocb.status("-v  - verbose mode. Use again to be more verbose; -V display version & exit.");
-	ocb.status("-d  - output in DFXML; -u - Escape Unicode; -W FILE - write to FILE.");
+	ocb.status("-d  - output in DFXML; -W FILE - write to FILE.");
 #ifdef HAVE_PTHREAD
 	ocb.status("-jnn run nn threads (default %d)",threadpool::numCPU());
 #else
@@ -166,12 +166,18 @@ void state::usage()
 #endif	
 
     }
-    if(usage_count==2){
-	ocb.status("-C - On MAC only --- use Common Crypto hash functions");
-	ocb.status("-B - verbose mode; repeat for more verbosity");
+    if(usage_count==2){			// -hh
+	ocb.status("-0 - use a NULL for newline.");
 	ocb.status("-u - escape Unicode");
+	ocb.status("-B - verbose mode; repeat for more verbosity");
+	ocb.status("-C - Macintosh only --- use Common Crypto hash functions");
+	ocb.status("-Fb - I/O mode buffered; -Fu unbuffered; -Fm memory-mapped");
+	ocb.status("-o[bcpflsd] - only process certain types of files:");
+	ocb.status("            b=block dev; c=character dev; p=named pipe");
+	ocb.status("            f=regular file; l=symlink; s=socket; d=door");
+	ocb.status("-Dnn - set debug level to nn");
     }
-    if(usage_count==3){
+    if(usage_count==3){			// -hhh - adds debugging information
 	ocb.status("sizeof(off_t)= %d",sizeof(off_t));
 #ifdef HAVE_PTHREAD
 	ocb.status("HAVE_PTHREAD");
@@ -218,18 +224,20 @@ void state::md5deep_usage(void)
 #endif	
 	ocb.status("-Z - traige mode;   -h - help;   -hh - full help");
     }
-    if(usage_count==2){
-	ocb.status("-B - verbose mode; repeat for more verbosity");
-	ocb.status("-C - On MAC only --- use Common Crypto hash functions");
-	ocb.status("-k - print asterisk before filename");
+    if(usage_count==2){			// -hh
 	ocb.status("-0 - use a NULL for newline.");
+	ocb.status("-k - print asterisk before filename");
+	ocb.status("-u - escape Unicode");
+	ocb.status("-B - verbose mode; repeat for more verbosity");
+	ocb.status("-C - Macintosh only --- use Common Crypto hash functions");
+	ocb.status("-Fb - I/O mode buffered; -Fu unbuffered; -Fm memory-mapped");
 	ocb.status("-ffilename - take list of files to hash from filename");
 	ocb.status("-o[bcpflsd] - only process certain types of files:");
 	ocb.status("            b=block dev; c=character dev; p=named pipe");
 	ocb.status("            f=regular file; l=symlink; s=socket; d=door");
 	ocb.status("-Dnn - set debug level to nn");
     }
-    if(usage_count==3){
+    if(usage_count==3){			// -hhh
 	ocb.status("sizeof(off_t)= %d",sizeof(off_t));
 #ifdef HAVE_PTHREAD
 	ocb.status("HAVE_PTHREAD");
@@ -965,7 +973,7 @@ int state::md5deep_process_command_line(int argc_, char **argv_)
 	case 'l': ocb.opt_relative = true;      break;
 	case 'q': ocb.mode_quiet = true;	break;
 	case 'W': ocb.set_outfilename(optarg);	break;
-	case 'u': ocb.opt_unicode_escape = 1;	break;
+	case 'u': ocb.opt_unicode_escape = true;break;
 
 	case 'h':
 	usage_count++;

@@ -1,3 +1,7 @@
+2011-11-29  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/main.h (d): default I/O mode changed from memory-mapped to buffered (the same as the 3.x release.) Memory-mapped should be faster, but for some reason it isn't. Also it makes the memory usage appear quite large (it isn't, but the top and ps commands report mapped memory.)
+
 2011-11-27 Jesse Kornblum <research@jessekornblum.com>:
 
 	* src/main.cpp (hashdeep_process_command_line): Fixed getopt command so that -c mode takes an argument, but -C does not. The former caused a crash.

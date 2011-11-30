@@ -88,7 +88,7 @@ public:;
 	if(str=="2" || str[0]=='m') return iomode::mmapped;
 	std::cerr << "Invalid iomode '" << str << "'";
 	assert(0);
-	return iomode::buffered;
+	return iomode::unbuffered;	// default
     }
 };
 
@@ -527,7 +527,7 @@ public:
 	opt_display_size(false),
 	opt_display_hash(false),
 	opt_show_matched(false),
-	opt_iomode(iomode::mmapped),	// by default, use memory-mapped
+	opt_iomode(iomode::buffered),	// by default, use buffered
 #ifdef HAVE_PTRHEAD
 	opt_threadcount(threadpool::numCPU()),
 	tp(0),
