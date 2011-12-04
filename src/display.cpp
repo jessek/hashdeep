@@ -808,6 +808,7 @@ void display::dfxml_write(file_data_hasher_t *fdht)
 	lock();
 	dfxml->push("fileobject",attrs);
 	dfxml->xmlout("filename",fdht->file_name);
+	dfxml->xmlout("filesize",(int64_t)fdht->stat_bytes);
 	dfxml->writexml(fdht->dfxml_hash.str());
 	dfxml->pop();
 	unlock();
