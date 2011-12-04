@@ -1,3 +1,7 @@
+2011-12-04  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/display.cpp (dfxml_write): added filesize to DFXML output
+
 2011-11-29  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* src/main.h (d): default I/O mode changed from memory-mapped to buffered (the same as the 3.x release.) Memory-mapped should be faster, but for some reason it isn't. Also it makes the memory usage appear quite large (it isn't, but the top and ps commands report mapped memory.)

@@ -270,7 +270,7 @@ public:
     void	append_dfxml_for_byterun();
     void	compute_dfxml(bool known_hash,const hash_context_obj *hc);
 
-    timestamp_t	timestamp;
+    timestamp_t	timestamp;		// ctime; should it be mtime?
 
     // How many bytes (and megs) we think are in the file, via stat(2)
     // and how many bytes we've actually read in the file
@@ -279,7 +279,7 @@ public:
     /* When we started the hashing, and when was the last time a display was printed,
      * for printing status updates.
      */
-    time_t	start_time, last_time;
+    time_t	start_time, last_time;	// of hashing
     bool	eof;			// end of file encountered while reading
     int		workerid;		// my worker id, or -1 if there is none
     void	set_workerid(int id){workerid=id;}
