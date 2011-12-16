@@ -1,3 +1,7 @@
+2011-12-16 Jesse Kornblum <research@jessekornblum.com>
+
+	* tests/tests.sh: added test for BSD style hashes, iLook hashes
+
 2011-12-04  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
 
 	* src/display.cpp (dfxml_write): added filesize to DFXML output

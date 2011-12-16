@@ -235,6 +235,12 @@ do
 
      # Additional tests as errors are discovered
     47) cmd="$BASE/hashdeep$EXE -vvvbak known1 -k known2 foo bar moo cow"      ;;
+
+     # BSD style hashes, iLook hashes
+    48) cmd="$BASE/md5deep$EXE -Sm $TESTFILES_DIR/bsd-hashes.txt -r $HTMP" ;;
+    49) cmd="$BASE/md5deep$EXE -m $TESTFILES_DIR/ilookv4.hsh -r $HTMP" ;;
+
+
    esac
    if [ x"$cmd" = "x" ]
    then 

@@ -17,7 +17,8 @@ FILES = 1072-at.txt \
 	one-byte-file.txt\
 	zero-byte-file.txt\
 	dir_a/web2 \
-	dir_a/dir_b/web2a 
+	dir_a/dir_b/web2a \
+	bsd-hashes.txt
 
 EXTRA_DIST = $(FILES) symlinktest.tar.gz testfiles.zip
 
