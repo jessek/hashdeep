@@ -230,61 +230,61 @@ int state::find_md5deep_size_hash(char *buf, char *known_fn)
 
 int state::find_bsd_hash(char *buf, char *fn)
 {
-  char *temp;
-  size_t buf_len = strlen(buf);
-  unsigned int pos = 0, hash_len = HASH_STRING_LENGTH, 
-    first_paren, second_paren;
+    char *temp;
+    size_t buf_len = strlen(buf);
+    unsigned int pos = 0;
+    unsigned int  hash_len = HASH_STRING_LENGTH;
 
-  if (buf == NULL || buf_len < hash_len)
-    return FALSE;
+    if (buf == NULL || buf_len < hash_len)
+	return FALSE;
 
-  while (pos < buf_len && buf[pos] != '(')
-    ++pos;
-  // The hash always comes after the file name, so there has to be 
-  // enough room for the filename and *then* the hash.
-  if (pos + hash_len + 1 > buf_len)
-    return FALSE;
-  first_paren = pos;
+    while (pos < buf_len && buf[pos] != '(')
+	++pos;
+    // The hash always comes after the file name, so there has to be 
+    // enough room for the filename and *then* the hash.
+    if (pos + hash_len + 1 > buf_len)
+	return FALSE;
+    unsigned int first_paren = pos;
 
-  // We only need to check back as far as the opening parenethsis,
-  // not the start of the string. If the closing paren comes before
-  // the opening paren (e.g. )( ) then the line is not valid
-  pos = buf_len - hash_len;
-  while (pos > first_paren && buf[pos] != ')')
-    --pos;
-  if (pos == first_paren)
-    return FALSE;
-  second_paren = pos;
+    // We only need to check back as far as the opening parenethsis,
+    // not the start of the string. If the closing paren comes before
+    // the opening paren (e.g. )( ) then the line is not valid
+    pos = buf_len - hash_len;
+    while (pos > first_paren && buf[pos] != ')')
+	--pos;
+    if (pos == first_paren)
+	return FALSE;
+    unsigned int second_paren = pos;
 
-  if (fn != NULL)  {
-    temp = strdup(buf);
-    temp[second_paren] = 0;
-    // The filename starts one character after the first paren
-    shift_string(temp,0,first_paren+1);
-    strncpy(fn,temp,PATH_MAX);
-    free(temp);
-  }
+    if (fn != NULL)  {
+	temp = strdup(buf);
+	temp[second_paren] = 0;
+	// The filename starts one character after the first paren
+	shift_string(temp,0,first_paren+1);
+	strncpy(fn,temp,PATH_MAX);
+	free(temp);
+    }
 
-  // We chop instead of setting buf[HASH_STRING_LENGTH] = 0 just in
-  // case there is extra data. We don't want to chop up longer 
-  // (possibly invalid) data and take part of it as a valid hash!
+    // We chop instead of setting buf[HASH_STRING_LENGTH] = 0 just in
+    // case there is extra data. We don't want to chop up longer 
+    // (possibly invalid) data and take part of it as a valid hash!
   
-  // We duplicate the buffer here as we're going to modify it.
-  // We work on a copy so that we don't muck up the buffer for
-  // any other functions who want to use it.
-  temp = strdup(buf);
-  chop_line(temp);
+    // We duplicate the buffer here as we're going to modify it.
+    // We work on a copy so that we don't muck up the buffer for
+    // any other functions who want to use it.
+    temp = strdup(buf);
+    chop_line(temp);
 
-  // The hash always begins four characters after the second paren
-  shift_string(temp,0,second_paren+4);
+    // The hash always begins four characters after the second paren
+    shift_string(temp,0,second_paren+4);
 
 #if 0
-  int status = valid_hash(s,temp);
-  return status;
+    int status = valid_hash(s,temp);
+    return status;
 #endif
-  free(temp);
-  assert(0);
-  return 0;
+    free(temp);
+    assert(0);
+    return 0;
 }
   
 
@@ -618,8 +618,7 @@ void state::md5deep_load_match_file(const char *fn)
 
 	if (!find_hash_in_line(buf,ftype,known_fn)) {
 	    if ((!ocb.opt_silent) || (mode_warn_only)) {
-		fprintf(stderr,"%s: %s: No hash found in line %" PRIu64 "%s", 
-			progname.c_str(),fn,line_number,NEWLINE);
+		std::cerr << progname << ": " << fn << "No hash found in line " << line_number << NEWLINE;
 	    }
 	} else {
 	    // Invalid hashes are caught above

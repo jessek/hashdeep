@@ -1,3 +1,9 @@
+2011-12-17  Simson Garfinkel  <simsong@arlington-8-30-79-4.ncr.vt.edu>
+
+	* src/files.cpp (state::md5deep_load_match_file): replaced fprintf(stderr) with a cerr output.
+
+	* src/hash.cpp (file_data_hasher_t::hash): removed assert(0) for invalid setting of iomode; now displays what the invalid setting is.
+
 2011-12-16 Jesse Kornblum <research@jessekornblum.com>
 
 	* tests/tests.sh: added test for BSD style hashes, iLook hashes

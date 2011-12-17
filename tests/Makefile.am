@@ -1,5 +1,6 @@
 EXTRA_DIST=README.txt tests.sh
 TESTS=tests.sh
+CLEANFILES=
 
 executable:
 	svn propset svn:executable on *.sh

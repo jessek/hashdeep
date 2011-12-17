@@ -256,7 +256,7 @@ void file_data_hasher_t::hash()
 #endif
 	    break;
 	default:
-	    assert(0);			// invalid setting of iomode
+	    ocb->fatal_error("hash.cpp: iomode setting invalid (%d)",ocb->opt_iomode);
 	}
 
 	/*
