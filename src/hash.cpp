@@ -195,8 +195,9 @@ void file_data_hasher_t::hash()
      */
     if(fdht->handle==0){		
 	/* Open the file and print an error if we can't */
-	// stat the file to get the bytes and timestamp
-	state::file_type(fdht->file_name_to_hash,ocb,&fdht->stat_bytes,&fdht->timestamp);
+	// stat the file to get the bytes and ctime
+	state::file_type(fdht->file_name_to_hash,ocb,&fdht->stat_bytes,
+			 &fdht->ctime,&fdht->mtime,&fdht->atime);
 
 	if(ocb->opt_verbose>=MORE_VERBOSE){
 	    errno = 0;			// no error

@@ -344,12 +344,14 @@ void file_data_hasher_t::dfxml_write_hashes(std::string hex_hashes[],int indent)
 
 void file_data_hasher_t::compute_dfxml(bool known_hash,const hash_context_obj *hc)
 {
+    int indent=0;
     if(hc && this->ocb->piecewise_size>0){
 	this->dfxml_hash << "<byte_run file_offset='" << hc->read_offset << "'" 
 			 << " len='" << hc->read_len << "'>   \n";
+	indent=2;
     }
     
-    this->dfxml_write_hashes(this->hash_hex,2);
+    this->dfxml_write_hashes(this->hash_hex,indent);
     if(known_hash){
 	this->dfxml_hash << "<matched>1</matched>";
     }
@@ -623,6 +625,26 @@ void display::finalize_matching()
 }
 
 
+struct tm  *display::portable_gmtime(struct tm *my_time,const timestamp_t *t)
+{
+    memset(my_time,0,sizeof(*my_time)); // clear it out
+#ifdef HAVE__GMTIME64
+    // This is not threadsafe, hence the lock 
+    lock();
+    *my_time = *_gmtime64(t);
+    unlock();
+    //we tried this:
+    //_gmtime64_s(&fdht->timestamp,&my_time);
+    //but it had problems on mingw64
+#endif
+#ifdef HAVE_GMTIME_R		
+    gmtime_r(t,my_time);
+#endif
+#if !defined(HAVE__GMTIME64) && !defined(HAVE_GMTIME_R)
+#error This program requires either _gmtime64 or gmtime_r for compilation
+#endif
+    return my_time;
+}
 
 /* The old display_hash from the md5deep program, with modifications
  * to build the line before outputing it.
@@ -661,26 +683,12 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht,const hash_context_
 	if ((fdht->ocb->piecewise_size) || (fdht->is_stdin()==false))    {
 	    if (mode_timestamp)      {
 		struct tm my_time;
-		memset(&my_time,0,sizeof(my_time)); // clear it out
-#ifdef HAVE__GMTIME64
-		// This is not threadsafe, hence the lock 
-		lock();
-		my_time = *_gmtime64(&fdht->timestamp);
-		unlock();
-		//we tried this:
-		//_gmtime64_s(&fdht->timestamp,&my_time);
-		//but it had problems on mingw64
-#endif
-#ifdef HAVE_GMTIME_R		
-		gmtime_r(&fdht->timestamp,&my_time);
-#endif
-
+		portable_gmtime(&my_time,&fdht->ctime);
 		char time_str[MAX_TIME_STRING_LENGTH];
 		
 		// The format is four digit year, two digit month, 
 		// two digit hour, two digit minute, two digit second
 		strftime(time_str, sizeof(time_str), "%Y:%m:%d:%H:%M:%S", &my_time);
-
 		line << (opt_csv ? ",":" ") << time_str;
 	    }
 	    if (opt_csv) {
@@ -798,6 +806,14 @@ void display::dfxml_startup(int argc,char **argv)
     }
 }
 
+void display::dfxml_timeout(const std::string &tag,const timestamp_t &val)
+{
+    char buf[256];
+    struct tm tm;
+    strftime(buf,sizeof(buf),"%FT%TZ",portable_gmtime(&tm,&val));
+    dfxml->xmlout(tag,buf);
+}
+
 void display::dfxml_write(file_data_hasher_t *fdht)
 {
     if(dfxml){
@@ -809,6 +825,9 @@ void display::dfxml_write(file_data_hasher_t *fdht)
 	dfxml->push("fileobject",attrs);
 	dfxml->xmlout("filename",fdht->file_name);
 	dfxml->xmlout("filesize",(int64_t)fdht->stat_bytes);
+	if(fdht->ctime) dfxml_timeout("ctime",fdht->ctime);
+	if(fdht->mtime) dfxml_timeout("mtime",fdht->mtime);
+	if(fdht->atime) dfxml_timeout("atime",fdht->atime);
 	dfxml->writexml(fdht->dfxml_hash.str());
 	dfxml->pop();
 	unlock();

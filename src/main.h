@@ -231,7 +231,7 @@ public:
 	handle(0),
 	fd(-1),
 	base(0),bounds(0),		// for mmap
-	file_number(0),timestamp(0),stat_bytes(0),
+	file_number(0),ctime(0),mtime(0),atime(0),stat_bytes(0),
 	start_time(0),last_time(0),eof(false),workerid(-1){
 	file_number = ++next_file_number;
     };
@@ -270,7 +270,9 @@ public:
     void	append_dfxml_for_byterun();
     void	compute_dfxml(bool known_hash,const hash_context_obj *hc);
 
-    timestamp_t	timestamp;		// ctime; should it be mtime?
+    timestamp_t	ctime;		// ctime; previously 'timestamp'
+    timestamp_t	mtime;		
+    timestamp_t	atime;		
 
     // How many bytes (and megs) we think are in the file, via stat(2)
     // and how many bytes we've actually read in the file
@@ -291,6 +293,7 @@ public:
      */
     // called to actually do the computation; returns true if successful
     // and fills in the read_offset and read_len
+    void dfxml_timeout(const std::string &tag,const timestamp_t &val);
     void dfxml_write_hashes(std::string hex_hashes[],int indent);
     bool compute_hash(uint64_t request_start,uint64_t request_len,hash_context_obj *segment,hash_context_obj *file);
     void hash();	// called to hash each file and record results
@@ -606,6 +609,7 @@ public:
     }
     void dfxml_startup(int argc,char **argv);
     void dfxml_shutdown();
+    void dfxml_timeout(const std::string &tag,const timestamp_t &val);
     void dfxml_write(file_data_hasher_t *fdht);
 
 
@@ -616,6 +620,7 @@ public:
 	utf8_banner = utf8_banner_;
     }
 
+    struct tm  *portable_gmtime(struct tm *my_time,const timestamp_t *t);
     void	try_msg(void);
 
     void	display_banner_if_needed();
@@ -862,7 +867,8 @@ public:;
      * If filesize and timestamp are provided, give them.
      */
     static file_types decode_file_type(const struct __stat64 &sb);
-    static file_types file_type(const filename_t &fn,class display *ocb,uint64_t *filesize,timestamp_t *timestamp);
+    static file_types file_type(const filename_t &fn,class display *ocb,uint64_t *filesize,
+				timestamp_t *ctime,timestamp_t *mtime,timestamp_t *atime);
 #ifdef _WIN32
     bool	is_junction_point(const std::wstring &fn);
 #endif

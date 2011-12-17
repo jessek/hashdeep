@@ -419,10 +419,11 @@ state::file_types state::decode_file_type(const struct __stat64 &sb)
 
 /* Return the 'decoded' file type of a file.
  * If an error is found and ocb is provided, send the error to ocb.
- * If filesize and timestamp are provided, give them.
+ * If filesize and ctime are provided, give them.
  * Also return the file size and modification time (may be used elsewhere).
  */
-state::file_types state::file_type(const tstring &fn,display *ocb,uint64_t *filesize,timestamp_t *timestamp)
+state::file_types state::file_type(const tstring &fn,display *ocb,uint64_t *filesize,
+				   timestamp_t *ctime,timestamp_t *mtime,timestamp_t *atime)
 {
     struct __stat64 sb;
     memset(&sb,0,sizeof(sb));
@@ -430,7 +431,9 @@ state::file_types state::file_type(const tstring &fn,display *ocb,uint64_t *file
 	if(ocb) ocb->error_filename(fn,"%s", strerror(errno));
 	return stat_unknown;
     }
-    if(timestamp) *timestamp = sb.st_ctime;
+    if(ctime) *ctime = sb.st_ctime;
+    if(mtime) *mtime = sb.st_mtime;
+    if(atime) *atime = sb.st_atime;
     if(filesize){
 	if(sb.st_size!=0){
 	    *filesize = sb.st_size;
@@ -544,7 +547,7 @@ bool state::should_hash_expert(const tstring &fn, file_types type)
 
 bool state::should_hash(const tstring &fn)
 {
-    file_types  type = state::file_type(fn,&ocb,0,0);
+    file_types  type = state::file_type(fn,&ocb,0,0,0,0);
   
     if (mode_expert) return should_hash_expert(fn,type);
 
@@ -758,9 +761,11 @@ void state::dig_self_test()
     state s;
     for(int i=0;names[i].size()>0;i++){
 	uint64_t stat_bytes;
-	timestamp_t timestamp;
-	file_types ft = s.file_type(names[i],&s.ocb,&stat_bytes,&timestamp);
+	timestamp_t ctime;
+	timestamp_t mtime;
+	timestamp_t atime;
+	file_types ft = s.file_type(names[i],&s.ocb,&stat_bytes,&ctime,&mtime,&atime);
 	std::cerr << "file_type(" << names[i] << ")="
-		  << (int)ft << " size=" << stat_bytes << " ctime=" << timestamp << "\n";
+		  << (int)ft << " size=" << stat_bytes << " ctime=" << ctime << "\n";
     }
 }
