@@ -1,3 +1,18 @@
+2011-12-17  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/files.cpp (state::find_hash_in_line): removed ILOOK3 intentional fall through. Now we explicitly do it.
+
+	* src/display.cpp (display::portable_gmtime): We needed a gmtime()
+	in multiple locaitons that was portable and threadsafe, so we
+	created this from the code that was previously in
+	md5deep_display_hash.
+	(file_data_hasher_t::compute_dfxml): hashdigest indent set to 0 from 2 if piecewise_size is 0
+	(display::dfxml_write): ctime, mtime, and atime now put in DFXML output.
+
+	* src/dig.cpp (state::file_type): added support for mtime and atime.
+
+	* src/main.h: changed fdht->timestamp to fdht->ctime.
+
 2011-12-17  Simson Garfinkel  <simsong@arlington-8-30-79-4.ncr.vt.edu>
 
 	* src/files.cpp (state::md5deep_load_match_file): replaced fprintf(stderr) with a cerr output.

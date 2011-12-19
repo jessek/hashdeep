@@ -125,6 +125,7 @@ public:
     static void clear_algorithms_inuse();
     static void enable_hashing_algorithms(std::string var);  // enable the algorithms in 'var'; var can be 'all'
     static hashid_t get_hashid_for_name(std::string name);   // return the hashid_t for 'name'
+    static bool valid_hex(const std::string &buf);	     // returns true if buf contains only hex characters
     static bool valid_hash(hashid_t alg,const std::string &buf); // returns true if buf is a valid hash for hashid_t a
 };
 

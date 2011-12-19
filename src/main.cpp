@@ -203,7 +203,7 @@ void state::md5deep_usage(void)
 	ocb.status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
 	ocb.status("-r  - recursive mode. All subdirectories are traversed");
 	ocb.status("-e  - show estimated time remaining for each file");
-	ocb.status("-s  - silent mode. Suppress all error messages; -S warn on bad hashes only");
+	ocb.status("-s  - silent mode. Suppress all error messages");
 	ocb.status("-z  - display file size before hash");
 	ocb.status("-m <file> - enables matching mode. See README/man page");
 	ocb.status("-x <file> - enables negative matching mode. See README/man page");
@@ -225,6 +225,7 @@ void state::md5deep_usage(void)
 	ocb.status("-Z - traige mode;   -h - help;   -hh - full help");
     }
     if(usage_count==2){			// -hh
+	ocb.status("-S - Silent mode, but warn on bad hashes");
 	ocb.status("-0 - use a NULL for newline.");
 	ocb.status("-k - print asterisk before filename");
 	ocb.status("-u - escape Unicode");
@@ -464,6 +465,14 @@ void algorithm_t::clear_algorithms_inuse()
   }
 }
 
+
+bool algorithm_t::valid_hex(const std::string &buf)
+{
+    for(std::string::const_iterator it = buf.begin(); it!=buf.end(); it++){
+	if(!isxdigit(*it)) return false;
+    }
+    return true;
+}
 
 bool algorithm_t::valid_hash(hashid_t alg, const std::string &buf)
 {
@@ -938,7 +947,7 @@ int state::md5deep_process_command_line(int argc_, char **argv_)
 	    setup_expert_mode(optarg);
 	    break;
       
-	case 'M':
+	case 'M':			// match mode
 	    ocb.opt_display_hash=true;
 	    /* Intentional fall through */
 	case 'm':

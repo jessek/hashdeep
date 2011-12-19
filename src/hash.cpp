@@ -327,7 +327,7 @@ void file_data_hasher_t::hash()
      */
 
     uint64_t request_start = 0;
-    hash_context_obj *hc_file= 0;	// if we are doing picewise hashing, this stores the file
+    hash_context_obj *hc_file= 0;	// if we are doing picewise hashing, this stores the file context
 
     if(fdht->ocb->piecewise_size>0){
 	hc_file = new hash_context_obj();
@@ -387,8 +387,9 @@ void file_data_hasher_t::hash()
 
 
     /**
-     * If we are in dfxml mode, output the DFXML, which may optionally include
-     * all of the piecewise information.
+     * If we had an additional hash context for the file,
+     * then we must be in DFXML mode and doing piecewise hashing.
+     * We want both the hash of the file and of the context.
      */
     if(hc_file){
 	std::string file_hashes[NUM_ALGORITHMS];

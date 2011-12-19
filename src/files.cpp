@@ -228,6 +228,11 @@ int state::find_md5deep_size_hash(char *buf, char *known_fn)
 }
 
 
+/**
+ * Look for a hash in a bsd-style buffer.
+ * @param buf - input buffer; set to hash on output.
+ * @param fn - gets filename
+ */
 int state::find_bsd_hash(char *buf, char *fn)
 {
     char *temp;
@@ -278,13 +283,7 @@ int state::find_bsd_hash(char *buf, char *fn)
     // The hash always begins four characters after the second paren
     shift_string(temp,0,second_paren+4);
 
-#if 0
-    int status = valid_hash(s,temp);
-    return status;
-#endif
-    free(temp);
-    assert(0);
-    return 0;
+    return algorithm_t::valid_hex(temp);
 }
   
 
@@ -298,25 +297,25 @@ int state::find_bsd_hash(char *buf, char *fn)
 
    you should call find_rigid_hash(buf,fn,1,4);
 
-   Note that columns start with #1, not zero. */
+   Note that columns start with #1, not zero.
+*/
+
 int state::find_rigid_hash(char *buf,  char *fn, unsigned int fn_location, unsigned int hash_location)
 {
-  char *temp = strdup(buf);
-  if (temp == NULL)
-    return FALSE;
-  if (find_comma_separated_string(temp,fn_location-1))  {
+    char *temp = strdup(buf);
+    if (temp == NULL)
+	return FALSE;
+    if (find_comma_separated_string(temp,fn_location-1))  {
+	free(temp);
+	return FALSE;
+    }
+    strncpy(fn, temp, strlen(fn));
     free(temp);
-    return FALSE;
-  }
-  strncpy(fn, temp, strlen(fn));
-  free(temp);
-  if (find_comma_separated_string(buf,hash_location-1)){
-    return FALSE;
-  }
+    if (find_comma_separated_string(buf,hash_location-1)){
+	return FALSE;
+    }
 
-  //return valid_hash(s,buf);
-  assert(0);
-  return false;
+    return algorithm_t::valid_hex(buf);
 }
 
 #ifdef WORDS_BIGENDIAN
@@ -458,17 +457,14 @@ int state::identify_hash_file_type(FILE *f,uint32_t *expected_hashes)
 int state::find_hash_in_line(char *buf, int fileType, char *fn) 
 {
     switch(fileType) {
-	
     case TYPE_PLAIN:	return find_plain_hash(buf,fn);
     case TYPE_BSD:	return find_bsd_hash(buf,fn);
     case TYPE_HASHKEEPER: return find_rigid_hash(buf,fn,3,h_hashkeeper);
-    case TYPE_NSRL_15: return find_rigid_hash(buf,fn,2,h_nsrl15);
-    case TYPE_NSRL_20: return find_rigid_hash(buf,fn,4,h_nsrl20);
-    case TYPE_ILOOK:   return find_ilook_hash(buf,fn);
-    case TYPE_ILOOK3:
-	/* Intentional Fall Through */
-    case TYPE_ILOOK4:
-	return find_rigid_hash(buf,fn,3,h_ilook3);
+    case TYPE_NSRL_15:  return find_rigid_hash(buf,fn,2,h_nsrl15);
+    case TYPE_NSRL_20:  return find_rigid_hash(buf,fn,4,h_nsrl20);
+    case TYPE_ILOOK:    return find_ilook_hash(buf,fn);
+    case TYPE_ILOOK3:	return find_rigid_hash(buf,fn,3,h_ilook3);
+    case TYPE_ILOOK4:	return find_rigid_hash(buf,fn,3,h_ilook3); // same as ilook3
     case TYPE_MD5DEEP_SIZE: return find_md5deep_size_hash(buf,fn);
     }
     return FALSE;
@@ -608,7 +604,7 @@ void state::md5deep_load_match_file(const char *fn)
 	rewind(f);
     }
     else {
-	line_number++;
+	++line_number;
     }
   
     char buf[MAX_STRING_LENGTH + 1];
@@ -623,12 +619,16 @@ void state::md5deep_load_match_file(const char *fn)
 	} else {
 	    // Invalid hashes are caught above
 	    file_data_t *fdt = new file_data_t();
+	    char *cc;
+	    if((cc=index(buf,'\n'))!=0) *cc = 0;	     // remove \n at end of line
+	    if((cc=index(buf,'\r'))!=0) *cc = 0;	     // remove \r at end of line
 	    fdt->hash_hex[opt_md5deep_mode_algorithm] = buf; // the hex hash
 	    fdt->file_name = known_fn;		    // the filename
 	    ocb.add_fdt(fdt);
 	}
     }
-    fclose(f); f = 0;
+    fclose(f);
+    f = 0;
 }
 
 
