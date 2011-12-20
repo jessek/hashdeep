@@ -20,12 +20,12 @@ FILES = 1072-at.txt \
 	dir_a/dir_b/web2a \
 	bsd-hashes.txt
 
-EXTRA_DIST = $(FILES) symlinktest.tar.gz testfiles.zip
+EXTRA_DIST = symlinktest.tar.gz testfiles.zip
 
 symlinktest.tar.gz: 
 	tar -c -f symlinktest.tar.gz -v -z --exclude "*.svn" symlinktest
 
-testfiles.zip: $(EXTRA_DIST)
-	zip testfiles.zip $(EXTRA_DIST)
+testfiles.zip: $(FILES)
+	zip testfiles.zip $(FILES)
 
 # You'll need to get the symlink files on your own
