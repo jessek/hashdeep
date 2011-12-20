@@ -206,9 +206,11 @@ int find_bsd_hash(state *s, char *buf, char *fn)
   int status = valid_hash(s,temp);
 
   // Okay, this is a valid hash. Go ahead and modify the original buffer
-  strncpy(buf,temp,strlen(temp));
-
-  chop_line(buf);
+  // The extra character is for the terminating null.
+  strncpy(buf,temp,HASH_STRING_LENGTH + 1);
+  // We used to run chop_line() on buf, but for some reason buf was not
+  // being NULL terminated. We force an explicit termination. -jdk 20 Dec 2011
+  buf[HASH_STRING_LENGTH] = 0;
 
   free(temp);
 
