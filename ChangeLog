@@ -1,3 +1,7 @@
+2011-12-20  Simson Garfinkel  <simsong@arlington-8-30-79-4.ncr.vt.edu>
+
+	* tests/testfiles/Makefile.am (testfiles.zip): removed $FILES from release; now testfiles.zip is built as part of the release, and the FILES are in it.
+
 2011-12-17  Simson Garfinkel  <simsong@imac3.home>
 
 	* src/files.cpp (state::find_hash_in_line): removed ILOOK3 intentional fall through. Now we explicitly do it.
