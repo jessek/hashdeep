@@ -1,6 +1,6 @@
 AC_PREREQ(2.57)
 
-AC_INIT([MD5DEEP],[3.9.2],[research@jessekornblum.com])
+AC_INIT([MD5DEEP],[3.9.3-001],[research@jessekornblum.com])
 AM_INIT_AUTOMAKE
 
 AC_GNU_SOURCE

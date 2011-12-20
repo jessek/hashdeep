@@ -2,6 +2,7 @@
 
 	* md5deep/files.c: Modified find_bsd_hash to deal with improperly 
 	  copied hashes. 
+	* configure.ac: Version bump to 3.9.3-001
 
 	
 2011-09-29 Jesse Kornblum
