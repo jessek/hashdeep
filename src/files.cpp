@@ -259,9 +259,9 @@ int state::find_bsd_hash(char *buf, char *fn)
     assert(buf!=0);
     if (buf_len < hash_len) return FALSE;
 
-    char *open  = index(buf,'(');
-    char *close = index(buf,')');
-    char *equal = index(buf,'=');
+    char *open  = strchr(buf,'(');
+    char *close = strchr(buf,')');
+    char *equal = strchr(buf,'=');
 
     if(open==0 || close==0 || equal==0) return FALSE; // not properly formatted
     *close = '\000';			  // termiante the string
@@ -594,8 +594,8 @@ void state::md5deep_load_match_file(const char *fn)
     while (fgets(buf,MAX_STRING_LENGTH,f)) {
 	char *cc;
 	char known_fn[PATH_MAX+1];		     // set to be the filename from the buffer
-	if((cc=index(buf,'\n'))!=0) *cc = 0;	     // remove \n at end of line
-	if((cc=index(buf,'\r'))!=0) *cc = 0;	     // remove \r at end of line
+	if((cc=strchr(buf,'\n'))!=0) *cc = 0;	     // remove \n at end of line
+	if((cc=strchr(buf,'\r'))!=0) *cc = 0;	     // remove \r at end of line
 	++line_number;
 	memset(known_fn,0,PATH_MAX);
 
