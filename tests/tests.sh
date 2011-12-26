@@ -234,10 +234,14 @@ do
      # Additional tests as errors are discovered
     47) cmd="$BASE/hashdeep$EXE -vvvbak known1 -k known2 foo bar moo cow"      ;;
 
-     # BSD style hashes, iLook hashes
+     # BSD style hashes, iLook hashes.
+     # iLook has different behavior with the algorithms, so we test with all
     48) cmd="$BASE/md5deep$EXE -Sm $TESTFILES_DIR/bsd-hashes.txt -r $HTMP" ;;
     49) cmd="$BASE/md5deep$EXE -m $TESTFILES_DIR/ilookv4.hsh -r $HTMP" ;;
-
+    50) cmd="$BASE/sha1deep$EXE -m $TESTFILES_DIR/ilookv4.hsh -r $HTMP" ;;
+    51) cmd="$BASE/md5deep$EXE -m $TESTFILES_DIR/nsrlfile.txt  -r $HTMP" ;;
+    52) cmd="$BASE/sha1deep$EXE -m $TESTFILES_DIR/nsrlfile.txt -r $HTMP" ;;
+       
 
    esac
    if [ x"$cmd" = "x" ]

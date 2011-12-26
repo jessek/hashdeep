@@ -1,5 +1,5 @@
 /**
- * MD5DEEP - files.c
+ * MD5DEEP - files.cpp
  *
  * By Jesse Kornblum
  * Substantially modified by Simson Garfinkel.
@@ -13,7 +13,7 @@
  *
  * $Id$
  *
- * files was originally just part of the md5deep-family programs, not hashdeep.
+ * files.cpp was originally just part of the md5deep-family programs, not hashdeep.
  * It reads hash database files and incorporates them into the in-memory database.
  * Because it was designed for md5deep/sha1deep/etc, it would only look for a
  * single hash per line.
@@ -95,35 +95,34 @@ typedef struct _ENCASE_HASH_HEADER {
  ****************************************************************/
 
 // Find the index of the next comma in the string str starting at index start.
+// quotes cause commas to be ingored until you are out of the quote.
 // If there is no next comma, returns -1. 
 static int find_next_comma(char *str, unsigned int start)
 {
-  if (NULL == str)
-    return -1;
+    assert(str);
 
-  size_t size = strlen(str);
-  unsigned int pos = start; 
-  int in_quote = FALSE;
+    size_t size = strlen(str);
+    unsigned int pos = start; 
+    int in_quote = FALSE;
   
-  while (pos < size)  {
-    switch (str[pos]) {
-    case '"':
-      in_quote = !in_quote;
-      break;
-    case ',':
-      if (in_quote)
-	break;
+    while (pos < size)  {
+	switch (str[pos]) {
+	case '"':
+	    in_quote = !in_quote;
+	    break;
+	case ',':
+	    if (in_quote) break;
 
-      // Although it's potentially unwise to cast an unsigned int back
-      // to an int, problems will only occur when the value is beyond 
-      // the range of int. Because we're working with the index of a 
-      // string that is probably less than 32,000 characters, we should
-      // be okay. 
-      return (int)pos;
+	    // Although it's potentially unwise to cast an unsigned int back
+	    // to an int, problems will only occur when the value is beyond 
+	    // the range of int. Because we're working with the index of a 
+	    // string that is probably less than 32,000 characters, we should
+	    // be okay. 
+	    return (int)pos;
+	}
+	++pos;
     }
-    ++pos;
-  }
-  return -1;
+    return -1;
 }
 
  
@@ -132,20 +131,18 @@ static int find_next_comma(char *str, unsigned int start)
 // will now begin at location 'start' 
 void shift_string(char *fn, size_t start, size_t new_start)
 {
-  if (NULL == fn)
-    return;
+    assert(fn!=0);
 
-  // TODO: Can shift_string be replaced with memmove? 
-  if (start > strlen(fn) || new_start < start)
-    return;
+    // TODO: Can shift_string be replaced with memmove? 
+    if (start > strlen(fn) || new_start < start) return;
 
-  while (new_start < strlen(fn))    {
-      fn[start] = fn[new_start];
-      new_start++;
-      start++;
+    while (new_start < strlen(fn))    {
+	fn[start] = fn[new_start];
+	new_start++;
+	start++;
     }
 
-  fn[start] = 0;
+    fn[start] = 0;
 }
 
 // Returns the string after the nth comma in the string str. If that
@@ -158,8 +155,7 @@ static int find_comma_separated_string(char *str, unsigned int n)
     int start = 0, end;
     unsigned int count = 0; 
     while (count < n)  {
-	if ((start = find_next_comma(str,start)) == -1)
-	    return TRUE;
+	if ((start = find_next_comma(str,start)) == -1) return TRUE;
 	++count;
 	// Advance the pointer past the current comma
 	++start;
@@ -275,13 +271,14 @@ int state::find_bsd_hash(char *buf, char *fn)
     equal++;
     while(*equal!='\000' && !isxdigit(*equal)) equal++;
 
-    /* Copy over buffer */
+    /* Copy over buffer; */
+    char *dest = buf;
     while(isxdigit(*equal)){
-	*buf = *equal;
-	buf++;
+	*dest = *equal;
+	dest++;
 	equal++;
     }
-    *buf = 0;				// terminate
+    *dest = 0;				// terminate
     return algorithm_t::valid_hex(buf);
 }
   
@@ -314,7 +311,7 @@ int state::find_rigid_hash(char *buf,  char *fn, unsigned int fn_location, unsig
 	return FALSE;
     }
 
-    return algorithm_t::valid_hex(buf);
+    return algorithm_t::valid_hash(opt_md5deep_mode_algorithm,buf);
 }
 
 #ifdef WORDS_BIGENDIAN

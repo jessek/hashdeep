@@ -1,8 +1,9 @@
 // $Id$ 
 
 /** hashlist.cpp
+ * Implements a list of hashes for local database, searching, etc.
+ * Currently done with a map; could be done with an unordered set.
  * Contains the logic for performing the audit.
- * Also has implementation of the hashlist, searching, etc.
  * Formerly this code was in audit.cpp and match.cpp.
  */
 
@@ -10,10 +11,17 @@
 #include <new>
 #include <iostream>
 
+/* Add a fi to the hash list.
+ * Be sure that the hash is all lower case, because that's what we use internally.
+ */
 void hashlist::hashmap::add_file(file_data_t *fi,int alg_num)
 {
     if(fi->hash_hex[alg_num].size()){
-	insert(std::pair<std::string,file_data_t *>(fi->hash_hex[alg_num],fi));
+	std::string hexhash = fi->hash_hex[alg_num];
+	for(std::string::iterator it = hexhash.begin();it!=hexhash.end();it++){
+	    if(isupper(*it)) *it = tolower(*it);
+	}
+	insert(std::pair<std::string,file_data_t *>(hexhash,fi));
     }
 }
 
@@ -21,7 +29,7 @@ void hashlist::hashmap::add_file(file_data_t *fi,int alg_num)
 /**
  * Adds a file_data_t pointer to the hashlist.
  * Does not copy the object.
- * Object will be modified from matching.
+ * Object will be modified if there is a match.
  */
 void hashlist::add_fdt(file_data_t *fi)
 { 
@@ -41,16 +49,22 @@ void hashlist::add_fdt(file_data_t *fi)
 file_data_t *hashlist::find_hash(hashid_t alg,const std::string &hash_hex,
 				       const std::string &file_name,uint64_t file_number)
 {
+    if(opt_debug>2) std::cerr << "find_hash alg=" << alg << " hash_hex=" << hash_hex << " fn=" << file_name << " file_number=" << file_number;
     std::pair<hashmap::iterator,hashmap::iterator> match = this->hashmaps[alg].equal_range(hash_hex);
-    if(match.first==match.second) return 0; // nothing found
+    if(match.first==match.second){
+	if(opt_debug>2) std::cerr << " RETURNS 0\n";
+	return 0; // nothing found
+    }
     for(hashmap::iterator it = match.first; it!=match.second; ++it){
 	if((*it).second->file_name == file_name){
 	    if(file_number) (*it).second->matched_file_number = file_number;
+	    if(opt_debug) std::cerr << " RETURNS EXACT MATCH " << file_number << "\n";
 	    return (*it).second;
 	}
     }
     /* No exact matches; return the first match */
     if(file_number) (*match.first).second->matched_file_number = file_number;
+    if(opt_debug) std::cerr << " RETURNS FIRST MATCH " << file_number << "\n";
     return(*match.first).second;
 }
 
@@ -208,9 +222,11 @@ void hashlist::enable_hashing_algorithms_from_hashdeep_file(class display *ocb,c
 
 void hashlist::dump_hashlist()
 {
+    std::cout << "md5,sha1,bytes,filename   matched\n";
     for(hashlist::const_iterator it = begin(); it!=end(); it++){
-	std::cout << (*it)->file_bytes << "," << (*it)->hash_hex[alg_md5] << "," << (*it)->file_name
-		  << "  matched=" << (*it)->matched_file_number << "\n";
+	std::cout << (*it)->hash_hex[alg_md5] << "," << (*it)->hash_hex[alg_sha1] << ","
+		  << (*it)->file_bytes << "," << (*it)->file_name
+		  << "\tmatched=" << (*it)->matched_file_number << "\n";
     }
 }
 
@@ -322,15 +338,15 @@ hashlist::loadstatus_t hashlist::load_hash_file(display *ocb,const std::string &
 }
 
 
- /**
-  * We don't use this function anymore, but it's handy to have just in case
-  */
+/**
+ * We don't use this function anymore, but it's handy to have just in case
+ */
 const char *hashlist::searchstatus_to_str(searchstatus_t val)
 {
     switch (val) {
-    case searchstatus_ok: return "ok";
-    case status_match:    return "complete match";
-    case status_partial_match: return "partial match";
+    case searchstatus_ok:           return "ok";
+    case status_match:              return "complete match";
+    case status_partial_match:      return "partial match";
     case status_file_size_mismatch: return "file size mismatch";
     case status_file_name_mismatch: return "file name mismatch";
     case status_no_match: return "no match"; 

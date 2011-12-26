@@ -68,6 +68,18 @@ typedef enum {
   alg_unknown 
 } hashid_t;
 
+inline std::ostream & operator << (std::ostream &os,const hashid_t &h) {
+    switch(h){
+    case alg_md5:       os << "alg_md5" ; break ;
+    case alg_sha1:      os << "alg_sha1" ; break ;
+    case alg_sha256:    os << "alg_sha256" ; break ;
+    case alg_tiger:     os << "alg_tige" ; break ;
+    case alg_whirlpool: os << "alg_whirlpool" ; break ;
+    case alg_unknown:   os << "alg_unknown" ; break ;
+    }
+    return os;
+}
+
 #define NUM_ALGORITHMS  alg_unknown
 
 /* Which ones are enabled by default */

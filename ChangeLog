@@ -1,3 +1,7 @@
+2011-12-27  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/hashlist.cpp (hashmap::add_file): now makes a copy of the hex hash and assures that it is lower case. 
+
 2011-12-26  Simson Garfinkel  <simsong@Mucha.local>
 
 	* src/main.h (class state): removed h_nsrl15 variable. Now it always looks for nsrl15 files when trying to decode a hash file.

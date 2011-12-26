@@ -17,21 +17,25 @@ md5deep/hashdeep:
 * -hh now prints more help
 
 Here's future stuff to do:
+* Performance tuning:
+  1 - don't create hash_hex strings for algorithms we don't use. 
+  2 - Currently hashlist is a multimap. It might be better to make it
+      a tr1::unordered_set, but that would require having the buckets be
+      vectors, since a single hash can have more than one file attached to it.  
+* Style:
+  - Currently hashlist is a subclass of a multimap; it should be an opaque object that
 * Nice graphs showing peformance and speedup.
 * Test with actual hash collisions of files that have same MD5 but different SHA1
 * Add a file pattern option that specifies what files are to be hashed.
 * Improve usage for -hh prints ALL options.
-* Better support for memory-mapped files.
+* Memory mapped files:
+  - Figure out why memory-mapped files are slower than unbuffered io.
     1- memory-mapped files can generate a SIGSEGV or SIGBUS if the mapped region is not available.
        http://linux.die.net/man/2/mmap
        This needs to be explicitly handled with a signal handler.
-    
     2-Memory mapped files can be handled on WIndows.
-  Until we get this, memory-mapped files are off by default.
-* Performance tuning:
-    1 - don't create hash_hex strings for algorithms we don't use. 
+  - Until we get this, memory-mapped files are off by default.
 * Should have a better startegy for "Known file not used" in audit_check, because I don't want to modify the map.
-* Replace C++ map with an unordered_map
 == 
 
 Below is a list of what Simson Garfinkel did to bring hashdeep and md5deep from version 3 to version 4:
@@ -39,16 +43,13 @@ Below is a list of what Simson Garfinkel did to bring hashdeep and md5deep from 
 2  - fixed the autoconf files.
 3  - migrated to C++ (hashdeep is now hashdeep.cpp)
 4  - add DFXML to the multihash program.
-
 5  - added an output mode to the multihash program that exactly matches
      the output mode of the single hash md5deep, sha1deep, etc. This was
      done by using md5deep's output functions directly.
-
 6  - added a mode to the multihash program that exactly matches the
      command-line options, and have that mode be the default when the
      command name changes. This was done by using md5deep's command line
      parser.
-
 7  - changed state to a C++ class.
 8  - Remove the current_file stuff from state to create another C++ class.
 9  - Modified hash() function take the file being hashed and a place to put it. 
@@ -59,44 +60,18 @@ Below is a list of what Simson Garfinkel did to bring hashdeep and md5deep from 
 14 - Fix audit mode so that it reads from that database.
 15 - Loading hashes should return a string with the set of hashes that were added.
 16 - Went through entire program looking for dead code.
-
 17 - migrated to multi-threaded producer/consumer architecture with
      the file searching (dig) being the producer and hash() being the
      consumer. (This code was taken from bulk_extractor)
-
 18 - Add "-j" option to control how many threads; -j0 turns off threading.
-
 19 - Made error printing is threadsafe
-
 20 - Remove the file_name_annotation and instead explicitly remembered
      the piecewise start and stop.
-
 21 - Figured out why threading turns on piecewise problem. Turns out
      that the SHA1 implementation was not threadsafe; replaced it with a
      different one.
-
 22 - got hashlist matching working again
-
 23 - Added support for common crypto functions on mac. This makes SHA1
      and SHA256 go dramatically faster.
 
-================================================================
-Another test case:
 
-C:\Users\Jesse Kornblum\Documents\tmp>hashdeep64 -bc md5 foo bar > known1
-
-C:\Users\Jesse Kornblum\Documents\tmp>hashdeep64 -bc sha1 moo cow > known2
-
-C:\Users\Jesse Kornblum\Documents\tmp>hashdeep64 -vvvbak known1 -k known2 foo bar moo cow
-hashdeep64: known2: Hashes not in same format as previously loaded
-foo: Ok
-bar: Ok
-moo: Ok
-cow: Ok
-hashdeep64: Audit passed
-         Files matched: 4
-Files partially matched: 0
-           Files moved: 0
-       New files found: 0
- Known files not found: 0
-================================================================
