@@ -66,7 +66,7 @@ AC_CANONICAL_HOST
 WARNINGS_TO_TEST="-MD -D_FORTIFY_SOURCE=2 -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes \
     -Wshadow -Wwrite-strings -Wcast-align -Waggregate-return \
     -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization \
-    -Wfloat-equal -Wmissing-format-attribute -Wmultichar -Wc++-compat -Wmissing-noreturn "
+    -Wfloat-equal -Wmissing-format-attribute -Wmultichar -Wc++-compat -Wmissing-noreturn  -funit-at-a-time"
 
 if test $mingw = "no" ; then
   # add the warnings we don't want to do on mingw
@@ -100,7 +100,7 @@ WARNINGS_TO_TEST="-Wall -MD -D_FORTIFY_SOURCE=2 -Wpointer-arith \
     -Wshadow -Wwrite-strings -Wcast-align  \
     -Wredundant-decls -Wdisabled-optimization \
     -Wfloat-equal -Wmultichar -Wmissing-noreturn \
-    -Wstrict-null-sentinel -Woverloaded-virtual -Wsign-promo"
+    -Wstrict-null-sentinel -Woverloaded-virtual -Wsign-promo  -funit-at-a-time"
 
 if test $mingw = "no" ; then
   # add the warnings we don't want to do on mingw
