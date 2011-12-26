@@ -141,8 +141,8 @@ $GOOD_BIN/md5deep$EXE -l $HTMP/deadbeef.txt  $HTMP/foo.txt > hashlist-md5deep-pa
 tail -1 hashlist-md5deep-partial.txt | sed s+$HTMP/foo.txt+/no/match/em+ \
     | sed s/[012345]/6/g >> hashlist-md5deep-partial.txt
 
-$GOOD_BIN/hashdeep$EXE -l -r $HTMP > hashlist-hashdeep-full.txt 2 >/dev/null
-$GOOD_BIN/md5deep$EXE  -l -r $HTMP > hashlist-md5deep-full.txt  2 >/dev/null
+$GOOD_BIN/hashdeep$EXE -l -r $HTMP > hashlist-hashdeep-full.txt 2>/dev/null
+$GOOD_BIN/md5deep$EXE  -l -r $HTMP > hashlist-md5deep-full.txt  2>/dev/null
 
 # Create the test files for audit test case
 /bin/rm -f foo bar moo cow known1 known2

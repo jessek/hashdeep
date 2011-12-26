@@ -773,9 +773,10 @@ public:;
 	    argc(0),argv(0),
 
 	    // these have something to do with hash files that are loaded
+	    h_field(0),
 	    h_plain(0),h_bsd(0),
 	    h_md5deep_size(0),
-	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl15(0),h_nsrl20(0), h_encase(0),
+	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl20(0), h_encase(0),
 	    usage_count(0)		// allows -hh to print extra help
 	    {};
 
@@ -807,8 +808,9 @@ public:;
     display	ocb;		// output control block
 
     // Which filetypes this algorithm supports and their position in the file
+    uint8_t	 h_field;		// which field to extract from a hash file.
     uint8_t      h_plain, h_bsd, h_md5deep_size, h_hashkeeper;
-    uint8_t      h_ilook, h_ilook3, h_ilook4, h_nsrl15, h_nsrl20, h_encase;
+    uint8_t      h_ilook, h_ilook3, h_ilook4, h_nsrl20, h_encase;
 
     void	md5deep_add_hash(char *h, char *fn); // explicitly add a hash
     void	setup_expert_mode(char *arg);

@@ -1,18 +1,37 @@
-// MD5DEEP - files.c
-//
-// By Jesse Kornblum
-//
-// This is a work of the US Government. In accordance with 17 USC 105,
-// copyright protection is not available for any work of the US Government.
-//
-// This program is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//
-// $Id$
+/**
+ * MD5DEEP - files.c
+ *
+ * By Jesse Kornblum
+ * Substantially modified by Simson Garfinkel.
+ *
+ * This is a work of the US Government. In accordance with 17 USC 105,
+ * copyright protection is not available for any work of the US Government.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * $Id$
+ *
+ * files was originally just part of the md5deep-family programs, not hashdeep.
+ * It reads hash database files and incorporates them into the in-memory database.
+ * Because it was designed for md5deep/sha1deep/etc, it would only look for a
+ * single hash per line.
+ *
+ * The original program had variables named h_ilook, h_ilook3 and h_ilook4.
+ * These variables were set to the variable number of the hash algorithm being looked for in each line.
+ *
+ */
 
 #include "main.h"
 #include "common.h"
+
+#ifndef HAVE_ISXDIGIT
+bool isxdigit(char ch)
+{
+    return isdigit(ch) || (ch>='a' && ch<='f') || (ch=>'A' && ch<='F');
+}
+#endif
 
 /* ---------------------------------------------------------------------
    How to add more file types that we can read known hashes from:
@@ -38,7 +57,8 @@
    7. Each hashing algorithm should set this variable in the 
       setup_hashing_algorithm function.
    
-   ---------------------------------------------------------------------- */
+   ----------------------------------------------------------------------
+*/
 
 typedef struct _ENCASE_HASH_HEADER {
   /* 000 */ char          Signature[8];
@@ -67,7 +87,6 @@ typedef struct _ENCASE_HASH_HEADER {
 
 #define HASHKEEPER_HEADER \
 "\"file_id\",\"hashset_id\",\"file_name\",\"directory\",\"hash\",\"file_size\",\"date_modified\",\"time_modified\",\"time_zone\",\"comments\",\"date_accessed\",\"time_accessed\""
-
 
 #define HASH_STRING_LENGTH   (hashes[opt_md5deep_mode_algorithm].bit_length/4)
 
@@ -172,8 +191,8 @@ static int find_comma_separated_string(char *str, unsigned int n)
 /**
  * looks for a valid hash in the provided buffer.
  * returns TRUE if one is present.
- * @param known_fn - the hex hash is copied here.
- * @param buf      - input is the hash and the filename; the filename is left here.
+ * @param buf      - input is the hash and the filename; the hash is left here.
+ * @param known_fn - the filename is copied there
  */
 int state::find_plain_hash(char *buf, char *known_fn) 
 {
@@ -232,58 +251,38 @@ int state::find_md5deep_size_hash(char *buf, char *known_fn)
  * Look for a hash in a bsd-style buffer.
  * @param buf - input buffer; set to hash on output.
  * @param fn - gets filename
+ *
+ * bsd hash lines look like this:
+ * MD5 (copying.txt) = 555b3e940c86b35d6e0c9976a05b3aa5
  */
 int state::find_bsd_hash(char *buf, char *fn)
 {
-    char *temp;
-    size_t buf_len = strlen(buf);
-    unsigned int pos = 0;
+    size_t buf_len         = strlen(buf);
     unsigned int  hash_len = HASH_STRING_LENGTH;
 
-    if (buf == NULL || buf_len < hash_len)
-	return FALSE;
+    assert(buf!=0);
+    if (buf_len < hash_len) return FALSE;
 
-    while (pos < buf_len && buf[pos] != '(')
-	++pos;
-    // The hash always comes after the file name, so there has to be 
-    // enough room for the filename and *then* the hash.
-    if (pos + hash_len + 1 > buf_len)
-	return FALSE;
-    unsigned int first_paren = pos;
+    char *open  = index(buf,'(');
+    char *close = index(buf,')');
+    char *equal = index(buf,'=');
 
-    // We only need to check back as far as the opening parenethsis,
-    // not the start of the string. If the closing paren comes before
-    // the opening paren (e.g. )( ) then the line is not valid
-    pos = buf_len - hash_len;
-    while (pos > first_paren && buf[pos] != ')')
-	--pos;
-    if (pos == first_paren)
-	return FALSE;
-    unsigned int second_paren = pos;
+    if(open==0 || close==0 || equal==0) return FALSE; // not properly formatted
+    *close = '\000';			  // termiante the string
+    strncpy(fn,open+1,PATH_MAX);
+    
+    /* Scan past the equal sign for the beginning of the hash */
+    equal++;
+    while(*equal!='\000' && !isxdigit(*equal)) equal++;
 
-    if (fn != NULL)  {
-	temp = strdup(buf);
-	temp[second_paren] = 0;
-	// The filename starts one character after the first paren
-	shift_string(temp,0,first_paren+1);
-	strncpy(fn,temp,PATH_MAX);
-	free(temp);
+    /* Copy over buffer */
+    while(isxdigit(*equal)){
+	*buf = *equal;
+	buf++;
+	equal++;
     }
-
-    // We chop instead of setting buf[HASH_STRING_LENGTH] = 0 just in
-    // case there is extra data. We don't want to chop up longer 
-    // (possibly invalid) data and take part of it as a valid hash!
-  
-    // We duplicate the buffer here as we're going to modify it.
-    // We work on a copy so that we don't muck up the buffer for
-    // any other functions who want to use it.
-    temp = strdup(buf);
-    chop_line(temp);
-
-    // The hash always begins four characters after the second paren
-    shift_string(temp,0,second_paren+4);
-
-    return algorithm_t::valid_hex(temp);
+    *buf = 0;				// terminate
+    return algorithm_t::valid_hex(buf);
 }
   
 
@@ -337,10 +336,7 @@ uint32_t byte_reverse(uint32_t n)
    As a result, we can just treat these files like plain hash files  */
 int state::find_ilook_hash(char *buf, char *known_fn) 
 {
-  if (h_ilook)
     return (find_plain_hash(buf,known_fn));
-  else
-    return FALSE;
 }
 
 
@@ -377,71 +373,48 @@ int state::identify_hash_file_type(FILE *f,uint32_t *expected_hashes)
     rewind(f);
     
     /* The "rigid" file types all have their headers in the 
-       first line of the file. We check them first */
+     * first line of the file. We check them first
+     */
     
-    if (h_encase)    {
-	if (check_for_encase(f,expected_hashes))
-	    return TYPE_ENCASE;
-    }
+    if (opt_md5deep_mode_algorithm == alg_md5 && check_for_encase(f,expected_hashes)) return TYPE_ENCASE;
     
     if ((fgets(buf,MAX_STRING_LENGTH,f)) == NULL) {
 	return TYPE_UNKNOWN;
     }
     
     if (strlen(buf) > HASH_STRING_LENGTH) {
+	
+	chop_line(buf);
 
-    chop_line(buf);
-
-    if (h_hashkeeper)      {
-	if (STRINGS_EQUAL(buf,HASHKEEPER_HEADER))
-	  return TYPE_HASHKEEPER;
-      }
-    
-    if (h_nsrl15)      {
-	if (STRINGS_EQUAL(buf,NSRL_15_HEADER))
-	  return TYPE_NSRL_15;
-      }
-    
-    if (h_nsrl20) {
-    if (STRINGS_EQUAL(buf,NSRL_20_HEADER))
-      return TYPE_NSRL_20;
-      }
-    
-    if (h_ilook)      {
-	if (STRINGS_EQUAL(buf,ILOOK_HEADER))
-	  return TYPE_ILOOK;
-      }
-
-    if (h_ilook3)      {
-	if (STRINGS_EQUAL(buf,ILOOK3_HEADER))
-	  return TYPE_ILOOK3;
-      }
-
-    if (h_ilook4)      {
-	if (STRINGS_EQUAL(buf,ILOOK4_HEADER))
-	  return TYPE_ILOOK3;
-      }
-
+	/* Check for the algorithms that only have MD5 */
+	if (opt_md5deep_mode_algorithm == alg_md5){
+	    if(STRINGS_EQUAL(buf,HASHKEEPER_HEADER)) return TYPE_HASHKEEPER;
+	    if (STRINGS_EQUAL(buf,ILOOK_HEADER)) return TYPE_ILOOK;
+	}
+	
+	/* Check for those that have md5 or sha1 */
+	if (opt_md5deep_mode_algorithm == alg_md5 || opt_md5deep_mode_algorithm == alg_sha1) {
+	    if (STRINGS_EQUAL(buf,NSRL_15_HEADER)) return TYPE_NSRL_15;
+	    if (STRINGS_EQUAL(buf,NSRL_20_HEADER)) return TYPE_NSRL_20;
+	}
+	
+	/* Check for those that have md5 or sha1 or sha256 */
+	if (opt_md5deep_mode_algorithm == alg_md5 || opt_md5deep_mode_algorithm == alg_sha1 || opt_md5deep_mode_algorithm == alg_sha256) {
+	    if (STRINGS_EQUAL(buf,ILOOK3_HEADER)) return TYPE_ILOOK3;
+	    if (STRINGS_EQUAL(buf,ILOOK4_HEADER)) return TYPE_ILOOK3;
+	}
     }
   
   
     /* Plain files can have comments, so the first line(s) may not
-       contain a valid hash. But if we should process this file
-       if we can find even *one* valid hash */
+     * contain a valid hash. But if we should process this file
+     * if we can find even *one* valid hash
+     */
     do {
-	if (find_bsd_hash(buf,known_fn)) {
-	    return TYPE_BSD;
-	}
-	
-	if (find_md5deep_size_hash(buf,known_fn)) {
-	    return TYPE_MD5DEEP_SIZE;
-	}
-	
-	if (find_plain_hash(buf,known_fn)) {
-	    return TYPE_PLAIN;
-	}
+	if (find_bsd_hash(buf,known_fn)) return TYPE_BSD;
+	if (find_md5deep_size_hash(buf,known_fn)) return TYPE_MD5DEEP_SIZE;
+	if (find_plain_hash(buf,known_fn)) return TYPE_PLAIN;
     } while ((fgets(buf,MAX_STRING_LENGTH,f)) != NULL);
-    
     return TYPE_UNKNOWN;
 }
 
@@ -457,14 +430,28 @@ int state::identify_hash_file_type(FILE *f,uint32_t *expected_hashes)
 int state::find_hash_in_line(char *buf, int fileType, char *fn) 
 {
     switch(fileType) {
-    case TYPE_PLAIN:	return find_plain_hash(buf,fn);
-    case TYPE_BSD:	return find_bsd_hash(buf,fn);
-    case TYPE_HASHKEEPER: return find_rigid_hash(buf,fn,3,h_hashkeeper);
-    case TYPE_NSRL_15:  return find_rigid_hash(buf,fn,2,h_nsrl15);
-    case TYPE_NSRL_20:  return find_rigid_hash(buf,fn,4,h_nsrl20);
-    case TYPE_ILOOK:    return find_ilook_hash(buf,fn);
-    case TYPE_ILOOK3:	return find_rigid_hash(buf,fn,3,h_ilook3);
-    case TYPE_ILOOK4:	return find_rigid_hash(buf,fn,3,h_ilook3); // same as ilook3
+    case TYPE_PLAIN:	    return find_plain_hash(buf,fn);
+    case TYPE_BSD:	    return find_bsd_hash(buf,fn);
+    case TYPE_HASHKEEPER:   return find_rigid_hash(buf,fn,3,h_hashkeeper);
+    case TYPE_NSRL_15:
+	if(opt_md5deep_mode_algorithm == alg_md5) return find_rigid_hash(buf,fn,2,7);
+	if(opt_md5deep_mode_algorithm == alg_sha1) return find_rigid_hash(buf,fn,2,1);
+	return FALSE;			// NSRL_15 only hash md5 and sha1
+    case TYPE_NSRL_20:
+	if(opt_md5deep_mode_algorithm == alg_md5) return find_rigid_hash(buf,fn,4,2);
+	if(opt_md5deep_mode_algorithm == alg_sha1) return find_rigid_hash(buf,fn,4,1);
+	return FALSE;
+    case TYPE_ILOOK:        return find_ilook_hash(buf,fn);
+    case TYPE_ILOOK3:
+	if(opt_md5deep_mode_algorithm == alg_md5)    return find_rigid_hash(buf,fn,3,1);
+	if(opt_md5deep_mode_algorithm == alg_sha1)   return find_rigid_hash(buf,fn,3,2);
+	if(opt_md5deep_mode_algorithm == alg_sha256) return find_rigid_hash(buf,fn,3,6);
+	return FALSE;			// ilook3 only has md5, sha1 and sha256
+    case TYPE_ILOOK4:	    
+	if(opt_md5deep_mode_algorithm == alg_md5)    return find_rigid_hash(buf,fn,3,1);
+	if(opt_md5deep_mode_algorithm == alg_sha1)   return find_rigid_hash(buf,fn,3,2);
+	if(opt_md5deep_mode_algorithm == alg_sha256) return find_rigid_hash(buf,fn,3,6);
+	return FALSE;			// ilook4 only has md5, sha1 and sha256
     case TYPE_MD5DEEP_SIZE: return find_md5deep_size_hash(buf,fn);
     }
     return FALSE;
@@ -574,7 +561,6 @@ int state::parse_encase_file(const char *fn, FILE *handle,uint32_t expected_hash
 void state::md5deep_load_match_file(const char *fn) 
 {
     uint64_t line_number = 0;
-    char known_fn[PATH_MAX+1];
     uint32_t expected_hashes=0;
 
     FILE *f= fopen(fn,"rb");
@@ -609,19 +595,23 @@ void state::md5deep_load_match_file(const char *fn)
   
     char buf[MAX_STRING_LENGTH + 1];
     while (fgets(buf,MAX_STRING_LENGTH,f)) {
+	char *cc;
+	char known_fn[PATH_MAX+1];		     // set to be the filename from the buffer
+	if((cc=index(buf,'\n'))!=0) *cc = 0;	     // remove \n at end of line
+	if((cc=index(buf,'\r'))!=0) *cc = 0;	     // remove \r at end of line
 	++line_number;
 	memset(known_fn,0,PATH_MAX);
 
+	/* This looks odd. The function find_hash_in_line modifies 'buf' so that it
+	 * begins with the hash, and copies the filename to known_fn.
+	 */
 	if (!find_hash_in_line(buf,ftype,known_fn)) {
 	    if ((!ocb.opt_silent) || (mode_warn_only)) {
-		std::cerr << progname << ": " << fn << "No hash found in line " << line_number << NEWLINE;
+		std::cerr << progname << ": " << fn << ": No hash found in line " << line_number << NEWLINE;
 	    }
 	} else {
 	    // Invalid hashes are caught above
 	    file_data_t *fdt = new file_data_t();
-	    char *cc;
-	    if((cc=index(buf,'\n'))!=0) *cc = 0;	     // remove \n at end of line
-	    if((cc=index(buf,'\r'))!=0) *cc = 0;	     // remove \r at end of line
 	    fdt->hash_hex[opt_md5deep_mode_algorithm] = buf; // the hex hash
 	    fdt->file_name = known_fn;		    // the filename
 	    ocb.add_fdt(fdt);

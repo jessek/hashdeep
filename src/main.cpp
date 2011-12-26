@@ -969,7 +969,7 @@ int state::md5deep_process_command_line(int argc_, char **argv_)
 	case '0': ocb.opt_zero = true;		break;
 
 	case 'S':
-	    mode_warn_only=true;
+	    mode_warn_only = true;
 	    ocb.opt_silent = true;
 	    break;
 

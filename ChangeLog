@@ -1,3 +1,7 @@
+2011-12-26  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/main.h (class state): removed h_nsrl15 variable. Now it always looks for nsrl15 files when trying to decode a hash file.
+
 2011-12-20  Simson Garfinkel  <simsong@arlington-8-30-79-4.ncr.vt.edu>
 
 	* tests/testfiles/Makefile.am (testfiles.zip): removed $FILES from release; now testfiles.zip is built as part of the release, and the FILES are in it.

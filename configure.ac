@@ -140,7 +140,7 @@ AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h malloc.h stdint.h stdlib.
 
 
 # These functions not available everywhere
-AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r mmap usleep mkstemp vasprintf getrusage getprogname])
+AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r mmap usleep mkstemp vasprintf getrusage getprogname isxdigit])
 
 # This is for Apple's new CommonCrypto (which is FIPS validated)
 AC_CHECK_FUNCS([CC_MD5_Init CC_SHA1_Init CC_SHA256_Init])
