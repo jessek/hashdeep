@@ -29,7 +29,7 @@
 #ifndef HAVE_ISXDIGIT
 bool isxdigit(char ch)
 {
-    return isdigit(ch) || (ch>='a' && ch<='f') || (ch=>'A' && ch<='F');
+    return isdigit(ch) || (ch >= 'a' && ch <= 'f') || (ch => 'A' && ch <= 'F');
 }
 #endif
 

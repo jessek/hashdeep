@@ -1,3 +1,7 @@
+2011-12-27  Jesse Kornblum <research@jessekornblum.com>
+
+	* src/files.cpp: Added spaces to isxdigit macro for OS X compilation.
+
 2011-12-27  Simson Garfinkel  <simsong@Mucha.local>
 
 	* src/hashlist.cpp (hashmap::add_file): now makes a copy of the hex hash and assures that it is lower case. 
