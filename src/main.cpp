@@ -199,7 +199,7 @@ void state::md5deep_usage(void)
     if(usage_count==1){
 	ocb.status("%s version %s by %s.",progname.c_str(),VERSION,AUTHOR);
 	ocb.status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,progname.c_str());
-	ocb.status("See the man page or README.txt file for the full list of options");
+	ocb.status("See the man page or README.txt file or use -hh for the full list of options");
 	ocb.status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
 	ocb.status("-r  - recursive mode. All subdirectories are traversed");
 	ocb.status("-e  - show estimated time remaining for each file");
