@@ -257,12 +257,6 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 #define CMD_PROMPT "C:\\>"
 #define DIR_SEPARATOR   '\\'
 
-// RBF - Resolve NEWLINE variable
-// Testing on Vista shows it needs to be \r\n, but on other
-// system \n seems to work ok. Which is it? 
-// If we end up using \n, we should move it out of the conditional defines
-
-#define NEWLINE "\r\n"			// for Windows, make newline \r\n
 #define LINE_LENGTH 72
 #define ftello   ftello64	/* use the 64-bit version */
 #define fseeko   fseeko64	/* use the 64-bit version */

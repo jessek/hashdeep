@@ -604,7 +604,7 @@ void state::md5deep_load_match_file(const char *fn)
 	 */
 	if (!find_hash_in_line(buf,ftype,known_fn)) {
 	    if ((!ocb.opt_silent) || (mode_warn_only)) {
-		std::cerr << progname << ": " << fn << ": No hash found in line " << line_number << NEWLINE;
+		std::cerr << progname << ": " << fn << ": No hash found in line " << line_number << std::endl;
 	    }
 	} else {
 	    // Invalid hashes are caught above

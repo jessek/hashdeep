@@ -34,11 +34,11 @@ std::string progname;
 
 #define AUTHOR      "Jesse Kornblum and Simson Garfinkel"
 #define COPYRIGHT   "This program is a work of the US Government. "\
-"In accordance with 17 USC 105,%s"\
-"copyright protection is not available for any work of the US Government.%s"\
-"This is free software; see the source for copying conditions. There is NO%s"\
-"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",\
-NEWLINE, NEWLINE, NEWLINE
+"In accordance with 17 USC 105,\n"\
+"copyright protection is not available for any work of the US Government.\n"\
+"This is free software; see the source for copying conditions. There is NO\n"\
+"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+
 
 #ifdef _WIN32 
 // This can't go in main.h or we get multiple definitions of it
@@ -63,7 +63,7 @@ uint64_t file_data_hasher_t::next_file_number = 0; // needs to live somewhere
 /* This is the one place we allow a printf, becuase we are about to exit, and we call it before we multithread */
 static void try_msg(void)
 {
-  fprintf(stderr,"Try `%s -h` for more information.%s", progname.c_str(),NEWLINE);
+    std::cerr << "Try `" << progname << " -h` for more information." << std::endl;
 }
 
 

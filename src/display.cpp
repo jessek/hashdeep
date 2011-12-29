@@ -39,7 +39,7 @@ void display::writeln(std::ostream *os,const std::string &str)
 	(*os) << '\000';
     }
     else {
-	(*os) << NEWLINE;
+	(*os) << std::endl;
     }
     os->flush();
     unlock();
