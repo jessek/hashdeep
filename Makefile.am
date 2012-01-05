@@ -1,15 +1,19 @@
-SUBDIRS = md5deep hashdeep
+SUBDIRS = src tests man tests/testfiles
 
-EXTRA_DIST = FILEFORMAT config.guess config.sub  \
-   include/md5.h include/sha1.h include/sha256.h include/tiger.h \
-   include/whirlpool.h include/common.h include/ui.h include/tchar-local.h
+# These prefixes are for compiling on FC15
+CROSS32_PREFIX = i686-w64-mingw32
+CROSS64_PREFIX = x86_64-w64-mingw32
+
+# on Mac, you may want this instead:
+# CROSS_PREFIX = i386-mingw32
+
+EXTRA_DIST = FILEFORMAT config.guess config.sub  m4/ax_pthread.m4 CONFIGURE_FC.sh
 
 nice:
-	rm -f *~ md5deep/*~ hashdeep/*~
+	rm -f *~ man/*~ src/*~
 
 preflight:
-	grep RBF md5deep/*.{c,h,1} hashdeep/*.{c,h,1} include/*.h common/*.c \
-                 doc/* AUTHORS README NEWS TODO ChangeLog 
+	grep RBF */*.{c,cpp,h,1} doc/* AUTHORS README NEWS TODO ChangeLog 
 
 todo:
 	@grep TODO *.c *.h ${man_MANS} AUTHORS README NEWS ChangeLog
@@ -17,78 +21,88 @@ todo:
 	@echo From TODO file:
 	@cat TODO
 
-
-# The flip command can be found at:
-# http://ccrma-www.stanford.edu/~craig/utility/flip/#
-
-FLIP = todos
-CROSS_PREFIX = i586-mingw32msvc
-CROSS64_PREFIX = x86_64-w64-mingw32
-
-SUFFIXES = .TXT .1
-
-.1.TXT:
-	/usr/bin/tbl $< | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > $@
-
-#.1.TXT: 
-#	man $< | col -bx > $@
-
-
-WINDOWSDOCS = MD5DEEP.TXT HASHDEEP.TXT CHANGES.TXT COPYING.TXT FILEFORMAT.TXT
-
-COPYING.TXT: COPYING
-	cp COPYING COPYING.TXT
-
-CHANGES.TXT: NEWS
-	cp NEWS CHANGES.TXT
-
-FILEFORMAT.TXT: FILEFORMAT
-	cp FILEFORMAT FILEFORMAT.TXT
-
-MD5DEEP.1: 
-	cp md5deep/md5deep.1   MD5DEEP.1
-HASHDEEP.1:
-	cp hashdeep/hashdeep.1 HASHDEEP.1
-
-win64: distclean
-	./configure --host=$(CROSS64_PREFIX)
+win32: 
+	make distclean
+	./configure --host=$(CROSS32_PREFIX) 
 	make
-	$(CROSS64_PREFIX)-strip md5deep/*exe hashdeep/*.exe
-	mv md5deep/md5deep.exe       md5deep/md5deep64.exe
-	mv md5deep/sha1deep.exe      md5deep/sha1deep64.exe
-	mv md5deep/sha256deep.exe    md5deep/sha256deep64.exe
-	mv md5deep/tigerdeep.exe     md5deep/tigerdeep64.exe
-	mv md5deep/whirlpooldeep.exe md5deep/whirlpooldeep64.exe
-	mv hashdeep/hashdeep.exe     hashdeep/hashdeep64.exe
-	cp md5deep/*.exe hashdeep/*.exe $(distdir)
+	/bin/rm -f /tmp/strings.txt
+	strings src/md5deep.exe > /tmp/strings.txt
+	if grep pthreadGC2.dll /tmp/strings.txt ; then echo not statically linked ; exit 1; fi
 
-win32: distclean
-	./configure --host=$(CROSS_PREFIX)
+win64: 
+	make distclean
+	./configure --host=$(CROSS64_PREFIX) 
 	make
-	$(CROSS_PREFIX)-strip md5deep/*.exe hashdeep/*.exe
-	cp md5deep/*.exe hashdeep/*.exe $(distdir)
+	/bin/rm -f /tmp/strings.txt
+	strings src/md5deep.exe > /tmp/strings.txt
+	if grep pthreadGC2.dll /tmp/strings.txt ; then echo not statically linked ; exit 1; fi
+	mv src/md5deep.exe       src/md5deep64.exe
+	mv src/sha1deep.exe      src/sha1deep64.exe
+	mv src/sha256deep.exe    src/sha256deep64.exe
+	mv src/tigerdeep.exe     src/tigerdeep64.exe
+	mv src/whirlpooldeep.exe src/whirlpooldeep64.exe
+	mv src/hashdeep.exe     src/hashdeep64.exe
 
+strip32:
+	$(CROSS32_PREFIX)-strip src/*.exe src/*.exe
+strip64:
+	$(CROSS64_PREFIX)-strip src/*64.exe 
 
-win-docs: $(WINDOWSDOCS)
-	$(FLIP) $(WINDOWSDOCS)
-#	flip -d $(WINDOWSDOCS)
-#	unix2dos $(WINDOWSDOCS)
-#	todos $(WINDOWSDOCS)
-
-win-prep:
-	rm -f $(WINDOWSDOCS)
-
-win-package: win-prep win-docs
-	cp *.TXT $(distdir)
-
-world: dist
-	rm -rf $(distdir).zip $(distdir) md5deep/*.exe hashdeep/*.exe
+windist: 
+	@echo 
+	@echo Making win32 
+	@echo
+	svn update
+	rm -rf $(distdir).zip $(distdir) src/*.exe
 	mkdir $(distdir)
-
-	make win32
+	make win32 
+	make strip32 
+	cp src/*.exe $(distdir)
+	@echo ====================================
+	@echo 
+	@echo Making win32 
 	make win64
-	make win-package
-
+	make strip64
+	make man/hashdeep.txt man/md5deep.txt
+	cp src/*.exe $(distdir)
+	@echo ====================================
+	@echo 
+	@echo Creating ZIP archive
+	@echo 
 	zip -r9 $(distdir).zip $(distdir)
+	@echo Adding text files to $(distdir).zip 
+	cp NEWS			$(distdir)/CHANGES.txt
+	cp COPYING		$(distdir)/COPYING.txt
+	cp FILEFORMAT		$(distdir)/FILEFORMAT.txt
+	cp man/md5deep.txt	$(distdir)/HASHDEEP.txt
+	cp man/hashdeep.txt	$(distdir)/MD5DEEP.txt
+	rm man/md5deep.txt man/hashdeep.txt
+	zip --to-crlf $(distdir).zip $(distdir)/*.txt
 	rm -rf $(distdir) $(WINDOWSDOCS) MD5DEEP.1 HASHDEEP.1
+	@echo "*************************"
+	@echo "*** THE WORLD IS MADE ***"
+	@echo ""
+	ls -l $(distdir).*
+	@echo ""
+	@unzip -l $(distdir).zip
+
+wintest:
+	@echo Will create md5deep-wintest.zip, a zip file that
+	@echo provides for full testing on Microsoft Windows with Cygwin installed.
+	make windist
+	zip md5deep-wintest.zip -9 $(distdir).zip tests/* tests/*.zip tests/*.sh tests/testfiles/ tests/testfiles/*txt tests/testfiles/*/*txt tests/testfiles/*/*/*txt
+
+world:
+	svn update
+	@echo meta-build system. 
+	@echo Making both Linux and Windows distributions
+	make distclean
+	./configure CFLAGS="-Wall -W -g -ggdb -O0"
+	make dist
+	make windist
+
+CLEANFILES = man/md5deep.txt man/hashdeep.txt
+SUFFIXES = .txt .1
+.1.txt:
+	/usr/bin/tbl $< | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > $@
 

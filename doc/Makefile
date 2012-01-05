@@ -2,7 +2,7 @@
 # top level directory. It is used only to clean up and
 # publish files for the public web site.
 #
-# $Id$
+# $Id: Makefile 252 2010-12-17 17:33:34Z jessekornblum $
 #
 
 ALL_FILES = index.html style.css \

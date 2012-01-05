@@ -1,29 +1,562 @@
-2011-12-20 Jesse Kornblum
+2012-01-05  Jesse Kornblum <research@jessekornblum.com>
 
-	* md5deep/files.c: Modified find_bsd_hash to deal with improperly 
-	  copied hashes. 
-	* configure.ac: Version bump to 3.9.3-001
+	* doc: Sync'ed files from trunk
 
+2011-12-27  Jesse Kornblum <research@jessekornblum.com>
+
+	* src/files.cpp: Added spaces to isxdigit macro for OS X compilation.
+
+2011-12-27  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/hashlist.cpp (hashmap::add_file): now makes a copy of the hex hash and assures that it is lower case. 
+
+2011-12-26  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/main.h (class state): removed h_nsrl15 variable. Now it always looks for nsrl15 files when trying to decode a hash file.
+
+2011-12-20  Simson Garfinkel  <simsong@arlington-8-30-79-4.ncr.vt.edu>
+
+	* tests/testfiles/Makefile.am (testfiles.zip): removed $FILES from release; now testfiles.zip is built as part of the release, and the FILES are in it.
+
+2011-12-17  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/files.cpp (state::find_hash_in_line): removed ILOOK3 intentional fall through. Now we explicitly do it.
+
+	* src/display.cpp (display::portable_gmtime): We needed a gmtime()
+	in multiple locaitons that was portable and threadsafe, so we
+	created this from the code that was previously in
+	md5deep_display_hash.
+	(file_data_hasher_t::compute_dfxml): hashdigest indent set to 0 from 2 if piecewise_size is 0
+	(display::dfxml_write): ctime, mtime, and atime now put in DFXML output.
+
+	* src/dig.cpp (state::file_type): added support for mtime and atime.
+
+	* src/main.h: changed fdht->timestamp to fdht->ctime.
+
+2011-12-17  Simson Garfinkel  <simsong@arlington-8-30-79-4.ncr.vt.edu>
+
+	* src/files.cpp (state::md5deep_load_match_file): replaced fprintf(stderr) with a cerr output.
+
+	* src/hash.cpp (file_data_hasher_t::hash): removed assert(0) for invalid setting of iomode; now displays what the invalid setting is.
+
+2011-12-16 Jesse Kornblum <research@jessekornblum.com>
+
+	* tests/tests.sh: added test for BSD style hashes, iLook hashes
+
+2011-12-04  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/display.cpp (dfxml_write): added filesize to DFXML output
+
+2011-11-29  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/main.h (d): default I/O mode changed from memory-mapped to buffered (the same as the 3.x release.) Memory-mapped should be faster, but for some reason it isn't. Also it makes the memory usage appear quite large (it isn't, but the top and ps commands report mapped memory.)
+
+2011-11-27 Jesse Kornblum <research@jessekornblum.com>:
+
+	* src/main.cpp (hashdeep_process_command_line): Fixed getopt command so that -c mode takes an argument, but -C does not. The former caused a crash.
+	* src/xml.h: Removed spurrious 'const'
+
+2011-11-17  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/main.cpp (state::main): -j default was being set after option processing. Moved to before. -j0 now disables threading, -j1 is just one thread.
+
+2011-11-07 Jesse Kornblum <research@jessekornblum.com>
+
+	* tests/Makefile.am: Corrected test filenames to make dist
+
+2011-11-01 Jesse Kornblum <research@jessekornblum.com>
+
+	* configure.ac: Version bump to 4.0 beta1
+
+2011-10-28  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac (HAVE_PTHREAD): fixed for multithreading error on macos and linux (it wasn't turning on)
+
+2011-10-26  Simson Garfinkel  <simsong@imac3.home>
+
+	* configure.ac: beta counter incremented to beta2
+
+	* tests/tests.sh: added code for test 47 to cover new audit mode generating more output.
+
+	* src/display.cpp (display::audit_update): audit output was going to cerr; should go to cout.
+
+	* src/threadpool.cpp (ERR): changed from fprintf to cerr; added __noreturn__ attribute.
+
+	* src/files.cpp (state::md5deep_load_match_file): file_type no longer shadows member of this.
+
+	* src/xml.cpp (XML::comment): comment no longer shadows local member
+
+	* src/dig.cpp (print_last_error): now uses cerr instead of fprintf; turns pszMessage into UTF8
+
+	* src/main.h (class display): added __attribute__ ((__noreturn__)) to internal_error().
+
+	* src/common.h (tstring): somehow we got a ; before the wstring. Removed it.
+
+2011-10-25  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/dig.cpp (state::dig_self_test): added explicit cast to ft to avoid compiler warning.
+
+	* src/main.h (class global): renamed class main to class global so that main() doesn't shadow main::main() (which doesn't exist)
+
+	* src/main.cpp (state::hashdeep_process_command_line): renamed argc and argv to argc_ and argv_ so as not to shadow instance variables.
+
+	* src/display.cpp (display::finalize_matching): removed known_size() as a local, since we have a function that does it.
+	(display::compute_unused): renamed parameter from display to show_display to avoid compiler warning.
+
+	* src/main.h (class display): renamed out to out_ so as not to shadow parameter.
+	(std::vector): removed num_columns, as it wasn't being used outside the local function.
+
+2011-10-17  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/xml.cpp (pop): added flush to out to make it easier for people to undestand status.
+
+2011-10-15  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/display.cpp: removed #include <sstream>
+
+	* src/main.cpp: removed #include <sstream>
+
+2011-10-09  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* tests/tests.sh (TMP): renamed TEST_DIR to TEST_BIN and GOOD_DIR to GOOD_BIN
+
+2011-10-09  Simson Garfinkel  <simsong@new-host-2.home>
+
+	* configure.ac (HAVE_PTHREAD): quoted AX_PTHREAD in the configure script
+
+2011-10-09  Simson Garfinkel  <simsong@new-host-3.home>
+
+	* configure.ac: version number increased to 4.0.0_beta_001
+
+	* src/main.cpp (md5deep_usage): 
+
+	All programs now have a -C option that enables Common Crypto on
+	Mac. It is disabled by default. You can use it if you want.
+
+	Windows - All tests now pass, with the exception that the windows
+	files now have proper UTF-8 in them rather than the question-mark
+	escaping. You can escape the UTF-8 by providing the flags. You can
+	run the tests.sh script with "--nounicode" to remove the filenames
+	with unicode in them.  Tests must be run within cygwin to get the
+	bash script to work, but the md5deep/hashdeep executables
+	themselves do not require cygwin and, in fact, ignore the DLL.
+
+	Threading now works on windows again. I think that I finally got the configure script right.
+
+	I have tested the CONFIGURE_FC.sh with a virgin FC15 ISO. You boot
+	the ISO in VMWare and it creates a user called 'user'.  You have
+	to create a user that has root access. Once you do this and become
+	root, run CONFIGURE_FC.sh. It will update the yum repository,
+	download the mingw32 and mingw64 compilers, download and build
+	pthreads, and then, just for kicks, it download the SVN repository
+	and build the 32-bit and 64-bit executables.
+
+	You can now run the executables with the '-hhh' option to print
+	information about the build configuration and environment as well.
+
+	I've added -B as a verbose flag for both md5deep and hashdeep. (-v
+	is verbose in hashdeep but prints the version number in md5deep)
+
+	Now, if you are in verbose mode, the DFXML will include the
+	workerid= of the thread that created the results. This is useful
+	for debugging to verify that each thread is actually hashing.
+
+
+2011-09-27  Simson Garfinkel  <simsong@FC15>
+
+	* src/display.cpp (dfxml_write): now writes workerid as an attribute in the fileobject output.
+
+	* src/main.h (file_data_t): added worker_id to fdht
+
+	* src/sha1.c (sha1_finish): added const to avoid casting warnings.
+
+2011-09-25  Simson Garfinkel  <simsong@alphonse-mucha.home>
+
+	* src/tiger.c (hash_init_tiger): changed all functions to return void rather than int.
+
+	* src/md5.c (hash_init_md5): all functions now return void rather than int.
+
+	* src/whirlpool.c (hash_init_whirlpool): all functions now return void rather than int.
+
+	* src/sha256.c (hash_final_sha256): all functions now return void rather than int
+
+	* src/main.h (class algorithm_t): hashing functions modified to return void rather than int
+
+2011-09-16  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/sha256.c (hash_init_sha256): added casts
+
+	* configure.ac: added -fast and a ton of more warnings
+
+	* configure.ac: now removes -fast flag if not optimizing
+
+	* src/sha256.c (hash_update_sha256): added casts to avoid void *.
+
+	* src/md5.c (hash_final_md5): added casts to avoid void *.
+
+	* src/sha1.h: noted that SHA1Transform now takes a const buffer.
+
+	* src/sha1.c (SHA1Final): added #define SHA1HANDSOFF so that it won't modify the buffer passed in.
+	(hash_final_sha1): added casts to avoid void *.
+
+2011-09-12 Jesse Kornblum
+
+	* tests/tests.sh: Fixed typo
 	
-2011-09-29 Jesse Kornblum
 
-	* match.c: Fixed wacky typo in memset
-	* files.c: Fixed bug to add support for hashes with no
-	filename information, bug 3392154.
+2011-09-11  Simson Garfinkel  <simsong@FC15>
+
+	* configure.ac (INCLUDE_NP): added define for INCLUDE_NP
+
+	* src/display.cpp (display_realtime_stats): removed setting shorten variable, since now we simply shorten where it is needed, rather than setting a variable and checking it elsewhere.
+
+	* src/xml.cpp: moved defines of O_BINARY, et all, out of #ifdef
+
+	* src/files.cpp (md5deep_load_match_file): removed setting status, because return code is now ignored. (errors in parse_encase_file are no longer reported)
+
+2011-08-24  User  <user@ubuntu>
+
+	* configure.ac: AM_CONFIG_HEADER changes to AC_CONFIG_HEADERS
+
+2011-08-22 Jesse Kornblum
+
+	* bootstrap-mingw.sh: Added support for mingw on Ubuntu
+
+2011-08-22  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/display.cpp (display::error_filename): moved lock to around dfxml
+
+2011-08-17  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/display.cpp (display::error_filename): error_filename now properly prints to DFXML
 
 
-2011-07-04 Jesse Kornblum
+2011-08-14  Simson Garfinkel  <simsong@t.nitroba.org>
 
-	* Fixed minor bugs regarding wide characters in 
-	  is_device_file on Win32
+	* src/main.h (d): added __attribute__ ((format(printf))) to all printf-like functions
+
+	* src/display.cpp (error): removed print_error(), since it did the same thing that error() did.
+
+	* src/main.h (d): added __attribute__ ((__noreturn__)) to fatal_error
+
+2011-08-12  Simson Garfinkel  <simsong@t.nitroba.org>
+
+	* src/display.cpp (error): always puts progname on error now. removed explicit "%s: " and progname from practially every place error was called.
+
+2011-08-09  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/main.h (std::vector): changed hashmap from a map to a multimap
+
+2011-08-07 Jesse Kornblum 
+	* man/md5deep.1: Updated version number
+	* man/hashdeep.1: Restored to earlier version
+	* man/Makefile.am: Corrected clobbering of hashdeep man page
+	* src/Makefile.am: Corrected typo in the symbolic linking
+
+	* src/ui.cpp: Vestigial file removed
+
+2011-08-01  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/main.h (class file_data_hasher_t): moved read_offset and read_len from file_data_t to file_data_hasher_t
+	(class file_data_hasher_t): moved timestamp from file_data_t to file_data_hasher_t
+
+	* src/display.cpp (file_data_hasher_t::compute_dfxml): fdht->dfxml_hash is now a string stream
+
+	* src/hash.cpp (file_data_hasher_t::hash): whoops; dfxml had old bytes=; replaced with len=;
+
+2011-07-31  Simson Garfinkel  <simsong@alphonse-mucha.local>
+
+	* src/hash.cpp (display::hash_stdin): sets stat_bytes to SIZE_T_MAX when hashing stdin.
+
+2011-07-27  Simson Garfinkel  <simsong@imac3.local>
+
+	* src/main.h (class display): added conditional defines so that wstring stuff isn't compiled on mac
+
+2011-07-27  Simson Garfinkel  <simsong@t.nitroba.org>
+
+	* configure.ac: now compiles with and without PTHREAD, and on win32 and win64
+	updated version to 4.0.0_alpha_001
+
+	* src/hash.cpp (hash): triage mode no longer works on stdin
+
+2011-07-26  Simson Garfinkel  <simsong@t.nitroba.org>
+
+	* src/main.cpp (main): main is now a method of state.
+
+2011-07-22  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/hash.cpp (display::hash_stdin): removed is_stdin because we can just compare handle to stdin.
+
+	* src/dig.cpp (have_processed_dir): cycle system no longer public; now it's static. (should there be a dig class?)
+
+2011-07-21  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* src/files.cpp (shift_string): moved to files.cpp, the only place where it is used.
+
+	* src/main.cpp (check_wow64): moved to main.cpp
+
+	* src/files.cpp (find_comma_separated_string): moved from helpers.cpp to files.cpp and made static.
+
+	* src/main.cpp (state::md5deep_process_command_line): -f option removed sincei t was not properly implemented and doesnt appear to have been used.
+
+2011-07-21  Simson Garfinkel  <simsong@cmu-466621.wv.cc.cmu.edu>
+
+	* src/Makefile.am: removed md5deep.h and md5deep_match.h
+
+2011-07-20  Simson Garfinkel  <simsong@cmu-466621.wv.cc.cmu.edu>
+
+	* src/main.cpp (state::md5deep_process_command_line): removed mode_piecewise, since it can be determined from picewise_size>0.
+
+	* src/main.h (class state): moved primary_function into display
+
+2011-07-19  Simson Garfinkel  <simsong@184.sub-75-243-240.myvzw.com>
+
+	* src/main.h (enum): added status_EXIT_FAILURE to status_t as status_t is now returned.
+
+2011-07-19  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/display.cpp: the only place that filename shortening was done was in display_realtime_stats, so all of the filename shortening logic was moved there and it was moved out of display_filename everywhere else. The passage of the FILE * to display to was put back in, becuase display_filename was also being used to display error messages.
+
+2011-07-18  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/main.h (mode_which): changed mode_which to opt_show_matched (which is the default)
+
+2011-07-18  Simson Garfinkel  <simsong@mncrnpsedu.local>
+
+	* src/display.cpp (display_size): changed mode_csv to opt_csv
+
+2011-07-14  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/common.h: removed STRINGS_CASE_EQUAL.
 
 
-2011-06-15 Jesse Kornblum
+2011-07-13  Simson Garfinkel  <simsong@imac3.home>
 
-	* Added warning message for programs running under WoW64
+	* src/hash.cpp (hash): successfully removed the state variable from compute_hash.
 
-	* Fixed cosmetic error in hashdeep, bug 3313963.
+	* src/display.cpp (display_realtime_stats): moved output of realtime_stats from file_name_annotation to a seperate output, so that display_realtime_stats can now take a const file_data_hasher.
 
+	* src/hash.cpp: changed update_display to display_realtime_stats() and moved to display.cpp
+
+2011-07-10  Simson Garfinkel  <simsong@imac3.home>
+
+	* src/sha1.c: removed copy on all algorithms except sha1; that copy is now done within the sha1 update function, where it should be.
+	
+
+	* src/md5.h: all update functions modified to take size_t as the length, becuase you can't pass a size larger than size_t.
+
+2011-07-07  Simson Garfinkel  <simsong@t.nitroba.org>
+
+	* src/dig.cpp (process_dir): modified conditional compilation for WIN32
+
+2011-07-05  Simson Garfinkel  <simsong@186.sub-75-197-238.myvzw.com>
+
+	* src/helpers.cpp: moved setup_expert_mode to main.cpp, because it's actually helping to parse the command line.
+	removed my_basename, since it is now done on strings in dig.cpp
+
+2011-07-05  Simson Garfinkel  <simsong@it012176.ern.nps.edu>
+
+	* Makefile.am (SUBDIRS): hashdeep subdir renamed to be src, since it is now src for everybody.
+
+2011-07-04  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/main.cpp: added conditional to use built-in __progname if compiling under WIN32
+
+	* hashdeep/Makefile.am (hashdeep_SOURCES): removed tchar-local.h and added wstring.h
+
+	* hashdeep/dig.cpp (clean_name): changed mode_relative to opt_relative
+
+2011-07-03  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/dig.cpp (should_hash_symlink): changed stat structure from _tstat_t to _tstati64
+
+	* configure.ac: added -DWINVER=0x0500 to get Windows UTF-8 conversion. mingw targets for 0x0400 (
+
+	* hashdeep/main.h (std::vector): file_type_t changed to hashfile_format, since that describes what it actually is.
+
+	* hashdeep/Makefile.am (hashdeep_SOURCES): removed cycles.cpp.
+
+	* hashdeep/dig.cpp (have_processed_dir): moved cycles.cpp into dig.cpp (because it's so much smaller now).
+
+2011-07-01  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/display.cpp (state::md5deep_display_hash): now uses gmtime_r for threadsafety
+
+	* hashdeep/hash.cpp (hash::hash_stdin): hash_file() and hash_stdin() are now methods.
+
+2011-06-29  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* hashdeep/common.h: moved sys/cdefs.h from tchar-local.h to common.h; added #ifdef
+
+2011-06-24  Simson Garfinkel  <simsong@msimsonnet.local>
+
+	* hashdeep/main.h: make_newline changed to print_newline(). No longer takes state. mode_zero changed to opt_zero.
+
+2011-06-24  Simson Garfinkel  <simsong@imac3.home>
+
+	* tests/tests.sh: now passes all tests
+
+	* hashdeep/display.cpp (display_match_result): fixed so that it works now.
+
+	* hashdeep/hashlist.cpp (hashlist::search): fixed search function so that it returns status_no_match when there is no match.
+
+2011-06-22  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/main.cpp: removed strsep
+
+2011-06-21  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/files.cpp (state::find_plain_hash): although this function takes the approach of hacking C strings with an axe, it seems to work.
+
+	* hashdeep/main.cpp (algorithm_t::valid_hash): fixed function.
+
+2011-06-20  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/hash.cpp (hash_file): eliminated by_basename, instead we now use rfind on the string.
+
+2011-06-19  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/Makefile.am (hashdeep_SOURCES): removed md5deep_hashtable.cpp and md5deep_hashtable.h 
+	(hashdeep_SOURCES): removed md5deep_match.cpp 
+
+	* hashdeep/md5deep_match.cpp (md5deep_load_match_file): expected_hashes, used in parsing EnCase hash files, is now segregated to the EnCase file parsing routines and no longer in the state variable.
+
+2011-06-18  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/Makefile.am (hashdeep_SOURCES): removed strsep; no longer needed.
+
+	* hashdeep/main.cpp (process_command_line): mode_verbose, mode_more_verbose and mode_insanely_verbose now replaced with a global variable opt_verbose which has value of 0, 1, 2 or 3.
+
+	* hashdeep/main.h: print_error no longer takes state.
+
+	* hashdeep/ui.cpp (fatal_error): fatal_error no longer takes
+	state; mode_silent is now a global variable.  Otherwise, EVERYTHING
+	that can generate a printout needs to pass a pointer to state,
+	which defeats the purpose of encapsulation. (If we ever want to
+	have two different state instances in memory at the same time, is
+	it likely that they will have different modes? I think not.)
+	(print_error_unicode): no longer takes (state *s)
+
+	* hashdeep/common.h (filetype_t): moved to hashlist class.
+
+	* hashdeep/main.h (hashlist): status_t broken up to hashlist::loadstatus_t and hashlist::search_status_t.
+
+	* hashdeep/main.cpp (process_command_line): load_match_file() call changed to known->load_hash_file() since the database of known hashes is now kept in a hashlist.
+
+2011-06-17  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* hashdeep/hash.cpp (hash_file): largely removed s->current_file; it is now a file_data_hasher_t pointer.
+
+2011-06-16  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* hashdeep/main.cpp: removed initialize_state(state *s); now it's in the state constructor.
+	(state::load_hashing_algorithms): this is now a method
+
+	* hashdeep/Makefile.am (hashdeep_SOURCES): removed hashtable.cpp 
+
+	* hashdeep/main.h (class file_data_t): created file_data_hasher_t to hold the actual variables needed to perform the hashing; only file_data_t is stored in the hashmap_t.
+
+2011-06-15  Simson Garfinkel  <simsong@msimsonnet.local>
+
+	* hashdeep/main.h (class file_data_t): removed full_name, as it is redundent with file_name
+
+	* hashdeep/multihash.cpp (multihash_update): moved hash_sum and hash_context from algorithm_t structure to file_info_t structure.
+
+	* hashdeep/main.h: removed state *s backpointer.
+	ALGORITHM_NAME_LENGTH changed to MAX_ALGORITHM_NAME_LENGTH and
+	ALGORITHM_CONTEXT_SIZE changed to MAX_ALGORITHM_CONTEXT_SIZE.
+
+2011-06-14  Simson Garfinkel  <simsong@alphonse-mucha.local.tld>
+
+	* hashdeep/main.h: changed hashname_t to hashid_t becuase it is an id number, not a name.
+
+2011-06-14  Simson Garfinkel  <simsong@11.sub-75-243-148.myvzw.com>
+
+	* hashdeep/main.h: removed __BEGIN_DECLS and __END_DECLS; we are now a C++ program!
+
+	* hashdeep/hash.cpp: moved shorten_filename to display.cpp becuase the shortened filenames are just used in a particular case. we can set a flag to print them and generate them on the fly.
+
+2011-06-12  Simson Garfinkel  <simsong@imac3.home>
+
+	* hashdeep/main.cpp (main): s->cwd is now pre-allocated
+
+	* hashdeep/main.h (class file_data_t): timestamp moved to current_file
+
+	* hashdeep/multihash.cpp (multihash_update): moved *buffer from dynamic allocation to allocated withn the current_file.
+
+	* hashdeep/hash.cpp (hash_stdin): moved full_name,short_name and msg into current_file
+
+	* hashdeep/md5deep_match.cpp (parse_encase_file): increased buffer[] from 19 bytes to 64; why be stingy? It's no longer dynamically allocated.
+	(parse_encase_file): increased result from dynamically allocated at s->hash_length*2 to 1024.
+
+2011-06-11 Jesse Kornblum
+
+	* display.cpp (display_size) Removed ten character limit on
+	  displayed sizes. We now display the full size regardless
+	  of mode.
+
+
+2011-06-07  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* hashdeep/files.cpp (hash_file_type): known_fn changed from char * to char[PATH_MAX+1]
+
+	* hashdeep/main.h (class state): time_str is now a local variable, not in state.
+
+	* hashdeep/main.cpp (main): state and the other structures defined in main.h are now classes.
+
+2011-06-04  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* hashdeep/hash.c (hash): s->full_name and tmp_name are now statically allocated arrays, rather than dynamcially allocated.
+
+2011-06-02  Simson Garfinkel  <simsong@alphonse-mucha>
+
+	* md5deep/Makefile.am (INCLUDES): removed references to -lm as we no longer use floor.
+
+	* hashdeep/hashdeep.cpp (main): renamed to main.cpp
+
+2011-06-01  Simson Garfinkel  <simsong@alphonse-mucha>
+
+	* md5deep/hashTable.c: renamed to hashdeeb/md5deep_hashtable.c
+
+	* man/Makefile.am: moved all man pages into the man directory.
+
+2011-06-01  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* hashdeep/sha1.c: made sha1.c include sha1.h but not main.h
+
+2011-05-31  Simson Garfinkel  <simsong@Alphonse-Mucha.local>
+
+	* configure.ac: changed version number to 4.0.0_alpha_000
+
+	* hashdeep/Makefile.am (hashdeep_SOURCES): simplified list of files
+
+	* hashdeep/common.h: __progname is now always extern; on systems that are not GLIBC we include progname.c
+
+	* configure.ac: moved all includes from include/* to hashdeep; there is no reason to have an include/ directory since we are not building a library.
+	
+	* configure.ac: added AC_PROG_CXX
+	
+
+	* hashdeep/Makefile.am (hashdeep_SOURCES): renamed main.c to hashdeep.cpp. Yes, we are now a C++ program!
+
+2011-05-31  Simson Garfinkel  <simsong@it151655.ern.nps.edu>
+
+	* md5deep/display.c: changed #include "main.h" to #include "md5deep.h"
+
+	* hashdeep/main.c: now includes md5deep.h if compiled for MD5DEEP, and main.h if compiled for hashdeep
+
+	* md5deep/md5deep.h: to avoid the name conflict, md5deep/main.h was renamed md5deep/md5deep.h
+
+	* hashdeep/hash.c: changed to use #ifdef MD5DEEP, which is now -D defined by md5deep/Makefile.am
+
+	* hashdeep/Makefile.am (COMMON_SRC): updated to indicate that hash.c, dig.c, cycles.c, ui.c, helpers.c, md5.c, sha1.c, sha256.c, tiger.c, whirlpool.c now reside in this directory
+
+	* md5deep/Makefile.am (whirlpooldeep_SOURCES): moved hash.c, dig.c, cycles.c, ui.c, helpers.c, md5.c, sha1.c, sha256.c, tiger.c, whirlpool.c from common/ to hashdeep/. Updated Makefile.am
+
+	* configure.ac: added initial comments as part of makefile
+	changing. The idea is to move C programs from common/ to hashdeep/
+	in preparation for removing 'common' and 'md5deep' entirely and
+	folding all of the functionality into the hashdeep program.
 
 2011-05-23 Jesse Kornblum
 

@@ -1,0 +1,5 @@
+MD5 (copying.txt) = 555b3e940c86b35d6e0c9976a05b3aa5
+MD5 (deadbeef.txt) = deadbeefb303ba89ae055ad0234eb7e8
+MD5 (foo.txt) = 7fa13061423e88e2fa4dc5746343ae96
+MD5 (install.txt) = d7adbcf07c5c813693ddf958be9c40e3
+MD5 (one-byte-file.txt) = c4ca4238a0b923820dcc509a6f75849b

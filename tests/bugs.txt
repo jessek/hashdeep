@@ -1,0 +1,278 @@
+The bugs:
+
+*** On Windows, the 32-bit version of the program cannot process known
+files from the 64-bit versions of the program.
+
+Actual output:
+C:\tmp\md5deep-4.0.0_alpha_004>hashdeep64 foo.txt > known.txt
+
+C:\tmp\md5deep-4.0.0_alpha_004>hashdeep -ak known.txt foo.txt
+hashdeep: known.txt: Unable to identify file format
+hashdeep: Unable to load any matching filesTry `hashdeep -h` for more
+information.
+
+
+Desired behavior:
+C:\tmp\md5deep-4.0.0_alpha_004>c:\bin\hashdeep64.exe foo.txt >
+known.txt
+
+C:\tmp\md5deep-4.0.0_alpha_004>c:\bin\hashdeep.exe -ak known.txt
+foo.txt
+hashdeep.exe: WARNING: You are running a 32-bit program on a 64-bit
+system.
+hashdeep.exe: You probably want to use the 64-bit version of this
+program.
+hashdeep.exe: Audit passed
+
+
+
+*** The audit mode is broken on all OSes
+
+(on OS X):
+
+$ ./hashdeep *deep > known.txt
+$ ./hashdeep -ak known.txt *deep
+hashdeep: Audit failed
+$ ./hashdeep -vak known.txt *deep
+hashdeep: Audit failed
+         Files matched: 1
+Files partially matched: 0
+           Files moved: 5
+       New files found: 0
+ Known files not found: 5
+
+
+Desired behavior:
+
+$ /opt/local/bin/hashdeep *deep > known.txt
+$ /opt/local/bin/hashdeep -ak known.txt *deep
+hashdeep: Audit passed
+
+
+
+*** The -vvv mode to display extreme verbosity (i.e. the status of
+each file) does not work on all OSes
+
+(On OS X, repeated commands as above, but adding the -vvv flag)
+$ ./hashdeep -vvvvak known.txt *deep
+hashdeep: Audit failed
+         Files matched: 1
+Files partially matched: 0
+           Files moved: 5
+       New files found: 0
+ Known files not found: 5
+
+Desired output:
+$ /opt/local/bin/hashdeep -vvvvak known.txt *deep
+hashdeep: User request for insane verbosity denied
+/Users/jessek/research/md5deep/svn/branches/version4/src/hashdeep: Ok
+/Users/jessek/research/md5deep/svn/branches/version4/src/md5deep: Ok
+/Users/jessek/research/md5deep/svn/branches/version4/src/sha1deep: Ok
+/Users/jessek/research/md5deep/svn/branches/version4/src/sha256deep:
+Ok
+/Users/jessek/research/md5deep/svn/branches/version4/src/tigerdeep: Ok
+/Users/jessek/research/md5deep/svn/branches/version4/src/whirlpooldeep:
+Ok
+hashdeep: Audit passed
+         Files matched: 6
+Files partially matched: 0
+           Files moved: 0
+       New files found: 0
+ Known files not found: 0
+
+
+
+*** On Win32, the audit mode does not terminate:
+
+C:\tmp\md5deep-4.0.0_alpha_004>hashdeep64 *.exe > known.txt
+
+C:\tmp\md5deep-4.0.0_alpha_004>hashdeep64 -ak known.txt *.exe
+[Does not terminate]
+
+
+Desired behavior:
+C:\tmp\md5deep-4.0.0_alpha_004>c:\bin\hashdeep64 *.exe > known.txt
+
+C:\tmp\md5deep-4.0.0_alpha_004>c:\bin\hashdeep64 -ak known.txt *.exe
+hashdeep64: Audit passed
+
+
+
+
+================================================================
+Hi Simson,
+
+I did some more testing with the md5deep suite today and found another
+crop of bugs. Thanks again for handling these!
+
+
+
+** On OS X, the -e mode results in oddly formatted output. (My guess
+is that stderr is not being cleared. There should be a \r in there...)
+
+Desired output:
+$ md5deep -e * > known
+$
+
+Actual output. Note many extra spaces on the second line:
+$ ./md5deep -e * > known
+                                                                         $
+
+
+
+** The -n flag does not appear to work in md5deep. This flag should
+display the names of known files which were not matched during a
+matching operation.
+
+Desired output:
+$ md5deep -m known -n *
+/Users/jessek/tmp/bin/known
+
+Actual output:
+$ ./md5deep -m known -n *
+/Users/jessek/tmp/bin/known
+/Users/jessek/tmp/bin/hashdeep
+/Users/jessek/tmp/bin/sha1deep
+/Users/jessek/tmp/bin/sha256deep
+/Users/jessek/tmp/bin/tigerdeep
+/Users/jessek/tmp/bin/whirlpooldeep
+
+
+
+** On OS X, the program crashes when using -e mode on a raw disk file:
+
+Desired output:
+$ sudo md5deep -e /dev/rdisk0s2
+/dev/rdisk0s2: 124MB done. Unable to estimate remaining time.
+(and so on, eventually outputting a hash)
+
+Actual output:
+$ sudo ./md5deep -e /dev/rdisk0s2
+terminate called after throwing an instance of 'std::out_of_range'
+ what():  basic_string::substr
+Abort trap
+
+Running under gdb produces the following:
+
+Program received signal SIGABRT, Aborted.
+0x00007fff834baa6a in __semwait_signal ()
+(gdb) bt
+#0  0x00007fff834baa6a in __semwait_signal ()
+#1  0x00007fff834ba8f9 in nanosleep ()
+#2  0x00007fff834ba863 in usleep ()
+#3  0x000000010001b002 in threadpool::wait_till_all_free
+(this=0x100100290) at threadpool.cpp:226
+#4  0x0000000100005079 in state::main (this=0x100800000, _argc=3,
+_argv=0x7fff5fbff950) at main.cpp:1077
+#5  0x0000000100005222 in main (argc=3, argv=0x7fff5fbff950) at main.cpp:943
+
+(gdb) list
+1072	}
+1073	    }
+1074	    
+1075	        /* If we are multi-threading, wait for all threads to finish */
+1076		#ifdef HAVE_PTHREAD
+1077		    if(ocb.tp) ocb.tp->wait_till_all_free();
+1078		    #endif
+1079		    
+1080		        if(opt_debug>2){
+1081				std::cout << "\ndump hashlist after matching:\n";
+
+
+
+
+
+
+================
+*** On Windows, the 32-bit version of the program cannot process known
+files from the 64-bit versions of the program.
+
+Actual output:
+C:\tmp\md5deep-4.0.0_alpha_004>hashdeep64 foo.txt > known.txt
+
+C:\tmp\md5deep-4.0.0_alpha_004>hashdeep -ak known.txt foo.txt
+hashdeep: known.txt: Unable to identify file format
+hashdeep: Unable to load any matching filesTry `hashdeep -h` for more
+information.
+
+
+Desired behavior:
+C:\tmp\md5deep-4.0.0_alpha_004>c:\bin\hashdeep64.exe foo.txt > known.txt
+
+C:\tmp\md5deep-4.0.0_alpha_004>c:\bin\hashdeep.exe -ak known.txt foo.txt
+hashdeep.exe: WARNING: You are running a 32-bit program on a 64-bit system.
+hashdeep.exe: You probably want to use the 64-bit version of this program.
+hashdeep.exe: Audit passed
+
+
+
+*** The audit mode is broken on all OSes
+
+(on OS X):
+
+$ ./hashdeep *deep > known.txt
+$ ./hashdeep -ak known.txt *deep
+hashdeep: Audit failed
+$ ./hashdeep -vak known.txt *deep
+hashdeep: Audit failed
+         Files matched: 1
+Files partially matched: 0
+           Files moved: 5
+       New files found: 0
+ Known files not found: 5
+
+
+Desired behavior:
+
+$ /opt/local/bin/hashdeep *deep > known.txt
+$ /opt/local/bin/hashdeep -ak known.txt *deep
+hashdeep: Audit passed
+
+
+
+*** The -vvv mode to display extreme verbosity (i.e. the status of
+each file) does not work on all OSes
+
+(On OS X, repeated commands as above, but adding the -vvv flag)
+$ ./hashdeep -vvvvak known.txt *deep
+hashdeep: Audit failed
+         Files matched: 1
+Files partially matched: 0
+           Files moved: 5
+       New files found: 0
+ Known files not found: 5
+
+Desired output:
+$ /opt/local/bin/hashdeep -vvvvak known.txt *deep
+hashdeep: User request for insane verbosity denied
+/Users/jessek/research/md5deep/svn/branches/version4/src/hashdeep: Ok
+/Users/jessek/research/md5deep/svn/branches/version4/src/md5deep: Ok
+/Users/jessek/research/md5deep/svn/branches/version4/src/sha1deep: Ok
+/Users/jessek/research/md5deep/svn/branches/version4/src/sha256deep: Ok
+/Users/jessek/research/md5deep/svn/branches/version4/src/tigerdeep: Ok
+/Users/jessek/research/md5deep/svn/branches/version4/src/whirlpooldeep: Ok
+hashdeep: Audit passed
+         Files matched: 6
+Files partially matched: 0
+           Files moved: 0
+       New files found: 0
+ Known files not found: 0
+
+
+
+*** On Win32, the audit mode does not terminate:
+
+C:\tmp\md5deep-4.0.0_alpha_004>hashdeep64 *.exe > known.txt
+
+C:\tmp\md5deep-4.0.0_alpha_004>hashdeep64 -ak known.txt *.exe
+[Does not terminate]
+
+
+Desired behavior:
+C:\tmp\md5deep-4.0.0_alpha_004>c:\bin\hashdeep64 *.exe > known.txt
+
+C:\tmp\md5deep-4.0.0_alpha_004>c:\bin\hashdeep64 -ak known.txt *.exe
+hashdeep64: Audit passed
+
+
+
