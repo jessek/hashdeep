@@ -1,3 +1,7 @@
+2012-01-05  Jesse Kornblum <research@jessekornblum.com>
+
+	* doc: Sync'ed files from trunk
+
 2011-12-27  Jesse Kornblum <research@jessekornblum.com>
 
 	* src/files.cpp: Added spaces to isxdigit macro for OS X compilation.
