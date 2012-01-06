@@ -104,5 +104,4 @@ world:
 CLEANFILES = man/md5deep.txt man/hashdeep.txt
 SUFFIXES = .txt .1
 .1.txt:
-	/usr/bin/tbl $< | /usr/bin/groff -S -Wall -mtty-char -mandoc -Tascii | /usr/bin/col -bx > $@
-
+	man $< > $@
