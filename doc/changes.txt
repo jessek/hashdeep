@@ -1,13 +1,16 @@
-** Changes in version 3.9.2 (26 Jul 2011)
+** Changes in version 4.0 (6 Jan 2012)
 
 * New Features
 
-      Added a warning message when running 32-bit versions of the
-      programs on a 64-bit system.
+      	Rewrote most of the program in C++.
+
+	Enabled multiprocessor support on all platforms.
+
+	Removed ten character limit on file size mode
 
 * Bug Fixes
 
-      Fixed a cosmetic bug in the hashdeep header.
+	Too numerous to count!
 
 
 

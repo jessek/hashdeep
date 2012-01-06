@@ -1,3 +1,9 @@
+2012-01-06  Jesse Kornblum <research@jessekornblum.com>
+	
+	* configure.ac: Version bump to 4.0.0
+	* src/hashlist.cpp: Legibility changes only.
+	* doc/Makefile: Updating man page locations
+
 2012-01-05  Jesse Kornblum <research@jessekornblum.com>
 
 	* doc: Sync'ed files from trunk

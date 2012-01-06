@@ -19,8 +19,8 @@ preflight:
 	grep RBF *.html *.txt
 
 manpages:
-	rman -f HTML -S -l "md5deep man page" ../md5deep/md5deep.1 > md5deep.html
-	rman -f HTML -S -l "hashdeep man page" ../hashdeep/hashdeep.1 > hashdeep.html
+	rman -f HTML -S -l "md5deep man page" ../man/md5deep.1 > md5deep.html
+	rman -f HTML -S -l "hashdeep man page" ../man/hashdeep.1 > hashdeep.html
 
 changes:
 	cp ../NEWS changes.txt
