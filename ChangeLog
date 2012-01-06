@@ -3,6 +3,7 @@
 	* configure.ac: Version bump to 4.0.0
 	* src/hashlist.cpp: Legibility changes only.
 	* doc/Makefile: Updating man page locations
+	* src/common.h: Added NEWLINE definition for Win32
 
 2012-01-05  Jesse Kornblum <research@jessekornblum.com>
 

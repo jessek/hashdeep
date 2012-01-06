@@ -254,6 +254,7 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
 #define EALREADY  37   // Operation already in progress
 #endif
 
+#define NEWLINE "\n"
 #define CMD_PROMPT "C:\\>"
 #define DIR_SEPARATOR   '\\'
 
