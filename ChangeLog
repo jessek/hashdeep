@@ -1,4 +1,8 @@
-2012-01-06  Jesse Kornblum <ressearch@jessekornblum.com>
+2012-01-09  Jesse Kornblum <research@jessekornblum.com>
+
+	* Makefile.am: The doc files for Win32 were backward. Addresses bug 3471505.
+
+2012-01-06  Jesse Kornblum <research@jessekornblum.com>
 
 	* Makefile.am: Changed rule for converting man pages to Windows text files
 
