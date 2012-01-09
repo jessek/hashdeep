@@ -484,6 +484,15 @@ bool algorithm_t::valid_hash(hashid_t alg, const std::string &buf)
 }
 
 
+int algorithm_t::algorithms_in_use_count() 
+{
+    int count = 0;
+    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  { 
+	if(hashes[i].inuse) count++;
+    }
+    return count;
+}
+
 
 /* C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c */
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {

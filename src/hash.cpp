@@ -75,6 +75,12 @@ static inline uint64_t max(uint64_t a,uint64_t b){
 bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_len,
 				      hash_context_obj *hc1,hash_context_obj *hc2)
 {
+    /* Shortcut; If no hash algorithms are specified, just advance the pointer and return */
+    if(algorithm_t::algorithms_in_use_count()==0){
+	eof = true;			// read everything
+	return true;			// done hashing
+    }
+
     /*
      * We may need to read multiple times; don't read more than
      * file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE

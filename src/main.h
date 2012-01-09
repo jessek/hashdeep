@@ -139,6 +139,7 @@ public:
     static hashid_t get_hashid_for_name(std::string name);   // return the hashid_t for 'name'
     static bool valid_hex(const std::string &buf);	     // returns true if buf contains only hex characters
     static bool valid_hash(hashid_t alg,const std::string &buf); // returns true if buf is a valid hash for hashid_t a
+    static int  algorithms_in_use_count(); // returns count of algorithms in use
 };
 
 extern algorithm_t     hashes[NUM_ALGORITHMS];		// which hash algorithms are available and in use
