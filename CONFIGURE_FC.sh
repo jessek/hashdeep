@@ -87,7 +87,7 @@ if [ ! -r /etc/yum.repos.d/fedora-cross.repo ] ; then
 fi
 
 echo Now adding all of the packages that we will need...
-if yum -y install autoconf automake gcc mingw32-gcc mingw32-gcc-c++ mingw64-gcc mingw64-gcc-c++ ; then
+if yum -y --nogpgcheck install autoconf automake gcc gcc-c++ mingw32-gcc mingw32-gcc-c++ mingw64-gcc mingw64-gcc-c++ ; then
   echo Successfully installed all required dependencies.
 else
   echo ERROR: Could not install required dependencies.
@@ -105,7 +105,7 @@ if [ ! -r pthreads-w32-2-8-0-release.tar.gz ]; then
   wget ftp://sourceware.org/pub/pthreads-win32/pthreads-w32-2-8-0-release.tar.gz
 fi
 /bin/rm -rf pthreads-w32-2-8-0-release 
-tar xfvz pthreads-w32-2-8-0-release.tar.gz
+tar xfz pthreads-w32-2-8-0-release.tar.gz
 
 echo
 echo Compiling pthreads...
