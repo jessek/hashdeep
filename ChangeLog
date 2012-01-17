@@ -1,3 +1,7 @@
+2012-01-16  Jesse Kornblum <research@jessekornblum.com>
+
+	* CONFIGURE_FC.sh: Updated for Fedora Core 16. Improved error messages.
+
 2012-01-09  Jesse Kornblum <research@jessekornblum.com>
 
 	* Makefile.am: The doc files for Win32 were backward. Addresses bug 3471505.
