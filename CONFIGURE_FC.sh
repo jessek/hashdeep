@@ -1,17 +1,18 @@
 #!/bin/sh
 cat <<EOF
 ****************************************************************
-Configuring FC15/16 for cross-compiling multi-threaded 32-bit and
+Configuring FC15 for cross-compiling multi-threaded 32-bit and
 		 64-bit Windows programs with mingw.
 ****************************************************************
 
-This script will configure a fresh Fedora 15 or 16 system to compile with
+This script will configure a fresh Fedora 15 system to compile with
 mingw32 and 64.  It requires:
 
 1. Fedora Core installed and running. Typically you will do this by:
 
    1a - download the ISO for the 64-bit DVD (not the live media) from:
         http://fedoraproject.org/en/get-fedora-options#formats
+        Note that you want Fedora Core 15, not the latest version!
    1b - Create a new VM using this ISO as the boot. The ISO will
         install off of its packages on your machine.
    1c - Run Applications/Other/Users and Groups from the Applications menu.
@@ -46,7 +47,7 @@ fi
 
 if [ ! -r /etc/redhat-release ]; then
   echo ERROR: This script requires Fedora Linux.
-  echo Please download Fedora-16-x86_64-Live-Desktop.iso.
+  echo Please download Fedora-15-x86_64-Live-Desktop.iso.
   echo Boot the ISO and chose System Tools / Install to Hard Drive.
   echo You will then need to:
   echo      sudo yum -y install subversion
@@ -56,12 +57,12 @@ if [ ! -r /etc/redhat-release ]; then
 fi
 
 if grep 'Fedora.release.15' /etc/redhat-release ; then
-  echo Detected Fedora Core Release 15, ok.
-elif grep 'Fedora.release.16' /etc/redhat-release ; then
-  echo Detected Fedora Core Release 16, good.
+  echo Detected Fedora Core Release 15, good.
+#elif grep 'Fedora.release.16' /etc/redhat-release ; then
+#  echo Detected Fedora Core Release 16, good.
 else
   echo
-  echo ERROR: Unsupported operating system. Try using Fedora Core 16.
+  echo ERROR: Unsupported operating system. Try using Fedora Core 15.
   exit 1
 fi
 

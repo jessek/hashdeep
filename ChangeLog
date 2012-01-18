@@ -1,3 +1,7 @@
+2012-01-18  Jesse Kornblum <research@jessekornblum.com>
+
+	* CONFIGURE_FC.sh: Removed FC16 checks. It doesn't work.
+
 2012-01-16  Jesse Kornblum <research@jessekornblum.com>
 
 	* CONFIGURE_FC.sh: Updated for Fedora Core 16. Improved error messages.
