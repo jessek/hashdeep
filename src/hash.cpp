@@ -462,6 +462,12 @@ void display::hash_stdin()
     fdht->file_name_to_hash = _T("stdin");
     fdht->file_name  = "stdin";
     fdht->handle     = stdin;
+#ifdef _WIN32
+    /* see http://support.microsoft.com/kb/58427 */
+    if (setmode(fileno(stdin),O_BINARY) == -1 ){
+	ocb->fatal_error("Cannot set stdin to binary mode");
+    }
+#endif
 #ifdef SIZE_T_MAX
     fdht->stat_bytes = SIZE_T_MAX;
 #else
