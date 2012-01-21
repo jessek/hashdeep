@@ -625,25 +625,35 @@ void display::finalize_matching()
 }
 
 
+#ifdef HAVE_PTHREAD
+pthread_mutex_t    display::portable_gmtime_lock;
+#endif
+
+void display::portable_gmtime_init()
+{
+    pthread_mutex_init(&portable_gmtime_lock,NULL);
+}
+
 struct tm  *display::portable_gmtime(struct tm *my_time,const timestamp_t *t)
 {
     memset(my_time,0,sizeof(*my_time)); // clear it out
+#ifdef HAVE_GMTIME_R		
+    gmtime_r(t,my_time);
+    return my_time;
+#endif
 #ifdef HAVE__GMTIME64
     // This is not threadsafe, hence the lock 
-    lock();
+    pthread_mutex_lock(&portable_gmtime_lock);
     *my_time = *_gmtime64(t);
-    unlock();
+    pthread_mutex_unlock(&portable_gmtime_lock);
     //we tried this:
     //_gmtime64_s(&fdht->timestamp,&my_time);
     //but it had problems on mingw64
-#endif
-#ifdef HAVE_GMTIME_R		
-    gmtime_r(t,my_time);
+    return my_time;
 #endif
 #if !defined(HAVE__GMTIME64) && !defined(HAVE_GMTIME_R)
 #error This program requires either _gmtime64 or gmtime_r for compilation
 #endif
-    return my_time;
 }
 
 /* The old display_hash from the md5deep program, with modifications
@@ -825,6 +835,7 @@ void display::dfxml_write(file_data_hasher_t *fdht)
 	dfxml->push("fileobject",attrs);
 	dfxml->xmlout("filename",fdht->file_name);
 	dfxml->xmlout("filesize",(int64_t)fdht->stat_bytes);
+	dfxml->comment("bar");
 	if(fdht->ctime) dfxml_timeout("ctime",fdht->ctime);
 	if(fdht->mtime) dfxml_timeout("mtime",fdht->mtime);
 	if(fdht->atime) dfxml_timeout("atime",fdht->atime);

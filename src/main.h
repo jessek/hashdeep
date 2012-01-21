@@ -634,6 +634,11 @@ public:
 	utf8_banner = utf8_banner_;
     }
 
+
+#ifdef HAVE_PTHREAD
+    static pthread_mutex_t portable_gmtime_lock;
+    static void portable_gmtime_init();
+#endif
     struct tm  *portable_gmtime(struct tm *my_time,const timestamp_t *t);
     void	try_msg(void);
 

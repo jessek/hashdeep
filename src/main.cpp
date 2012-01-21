@@ -1125,6 +1125,9 @@ int main(int argc, char **argv)
 
     assert(sizeof(off_t)==8);		// be sure that we were compiled correctly
     algorithm_t::load_hashing_algorithms();		
+#ifdef HAVE_PTHREAD
+    display::portable_gmtime_init();
+#endif
     state *s = new state();
 
     exit(s->main(argc,argv));
