@@ -465,7 +465,7 @@ void display::hash_stdin()
 #ifdef _WIN32
     /* see http://support.microsoft.com/kb/58427 */
     if (setmode(fileno(stdin),O_BINARY) == -1 ){
-	ocb->fatal_error("Cannot set stdin to binary mode");
+	fatal_error("Cannot set stdin to binary mode");
     }
 #endif
 #ifdef SIZE_T_MAX
