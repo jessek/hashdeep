@@ -32,7 +32,7 @@
 <body>
 
 <h1>
-md5deep and hashdeep - Latest version 4.0.0
+md5deep and hashdeep - Latest version 4.0.1
 </h1>
 
 <hr>
@@ -175,15 +175,15 @@ Download md5deep and hashdeep
 
 <p>
 The latest stable versions of md5deep and hashdeep are 
-version 4.0.0
+version 4.0.1
 and was released on
-6 Jan 2012. 
+22 Jan 2012.
 You can take a look at the 
 <a href="changes.txt">complete changelog</a>, but here are the 
 changes in the latest version:
 
 
-
+<!--
 <h4> New Features </h4>
 <ul>
 <li> Added multithreaded processing on all platforms </li>
@@ -192,11 +192,14 @@ changes in the latest version:
 <li> Rewrote large portions of the code in C++ </li>
 <li> Added regression testing </a>
 </ul>
+-->
 
 <h4> Bug Fixes </h4>
 <ul>
-<li> Improved -f mode for reading list of files to hash from a file </li>
-<li> Others too numerous to count! </li>
+<li>Fixed hang on DFXML generation on Win32 </li>
+<li>Fixed incorrect hashes via stdin on Win32</li>
+<li>Fixed "Too many open files" error on OS X</li>
+<li>Doc files in Win32 have been corrected. </li>
 </ul>
 
 
@@ -207,30 +210,30 @@ changes in the latest version:
 
     <tr>
      <td rowspan="2">
-       Version 4.0.0
+       Version 4.0.1
      </td>
 
      <td rowspan="2">
-       6 Jan 2012
+       22 Jan 2012
      </td>
 
      <td>
-        <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-4.0.0/md5deep-4.0.0.zip/download">
+        <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-4.0.1/md5deep-4.0.1.zip/download">
        Windows binary</a>
      </td>
      <td class="hash"> 
-        SHA256 cc9c13b38ba63f3b17d9d6b53bae136d23eaa7dfff988c26dfd175273f270d01
+        SHA256 
      </td>
     </tr>
 
 
      <tr>
       <td>
-        <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-4.0.0/md5deep-4.0.0.tar.gz/download">
+        <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-4.0.1/md5deep-4.0.1.tar.gz/download">
         source code</a>
      </td>
      <td class="hash"> 
-        SHA256 53cf46fd322c412fb666002b77b216e9cf5ca3bccd2251aa69d7482d93b39014
+        SHA256 
      </td>
     </tr>
 
@@ -342,6 +345,35 @@ document.write(old_link_text);
   </thead>
 
   <tbody>
+
+    <tr>
+     <td rowspan="2">
+       4.0.0
+     </td>
+
+     <td rowspan="2">
+       6 Jan 2012
+     </td>
+
+     <td>
+        <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-4.0.0/md5deep-4.0.0.zip/download">
+       Windows binary</a>
+     </td>
+     <td class="hash"> 
+        SHA256 cc9c13b38ba63f3b17d9d6b53bae136d23eaa7dfff988c26dfd175273f270d01
+     </td>
+    </tr>
+
+
+     <tr>
+      <td>
+        <a href="http://sourceforge.net/projects/md5deep/files/md5deep/md5deep-4.0.0/md5deep-4.0.0.tar.gz/download">
+        source code</a>
+     </td>
+     <td class="hash"> 
+        SHA256 53cf46fd322c412fb666002b77b216e9cf5ca3bccd2251aa69d7482d93b39014
+     </td>
+    </tr>
 
     <tr>
      <td rowspan="2">

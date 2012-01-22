@@ -1,11 +1,10 @@
-** Changes in version 4.RBF.RBF (RBF DATE)
-
-* New Featurs
-
-	RBF - New feature
+** Changes in version 4.0.1 (22 Jan 2012)
 
 * Bug Fixes
 
+        Fixed hang on DFXML generation on Win32
+	Fixed incorrect hashes via stdin on Win32
+	Fixed "Too many open files" error on OS X
 	Doc files in Win32 have been corrected. 
 
 

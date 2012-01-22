@@ -15,7 +15,6 @@ class mutex_t {
 public:
     mutable pthread_mutex_t	mutex;
     mutex_t(){
-	fprintf(stderr,"mutex init\n");
 	if(pthread_mutex_init(&mutex,NULL)){
 	    perror("pthread_mutex_init failed");
 	    exit(1);

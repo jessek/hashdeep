@@ -1,3 +1,9 @@
+2012-01-22  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* src/threadpool.h: Removed debugging fprintf
+	* configure.ac: Version bump to 4.0.1
+	* NEWS: Updated for version 4.0.1
+
 2012-01-21  Simson Garfinkel  <simsong@imac3.home>
 
 	* src/hash.cpp (display::hash_stdin): added setmode stdin to binary on windows
