@@ -611,7 +611,7 @@ public:
     }
 
 
-    static	pthread_mutex_t		portable_gmtime_lock;
+    static	mutex_t		portable_gmtime_mutex;
     struct tm  *portable_gmtime(struct tm *my_time,const timestamp_t *t);
     void	try_msg(void);
 

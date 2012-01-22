@@ -625,9 +625,7 @@ void display::finalize_matching()
 }
 
 
-#ifdef HAVE_PTHREAD
-pthread_mutex_t    display::portable_gmtime_lock;
-#endif
+mutex_t    display::portable_gmtime_mutex;
 
 struct tm  *display::portable_gmtime(struct tm *my_time,const timestamp_t *t)
 {
@@ -638,9 +636,10 @@ struct tm  *display::portable_gmtime(struct tm *my_time,const timestamp_t *t)
 #endif
 #ifdef HAVE__GMTIME64
     // This is not threadsafe, hence the lock 
-    pthread_mutex_lock(&portable_gmtime_lock);
+    portable_gmtime_mutex.lock();
     *my_time = *_gmtime64(t);
-    pthread_mutex_unlock(&portable_gmtime_lock);
+    portable_gmtime_mutex.unlock();
+
     //we tried this:
     //_gmtime64_s(&fdht->timestamp,&my_time);
     //but it had problems on mingw64
@@ -830,7 +829,6 @@ void display::dfxml_write(file_data_hasher_t *fdht)
 	dfxml->push("fileobject",attrs);
 	dfxml->xmlout("filename",fdht->file_name);
 	dfxml->xmlout("filesize",(int64_t)fdht->stat_bytes);
-	dfxml->comment("bar");
 	if(fdht->ctime) dfxml_timeout("ctime",fdht->ctime);
 	if(fdht->mtime) dfxml_timeout("mtime",fdht->mtime);
 	if(fdht->atime) dfxml_timeout("atime",fdht->atime);

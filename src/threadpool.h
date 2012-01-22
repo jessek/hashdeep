@@ -15,16 +15,22 @@ class mutex_t {
 public:
     mutable pthread_mutex_t	mutex;
     mutex_t(){
+	fprintf(stderr,"mutex init\n");
 	if(pthread_mutex_init(&mutex,NULL)){
 	    perror("pthread_mutex_init failed");
 	    exit(1);
 	}
     }
     ~mutex_t(){
-	if(pthread_mutex_destroy(&mutex)){
-	    perror("pthread_mutex_destroy failed");
-	    exit(1);
-	}
+	/*
+	 * note that we do not destroy the mutex.
+	 * On windows this seems to cause problems, so we just don't bother.
+	 *
+	 * if(pthread_mutex_destroy(&mutex)){
+	 *    perror("pthread_mutex_destroy failed");
+	 *    exit(1);
+	 * }
+	 */
     }
     void lock() const{
 	if(pthread_mutex_lock(&mutex)){
