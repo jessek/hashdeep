@@ -5,14 +5,44 @@
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
 
+#include <stdio.h>
 #include <pthread.h>
 #include <algorithm>
 #include <queue>
 #include <vector>
 
+class mutex_t {
+public:
+    mutable pthread_mutex_t	mutex;
+    mutex_t(){
+	if(pthread_mutex_init(&mutex,NULL)){
+	    perror("pthread_mutex_init failed");
+	    exit(1);
+	}
+    }
+    ~mutex_t(){
+	if(pthread_mutex_destroy(&mutex)){
+	    perror("pthread_mutex_destroy failed");
+	    exit(1);
+	}
+    }
+    void lock() const{
+	if(pthread_mutex_lock(&mutex)){
+	    perror("pthread_mutex_lock failed");
+	    exit(1);
+	}
+    }
+    void unlock() const{
+	if(pthread_mutex_unlock(&mutex)){
+	    perror("pthread_mutex_unlock failed");
+	    exit(1);
+	}
+    }
+};
+
 class threadpool: public std::vector<class worker *> {
 public:
-    pthread_mutex_t	M;			// protects the following variables
+    mutex_t		M;			// protects the following variables
     volatile unsigned int numworkers;
     volatile unsigned int freethreads;
     pthread_cond_t	TOMAIN;

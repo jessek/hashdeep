@@ -234,7 +234,8 @@ public:;
  */
 class file_data_hasher_t : public file_data_t {
 private:
-    static uint64_t next_file_number;
+    static uint64_t	next_file_number;
+    static mutex_t	fdh_lock;
 public:
     uint64_t	stat_megs() const {	// return how many megabytes is the file in MB?
 	return stat_bytes / ONE_MEGABYTE;
@@ -490,25 +491,9 @@ public:
  */
 class display {
  private:
-#ifdef HAVE_PTHREAD
-    mutable pthread_mutex_t	M;	// lock for anything in output section
-#endif    
-    void lock() const {
-#ifdef HAVE_PTHREAD
-	if(pthread_mutex_lock(&M)){
-	    perror("pthread_mutex_lock failed");
-	    exit(1);
-	}
-#endif
-    }
-    void unlock() const {
-#ifdef HAVE_PTHREAD
-	if(pthread_mutex_unlock(&M)){
-	    perror("pthread_mutex_unlock failed");
-	    exit(1);
-	}
-#endif
-    }
+    mutable mutex_t	M;	// lock for anything in output section
+    void lock() const	{ M.lock(); }
+    void unlock() const { M.unlock(); }
 
     /* all display state variables are protected by M and must be private */
     std::ostream	*out;		// where things get sent
@@ -554,15 +539,6 @@ public:
 	size_threshold(0),
 	piecewise_size(0),	
 	primary_function(primary_compute){
-
-#ifdef HAVE_PTHREAD
-	pthread_mutex_init(&M,NULL);
-#endif	
-    }
-    ~display(){
-#ifdef HAVE_PTHREAD
-	pthread_mutex_destroy(&M);
-#endif	
     }
 
     /* These variables are read-only after threading starts */
@@ -635,10 +611,7 @@ public:
     }
 
 
-#ifdef HAVE_PTHREAD
-    static pthread_mutex_t portable_gmtime_lock;
-    static void portable_gmtime_init();
-#endif
+    static	pthread_mutex_t		portable_gmtime_lock;
     struct tm  *portable_gmtime(struct tm *my_time,const timestamp_t *t);
     void	try_msg(void);
 

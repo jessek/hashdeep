@@ -121,18 +121,17 @@ threadpool::threadpool(int numworkers_)
 
     numworkers		= numworkers_;
     freethreads		= numworkers;
-    if(pthread_mutex_init(&M,NULL))	  ERR(1,"pthread_mutex_init failed");
     if(pthread_cond_init(&TOMAIN,NULL))   ERR(1,"pthread_cond_init #1 failed");
     if(pthread_cond_init(&TOWORKER,NULL)) ERR(1,"pthread_cond_init #2 failed");
 
     // lock while I create the threads
-    if(pthread_mutex_lock(&M))		  ERR(1,"pthread_mutex_lock failed");
+    M.lock();
     for(unsigned int i=0;i<numworkers;i++){
 	class worker *w = new worker(this,i);
 	push_back(w);
 	pthread_create(&w->thread,NULL,worker::start_worker,(void *)w);
     }
-    pthread_mutex_unlock(&M);		// lock while I create the threads
+    M.unlock();
 }
 
 threadpool::~threadpool()
@@ -144,7 +143,6 @@ threadpool::~threadpool()
      */
     kill_all_workers();
     /* Release our resources */
-    pthread_mutex_destroy(&M);
     pthread_cond_destroy(&TOMAIN);
     pthread_cond_destroy(&TOWORKER);
 
@@ -161,9 +159,9 @@ threadpool::~threadpool()
  */
 void threadpool::kill_all_workers()
 {
-    pthread_mutex_lock(&M);
+    M.lock();
     int worker_count = numworkers;
-    pthread_mutex_unlock(&M);
+    M.unlock();
     while(worker_count>0){
 	this->schedule_work(0);
 	worker_count--;
@@ -176,24 +174,24 @@ void threadpool::kill_all_workers()
  */
 void threadpool::schedule_work(file_data_hasher_t *fdht)
 {
-    pthread_mutex_lock(&M);
+    M.lock();
     while(freethreads==0){
 	// wait until a thread is free (doesn't matter which)
-	if(pthread_cond_wait(&TOMAIN,&M)){
+	if(pthread_cond_wait(&TOMAIN,&M.mutex)){
 	    ERR(1,"threadpool::schedule_work pthread_cond_wait failed");
 	}
     }
     work_queue.push(fdht); 
     freethreads--;
     pthread_cond_signal(&TOWORKER);
-    pthread_mutex_unlock(&M);
+    M.unlock();
 }
 
 unsigned int threadpool::get_free_count()
 {
-    pthread_mutex_lock(&M);
+    M.lock();
     unsigned int ret = freethreads;
-    pthread_mutex_unlock(&M);
+    M.unlock();
     return ret;
 }
 
@@ -206,31 +204,29 @@ void *worker::run()
 	/* Get the lock, then wait for the queue to be empty.
 	 * If it is not empty, wait for the lock again.
 	 */
-	if(pthread_mutex_lock(&master->M)){
-	    ERR(1,"worker::run: pthread_mutex_lock failed");
-	}
+	master->M.lock();
 	while(master->work_queue.empty()){
 	    /* I didn't get any work; go back to sleep */
-	    if(pthread_cond_wait(&master->TOWORKER,&master->M)){
+	    if(pthread_cond_wait(&master->TOWORKER,&master->M.mutex)){
 		fprintf(stderr,"pthread_cond_wait error=%d\n",errno);
 		exit(1);
 	    }
 	}
 	file_data_hasher_t *fdht = master->work_queue.front(); // get the sbuf
 	master->work_queue.pop();		   // pop from the list
-	pthread_mutex_unlock(&master->M);	   // unlock
+	master->M.unlock();
 	if(fdht==0) {
 	    break;			// told to exit
 	}
 	do_work(fdht);
-	pthread_mutex_lock(&master->M);
+	master->M.lock();
 	master->freethreads++;
 	pthread_cond_signal(&master->TOMAIN); // tell the master that we are free!
-	pthread_mutex_unlock(&master->M);     // should wake up the master
+	master->M.unlock();
     }
-    pthread_mutex_lock(&master->M);
+    master->M.lock();
     master->numworkers--;
-    pthread_mutex_unlock(&master->M);
+    master->M.unlock();
     return 0;
 }
 
@@ -241,9 +237,9 @@ bool threadpool::all_free()
 
 unsigned int threadpool::num_workers() 
 {
-    pthread_mutex_lock(&M);
+    M.lock();
     unsigned int ret = numworkers;
-    pthread_mutex_unlock(&M);
+    M.unlock();
     return ret;
 }
 

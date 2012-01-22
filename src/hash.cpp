@@ -191,6 +191,10 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
  * In the case of piecewise hashing, 
  * This routine is made multi-threaded to make the system run faster.
  */
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+mutex_t file_data_hasher_t::fdh_lock;
 void file_data_hasher_t::hash()
 {
     file_data_hasher_t *fdht = this;
@@ -229,16 +233,25 @@ void file_data_hasher_t::hash()
 	switch(ocb->opt_iomode){
 	case iomode::buffered:
 	    assert(fdht->handle==0);
+
+	    /* Corrects bug 3476412 on MacOS 10.6 
+	     * in which the 'too many files' error was generated when two threads
+	     * tried to run fopen() simultaneously. This bug was apparently fixed
+	     * in MacOS 10.7. There is only minimal overhead with the lock, however,
+	     * and there is a chance that other platforms may have a similar bug,
+	     * so we always do it, just to be safe.
+	     * Simson L. Garfinkel, Jan 21, 2012
+	     */
+	    fdh_lock.lock();
 	    fdht->handle = _tfopen(file_name_to_hash.c_str(),_TEXT("rb"));
+	    fdh_lock.unlock();
+
 	    if(fdht->handle==0){
 		ocb->error_filename(fdht->file_name_to_hash,"%s", strerror(errno));
 		return;
 	    }
 	    break;
 	case iomode::unbuffered:
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
 	    assert(fdht->fd==-1);
 	    fdht->fd    = _topen(file_name_to_hash.c_str(),O_BINARY|O_RDONLY,0);
 	    if(fdht->fd<0){

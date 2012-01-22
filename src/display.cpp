@@ -629,11 +629,6 @@ void display::finalize_matching()
 pthread_mutex_t    display::portable_gmtime_lock;
 #endif
 
-void display::portable_gmtime_init()
-{
-    pthread_mutex_init(&portable_gmtime_lock,NULL);
-}
-
 struct tm  *display::portable_gmtime(struct tm *my_time,const timestamp_t *t)
 {
     memset(my_time,0,sizeof(*my_time)); // clear it out
