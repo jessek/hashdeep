@@ -907,7 +907,6 @@ extern std::string progname;		// formerly const char *__progname
 // helper.cpp 
 // ------------------------------------------------------------------
 
-std::string itos(uint64_t i);
 void     chop_line(char *s);
 off_t	find_file_size(FILE *f,class display *ocb); // Return the size, in bytes of an open file stream. On error, return -1 
 

@@ -417,6 +417,14 @@ state::file_types state::decode_file_type(const struct __stat64 &sb)
 #define TLSTAT(path,buf) lstat(path,buf)
 #endif
 
+/* This is coming... */
+#if 0
+HFILE filehandle;
+(void)GetFileInformationByHandle((HANDLE)filehandle, &fileinfo);
+file->fileindexhi = fileinfo.nFileIndexHigh;
+file->fileindexlo = fileinfo.nFileIndexLow;
+#endif
+
 /* Return the 'decoded' file type of a file.
  * If an error is found and ocb is provided, send the error to ocb.
  * If filesize and ctime are provided, give them.

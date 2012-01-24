@@ -823,7 +823,9 @@ void display::dfxml_write(file_data_hasher_t *fdht)
     if(dfxml){
 	std::string attrs;
 	if(opt_verbose && fdht->workerid>=0){
-	    attrs = "workerid='"+itos(fdht->workerid)+"'";
+	    sstream ss;
+	    ss << "workerid='" << fdht->workerid << "'";
+	    attrs = ss.str();
 	}
 	lock();
 	dfxml->push("fileobject",attrs);

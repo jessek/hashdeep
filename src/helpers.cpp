@@ -14,16 +14,6 @@
 
 #include "main.h"
 
-std::string itos(uint64_t i)
-{
-    char buf[256];
-    snprintf(buf,sizeof(buf),"%"PRIu64,i);
-    return std::string(buf);
-}
-
-
-      
-
 // Remove the newlines, if any. Works on both DOS and *nix newlines
 void chop_line(char *s)
 {

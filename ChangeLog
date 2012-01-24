@@ -1,3 +1,7 @@
+2012-01-23  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/helpers.cpp: successfully removed itos().
+
 2012-01-22  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* src/threadpool.h: Removed debugging fprintf
