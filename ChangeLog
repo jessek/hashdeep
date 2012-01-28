@@ -1,3 +1,7 @@
+2012-01-28  Simson Garfinkel  <simsong@mucha>
+
+	* src/display.cpp (display::dfxml_write): strange; sstream should have been stringstream. Well, it's fixed now.
+
 2012-01-23  Simson Garfinkel  <simsong@Mucha.local>
 
 	* src/helpers.cpp: successfully removed itos().

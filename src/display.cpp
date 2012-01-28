@@ -823,7 +823,7 @@ void display::dfxml_write(file_data_hasher_t *fdht)
     if(dfxml){
 	std::string attrs;
 	if(opt_verbose && fdht->workerid>=0){
-	    sstream ss;
+	    std::stringstream ss;
 	    ss << "workerid='" << fdht->workerid << "'";
 	    attrs = ss.str();
 	}
