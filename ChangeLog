@@ -1,3 +1,7 @@
+2012-01-28  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* configure.ac: Version bump to 4.0.2-001
+
 2012-01-28  Simson Garfinkel  <simsong@mucha>
 
 	* src/display.cpp (display::dfxml_write): strange; sstream should have been stringstream. Well, it's fixed now.
