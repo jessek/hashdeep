@@ -138,6 +138,8 @@ void print_last_error(char *function_name)
 	      << ":" << global::make_utf8(pszMessage) << "\n";
     LocalFree(pszMessage);
 }
+
+
 // An NTFS Junction Point is like a hard link on *nix but only works
 // on the same filesystem and only for directories. Unfortunately they
 // can also create infinite loops for programs that recurse filesystems.
@@ -148,34 +150,41 @@ void print_last_error(char *function_name)
 // given filename is a junction point. Otherwise it returns FALSE.
 bool state::is_junction_point(const std::wstring &fn)
 {
-    int status = FALSE;
-
-    WIN32_FIND_DATA FindFileData;
-    HANDLE hFind;
-
-    hFind = FindFirstFile(fn.c_str(), &FindFileData);
-    if (INVALID_HANDLE_VALUE != hFind)  {
-	if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)    {
-	    // We're going to skip this reparse point no matter what,
-	    // but we may want to display a message just in case.
-	    // TODO: Maybe have the option to follow symbolic links?
-	    status = TRUE;
-
-	    if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0) {
-		ocb.error_filename(fn,"Junction point, skipping");
-	    } else if (IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0) {
-		ocb.error_filename(fn,"Symbolic link, skipping");
-	    } else {
-		ocb.error_filename(fn,"Unknown reparse point 0x%"PRIx32", skipping",
-					 FindFileData.dwReserved0);
-	    }
-	}
-
-	// We don't error check this call as there's nothing to do differently
-	// if it fails.
-	FindClose(hFind);
+  int status = false;
+  
+  WIN32_FIND_DATA FindFileData;
+  HANDLE hFind;
+  
+  hFind = FindFirstFile(fn.c_str(), &FindFileData);
+  if (INVALID_HANDLE_VALUE != hFind)  
+  {
+    if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)    
+    {
+      // We're going to skip this reparse point no matter what,
+      // but we may want to display a message just in case.
+      // TODO: Maybe have the option to follow symbolic links?
+      status = true;
+      
+      if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0) 
+      {
+	ocb.error_filename(fn,"Junction point, skipping");
+      } 
+      else if (IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0) 
+      {
+	ocb.error_filename(fn,"Symbolic link, skipping");
+      } 
+      else 
+      {
+	ocb.error_filename(fn,"Unknown reparse point 0x%"PRIx32", skipping",
+			   FindFileData.dwReserved0);
+      }
     }
-    return status;
+    
+    // We don't error check this call as there's nothing to do differently
+    // if it fails.
+    FindClose(hFind);
+  }
+  return status;
 }
 // This is experimental code for reparse point process
 // We don't use it yet, but I don't want to delete it
@@ -349,24 +358,28 @@ void state::process_dir(const tstring &fn)
      * 4. Process them.
      */
     std::vector<tstring> dir_entries;
-    while ((entry = _treaddir(current_dir)) != NULL)   {
-	if (is_special_dir(entry->d_name)) continue; // ignore . and ..
-    
-	// compute full path
-	// don't append if the DIR_SEPARATOR if there is already one there
-	tstring new_file = fn;
-	if(new_file.size()==0 || new_file[new_file.size()-1]!=DIR_SEPARATOR){
-	    new_file.push_back(DIR_SEPARATOR);
-	}
-	new_file.append(entry->d_name);
-	dir_entries.push_back(new_file);
-
+    while ((entry = _treaddir(current_dir)) != NULL)   
+    {
+      // ignore . and ..
+      if (is_special_dir(entry->d_name)) 
+	continue; 
+      
 #ifdef _WIN32
-	if (is_junction_point(new_file)){		       // whatever this is, ignore it
-	    continue;
-	}
+      /// Windows Junction points
+      if (is_junction_point(new_file))
+	continue;
 #endif
-
+      
+      // compute full path
+      // don't append if the DIR_SEPARATOR if there is already one there
+      tstring new_file = fn;
+      if (0 == new_file.size() || new_file[new_file.size()-1]!=DIR_SEPARATOR)
+      {
+	new_file.push_back(DIR_SEPARATOR);
+      }
+      new_file.append(entry->d_name);
+      dir_entries.push_back(new_file);
+      
     }
     _tclosedir(current_dir);		// done with this directory
 

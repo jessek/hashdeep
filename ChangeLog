@@ -1,3 +1,7 @@
+2012-01-29  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* src/dig.cpp: Check for junction points before adding files to queue
+
 2012-01-28  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* configure.ac: Version bump to 4.0.2-001
