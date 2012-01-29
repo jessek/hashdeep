@@ -368,20 +368,19 @@ void state::process_dir(const tstring &fn)
       // don't append if the DIR_SEPARATOR if there is already one there
       tstring new_file = fn;
 
+      if (0 == new_file.size() || new_file[new_file.size()-1]!=DIR_SEPARATOR)
+      {
+	new_file.push_back(DIR_SEPARATOR);
+      }
+      new_file.append(entry->d_name);
+
 #ifdef _WIN32
       /// Windows Junction points
       if (is_junction_point(new_file)){
 	continue;
       }
 #endif
-      
 
-
-      if (0 == new_file.size() || new_file[new_file.size()-1]!=DIR_SEPARATOR)
-      {
-	new_file.push_back(DIR_SEPARATOR);
-      }
-      new_file.append(entry->d_name);
       dir_entries.push_back(new_file);
       
     }
