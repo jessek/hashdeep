@@ -793,7 +793,6 @@ tstring global::getcwd()
 
 #if 0
 // See http://insanecoding.blogspot.com/2007/11/pathmax-simply-isnt.html
-#ifndef _WIN32
 tstring global::getcwd()
 {
     std::string path;

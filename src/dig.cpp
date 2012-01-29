@@ -364,15 +364,19 @@ void state::process_dir(const tstring &fn)
       if (is_special_dir(entry->d_name)) 
 	continue; 
       
-#ifdef _WIN32
-      /// Windows Junction points
-      if (is_junction_point(new_file))
-	continue;
-#endif
-      
       // compute full path
       // don't append if the DIR_SEPARATOR if there is already one there
       tstring new_file = fn;
+
+#ifdef _WIN32
+      /// Windows Junction points
+      if (is_junction_point(new_file)){
+	continue;
+      }
+#endif
+      
+
+
       if (0 == new_file.size() || new_file[new_file.size()-1]!=DIR_SEPARATOR)
       {
 	new_file.push_back(DIR_SEPARATOR);
