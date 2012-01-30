@@ -4,6 +4,8 @@
 
 * Bug Fixes
 
+      Fixed junction point handling on Win32
+
 
 
 ** Changes in version 4.0.1 (22 Jan 2012)
