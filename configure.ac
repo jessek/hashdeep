@@ -3,7 +3,7 @@
 #
 
 AC_PREREQ(2.57)
-AC_INIT([MD5DEEP],[4.0.2-001],[research@jessekornblum.com])
+AC_INIT([MD5DEEP],[4.0.2-002],[research@jessekornblum.com])
 AC_CONFIG_FILES([Makefile src/Makefile man/Makefile tests/Makefile tests/testfiles/Makefile ])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])

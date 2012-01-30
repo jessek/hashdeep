@@ -45,6 +45,38 @@ void display::writeln(std::ostream *os,const std::string &str)
     unlock();
 }
 
+#if defined(HAVE_VASPRINTF) && defined(__MINGW_H)
+/* prototype missing under mingw */
+extern "C" {
+    int vasprintf(char **ret,const char *fmt,va_list ap);
+}
+#endif    
+	
+
+/*
+ * on mingw the have_vasprintf check succedes, but it really isn't there
+ */
+#if defined(HAVE_VASPRINTF) && defined(__MINGW_H)
+extern "C" {
+    /**
+     * We do not have vasprintf.
+     * We have determined that vsnprintf() does not perform properly on windows.
+     * So we just allocate a huge buffer and then strdup() and hope!
+     */
+    int vasprintf(char **ret,const char *fmt,va_list ap)
+    {
+	/* Figure out how long the result will be */
+	char buf[65536];
+	int size = vsnprintf(buf,sizeof(buf),fmt,ap);
+	if(size<0) return size;
+	/* Now allocate the memory */
+	*ret = (char *)strdup(buf);
+	return size;
+    }
+}
+#endif
+
+
 void display::status(const char *fmt,...)
 {
     va_list(ap); 
