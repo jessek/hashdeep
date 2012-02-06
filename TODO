@@ -75,3 +75,9 @@ Below is a list of what Simson Garfinkel did to bring hashdeep and md5deep from 
      and SHA256 go dramatically faster.
 
 
+
+================
+Remaining:
+
+* - Change all codes to UTF8 in all modes of operation
+* - Option to include BOM in plain text output mode.
