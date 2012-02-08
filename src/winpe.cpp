@@ -23,7 +23,9 @@ bool has_executable_extension(const tstring &fn)
   if (std::string::npos == last_period)
     return false;
 
+  // Get the file extension and convert it to lowercase
   tstring extension = fn.substr(last_period);
+  std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 
 #define CHECK_EXEC(A)  if (A == extension) return true;
   CHECK_EXEC(_TEXT(".exe"));
