@@ -663,9 +663,9 @@ void state::dig_normal(const tstring &fn_)
 std::wstring  win32_dirname(const std::wstring &fn)
 {
     size_t loc = fn.rfind(DIR_SEPARATOR);
-    if(loc==tstring::npos){
-	std::cerr << "returning empty\n";
-	return tstring(); // return empty string
+    if (loc==tstring::npos)
+    {
+      return tstring(); // return empty string
     }
     return fn.substr(0,loc);
 }
