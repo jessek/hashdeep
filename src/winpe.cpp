@@ -9,7 +9,7 @@
 // WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
-// $Id: dig.cpp 607 2012-01-29 20:59:24Z jessekornblum $
+// $Id$
 //
 
 

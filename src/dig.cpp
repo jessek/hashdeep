@@ -34,7 +34,7 @@ void state::done_processing_dir(const tstring &fn_)
     tstring fn = global::get_realpath(fn_);
     dir_table_t::iterator pos = dir_table.find(fn);
     if(pos==dir_table.end()){
-	ocb.internal_error("%s: Directory %s not found in done_processing_dir", progname.c_str(), fn.c_str());
+	ocb.internal_error("%s: Directory '%s' not found in done_processing_dir", progname.c_str(), fn.c_str());
 	// will not be reached.
     }
     dir_table.erase(pos);
@@ -44,9 +44,10 @@ void state::done_processing_dir(const tstring &fn_)
 void state::processing_dir(const tstring &fn_)
 {
     tstring fn = global::get_realpath(fn_);
-    if(dir_table.find(fn)!=dir_table.end()){
-	ocb.internal_error("%s: Attempt to add existing %s in processing_dir", progname.c_str(), fn.c_str());
-	// will not be reached.
+    if (dir_table.find(fn)!=dir_table.end())
+    {
+      ocb.internal_error("%s: Attempt to add existing %s in processing_dir", progname.c_str(), fn.c_str());
+      // will not be reached.
     }
     dir_table.insert(fn);
 }
@@ -526,7 +527,8 @@ bool state::should_hash_winpe(const tstring &fn)
 
   unsigned char buffer[PETEST_BUFFER_SIZE] = {0};
   size_t size = fread(buffer,1,PETEST_BUFFER_SIZE,handle);
- 
+  fclose(handle);
+
   bool status = is_pe_file(buffer, size);
 
   if (status and not executable_extension)
@@ -543,33 +545,34 @@ bool state::should_hash_winpe(const tstring &fn)
  */
 bool state::should_hash_expert(const tstring &fn, file_types type)
 {
+  file_types link_type=stat_unknown;
+  if (stat_directory == type)
+  {
+    if (mode_recursive)
+      process_dir(fn);
+    else 
+      ocb.error_filename(fn,"Is a directory");
+
+    return false;
+  }
+
   if (mode_winpe)
   {
     // The user could have requested PE files *and* something else
     // therefore we don't return false here if the file is not a PE.
+    // Note that we have to check for directories first!
     if (should_hash_winpe(fn))
       return true;
   }
 
-  file_types link_type=stat_unknown;
   switch(type)  
   {
-  case stat_directory:
-    if (mode_recursive)
-    {
-      process_dir(fn);
-    }
-    else 
-    {
-      ocb.error_filename(fn,"Is a directory");
-    }
-    return FALSE;
-
     // We can't just return s->mode & mode_X because mode_X is
     // a 64-bit value. When that value gets converted back to int,
     // the high part of it is lost. 
     
 #define RETURN_IF_MODE(A) if (A) return true; break;
+
     case stat_regular:   RETURN_IF_MODE(mode_regular);
     case stat_block:     RETURN_IF_MODE(mode_block);
     case stat_character: RETURN_IF_MODE(mode_character);
@@ -578,23 +581,26 @@ bool state::should_hash_expert(const tstring &fn, file_types type)
     case stat_door:      RETURN_IF_MODE(mode_door);
     case stat_symlink: 
 
-	//  Although it might appear that we need nothing more than
-	//     return (s->mode & mode_symlink);
-	// that doesn't work. That logic gets into trouble when we're
-	// running in recursive mode on a symlink to a directory.
-	// The program attempts to open the directory entry itself
-	// and gets into an infinite loop.
-
-	if (!(mode_symlink)) return false;
-	if (should_hash_symlink(fn,&link_type)){
-	    return should_hash_expert(fn,link_type);
-	}
+      //  Although it might appear that we need nothing more than
+      //     return (s->mode & mode_symlink);
+      // that doesn't work. That logic gets into trouble when we're
+      // running in recursive mode on a symlink to a directory.
+      // The program attempts to open the directory entry itself
+      // and gets into an infinite loop.
+      
+      if (!(mode_symlink)) 
 	return false;
-    case stat_unknown:
-	ocb.error_filename(fn,"unknown file type");
-	return false;
-    }
+      if (should_hash_symlink(fn,&link_type))
+      {
+	return should_hash_expert(fn,link_type);
+      }
+      return false;
+  case stat_unknown:
+    ocb.error_filename(fn,"unknown file type");
     return false;
+  }
+
+  return false;
 }
 
 

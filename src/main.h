@@ -12,7 +12,7 @@
  *
  * It then creates all the C++ classes and structures used.
  *
- * $Id: main.h,v 1.14 2007/12/28 01:49:36 jessekornblum Exp $
+ * $Id$
  */
 
 
