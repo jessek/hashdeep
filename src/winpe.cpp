@@ -12,19 +12,15 @@
 // $Id$
 //
 
-
 #include "main.h"
 
-
-#include <iostream>
-using namespace std;
 
 bool has_executable_extension(const tstring &fn)
 {
   size_t last_period = fn.find_last_of(_TEXT("."));
 
-  // There is no extension
-  if (string::npos == last_period)
+  // If there is no extension, we're done.
+  if (std::string::npos == last_period)
     return false;
 
   tstring extension = fn.substr(last_period);
@@ -151,7 +147,9 @@ bool is_pe_file(const unsigned char * buffer, size_t size)
   // Find the PE header. It's the e_lfanew field in the IMAGE_DOS_HEADER
   // structure, which is at offset 0x3c.
   uint16_t pe_offset = *(uint16_t *)(buffer + 0x3c);
-  if (pe_offset > size)
+
+  // Do we have enough data to do this check?
+  if (pe_offset + 4 > size)
     return false;
 
   IMAGE_NT_HEADERS h = *(IMAGE_NT_HEADERS *)(buffer + pe_offset);
