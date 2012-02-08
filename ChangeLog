@@ -1,3 +1,7 @@
+2012-02-08  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* src/dig.cpp, winpe.h, winpe.cpp, main.cpp: Added check for Windows PE files to expert mode.
+
 2012-01-30  Jesse Kornblum  <research@jessekornblum.com:>
 
 	* src/display.cpp: Reverted previous change, but updated test for presence of vasprintf.

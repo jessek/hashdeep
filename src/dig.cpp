@@ -18,6 +18,7 @@
 // $Id$
 
 #include "main.h"
+#include "winpe.h"
 #include <iostream>
 
 /****************************************************************
@@ -510,7 +511,29 @@ bool state::should_hash_symlink(const tstring &fn, file_types *link_type)
     if (link_type) *link_type = type;
     return true;    
 }
-    
+
+
+bool state::should_hash_winpe(const tstring &fn)
+{
+  bool executable_extension = has_executable_extension(fn);
+  
+  FILE * handle = _tfopen(fn.c_str(),_TEXT("rb"));
+  if (NULL == handle)
+  {
+    ocb.error_filename(fn,"%s", strerror(errno));
+    return false;
+  }
+
+  unsigned char buffer[PETEST_BUFFER_SIZE] = {0};
+  size_t size = fread(buffer,1,PETEST_BUFFER_SIZE,handle);
+ 
+  bool status = is_pe_file(buffer, size);
+
+  if (status and not executable_extension)
+    ocb.error_filename(fn,"Is Windows executable but does not have executable extension");
+ 
+  return status;
+}
 
 /*
  * Type should be the result of calling lstat on the file.
@@ -520,21 +543,32 @@ bool state::should_hash_symlink(const tstring &fn, file_types *link_type)
  */
 bool state::should_hash_expert(const tstring &fn, file_types type)
 {
-    file_types link_type=stat_unknown;
-    switch(type)  {
-    case stat_directory:
-	if (mode_recursive){
-	    process_dir(fn);
-	}
-	else {
-	    ocb.error_filename(fn,"Is a directory");
-	}
-	return FALSE;
+  if (mode_winpe)
+  {
+    // The user could have requested PE files *and* something else
+    // therefore we don't return false here if the file is not a PE.
+    if (should_hash_winpe(fn))
+      return true;
+  }
 
-	// We can't just return s->mode & mode_X because mode_X is
-	// a 64-bit value. When that value gets converted back to int,
-	// the high part of it is lost. 
+  file_types link_type=stat_unknown;
+  switch(type)  
+  {
+  case stat_directory:
+    if (mode_recursive)
+    {
+      process_dir(fn);
+    }
+    else 
+    {
+      ocb.error_filename(fn,"Is a directory");
+    }
+    return FALSE;
 
+    // We can't just return s->mode & mode_X because mode_X is
+    // a 64-bit value. When that value gets converted back to int,
+    // the high part of it is lost. 
+    
 #define RETURN_IF_MODE(A) if (A) return true; break;
     case stat_regular:   RETURN_IF_MODE(mode_regular);
     case stat_block:     RETURN_IF_MODE(mode_block);
@@ -571,9 +605,10 @@ bool state::should_hash_expert(const tstring &fn, file_types type)
 
 bool state::should_hash(const tstring &fn)
 {
-    file_types  type = state::file_type(fn,&ocb,0,0,0,0);
+    file_types type = state::file_type(fn,&ocb,0,0,0,0);
   
-    if (mode_expert) return should_hash_expert(fn,type);
+    if (mode_expert) 
+      return should_hash_expert(fn,type);
 
     if (type == stat_directory)  {
 	if (mode_recursive){

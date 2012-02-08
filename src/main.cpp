@@ -172,9 +172,9 @@ void state::usage()
 	ocb.status("-B - verbose mode; repeat for more verbosity");
 	ocb.status("-C - Macintosh only --- use Common Crypto hash functions");
 	ocb.status("-Fb - I/O mode buffered; -Fu unbuffered; -Fm memory-mapped");
-	ocb.status("-o[bcpflsd] - only process certain types of files:");
+	ocb.status("-o[bcpflsde] - only process certain types of files:");
 	ocb.status("            b=block dev; c=character dev; p=named pipe");
-	ocb.status("            f=regular file; l=symlink; s=socket; d=door");
+	ocb.status("            f=regular file; l=symlink; s=socket; d=door e=Windows PE");
 	ocb.status("-Dnn - set debug level to nn");
     }
     if(usage_count==3){			// -hhh - adds debugging information
@@ -233,9 +233,9 @@ void state::md5deep_usage(void)
 	ocb.status("-C - Macintosh only --- use Common Crypto hash functions");
 	ocb.status("-Fb - I/O mode buffered; -Fu unbuffered; -Fm memory-mapped");
 	ocb.status("-ffilename - take list of files to hash from filename");
-	ocb.status("-o[bcpflsd] - only process certain types of files:");
+	ocb.status("-o[bcpflsde] - only process certain types of files:");
 	ocb.status("            b=block dev; c=character dev; p=named pipe");
-	ocb.status("            f=regular file; l=symlink; s=socket; d=door");
+	ocb.status("            f=regular file; l=symlink; s=socket; d=door e=Windows PE");
 	ocb.status("-Dnn - set debug level to nn");
     }
     if(usage_count==3){			// -hhh
@@ -556,20 +556,22 @@ void state::setup_expert_mode(char *arg)
 {
     for(unsigned int i=0;i<strlen(arg);i++){
 	switch(arg[i]){
+	case 'e': // Windows PE executables
+	  mode_winpe = true;       break;
 	case 'b': // Block Device
 	    mode_block = true;     break;
 	case 'c': // Character Device
 	    mode_character = true; break;
 	case 'p': // Named Pipe
-	    mode_pipe=true;      break;
+	    mode_pipe=true;        break;
 	case 'f': // Regular File
-	    mode_regular=true;   break;
+	    mode_regular=true;     break;
 	case 'l': // Symbolic Link
-	    mode_symlink=true;   break;
+	    mode_symlink=true;     break;
 	case 's': // Socket
-	    mode_socket=true;    break;
+	    mode_socket=true;      break;
 	case 'd': // Door (Solaris)
-	    mode_door=true;      break;
+	    mode_door=true;        break;
 	default:
 	    ocb.error("%s: Unrecognized file type: %c", progname.c_str(),arg[i]);
 	}

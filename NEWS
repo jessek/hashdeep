@@ -2,6 +2,8 @@
 
 * New Features
 
+      Added expert mode option to parse Windows PE files
+
 * Bug Fixes
 
       Fixed junction point handling on Win32

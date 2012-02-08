@@ -746,30 +746,31 @@ public:;
 	stat_unknown=254
     } file_types;
 
-    state():mode_recursive(false),	// do we recurse?
-	    mode_warn_only(false),	// for loading hash files
+ state():mode_recursive(false),	// do we recurse?
+      mode_warn_only(false),	// for loading hash files
+      
+      // these determine which files get hashed
+      mode_expert(false),
+      mode_regular(false),
+      mode_directory(false),
+      mode_door(false),
+      mode_block(false),
+      mode_character(false),
+      mode_pipe(false),
+      mode_socket(false),
+      mode_symlink(false),
+      mode_winpe(false),
 
-	    // these determine which files get hashed
-	    mode_expert(false),
-	    mode_regular(false),
-	    mode_directory(false),
-	    mode_door(false),
-	    mode_block(false),
-	    mode_character(false),
-	    mode_pipe(false),
-	    mode_socket(false),
-	    mode_symlink(false),
-
-	    // command line argument
-	    argc(0),argv(0),
-
-	    // these have something to do with hash files that are loaded
-	    h_field(0),
-	    h_plain(0),h_bsd(0),
-	    h_md5deep_size(0),
-	    h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl20(0), h_encase(0),
-	    usage_count(0)		// allows -hh to print extra help
-	    {};
+      // command line argument
+      argc(0),argv(0),
+      
+      // these have something to do with hash files that are loaded
+      h_field(0),
+      h_plain(0),h_bsd(0),
+      h_md5deep_size(0),
+      h_hashkeeper(0),h_ilook(0),h_ilook3(0),h_ilook4(0), h_nsrl20(0), h_encase(0),
+      usage_count(0)		// allows -hh to print extra help
+	{};
 
     bool	mode_recursive;
     bool	mode_warn_only;
@@ -784,6 +785,7 @@ public:;
     bool	mode_pipe;
     bool	mode_socket;
     bool	mode_symlink;
+    bool        mode_winpe;
  
 
     /* Command line arguments */
@@ -853,6 +855,7 @@ public:;
 
     int		identify_hash_file_type(FILE *f,uint32_t *expected_hashes); // identify the hash file type
     bool	should_hash_symlink(const tstring &fn,file_types *link_type);
+    bool        should_hash_winpe(const tstring &fn);
     bool	should_hash_expert(const tstring &fn, file_types type);
     bool	should_hash(const tstring &fn);
 
