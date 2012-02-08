@@ -37,6 +37,7 @@ bool has_executable_extension(const tstring &fn)
   CHECK_EXEC(_TEXT(".hxi"));
   CHECK_EXEC(_TEXT(".olb"));
   CHECK_EXEC(_TEXT(".rll"));
+  CHECK_EXEC(_TEXT(".mui"));
   CHECK_EXEC(_TEXT(".tlb"));
 
   return false;
