@@ -2,6 +2,8 @@
  *** THREADING SUPPORT
  ****************************************************************/
 
+// $Id$
+
 #include "main.h"
 
 #ifdef HAVE_PTHREAD

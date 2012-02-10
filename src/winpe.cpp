@@ -46,7 +46,9 @@ bool has_executable_extension(const tstring &fn)
 
 bool is_pe_file(const unsigned char * buffer, size_t size)
 {
-  if (NULL == buffer or size < 2)
+  // We need at least 0x40 bytes to hold an IMAGE_DOS_HEADER
+  // and the signature of a PE header.
+  if (NULL == buffer or size < 0x40)
     return false;
 
   // Is the MZ header's signature 'MZ'?
@@ -56,7 +58,13 @@ bool is_pe_file(const unsigned char * buffer, size_t size)
 
   // Find the PE header. It's the e_lfanew field in the IMAGE_DOS_HEADER
   // structure, which is at offset 0x3c.
-  uint16_t pe_offset = buffer[0x3c] | (buffer[0x3d] << 8);
+  // This line is equivalent to:
+  //    uint16_t pe_offset = *(uint16_t *)(buffer + 0x3c);
+  // but is not affected by the endianness of the system.
+  // This value should be a uint16_t according to the IMAGE_DOS_HEADER
+  // but that merits us a compiler warning. size_t *should* be wider than
+  // 16 bits on your platform. Or else you need a better platform. Just sayin'.
+  size_t pe_offset = buffer[0x3c] | (buffer[0x3d] << 8);
 
   // Do we have enough data to do this check?
   if (pe_offset + 4 > size)
@@ -64,6 +72,9 @@ bool is_pe_file(const unsigned char * buffer, size_t size)
 
   // Is the PE header's signature 'PE  '? The PE signature should begin
   // at the location specified by the PE offset in the DOS header
+  // This line is equivalent to:
+  //    uint32_t signature = *(uint32_t *)(buffer + pe_offset);
+  // but is not affected by the endianness of the system.
   const unsigned char * tmp = buffer+pe_offset;
   uint32_t signature=tmp[0] | (tmp[1] << 8) | (tmp[2] << 16) | (tmp[3] << 24);
   if (signature != 0x4550)

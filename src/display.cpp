@@ -2,6 +2,8 @@
 #include "utf8.h"
 #include <stdarg.h>
 
+// $Id$
+
 /**
  *
  * display.cpp:

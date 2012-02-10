@@ -514,6 +514,13 @@ bool state::should_hash_symlink(const tstring &fn, file_types *link_type)
 }
 
 
+/// Returns true if the filename fn is a Windows PE executable
+///
+/// If the filename is a PE executable but does not have an executable
+/// extension, displays an error message. If the file cannot be read,
+/// returns false.
+///
+/// @param fn Filename to examine
 bool state::should_hash_winpe(const tstring &fn)
 {
   bool executable_extension = has_executable_extension(fn);
@@ -572,29 +579,33 @@ bool state::should_hash_expert(const tstring &fn, file_types type)
     // the high part of it is lost. 
     
 #define RETURN_IF_MODE(A) if (A) return true; break;
+  case stat_directory:
+    // This case should be handled above. This statement is 
+    // here to avoid compiler warnings
+    ocb.internal_error("Did not handle directory entry in should_hash_expert()");
 
-    case stat_regular:   RETURN_IF_MODE(mode_regular);
-    case stat_block:     RETURN_IF_MODE(mode_block);
-    case stat_character: RETURN_IF_MODE(mode_character);
-    case stat_pipe:      RETURN_IF_MODE(mode_pipe);
-    case stat_socket:    RETURN_IF_MODE(mode_socket);
-    case stat_door:      RETURN_IF_MODE(mode_door);
-    case stat_symlink: 
-
-      //  Although it might appear that we need nothing more than
-      //     return (s->mode & mode_symlink);
-      // that doesn't work. That logic gets into trouble when we're
-      // running in recursive mode on a symlink to a directory.
-      // The program attempts to open the directory entry itself
-      // and gets into an infinite loop.
-      
-      if (!(mode_symlink)) 
-	return false;
-      if (should_hash_symlink(fn,&link_type))
-      {
-	return should_hash_expert(fn,link_type);
-      }
+  case stat_regular:   RETURN_IF_MODE(mode_regular);
+  case stat_block:     RETURN_IF_MODE(mode_block);
+  case stat_character: RETURN_IF_MODE(mode_character);
+  case stat_pipe:      RETURN_IF_MODE(mode_pipe);
+  case stat_socket:    RETURN_IF_MODE(mode_socket);
+  case stat_door:      RETURN_IF_MODE(mode_door);
+  case stat_symlink: 
+    
+    //  Although it might appear that we need nothing more than
+    //     return (s->mode & mode_symlink);
+    // that doesn't work. That logic gets into trouble when we're
+    // running in recursive mode on a symlink to a directory.
+    // The program attempts to open the directory entry itself
+    // and gets into an infinite loop.
+    
+    if (!(mode_symlink)) 
       return false;
+    if (should_hash_symlink(fn,&link_type))
+    {
+      return should_hash_expert(fn,link_type);
+    }
+    return false;
   case stat_unknown:
     ocb.error_filename(fn,"unknown file type");
     return false;

@@ -1,3 +1,10 @@
+2012-02-10  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* sample-hashes/sample.{c,jpg}: Added Windows executable with non-executable extension
+	* src/winpe.cpp, main.cpp, dig.cpp: Added comments
+	* configure.ac: Version bump to 4.1
+	* src/*.cpp: Added $Id$ tags
+
 2012-02-08  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* src/dig.cpp, winpe.h, winpe.cpp, main.cpp: Added check for Windows PE files to expert mode.
