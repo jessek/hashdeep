@@ -20,7 +20,7 @@ whirlpooldeep - Compute and compare Whirlpool message digests
 <b>md5deep
 </b> -v | -V | -h <br>
 <b>md5deep</b> [-m|-M|-x|-X &lt;file&gt;]  [-a|-A &lt;hash&gt;] [-f &lt;file&gt;] [-p &lt;size&gt;] [-i &lt;size&gt;] [-tnwzresS0lbkqZud]
-[-F&lt;bum&gt;]  [-o &lt;fbcplsd&gt;]  [-jnn] [[<b>FILES</b>] 
+[-F&lt;bum&gt;]  [-o &lt;fbcplsde&gt;]  [-jnn] [[<b>FILES</b>] 
 <p> 
 <h2><a name='sect2' href='#toc2'>Description</a></h2>
 <p>
@@ -211,13 +211,14 @@ c - Character Devices <br>
 p - Named Pipes <br>
 l - Symbolic Links <br>
 s - Sockets <br>
-d - Solaris Doors 
+d - Solaris Doors <br>
+e - Windows PE executables 
 <p> </dd>
 
 <dt><b>-jnn</b> </dt>
-<dd>Controls multi-threading. By default the program will
-create one producer thread to scna the file system and one hashing thread
-per CPU core. Multi-threading causes output filenames to be in non-deterministic
+<dd>Controls multi-threading. By default the program
+will create one producer thread to scna the file system and one hashing
+thread per CPU core. Multi-threading causes output filenames to be in non-deterministic
 order, as files that take longer to hash will be delayed while they are
 hashed. If a deterministic order is required, specify <b>-j0</b> to disable multi-threading
 

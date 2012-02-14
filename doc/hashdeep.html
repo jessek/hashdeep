@@ -15,7 +15,7 @@ hashdeep - Compute, compare, or audit multiple message digests
 <h2><a name='sect1' href='#toc1'>Synopsis</a></h2>
 <b>hashdeep
 </b> -V | -h <br>
-<b>hashdeep</b> [-c &lt;alg1&gt;[,&lt;alg2&gt;]] [-k &lt;file&gt;] [-i &lt;size&gt;] [-f &lt;file&gt;]  [-o &lt;fbcplsd&gt;] [-amxwMXrespblvv]
+<b>hashdeep</b> [-c &lt;alg1&gt;[,&lt;alg2&gt;]] [-k &lt;file&gt;] [-i &lt;size&gt;] [-f &lt;file&gt;]  [-o &lt;fbcplsde&gt;] [-amxwMXrespblvv]
 [-F&lt;bum&gt;] [-jnn] [<b>FILES</b>] 
 <p> 
 <p> 
@@ -148,45 +148,46 @@ c - Character Devices <br>
 p - Named Pipes <br>
 l - Symbolic Links <br>
 s - Sockets <br>
-d - Solaris Doors 
+d - Solaris Doors <br>
+e - Windows PE executables 
 <p> 
 <p> </dd>
 
 <dt><b>-s</b> </dt>
-<dd>Enables silent mode. All error messages are supressed.
-
+<dd>Enables silent mode. All error messages are
+supressed. 
 <p> 
 <p> </dd>
 
 <dt><b>-p</b> </dt>
-<dd>Piecewise mode. Breaks files into chunks before hashing. Chunks may be
-specified using IEC multipliers b,k,m,g,t,p, and e. (Never let it be said
-that the author didn’t plan ahead.)  
+<dd>Piecewise mode. Breaks files into chunks before hashing. Chunks
+may be specified using IEC multipliers b,k,m,g,t,p, and e. (Never let it
+be said that the author didn’t plan ahead.)  
 <p> 
 <p> </dd>
 
 <dt><b>-b</b> </dt>
-<dd>Enables bare mode. Strips any
-leading directory information from  displayed filenames. This flag may not
-be used in conjunction with the -l flag. 
+<dd>Enables bare mode. Strips
+any leading directory information from  displayed filenames. This flag may
+not be used in conjunction with the -l flag. 
 <p> </dd>
 
 <dt><b>-l</b> </dt>
-<dd>Enables relative file paths. Instead
-of printing the absolute path for each file, displays the relative file
-path as indicated on the command  line. This flag may not be used in conjunction
-with the -b flag. 
+<dd>Enables relative file paths.
+Instead of printing the absolute path for each file, displays the relative
+file path as indicated on the command  line. This flag may not be used in
+conjunction with the -b flag. 
 <p> </dd>
 
 <dt><b>-v</b> </dt>
-<dd>Enables verbose mode. Use again to make the program more
-verbose.  This mostly changes the behvaior of the audit mode, -a. 
+<dd>Enables verbose mode. Use again to make the
+program more verbose.  This mostly changes the behvaior of the audit mode,
+-a. 
 <p> </dd>
 
 <dt><b>-jnn</b> </dt>
-<dd>Controls
-multi-threading. By default the program will create one producer thread to
-scna the file system and one hashing thread per CPU core. Multi-threading
+<dd>Controls multi-threading. By default the program will create one producer
+thread to scna the file system and one hashing thread per CPU core. Multi-threading
 causes output filenames to be in non-deterministic order, as files that
 take longer to hash will be delayed while they are hashed. If a deterministic
 order is required, specify <b>-j0</b> to disable multi-threading 

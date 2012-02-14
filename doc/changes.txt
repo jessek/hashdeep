@@ -1,3 +1,15 @@
+** Changes in version 4.1.0 (14 Feb 2012)
+
+* New Features
+
+      Added expert mode option to parse Windows PE files
+
+* Bug Fixes
+
+      Fixed junction point handling on Win32
+
+
+
 ** Changes in version 4.0.1 (22 Jan 2012)
 
 * Bug Fixes
