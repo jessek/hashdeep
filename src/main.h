@@ -530,7 +530,7 @@ public:
 	opt_display_hash(false),
 	opt_show_matched(false),
 	opt_iomode(iomode::buffered),	// by default, use buffered
-#ifdef HAVE_PTRHEAD
+#ifdef HAVE_PTHREAD
 	opt_threadcount(threadpool::numCPU()),
 	tp(0),
 #else

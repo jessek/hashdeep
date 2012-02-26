@@ -628,11 +628,11 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
       // TODO: Add -t mode to hashdeep
       //    case 't': mode |= mode_timestamp;    break;
 
-    case 'b': ocb.mode_barename=true;     break;
-    case 'l': ocb.opt_relative=true;     break;
-    case 'e': ocb.opt_estimate = true;	    break;
-    case 'r': mode_recursive=true;    break;
-    case 's': ocb.opt_silent = true;	    break;
+    case 'b': ocb.mode_barename=true;   break;
+    case 'l': ocb.opt_relative=true;    break;
+    case 'e': ocb.opt_estimate = true;	break;
+    case 'r': mode_recursive=true;	break;
+    case 's': ocb.opt_silent = true;	break;
       
     case 'p':
 	ocb.piecewise_size = find_block_size(optarg);
@@ -1224,6 +1224,7 @@ int state::main(int _argc,char **_argv)
 #endif
 
 #ifdef HAVE_PTHREAD
+    threadpool::win32_init();			// 
     ocb.opt_threadcount = threadpool::numCPU(); // be sure it's set
 #endif
 

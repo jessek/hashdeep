@@ -660,6 +660,7 @@ void state::dig_normal(const tstring &fn_)
 #endif
     if (opt_debug) ocb.status("*** cleaned:%s",global::make_utf8(fn).c_str());
     if (should_hash(fn)){
+    std::cerr << "ocb=" << (int *)&ocb << "\n";
 	ocb.hash_file(fn);
     }
 }

@@ -47,6 +47,7 @@ public:
 
 class threadpool: public std::vector<class worker *> {
 public:
+    static void		win32_init(); // must be called under win32 to initialize posix threads
     mutex_t		M;			// protects the following variables
     volatile unsigned int numworkers;
     volatile unsigned int freethreads;

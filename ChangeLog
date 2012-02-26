@@ -1,3 +1,11 @@
+2012-02-26  Simson Garfinkel  <simsong@FC15>
+
+	* src/main.h (d): fixed THREAD typo.
+
+	* src/display.cpp: changed #if so that it checks for MINGW and not __MINGW_H
+
+	* configure.ac (MINGW): now explicitly sets MINGW if we are compiling under mingw.
+
 2012-02-10  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* sample-hashes/sample.{c,jpg}: Added Windows executable with non-executable extension

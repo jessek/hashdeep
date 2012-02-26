@@ -95,6 +95,20 @@ void ERR(int val,const char *msg)
 }
 
 
+/* Run non-portable pthread win32 startup */
+void threadpool::win32_init()
+{
+#ifdef WIN32
+    static bool initialized = false;
+    if(initialized==false){
+	pthread_win32_process_attach_np();
+	pthread_win32_thread_attach_np();
+	initialized=true;
+    }
+#endif
+}
+
+
 /**
  * Create the thread pool.
  * Each thread has its own feature_recorder_set.
@@ -115,12 +129,6 @@ void ERR(int val,const char *msg)
 
 threadpool::threadpool(int numworkers_)
 {
-#ifdef WIN32
-    /* Run non-portable pthread win32 startup */
-    pthread_win32_process_attach_np();
-    pthread_win32_thread_attach_np();
-#endif
-
     numworkers		= numworkers_;
     freethreads		= numworkers;
     if(pthread_cond_init(&TOMAIN,NULL))   ERR(1,"pthread_cond_init #1 failed");

@@ -195,6 +195,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 #define O_BINARY 0
 #endif
 mutex_t file_data_hasher_t::fdh_lock;
+
 void file_data_hasher_t::hash()
 {
     file_data_hasher_t *fdht = this;
@@ -403,7 +404,6 @@ void file_data_hasher_t::hash()
 	    }
 	}
     }
-
 
     /**
      * If we had an additional hash context for the file,

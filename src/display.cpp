@@ -47,18 +47,19 @@ void display::writeln(std::ostream *os,const std::string &str)
     unlock();
 }
 
-#if defined(HAVE_VASPRINTF) && defined(__MINGW_H)
-/* prototype missing under mingw */
+/* special handling for vasprintf under mingw.
+ * Sometimes the function prototype is missing. Sometimes the entire function is missing!
+ */
+#if defined(HAVE_VASPRINTF) && defined(MINGW)
 extern "C" {
     int vasprintf(char **ret,const char *fmt,va_list ap);
 }
 #endif    
 	
-
 /*
- * on mingw the have_vasprintf check succedes, but it really isn't there
+ * If we don't have vasprintf, bring it in.
  */
-#if defined(HAVE_VASPRINTF) && defined(__MINGW_H)
+#if !defined(HAVE_VASPRINTF) 
 extern "C" {
     /**
      * We do not have vasprintf.
