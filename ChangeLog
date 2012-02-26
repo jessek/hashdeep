@@ -1,11 +1,20 @@
+2012-02-27  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* man/md5deep.1: Added Simson to the AUTHORS section
+	* src/main.cpp: Formatted usage messages
+	* configure.ac: Version bump to 4.1.1
+	* Makefile.am: Added doc to directories cleaned with make nice
+
 2012-02-26  Simson Garfinkel  <simsong@FC15>
 
 	* src/main.h (d): fixed THREAD typo.
-
 	* src/display.cpp: changed #if so that it checks for MINGW and not __MINGW_H
-
 	* configure.ac (MINGW): now explicitly sets MINGW if we are compiling under mingw.
 
+2012-02-10  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* doc/start-hashdeep.html: Clarified how to run the programs.
+	
 2012-02-10  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* sample-hashes/sample.{c,jpg}: Added Windows executable with non-executable extension
@@ -17,7 +26,7 @@
 
 	* src/dig.cpp, winpe.h, winpe.cpp, main.cpp: Added check for Windows PE files to expert mode.
 
-2012-01-30  Jesse Kornblum  <research@jessekornblum.com:>
+2012-01-30  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* src/display.cpp: Reverted previous change, but updated test for presence of vasprintf.
 

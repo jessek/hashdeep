@@ -10,7 +10,7 @@ CROSS64_PREFIX = x86_64-w64-mingw32
 EXTRA_DIST = FILEFORMAT config.guess config.sub  m4/ax_pthread.m4 CONFIGURE_FC.sh
 
 nice:
-	rm -f *~ man/*~ src/*~
+	rm -f *~ man/*~ src/*~ doc/*~
 
 preflight:
 	grep RBF */*.{c,cpp,h,1} doc/* AUTHORS README NEWS TODO ChangeLog 

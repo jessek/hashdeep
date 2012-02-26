@@ -130,65 +130,72 @@ tstring state::generate_filename(const tstring &input)
 // function should produce no more than 22 lines of text.
 void state::usage()
 {
-    if(usage_count==1){
-	ocb.status("%s version %s by %s.",progname.c_str(),VERSION,AUTHOR);
-	ocb.status("%s %s [-c <alg>] [-k <file>] [-amxwMXrespblvv] [-jnn] [-V|-h] [-o <mode>] [FILES]",
-		     CMD_PROMPT,progname.c_str());
-	
-	/* Make a list of the hashes */
-	ocb.status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
-	fprintf(stdout,"     legal values: ");
-	for (int i = 0 ; i < NUM_ALGORITHMS ; i++){
-	    fprintf(stdout,"%s%s",hashes[i].name.c_str(),(i+1<NUM_ALGORITHMS) ? "," : NEWLINE);
-	}
-	
-	ocb.status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
-	ocb.status("-r  - recursive mode. All subdirectories are traversed");
-	ocb.status("-d  - output in DFXML (Digital Forensics XML)");
-	ocb.status("-k <FN>  - add a file of known hashes");
-	ocb.status("-a  - audit mode. Validates FILES against known hashes. Requires -k");
-	ocb.status("-m  - matching mode. Requires -k");
-	ocb.status("-x  - negative matching mode. Requires -k");
-	ocb.status("-w  - in -m mode, displays which known file was matched");
-	ocb.status("-M and -X act like -m and -x, but display hashes of matching files");
-	ocb.status("-e  - compute estimated time remaining for each file");
-	ocb.status("-s  - silent mode. Suppress all error messages");
-	ocb.status("-b  - prints only the bare name of files; all path information is omitted");
-	ocb.status("-l  - print relative paths for filenames");
-	ocb.status("-i  - only process files smaller than the given threshold");
-	ocb.status("-o  - only process certain types of files. See README/manpage");
-	ocb.status("-v  - verbose mode. Use again to be more verbose; -V display version & exit.");
-	ocb.status("-d  - output in DFXML; -W FILE - write to FILE.");
-#ifdef HAVE_PTHREAD
-	ocb.status("-jnn run nn threads (default %d)",threadpool::numCPU());
-#else
-	ocb.status("-jnn ignored (compiled without pthreads)");
-#endif	
+  if (1 == usage_count)
+  {
+    ocb.status("%s version %s by %s.",progname.c_str(),VERSION,AUTHOR);
+    ocb.status("%s %s [OPTION]... [FILES]...",CMD_PROMPT,progname.c_str());
 
+    // Make a list of the hashes
+    ocb.status("-c <alg1,[alg2]> - Compute hashes only. Defaults are MD5 and SHA-256");
+    fprintf(stdout,"                   legal values: ");
+    for (int i = 0 ; i < NUM_ALGORITHMS ; i++)
+    {
+      fprintf(stdout,"%s%s",hashes[i].name.c_str(),(i+1<NUM_ALGORITHMS) ? "," : NEWLINE);
     }
-    if(usage_count==2){			// -hh
-	ocb.status("-0 - use a NULL for newline.");
-	ocb.status("-u - escape Unicode");
-	ocb.status("-B - verbose mode; repeat for more verbosity");
-	ocb.status("-C - Macintosh only --- use Common Crypto hash functions");
-	ocb.status("-Fb - I/O mode buffered; -Fu unbuffered; -Fm memory-mapped");
-	ocb.status("-o[bcpflsde] - only process certain types of files:");
-	ocb.status("            b=block dev; c=character dev; p=named pipe");
-	ocb.status("            f=regular file; l=symlink; s=socket; d=door e=Windows PE");
-	ocb.status("-Dnn - set debug level to nn");
-    }
-    if(usage_count==3){			// -hhh - adds debugging information
-	ocb.status("sizeof(off_t)= %d",sizeof(off_t));
+	
+    ocb.status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
+    ocb.status("-r        - recursive mode. All subdirectories are traversed");
+    ocb.status("-d        - output in DFXML (Digital Forensics XML)");
+    ocb.status("-k <file> - add a file of known hashes");
+    ocb.status("-a        - audit mode. Validates FILES against known hashes. Requires -k");
+    ocb.status("-m        - matching mode. Requires -k");
+    ocb.status("-x        - negative matching mode. Requires -k");
+    ocb.status("-w        - in -m mode, displays which known file was matched");
+    ocb.status("-M and -X act like -m and -x, but display hashes of matching files");
+    ocb.status("-e        - compute estimated time remaining for each file");
+    ocb.status("-s        - silent mode. Suppress all error messages");
+    ocb.status("-b        - prints only the bare name of files; all path information is omitted");
+    ocb.status("-l        - print relative paths for filenames");
+    ocb.status("-i        - only process files smaller than the given threshold");
+    ocb.status("-o        - only process certain types of files. See README/manpage");
+    ocb.status("-v        - verbose mode. Use again to be more verbose");
+    ocb.status("-d        - output in DFXML; -W FILE - write to FILE.");
 #ifdef HAVE_PTHREAD
-	ocb.status("HAVE_PTHREAD");
+    ocb.status("-j <num>  - use num threads (default %d)",threadpool::numCPU());
+#else
+    ocb.status("-j <num>  - ignored (compiled without pthreads)");
+#endif	
+  }
+
+  // -hh makes us more verbose
+  if (2 == usage_count)
+  {			
+    ocb.status("-V        - display version number and exit");
+    ocb.status("-0        - use a NUL (\\0) for newline.");
+    ocb.status("-u        - escape Unicode");
+    ocb.status("-B        - verbose mode; repeat for more verbosity");
+    ocb.status("-C        - OS X only --- use Common Crypto hash functions");
+    ocb.status("-Fb       - I/O mode buffered; -Fu unbuffered; -Fm memory-mapped");
+    ocb.status("-o[bcpflsde] - Expert mode. only process certain types of files:");
+    ocb.status("               b=block dev; c=character dev; p=named pipe");
+    ocb.status("               f=regular file; l=symlink; s=socket; d=door e=Windows PE");
+    ocb.status("-D <num>  - set debug level");
+  }
+  
+  /// -hhh mode includes debugging information.
+  if (3 == usage_count)
+  {
+    ocb.status("sizeof(off_t)= %d",sizeof(off_t));
+#ifdef HAVE_PTHREAD
+    ocb.status("HAVE_PTHREAD");
 #endif
 #ifdef HAVE_PTHREAD_H
-	ocb.status("HAVE_PTHREAD_H");
+    ocb.status("HAVE_PTHREAD_H");
 #endif
 #ifdef HAVE_PTHREAD_WIN32_PROCESS_ATTACH_NP
-	ocb.status("HAVE_PTHREAD_WIN32_PROCESS_ATTACH_NP");
+    ocb.status("HAVE_PTHREAD_WIN32_PROCESS_ATTACH_NP");
 #endif
-    }
+  }
 }
 
 
@@ -198,45 +205,45 @@ void state::md5deep_usage(void)
 {
     if(usage_count==1){
 	ocb.status("%s version %s by %s.",progname.c_str(),VERSION,AUTHOR);
-	ocb.status("%s %s [OPTION]... [FILE]...",CMD_PROMPT,progname.c_str());
+	ocb.status("%s %s [OPTION]... [FILES]...",CMD_PROMPT,progname.c_str());
 	ocb.status("See the man page or README.txt file or use -hh for the full list of options");
 	ocb.status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
-	ocb.status("-r  - recursive mode. All subdirectories are traversed");
-	ocb.status("-e  - show estimated time remaining for each file");
-	ocb.status("-s  - silent mode. Suppress all error messages");
-	ocb.status("-z  - display file size before hash");
+	ocb.status("-r        - recursive mode. All subdirectories are traversed");
+	ocb.status("-e        - show estimated time remaining for each file");
+	ocb.status("-s        - silent mode. Suppress all error messages");
+	ocb.status("-z        - display file size before hash");
 	ocb.status("-m <file> - enables matching mode. See README/man page");
 	ocb.status("-x <file> - enables negative matching mode. See README/man page");
 	ocb.status("-M and -X are the same as -m and -x but also print hashes of each file");
-	ocb.status("-w  - displays which known file generated a match");
-	ocb.status("-n  - displays known hashes that did not match any input files");
+	ocb.status("-w        - displays which known file generated a match");
+	ocb.status("-n        - displays known hashes that did not match any input files");
 	ocb.status("-a and -A add a single hash to the positive or negative matching set");
-	ocb.status("-b  - prints only the bare name of files; all path information is omitted");
-	ocb.status("-l  - print relative paths for filenames");
-	ocb.status("-t  - print GMT timestamp (ctime)");
-	ocb.status("-iSIZE/-ISIZE - only process files smaller/larger than SIZE");
-	ocb.status("-v  - display version number and exit");
-	ocb.status("-d  - output in DFXML; -u - Escape Unicode; -W FILE - write to FILE.");
+	ocb.status("-b        - prints only the bare name of files; all path information is omitted");
+	ocb.status("-l        - print relative paths for filenames");
+	ocb.status("-t        - print GMT timestamp (ctime)");
+	ocb.status("-i/I <size> - only process files smaller/larger than SIZE");
+	ocb.status("-v        - display version number and exit");
+	ocb.status("-d        - output in DFXML; -u - Escape Unicode; -W FILE - write to FILE.");
 #ifdef HAVE_PTHREAD
-	ocb.status("-jnn run nn threads (default %d)",threadpool::numCPU());
+	ocb.status("-j <num>  - use num threads (default %d)",threadpool::numCPU());
 #else
-	ocb.status("-jnn ignored (compiled without pthreads)");
+	ocb.status("-j <num>  - ignored (compiled without pthreads)");
 #endif	
-	ocb.status("-Z - traige mode;   -h - help;   -hh - full help");
+	ocb.status("-Z - triage mode;   -h - help;   -hh - full help");
     }
     if(usage_count==2){			// -hh
-	ocb.status("-S - Silent mode, but warn on bad hashes");
-	ocb.status("-0 - use a NULL for newline.");
-	ocb.status("-k - print asterisk before filename");
-	ocb.status("-u - escape Unicode");
-	ocb.status("-B - verbose mode; repeat for more verbosity");
-	ocb.status("-C - Macintosh only --- use Common Crypto hash functions");
-	ocb.status("-Fb - I/O mode buffered; -Fu unbuffered; -Fm memory-mapped");
-	ocb.status("-ffilename - take list of files to hash from filename");
-	ocb.status("-o[bcpflsde] - only process certain types of files:");
-	ocb.status("            b=block dev; c=character dev; p=named pipe");
-	ocb.status("            f=regular file; l=symlink; s=socket; d=door e=Windows PE");
-	ocb.status("-Dnn - set debug level to nn");
+	ocb.status("-S        - Silent mode, but warn on bad hashes");
+	ocb.status("-0        - use a NUL (\\0) for newline.");
+	ocb.status("-k        - print asterisk before filename");
+	ocb.status("-u        - escape Unicode characters in filenames");
+	ocb.status("-B        - verbose mode; repeat for more verbosity");
+	ocb.status("-C        - OS X only --- use Common Crypto hash functions");
+	ocb.status("-Fb       - I/O mode buffered; -Fu unbuffered; -Fm memory-mapped");
+	ocb.status("-f <file> - take list of files to hash from filename");
+	ocb.status("-o[bcpflsde] - expert mode. Only process certain types of files:");
+	ocb.status("               b=block dev; c=character dev; p=named pipe");
+	ocb.status("               f=regular file; l=symlink; s=socket; d=door e=Windows PE");
+	ocb.status("-D <num>  - set debug level to nn");
     }
     if(usage_count==3){			// -hhh
 	ocb.status("sizeof(off_t)= %d",sizeof(off_t));
