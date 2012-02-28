@@ -593,7 +593,7 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
     bool did_usage = false;
   int i;
   
-  while ((i=getopt(argc_,argv_,"abBc:CdeF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
+  while ((i=getopt(argc_,argv_,"abc:CdeF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
     switch (i) {
     case 'a': ocb.primary_function = primary_audit;      break;
     case 'C': opt_enable_mac_cc = true; break;
@@ -679,12 +679,11 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
 	}
       break;
       
-    case 'B': /* Intentional Fall-Through */
     case 'v':
-	if(++ocb.opt_verbose > INSANELY_VERBOSE){
-	    ocb.error("User request for insane verbosity denied");
-	}
-	break;
+      ++ocb.opt_verbose;
+      if (ocb.opt_verbose > INSANELY_VERBOSE)
+	ocb.error("User request for insane verbosity denied");
+      break;
       
     case 'V':
       ocb.status("%s", VERSION);
@@ -982,13 +981,8 @@ int state::md5deep_process_command_line(int argc_, char **argv_)
 
     while ((i = getopt(argc_,
 		       argv_,
-		       "A:a:bBcCdeF:f:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) { 
+		       "A:a:bcCdeF:f:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) { 
 	switch (i) {
-	case 'B': /* Intentional Fall-Through */
-	    if(++ocb.opt_verbose > INSANELY_VERBOSE){
-		ocb.error("User request for insane verbosity denied");
-	    }
-	    break;
 	case 'C': opt_enable_mac_cc = true; break;
 	case 'D': opt_debug = atoi(optarg);	break;
 	case 'd': ocb.xml_open(stdout);		break;

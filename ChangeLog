@@ -1,5 +1,9 @@
 2012-02-27  Jesse Kornblum  <research@jessekornblum.com>:
 
+	* main.cpp: Removed -B command line flag from all programs
+
+2012-02-27  Jesse Kornblum  <research@jessekornblum.com>:
+
 	* man/md5deep.1: Added Simson to the AUTHORS section
 	* src/main.cpp: Formatted usage messages
 	* configure.ac: Version bump to 4.1.1
