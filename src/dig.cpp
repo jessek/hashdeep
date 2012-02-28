@@ -1,6 +1,6 @@
 // MD5DEEP - dig.c
 //
-// By Jesse Kornblum
+// By Jesse Kornblum and Simson Garfinkel
 //
 // This is a work of the US Government. In accordance with 17 USC 105,
 //  copyright protection is not available for any work of the US Government.
@@ -9,7 +9,7 @@
 // WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
-//
+
 
 /* The functions in this file will recurse through a directory
  * and call hash_file(fn) for every file that needs to be hashes.
@@ -21,12 +21,133 @@
 #include "winpe.h"
 #include <iostream>
 
+/*
+ * file stat system
+ */
+
+// Use a stat function to look up while kind of file this is
+// and determine its size if possible
+#ifdef _WIN32
+#define TSTAT(path,buf) _wstat64(path,buf)
+#define TLSTAT(path,buf) _wstat64(path,buf) // no lstat on windows
+#else
+#define TSTAT(path,buf) stat(path,buf)
+#define TLSTAT(path,buf) lstat(path,buf)
+#endif
+
+// Returns TRUE if the directory is '.' or '..', otherwise FALSE
+static bool is_special_dir(const tstring &d)
+{
+    return global::make_utf8(d)=="." || global::make_utf8(d)=="..";
+}
+
+/* Determine the file type of a structure
+ * called by file_type() and should_hash_symlink() 
+ */
+
+file_types file_metadata_t::decode_file_type(const struct __stat64 &sb)
+{
+    if (S_ISREG(sb.st_mode))  return stat_regular;
+    if (S_ISDIR(sb.st_mode))  return stat_directory;
+    if (S_ISBLK(sb.st_mode))  return stat_block;
+    if (S_ISCHR(sb.st_mode))  return stat_character;
+    if (S_ISFIFO(sb.st_mode)) return stat_pipe;
+
+#ifdef S_ISSOCK
+    if (S_ISSOCK(sb.st_mode)) return stat_socket; // not present on WIN32
+#endif
+
+#ifdef S_ISLNK
+    if (S_ISLNK(sb.st_mode)) return stat_symlink; // not present on WIN32
+#endif   
+
+#ifdef S_ISDOOR
+    // Solaris doors are an inter-process communications facility present in Solaris 2.6
+    // http://en.wikipedia.org/wiki/Doors_(computing)
+    if (S_ISDOOR(sb.st_mode)) return stat_door; 
+#endif
+    return stat_unknown;
+}
+
+/**
+ * stat a file and return the appropriate object
+ * This would better be done on an open file handle
+ */
+int file_metadata_t::stat(const tstring &fn,file_metadata_t *m,class display &ocb)
+{
+    struct __stat64 sb;
+    if (::TSTAT(fn.c_str(),&sb)) {
+	ocb.error_filename(fn,"%s",strerror(errno));
+	return -1;
+    }
+    m->fileid.dev = sb.st_dev;
+#ifdef _WIN32
+    HANDLE filehandle = CreateFile(fn,
+			      0,   // desired access
+			      FILE_SHARE_READ,
+			      NULL,  
+			      OPEN_EXISTING,
+			      (FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS),
+			      NULL);
+    (void)GetFileInformationByHandle(filehandle, &fileinfo);
+    CloseHandle(filehandle);
+    m->fileid.ino = (((uint64_t)fileinfo.nFileIndexHigh)<<32) | (fileinfo.nFileIndexLow);
+#else
+    m->fileid.ino = sb.st_ino;
+#endif
+    m->nlink      = sb.st_nlink;
+    m->size       = sb.st_size;
+    m->ctime      = sb.st_ctime;
+    m->mtime      = sb.st_mtime;
+    m->atime      = sb.st_atime;
+    return 0;
+}
+
+
+/* Return the 'decoded' file type of a file.
+ * If an error is found and ocb is provided, send the error to ocb.
+ * If filesize and ctime are provided, give them.
+ * Also return the file size and modification time (may be used elsewhere).
+ */
+
+file_types state::file_type(const tstring &fn,display *ocb,uint64_t *filesize,
+				   timestamp_t *ctime,timestamp_t *mtime,timestamp_t *atime)
+{
+    struct __stat64 sb;
+    memset(&sb,0,sizeof(sb));
+    if (TLSTAT(fn.c_str(),&sb))  {
+	if(ocb) ocb->error_filename(fn,"%s", strerror(errno));
+	return stat_unknown;
+    }
+    if(ctime) *ctime = sb.st_ctime;
+    if(mtime) *mtime = sb.st_mtime;
+    if(atime) *atime = sb.st_atime;
+    if(filesize){
+	if(sb.st_size!=0){
+	    *filesize = sb.st_size;
+	} else {
+	    /*
+	     * The stat() function does not return file size for raw devices.
+	     * If we have no file size, try to use the find_file_size function,
+	     * which calls ioctl.
+	     */
+	    FILE *f = _tfopen(fn.c_str(),_TEXT("rb"));
+	    if(f){
+		*filesize = find_file_size(f,ocb);
+		fclose(f); f = 0;
+	    }
+	}
+    }
+    return file_metadata_t::decode_file_type(sb);
+}
+
+
+
 /****************************************************************
  *** database of directories we've seen.
  *** originally in cycles.c.
  *** so much smaller now, we put it here.
  ****************************************************************/
-
 
 
 void state::done_processing_dir(const tstring &fn_)
@@ -330,12 +451,6 @@ void state::clean_name_posix(std::string &fn)
 }
 #endif
 
-// Returns TRUE if the directory is '.' or '..', otherwise FALSE
-static bool is_special_dir(const tstring &d)
-{
-    return global::make_utf8(d)=="." || global::make_utf8(d)=="..";
-}
-
 void state::process_dir(const tstring &fn)
 {
     _TDIR *current_dir;
@@ -360,8 +475,7 @@ void state::process_dir(const tstring &fn)
      * 4. Process them.
      */
     std::vector<tstring> dir_entries;
-    while ((entry = _treaddir(current_dir)) != NULL)   
-    {
+    while ((entry = _treaddir(current_dir)) != NULL) {
       // ignore . and ..
       if (is_special_dir(entry->d_name)) 
 	continue; 
@@ -397,89 +511,6 @@ void state::process_dir(const tstring &fn)
 }
 
 
-/* Determine the file type of a structure
- * called by file_type() and should_hash_symlink() 
- */
-
-state::file_types state::decode_file_type(const struct __stat64 &sb)
-{
-    if (S_ISREG(sb.st_mode))  return stat_regular;
-    if (S_ISDIR(sb.st_mode))  return stat_directory;
-    if (S_ISBLK(sb.st_mode))  return stat_block;
-    if (S_ISCHR(sb.st_mode))  return stat_character;
-    if (S_ISFIFO(sb.st_mode)) return stat_pipe;
-
-#ifdef S_ISSOCK
-    if (S_ISSOCK(sb.st_mode)) return stat_socket; // not present on WIN32
-#endif
-
-#ifdef S_ISLNK
-    if (S_ISLNK(sb.st_mode)) return stat_symlink; // not present on WIN32
-#endif   
-
-#ifdef S_ISDOOR
-    // Solaris doors are an inter-process communications facility present in Solaris 2.6
-    // http://en.wikipedia.org/wiki/Doors_(computing)
-    if (S_ISDOOR(sb.st_mode)) return stat_door; 
-#endif
-    return stat_unknown;
-}
-
-// Use a stat function to look up while kind of file this is
-// and determine its size if possible
-#ifdef _WIN32
-#define TSTAT(path,buf) _wstat64(path,buf)
-#define TLSTAT(path,buf) _wstat64(path,buf) // no lstat on windows
-#else
-#define TSTAT(path,buf) stat(path,buf)
-#define TLSTAT(path,buf) lstat(path,buf)
-#endif
-
-/* This is coming... */
-#if 0
-HFILE filehandle;
-(void)GetFileInformationByHandle((HANDLE)filehandle, &fileinfo);
-file->fileindexhi = fileinfo.nFileIndexHigh;
-file->fileindexlo = fileinfo.nFileIndexLow;
-#endif
-
-/* Return the 'decoded' file type of a file.
- * If an error is found and ocb is provided, send the error to ocb.
- * If filesize and ctime are provided, give them.
- * Also return the file size and modification time (may be used elsewhere).
- */
-state::file_types state::file_type(const tstring &fn,display *ocb,uint64_t *filesize,
-				   timestamp_t *ctime,timestamp_t *mtime,timestamp_t *atime)
-{
-    struct __stat64 sb;
-    memset(&sb,0,sizeof(sb));
-    if (TLSTAT(fn.c_str(),&sb))  {
-	if(ocb) ocb->error_filename(fn,"%s", strerror(errno));
-	return stat_unknown;
-    }
-    if(ctime) *ctime = sb.st_ctime;
-    if(mtime) *mtime = sb.st_mtime;
-    if(atime) *atime = sb.st_atime;
-    if(filesize){
-	if(sb.st_size!=0){
-	    *filesize = sb.st_size;
-	} else {
-	    /*
-	     * The stat() function does not return file size for raw devices.
-	     * If we have no file size, try to use the find_file_size function,
-	     * which calls ioctl.
-	     */
-	    FILE *f = _tfopen(fn.c_str(),_TEXT("rb"));
-	    if(f){
-		*filesize = find_file_size(f,ocb);
-		fclose(f); f = 0;
-	    }
-	}
-    }
-    return decode_file_type(sb);
-}
-
-
 /* Deterine if a symlink should be hashed or not.
  * Returns TRUE if a symlink should be hashed.
  */
@@ -498,7 +529,7 @@ bool state::should_hash_symlink(const tstring &fn, file_types *link_type)
 	return false;
     }
 
-    state::file_types type = decode_file_type(sb);
+    file_types type = file_metadata_t::decode_file_type(sb);
 
     if (type == stat_directory)  {
 	if (mode_recursive){
@@ -526,8 +557,7 @@ bool state::should_hash_winpe(const tstring &fn)
   bool executable_extension = has_executable_extension(fn);
   
   FILE * handle = _tfopen(fn.c_str(),_TEXT("rb"));
-  if (NULL == handle)
-  {
+  if (NULL == handle) {
     ocb.error_filename(fn,"%s", strerror(errno));
     return false;
   }
@@ -552,66 +582,62 @@ bool state::should_hash_winpe(const tstring &fn)
  */
 bool state::should_hash_expert(const tstring &fn, file_types type)
 {
-  file_types link_type=stat_unknown;
-  if (stat_directory == type)
-  {
-    if (mode_recursive)
-      process_dir(fn);
-    else 
-      ocb.error_filename(fn,"Is a directory");
+    file_types link_type=stat_unknown;
+    if (stat_directory == type)  {
+	if (mode_recursive){
+	    process_dir(fn);
+	}
+	else {
+	    ocb.error_filename(fn,"Is a directory");
+	}
+	return false;
+    }
 
-    return false;
-  }
+    if (mode_winpe)  {
+	// The user could have requested PE files *and* something else
+	// therefore we don't return false here if the file is not a PE.
+	// Note that we have to check for directories first!
+	if (should_hash_winpe(fn)){
+	    return true;
+	}
+    }
 
-  if (mode_winpe)
-  {
-    // The user could have requested PE files *and* something else
-    // therefore we don't return false here if the file is not a PE.
-    // Note that we have to check for directories first!
-    if (should_hash_winpe(fn))
-      return true;
-  }
-
-  switch(type)  
-  {
-    // We can't just return s->mode & mode_X because mode_X is
-    // a 64-bit value. When that value gets converted back to int,
-    // the high part of it is lost. 
-    
+    switch(type) {
+	// We can't just return s->mode & mode_X because mode_X is
+	// a 64-bit value. When that value gets converted back to int,
+	// the high part of it is lost. 
+	
 #define RETURN_IF_MODE(A) if (A) return true; break;
-  case stat_directory:
-    // This case should be handled above. This statement is 
-    // here to avoid compiler warnings
-    ocb.internal_error("Did not handle directory entry in should_hash_expert()");
-
-  case stat_regular:   RETURN_IF_MODE(mode_regular);
-  case stat_block:     RETURN_IF_MODE(mode_block);
-  case stat_character: RETURN_IF_MODE(mode_character);
-  case stat_pipe:      RETURN_IF_MODE(mode_pipe);
-  case stat_socket:    RETURN_IF_MODE(mode_socket);
-  case stat_door:      RETURN_IF_MODE(mode_door);
-  case stat_symlink: 
-    
-    //  Although it might appear that we need nothing more than
-    //     return (s->mode & mode_symlink);
-    // that doesn't work. That logic gets into trouble when we're
-    // running in recursive mode on a symlink to a directory.
-    // The program attempts to open the directory entry itself
-    // and gets into an infinite loop.
-    
-    if (!(mode_symlink)) 
-      return false;
-    if (should_hash_symlink(fn,&link_type))
-    {
-      return should_hash_expert(fn,link_type);
+    case stat_directory:
+	// This case should be handled above. This statement is 
+	// here to avoid compiler warnings
+	ocb.internal_error("Did not handle directory entry in should_hash_expert()");
+	
+    case stat_regular:   RETURN_IF_MODE(mode_regular);
+    case stat_block:     RETURN_IF_MODE(mode_block);
+    case stat_character: RETURN_IF_MODE(mode_character);
+    case stat_pipe:      RETURN_IF_MODE(mode_pipe);
+    case stat_socket:    RETURN_IF_MODE(mode_socket);
+    case stat_door:      RETURN_IF_MODE(mode_door);
+    case stat_symlink: 
+	
+	//  Although it might appear that we need nothing more than
+	//     return (s->mode & mode_symlink);
+	// that doesn't work. That logic gets into trouble when we're
+	// running in recursive mode on a symlink to a directory.
+	// The program attempts to open the directory entry itself
+	// and gets into an infinite loop.
+	
+	if (!(mode_symlink)) return false;
+	if (should_hash_symlink(fn,&link_type))    {
+	    return should_hash_expert(fn,link_type);
+	}
+	return false;
+    case stat_unknown:
+	ocb.error_filename(fn,"unknown file type");
+	return false;
     }
     return false;
-  case stat_unknown:
-    ocb.error_filename(fn,"unknown file type");
-    return false;
-  }
-
-  return false;
 }
 
 

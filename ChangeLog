@@ -1,3 +1,7 @@
+2012-02-27  Simson Garfinkel  <simsong@Mucha.local>
+
+	* src/dig.cpp (state::decode_file_type): removed from state, since it didn't use any of the instance variables.
+
 2012-02-27  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* main.cpp: Removed -B command line flag from all programs

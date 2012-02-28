@@ -207,8 +207,14 @@ void file_data_hasher_t::hash()
     if(fdht->handle==0){		
 	/* Open the file and print an error if we can't */
 	// stat the file to get the bytes and ctime
-	state::file_type(fdht->file_name_to_hash,ocb,&fdht->stat_bytes,
-			 &fdht->ctime,&fdht->mtime,&fdht->atime);
+	//state::file_type(fdht->file_name_to_hash,ocb,&fdht->stat_bytes,
+	//&fdht->ctime,&fdht->mtime,&fdht->atime);
+	file_metadata_t m;
+	file_metadata_t::stat(fdht->file_name_to_hash,&m,*ocb);
+	fdht->stat_bytes = m.size;
+	fdht->ctime      = m.ctime;
+	fdht->mtime      = m.mtime;
+	fdht->atime      = m.atime;
 
 	if(ocb->opt_verbose>=MORE_VERBOSE){
 	    errno = 0;			// no error

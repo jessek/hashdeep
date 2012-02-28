@@ -186,6 +186,54 @@ typedef time_t		timestamp_t;
 typedef std::string	filename_t;
 #endif
 
+/**
+ * file_metadata_t contains metadata information about a file.
+ * It also includes a stat call that returns the inode information
+ * and link count even on windows, where the API is different than stat.
+ * Note that we only include information we care about in this program
+ * 
+ * this is in dig.cpp.
+ */
+
+
+/* strangely, we define our own file types */
+typedef enum {
+    stat_regular=0,
+    stat_directory,
+    stat_door,
+    stat_block,
+    stat_character,
+    stat_pipe,
+    stat_socket,
+    stat_symlink,
+    stat_unknown=254
+} file_types;
+
+class file_metadata_t {
+public:
+    static file_types decode_file_type(const struct __stat64 &sb);
+
+    // stat a file, print an error and return -1 if it fails, otherwise return 0
+    static int stat(const filename_t &path,file_metadata_t *m,class display &ocb); 
+    class fileid_t {				      // uniquely defines a file on this system
+    public:
+	fileid_t():dev(0),ino(0){};
+	fileid_t(uint64_t dev_,uint64_t ino_):dev(dev_),ino(ino_){};
+	uint64_t	dev;			      // device number
+	uint64_t	ino;			      // inode number
+    };
+    file_metadata_t():fileid(),nlink(0),size(0),ctime(0),mtime(0),atime(0){};
+    file_metadata_t(fileid_t fileid_,uint64_t nlink_,uint64_t size_,timestamp_t ctime_,timestamp_t mtime_,
+		    timestamp_t atime_):fileid(fileid_),nlink(nlink_),size(size_),ctime(ctime_),mtime(mtime_),atime(atime_){};
+    fileid_t	fileid;
+    uint64_t	nlink;
+    uint64_t	size;
+    timestamp_t ctime;
+    timestamp_t mtime;
+    timestamp_t atime;
+    
+};
+
 /** file_data_t contains information about a file.
  * It can be created by hashing an actual file, or by reading a hash file a file of hashes. 
  * The object is simple so that the built in C++ shallow copy will make a proper copy of it.
@@ -734,17 +782,6 @@ inline std::ostream & operator <<(std::ostream &os,const std::wstring &wstr) {
 
 class state {
 public:;
-    typedef enum {
-	stat_regular=0,
-	stat_directory,
-	stat_door,
-	stat_block,
-	stat_character,
-	stat_pipe,
-	stat_socket,
-	stat_symlink,
-	stat_unknown=254
-    } file_types;
 
  state():mode_recursive(false),	// do we recurse?
       mode_warn_only(false),	// for loading hash files
@@ -863,7 +900,6 @@ public:;
      * If an error is found and ocb is provided, send the error to ocb.
      * If filesize and timestamp are provided, give them.
      */
-    static file_types decode_file_type(const struct __stat64 &sb);
     static file_types file_type(const filename_t &fn,class display *ocb,uint64_t *filesize,
 				timestamp_t *ctime,timestamp_t *mtime,timestamp_t *atime);
 #ifdef _WIN32
