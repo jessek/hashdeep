@@ -1,3 +1,7 @@
+2012-05-20  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* man/md5deep1,hashdeep.1: Fixed typo in -j mode
+
 2012-02-27  Simson Garfinkel  <simsong@Mucha.local>
 
 	* src/dig.cpp (state::decode_file_type): removed from state, since it didn't use any of the instance variables.
