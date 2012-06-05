@@ -1,3 +1,13 @@
+** Changes in version 4.1.1 (5 Jun 2012)
+
+* New Features
+
+* Bug Fixes
+
+      Fixed hashdeep bug for known files with commas in their names.
+      Cleaned up usage message
+
+
 ** Changes in version 4.1.0 (14 Feb 2012)
 
 * New Features

@@ -20,12 +20,12 @@ whirlpooldeep - Compute and compare Whirlpool message digests
 <b>md5deep
 </b> -v | -V | -h <br>
 <b>md5deep</b> [-m|-M|-x|-X &lt;file&gt;]  [-a|-A &lt;hash&gt;] [-f &lt;file&gt;] [-p &lt;size&gt;] [-i &lt;size&gt;] [-tnwzresS0lbkqZud]
-[-F&lt;bum&gt;]  [-o &lt;fbcplsde&gt;]  [-jnn] [[<b>FILES</b>] 
+[-F &lt;bum&gt;]  [-o &lt;fbcplsde&gt;]  [-j &lt;num&gt;] [[<b>FILES</b>] 
 <p> 
 <h2><a name='sect2' href='#toc2'>Description</a></h2>
 <p>
-Computes the hashes, or
-message digest,  for any number of files while  optionally recursively
+Computes the hashes,
+or message digest,  for any number of files while  optionally recursively
 digging through the directory structure. Can also take a list of known hashes
 and display the filenames of input files whose hashes either do or do not
 match any of the known hashes. Errors are reported to standard error. If
@@ -217,7 +217,7 @@ e - Windows PE executables
 
 <dt><b>-jnn</b> </dt>
 <dd>Controls multi-threading. By default the program
-will create one producer thread to scna the file system and one hashing
+will create one producer thread to scan the file system and one hashing
 thread per CPU core. Multi-threading causes output filenames to be in non-deterministic
 order, as files that take longer to hash will be delayed while they are
 hashed. If a deterministic order is required, specify <b>-j0</b> to disable multi-threading
@@ -299,30 +299,30 @@ should be reported to the developer! See the section "Reporting Bugs" below.
 </ol>
 
 <h2><a name='sect5' href='#toc5'>Author</a></h2>
-md5deep was written by Jesse Kornblum, research@jessekornblum.com.
-
+md5deep was written by Jesse Kornblum, research@jessekornblum.com
+and Simson Garfinkel. 
 <p> 
 <h2><a name='sect6' href='#toc6'>Known Issues</a></h2>
-Using the -r flag cannot be used to recursively process all
-files  of a given extension in a directory. This is a feature, not a bug.
- If you need to do this, use the <a href='find.1'><b>find</b>(1)</a>
+Using the -r flag cannot be used to recursively
+process all files  of a given extension in a directory. This is a feature,
+not a bug.  If you need to do this, use the <a href='find.1'><b>find</b>(1)</a>
  command. 
 <p> 
 <h2><a name='sect7' href='#toc7'>Reporting Bugs</a></h2>
-We take
-all bug reports <i>very</i> seriously. Any bug that jeopardizes the forensic integrity
-of this program could have serious consequenses on  people&rsquo;s lives. When
-submitting a bug report, please include a description of the problem, how
-you found it, and your contact information. <p>
-Send bug reports to the author
-at the address above. 
+We
+take all bug reports <i>very</i> seriously. Any bug that jeopardizes the forensic
+integrity of this program could have serious consequenses on  people&rsquo;s lives.
+When submitting a bug report, please include a description of the problem,
+how you found it, and your contact information. <p>
+Send bug reports to the
+author at the address above. 
 <p> <p>
 
 <h2><a name='sect8' href='#toc8'>Copyright</a></h2>
-This program is a work of the US Government.
-In accordance with 17 USC 105, copyright protection is not available for
-any work of the US Government. This program is PUBLIC DOMAIN. Portions of
-this program contain code that is licensed under the terms of the General
+This program is a work of the US
+Government. In accordance with 17 USC 105, copyright protection is not available
+for any work of the US Government. This program is PUBLIC DOMAIN. Portions
+of this program contain code that is licensed under the terms of the General
 Public License (GPL). Those portions retain their original copyright and
 license. See the file COPYING for more details. <p>
 There is NO warranty for

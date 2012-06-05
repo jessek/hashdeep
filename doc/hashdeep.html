@@ -16,7 +16,7 @@ hashdeep - Compute, compare, or audit multiple message digests
 <b>hashdeep
 </b> -V | -h <br>
 <b>hashdeep</b> [-c &lt;alg1&gt;[,&lt;alg2&gt;]] [-k &lt;file&gt;] [-i &lt;size&gt;] [-f &lt;file&gt;]  [-o &lt;fbcplsde&gt;] [-amxwMXrespblvv]
-[-F&lt;bum&gt;] [-jnn] [<b>FILES</b>] 
+[-F&lt;bum&gt;] [-j &lt;num&gt;] [<b>FILES</b>] 
 <p> 
 <p> 
 <h2><a name='sect2' href='#toc2'>Description</a></h2>
@@ -187,7 +187,7 @@ program more verbose.  This mostly changes the behvaior of the audit mode,
 
 <dt><b>-jnn</b> </dt>
 <dd>Controls multi-threading. By default the program will create one producer
-thread to scna the file system and one hashing thread per CPU core. Multi-threading
+thread to scan the file system and one hashing thread per CPU core. Multi-threading
 causes output filenames to be in non-deterministic order, as files that
 take longer to hash will be delayed while they are hashed. If a deterministic
 order is required, specify <b>-j0</b> to disable multi-threading 
@@ -252,23 +252,23 @@ Returns zero on success, one on error.
 <p> 
 <h2><a name='sect5' href='#toc5'>Author</a></h2>
 hashdeep was
-written by Jesse Kornblum, research@jessekornblum.com. 
+written by Jesse Kornblum, research@jessekornblum.com, and Simson Garfinkel.
+
 <p> 
 <h2><a name='sect6' href='#toc6'>Known Issues</a></h2>
-Using
-the -r flag cannot be used to recursively process all files  of a given
-extension in a directory. This is a feature, not a bug.  If you need to do
-this, use the <a href='find.1'><b>find</b>(1)</a>
+Using the -r flag cannot be used to recursively process all
+files  of a given extension in a directory. This is a feature, not a bug.
+ If you need to do this, use the <a href='find.1'><b>find</b>(1)</a>
  command. 
-<p> The program will fail if you attempt to
-compare 2^64 or more input files against a set of known files.  
+<p> The program will fail
+if you attempt to compare 2^64 or more input files against a set of known
+files.  
 <p> 
 <p> 
-<h2><a name='sect7' href='#toc7'>Reporting
-Bugs</a></h2>
-We take all bug reports <i>very</i> seriously. Any bug that jeopardizes the
-forensic integrity of this program could have serious consequenses on 
-people&rsquo;s lives. When submitting a bug report, please include a description
+<h2><a name='sect7' href='#toc7'>Reporting Bugs</a></h2>
+We take all bug reports <i>very</i> seriously. Any bug that
+jeopardizes the forensic integrity of this program could have serious consequenses
+on  people&rsquo;s lives. When submitting a bug report, please include a description
 of the problem, how you found it, and your contact information. <p>
 Send bug
 reports to the author at the address above. 
