@@ -59,26 +59,27 @@ extern "C" {
 /*
  * If we don't have vasprintf, bring it in.
  */
+/*
 #if !defined(HAVE_VASPRINTF) 
 extern "C" {
-    /**
-     * We do not have vasprintf.
-     * We have determined that vsnprintf() does not perform properly on windows.
-     * So we just allocate a huge buffer and then strdup() and hope!
-     */
+    //
+    // We do not have vasprintf.
+    // We have determined that vsnprintf() does not perform properly on windows.
+    // So we just allocate a huge buffer and then strdup() and hope!
+    //
     int vasprintf(char **ret,const char *fmt,va_list ap)
     {
-	/* Figure out how long the result will be */
+	// Figure out how long the result will be 
 	char buf[65536];
 	int size = vsnprintf(buf,sizeof(buf),fmt,ap);
 	if(size<0) return size;
-	/* Now allocate the memory */
+	// Now allocate the memory 
 	*ret = (char *)strdup(buf);
 	return size;
     }
 }
 #endif
-
+*/
 
 void display::status(const char *fmt,...)
 {

@@ -1,6 +1,7 @@
 2012-06-05  Jesse Kornblum  <research@jessekornblum.com>:
 
-	* src/dig.cpp: Cosmetic formatting.
+	* src/dig.cpp: Cosmetic formatting. Fixed Win32 stat function.
+	* src/display.cpp: Commented out vasprintf, which is now present on mingw
 	* src/hashlist.cpp: Formatting. Revised to handle case where filename is a hash.
 	* src/sha1_version.c: Removed vestigial code
 
