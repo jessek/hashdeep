@@ -1,3 +1,9 @@
+2012-06-05  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* src/dig.cpp: Cosmetic formatting.
+	* src/hashlist.cpp: Formatting. Revised to handle case where filename is a hash.
+	* src/sha1_version.c: Removed vestigial code
+
 2012-06-04  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* src/hashlist.cpp: Formatting. Addressed bug with filenames with commas in them.

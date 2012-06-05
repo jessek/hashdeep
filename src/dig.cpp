@@ -674,23 +674,22 @@ bool state::should_hash(const tstring &fn)
     return true;
 }
 
-/* Search through a directory and its subdirectory for files to hash */
+// Search through a directory and its subdirectory for files to hash 
 void state::dig_normal(const tstring &fn_)
 {
-    tstring fn(fn_);			// local copy will be modified
-    if (opt_debug) ocb.status("*** state::dig_normal(%s)",global::make_utf8(fn).c_str());
+  // local copy will be modified
+  tstring fn(fn_);			
+  if (opt_debug) 
+    ocb.status("*** state::dig_normal(%s)",global::make_utf8(fn).c_str());
 #ifdef _WIN32
-    clean_name_win32(fn);
+  clean_name_win32(fn);
 #else
-    clean_name_posix(fn);
+  clean_name_posix(fn);
 #endif
-    if (opt_debug) ocb.status("*** cleaned:%s",global::make_utf8(fn).c_str());
-    if (should_hash(fn))
-      {
-	// RBF - Debuging code
-	//	std::cerr << "ocb=" << (int *)&ocb << "\n";
-	ocb.hash_file(fn);
-    }
+  if (opt_debug) 
+    ocb.status("*** cleaned:%s",global::make_utf8(fn).c_str());
+  if (should_hash(fn))
+    ocb.hash_file(fn);
 }
 
 
