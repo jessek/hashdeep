@@ -466,6 +466,7 @@ public:;
     std::string		last_enabled_algorithms; // a string with the algorithms that were enabled last
     hashid_t		hash_column[NUM_ALGORITHMS]; // maps a column number to a hashid;
 						     // the order columns appear in the file being loaded.
+    uint8_t   filename_column;  // Column number which should contain the filename
     hashfile_format	identify_format(class display *ocb,const std::string &fn,FILE *handle);
     loadstatus_t	load_hash_file(class display *ocb,const std::string &fn); // not tstring! always ASCII
 
