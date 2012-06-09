@@ -1,20 +1,18 @@
+This program is divided into two parts, the Tiger code and everything 
+else. Let's start with everything else:
 
-This program is divided into two parts, the Tiger+strsep ccode and
-everything else. Let's start with everything else:
-
-This program is a work of the US Government. In accordance with 17 USC
-105, copyright protection is not available for any work of the US
-Government. As such this code is considered public domain. There is NO
-warranty for this program; not even for MERCHANTABILITY or FITNESS FOR A
+This program is a work of the US Government. In accordance with 17 USC 
+105, copyright protection is not available for any work of the US 
+Government. As such this code is considered public domain. There is NO 
+warranty for this program; not even for MERCHANTABILITY or FITNESS FOR A 
 PARTICULAR PURPOSE.
 
-The code for Tiger comes from the GnuPG project and is licensed under
-the General Public License (GPL). The code from strsep comes from the
-gnulib library and is also GPL'ed. 
+The code for Tiger comes from the libgcrypt project and is licensed 
+under the General Public License (GPL).
 
-Because the vast majority of this program is public domain, the license
-of this project as whole remains public domain. The Tiger code itself is
-still licensed under the GPL. Note that this dual licensing scheme does
+Because the vast majority of this program is public domain, the license 
+of this project as whole remains public domain. The Tiger code itself is 
+still licensed under the GPL. Note that this dual licensing scheme does 
 not violate the terms of the GPL. Please see the GPL FAQ, specifically:
 
 http://www.fsf.org/licensing/licenses/gpl-faq.html#CombinePublicDomainWithGPL
