@@ -1,6 +1,14 @@
-** Changes in version 4.1.1 (5 Jun 2012)
+** Changes in version 4.2 (RBF DATE 2012)
 
 * New Features
+
+* Bug Fixes
+
+      Fixed padding in Tiger hashes for large files
+
+
+
+** Changes in version 4.1.1 (5 Jun 2012)
 
 * Bug Fixes
 

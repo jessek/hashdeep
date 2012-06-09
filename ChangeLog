@@ -1,3 +1,8 @@
+2012-06-09  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* src/tiger.h tiger.c: Replaced with newer code from libgcrypt.
+	* configure.ac: Version bump to 4.2
+
 2012-06-05  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* src/dig.cpp: Cosmetic formatting. Fixed Win32 stat function.
