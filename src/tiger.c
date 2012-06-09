@@ -1,77 +1,55 @@
-
-/* MD5DEEP - tiger.c
+/* tiger.c  -  The TIGER hash function
+ * Copyright (C) 1998, 2001, 2002, 2003, 2010 Free Software Foundation, Inc.
  *
- * This code was adapted from GnuPG and is licensed under the
- * GNU General Public License as published by the Free Software Foundation;
- * either version 2 of the license, or (at your option) any later version.
- * Please see COPYING for the license regarding this file
+ * This file is part of Libgcrypt.
  *
- * Some functions have been changed or removed from the GnuPG version.
- * See comments for details.
+ * Libgcrypt is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * Libgcrypt is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-/* $Id$ */
+/* See http://www.cs.technion.ac.il/~biham/Reports/Tiger/  */
 
-//#include "main.h"
+#include "common.h"
 #include "tiger.h"
 
+// Code copied from libgcrypt, version 1.5.0
+// http://directory.fsf.org/wiki/Libgcrypt
+// http://www.gnupg.org/download/#libgcrypt
 
-/* Test vectors from the NESSIE Project:
-   Note that the original version of this code included test vectors
-   in big endian format. These test vectors are in little endian format.
-   More of them are available at 
-   http://www.cs.technion.ac.il/~biham/Reports/Tiger/test-vectors-nessie-format.dat
-
-  message="" (empty string)
-  hash=3293AC630C13F0245F92BBB1766E16167A4E58492DDE73F3
-
-  message="a"
-  hash=77BEFBEF2E7EF8AB2EC8F93BF587A7FC613E247F5F247809
-
-  message="abc"
-  hash=2AAB1484E8C158F2BFB8C5FF41B57A525129131C957B5F93
-
-  message="message digest"
-  hash=D981F8CB78201A950DCF3048751E441C517FCA1AA55A29F6
-
-  message="abcdefghijklmnopqrstuvwxyz"
-  hash=1714A472EEE57D30040412BFCC55032A0B11602FF37BEEE9
-
-  message="abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
-  hash=0F7BF9A19B9C58F2B7610DF7E84F0AC3A71C631E7B53F78E
-
-  message="A...Za...z0...9"
-  hash=8DCEA680A17583EE502BA38A3C368651890FFBCCDC49A8CC
-
-  message=8 times "1234567890"
-  hash=1C14795529FD9F207A958F84C52F11E887FA0CABDFD91BFD
-
-  message=1 million times "a"
-  hash=6DB0E2729CBEAD93D715C6A7D36302E9B3CEE0D2BC314B41
-*/
-
-
-void hash_init_tiger(void * ctx)
-{
-    tiger_init((TIGER_CONTEXT *)ctx);
-}
-
-void hash_update_tiger(void * ctx, const unsigned char *buf, size_t len)
-{
-  tiger_update((TIGER_CONTEXT *)ctx,buf,(size_t)len);
-}
-
-void hash_final_tiger(void * ctx, unsigned char *sum)
-{
-  tiger_final(sum,(TIGER_CONTEXT *)ctx);
-}
-
-
+// Test vectors for the "Fixed" Tiger algorithm
+// Source: http://www.cs.technion.ac.il/~biham/Reports/Tiger/test-vectors-nessie-format.dat
+// Inserted by Jesse Kornblum
+//
+// Set 1, vector#  0:
+// message="" (empty string)
+// hash=3293AC630C13F0245F92BBB1766E16167A4E58492DDE73F3
+//
+// Set 1, vector#  1:
+// message="a"
+// hash=77BEFBEF2E7EF8AB2EC8F93BF587A7FC613E247F5F247809
+//
+// Set 1, vector#  2:
+// message="abc"
+// hash=2AAB1484E8C158F2BFB8C5FF41B57A525129131C957B5F93
+//
+// Set 1, vector#  3:
+// message="message digest"
+// hash=D981F8CB78201A950DCF3048751E441C517FCA1AA55A29F6
+//
+// Set 1, vector#  4:
+// message="abcdefghijklmnopqrstuvwxyz"
+// hash=1714A472EEE57D30040412BFCC55032A0B11602FF37BEEE9
 
 
 static uint64_t sbox1[256] = {
@@ -596,72 +574,136 @@ static uint64_t sbox4[256] = {
 };
 
 
-// print functions are unnessary and have been removed (jk)
+
+// Inserted code
+// From libgcrypt, g10lib.h
+#define wipememory2(_ptr,_set,_len) do { \
+    volatile char *_vptr=(volatile char *)(_ptr); \
+    size_t _vlen=(_len); \
+    while(_vlen) { *_vptr=(_set); _vptr++; _vlen--; } \
+  } while(0)
+#define wipememory(_ptr,_len) wipememory2(_ptr,0,_len)
+
+void _gcry_burn_stack(int bytes);
 
 
-/* I was getting compiler errors for "conflicting types for 'round'
-   from including math.h, so I renamed this function tiger_round (jk) */
-static void 
+// Inserted code
+// From libgcrypt, misc.c
+void
+_gcry_burn_stack (int bytes)
+{
+  char buf[64];
+
+  wipememory (buf, sizeof buf);
+  bytes -= sizeof buf;
+  if (bytes > 0)
+    _gcry_burn_stack (bytes);
+}
+
+
+// libgcrypt, tiger.c
+typedef struct
+{
+  uint64_t  a, b, c;
+  unsigned char buf[64];
+  int  count;
+  uint32_t  nblocks;
+  int  variant;  /* 0 = old code, 1 = fixed code, 2 - TIGER2.  */
+} TIGER_CONTEXT;
+
+
+static void
+do_init (void *context, int variant)
+{
+  TIGER_CONTEXT *hd = (TIGER_CONTEXT *)context;
+
+  hd->a = 0x0123456789abcdefLL;
+  hd->b = 0xfedcba9876543210LL;
+  hd->c = 0xf096a5b4c3b2e187LL;
+  hd->nblocks = 0;
+  hd->count = 0;
+  hd->variant = variant;
+}
+
+static void
+tiger_init (void *context)
+{
+  do_init (context, 0);
+}
+
+static void
+tiger1_init (void *context)
+{
+  do_init (context, 1);
+}
+
+static void
+tiger2_init (void *context)
+{
+  do_init (context, 2);
+}
+
+static void
 tiger_round( uint64_t *ra, uint64_t *rb, uint64_t *rc, uint64_t x, int mul )
 {
-    uint64_t a = *ra;
-    uint64_t b = *rb;
-    uint64_t c = *rc;
+  uint64_t a = *ra;
+  uint64_t b = *rb;
+  uint64_t c = *rc;
 
-    c ^= x;
-    a -=   sbox1[  c	    & 0xff ] ^ sbox2[ (c >> 16) & 0xff ]
-	 ^ sbox3[ (c >> 32) & 0xff ] ^ sbox4[ (c >> 48) & 0xff ];
-    b +=   sbox4[ (c >>  8) & 0xff ] ^ sbox3[ (c >> 24) & 0xff ]
-	 ^ sbox2[ (c >> 40) & 0xff ] ^ sbox1[ (c >> 56) & 0xff ];
-    b *= mul;
+  c ^= x;
+  a -= (  sbox1[  c        & 0xff ] ^ sbox2[ (c >> 16) & 0xff ]
+        ^ sbox3[ (c >> 32) & 0xff ] ^ sbox4[ (c >> 48) & 0xff ]);
+  b += (  sbox4[ (c >>  8) & 0xff ] ^ sbox3[ (c >> 24) & 0xff ]
+        ^ sbox2[ (c >> 40) & 0xff ] ^ sbox1[ (c >> 56) & 0xff ]);
+  b *= mul;
 
-    *ra = a;
-    *rb = b;
-    *rc = c;
+  *ra = a;
+  *rb = b;
+  *rc = c;
 }
 
 
 static void
 pass( uint64_t *ra, uint64_t *rb, uint64_t *rc, uint64_t *x, int mul )
 {
-    uint64_t a = *ra;
-    uint64_t b = *rb;
-    uint64_t c = *rc;
+  uint64_t a = *ra;
+  uint64_t b = *rb;
+  uint64_t c = *rc;
 
-    tiger_round( &a, &b, &c, x[0], mul );
-    tiger_round( &b, &c, &a, x[1], mul );
-    tiger_round( &c, &a, &b, x[2], mul );
-    tiger_round( &a, &b, &c, x[3], mul );
-    tiger_round( &b, &c, &a, x[4], mul );
-    tiger_round( &c, &a, &b, x[5], mul );
-    tiger_round( &a, &b, &c, x[6], mul );
-    tiger_round( &b, &c, &a, x[7], mul );
+  tiger_round( &a, &b, &c, x[0], mul );
+  tiger_round( &b, &c, &a, x[1], mul );
+  tiger_round( &c, &a, &b, x[2], mul );
+  tiger_round( &a, &b, &c, x[3], mul );
+  tiger_round( &b, &c, &a, x[4], mul );
+  tiger_round( &c, &a, &b, x[5], mul );
+  tiger_round( &a, &b, &c, x[6], mul );
+  tiger_round( &b, &c, &a, x[7], mul );
 
-    *ra = a;
-    *rb = b;
-    *rc = c;
+  *ra = a;
+  *rb = b;
+  *rc = c;
 }
 
 
 static void
 key_schedule( uint64_t *x )
 {
-    x[0] -= x[7] ^ 0xa5a5a5a5a5a5a5a5LL;
-    x[1] ^= x[0];
-    x[2] += x[1];
-    x[3] -= x[2] ^ ((~x[1]) << 19 );
-    x[4] ^= x[3];
-    x[5] += x[4];
-    x[6] -= x[5] ^ ((~x[4]) >> 23 );
-    x[7] ^= x[6];
-    x[0] += x[7];
-    x[1] -= x[0] ^ ((~x[7]) << 19 );
-    x[2] ^= x[1];
-    x[3] += x[2];
-    x[4] -= x[3] ^ ((~x[2]) >> 23 );
-    x[5] ^= x[4];
-    x[6] += x[5];
-    x[7] -= x[6] ^ 0x0123456789abcdefLL;
+  x[0] -= x[7] ^ 0xa5a5a5a5a5a5a5a5LL;
+  x[1] ^= x[0];
+  x[2] += x[1];
+  x[3] -= x[2] ^ ((~x[1]) << 19 );
+  x[4] ^= x[3];
+  x[5] += x[4];
+  x[6] -= x[5] ^ ((~x[4]) >> 23 );
+  x[7] ^= x[6];
+  x[0] += x[7];
+  x[1] -= x[0] ^ ((~x[7]) << 19 );
+  x[2] ^= x[1];
+  x[3] += x[2];
+  x[4] -= x[3] ^ ((~x[2]) >> 23 );
+  x[5] ^= x[4];
+  x[6] += x[5];
+  x[7] -= x[6] ^ 0x0123456789abcdefLL;
 }
 
 
@@ -669,187 +711,214 @@ key_schedule( uint64_t *x )
  * Transform the message DATA which consists of 512 bytes (8 words)
  */
 static void
-transform( TIGER_CONTEXT *hd, const unsigned char *data )
+transform ( TIGER_CONTEXT *hd, const unsigned char *data )
 {
-    uint64_t a,b,c,aa,bb,cc;
-    uint64_t x[8];
-  #ifdef WORDS_BIGENDIAN
-    #define MKWORD(d,n) \
+  uint64_t a,b,c,aa,bb,cc;
+  uint64_t x[8];
+#ifdef WORDS_BIGENDIAN
+#define MKWORD(d,n) \
 		(  ((uint64_t)(d)[8*(n)+7]) << 56 | ((uint64_t)(d)[8*(n)+6]) << 48  \
 		 | ((uint64_t)(d)[8*(n)+5]) << 40 | ((uint64_t)(d)[8*(n)+4]) << 32  \
 		 | ((uint64_t)(d)[8*(n)+3]) << 24 | ((uint64_t)(d)[8*(n)+2]) << 16  \
 		 | ((uint64_t)(d)[8*(n)+1]) << 8  | ((uint64_t)(d)[8*(n)	])	 )
-    x[0] = MKWORD(data, 0);
-    x[1] = MKWORD(data, 1);
-    x[2] = MKWORD(data, 2);
-    x[3] = MKWORD(data, 3);
-    x[4] = MKWORD(data, 4);
-    x[5] = MKWORD(data, 5);
-    x[6] = MKWORD(data, 6);
-    x[7] = MKWORD(data, 7);
-    #undef MKWORD
-  #else
-    memcpy( &x[0], data, 64 );
-  #endif
+  x[0] = MKWORD(data, 0);
+  x[1] = MKWORD(data, 1);
+  x[2] = MKWORD(data, 2);
+  x[3] = MKWORD(data, 3);
+  x[4] = MKWORD(data, 4);
+  x[5] = MKWORD(data, 5);
+  x[6] = MKWORD(data, 6);
+  x[7] = MKWORD(data, 7);
+#undef MKWORD
+#else
+  memcpy( &x[0], data, 64 );
+#endif
 
-    /* save */
-    a = aa = hd->a;
-    b = bb = hd->b;
-    c = cc = hd->c;
+  /* save */
+  a = aa = hd->a;
+  b = bb = hd->b;
+  c = cc = hd->c;
 
-    // print functions have been removed (jk)
-    pass( &a, &b, &c, x, 5);
-    key_schedule( x );
-    pass( &c, &a, &b, x, 7);
-    key_schedule( x );
-    pass( &b, &c, &a, x, 9);
+  pass( &a, &b, &c, x, 5);
+  key_schedule( x );
+  pass( &c, &a, &b, x, 7);
+  key_schedule( x );
+  pass( &b, &c, &a, x, 9);
 
-    /* feedforward */
-    a ^= aa;
-    b -= bb;
-    c += cc;
-    /* store */
-    hd->a = a;
-    hd->b = b;
-    hd->c = c;
+  /* feedforward */
+  a ^= aa;
+  b -= bb;
+  c += cc;
+  /* store */
+  hd->a = a;
+  hd->b = b;
+  hd->c = c;
 }
 
-void
-tiger_init( TIGER_CONTEXT *hd )
-{
-    hd->a = 0x0123456789abcdefLL;
-    hd->b = 0xfedcba9876543210LL;
-    hd->c = 0xf096a5b4c3b2e187LL;
-    hd->nblocks = 0;
-    hd->count = 0;
-}
+
 
 /* Update the message digest with the contents
- * of INBUF with length INLEN. */
-void
-tiger_update(TIGER_CONTEXT *hd, const unsigned char *inbuf, size_t inlen)
+ * of INBUF with length INLEN.
+ */
+static void
+tiger_write ( void *context, const void *inbuf_arg, size_t inlen)
 {
-    if( hd->count == 64 ) { /* flush the buffer */
-	transform( hd, hd->buf );
-	hd->count = 0;
-	hd->nblocks++;
-    }
-    if( !inbuf )
-	return;
-    if( hd->count ) {
-	for( ; inlen && hd->count < 64; inlen-- )
-	    hd->buf[hd->count++] = *inbuf++;
-	tiger_update( hd, NULL, 0 );
-	if( !inlen ) {
-	  return;
-	}
+  const unsigned char *inbuf = (const unsigned char *)inbuf_arg;
+  TIGER_CONTEXT *hd = (TIGER_CONTEXT *)context;
 
+  if( hd->count == 64) /* flush the buffer */
+    {
+      transform( hd, hd->buf );
+      _gcry_burn_stack (21*8+11*sizeof(void*));
+      hd->count = 0;
+      hd->nblocks++;
+    }
+  if( !inbuf )
+    return;
+  if( hd->count )
+    {
+      for( ; inlen && hd->count < 64; inlen-- )
+        hd->buf[hd->count++] = *inbuf++;
+      tiger_write( hd, NULL, 0 );
+      if( !inlen )
+        return;
     }
 
-    while( inlen >= 64 ) {
+  while( inlen >= 64 )
+    {
       transform( hd, inbuf );
       hd->count = 0;
       hd->nblocks++;
       inlen -= 64;
       inbuf += 64;
     }
-    for( ; inlen && hd->count < 64; inlen-- )
-	hd->buf[hd->count++] = *inbuf++;
+  _gcry_burn_stack (21*8+11*sizeof(void*));
+  for( ; inlen && hd->count < 64; inlen-- )
+    hd->buf[hd->count++] = *inbuf++;
 }
 
-/* The routine terminates the computation */
-void
-tiger_final(unsigned char hash[24], TIGER_CONTEXT *hd)
+
+
+/* The routine terminates the computation
+ */
+static void
+tiger_final( void *context )
 {
-    uint32_t t, msb, lsb;
-    unsigned char *p;
-    int i, j;
+  TIGER_CONTEXT *hd = (TIGER_CONTEXT *)context;
+  uint32_t t, msb, lsb;
+  unsigned char *p;
+  unsigned char pad = hd->variant == 2? 0x80 : 0x01;
 
-    tiger_update(hd, NULL, 0); /* flush */;
+  tiger_write(hd, NULL, 0); /* flush */;
 
-    msb = 0;
-    t = hd->nblocks;
-    if( (lsb = t << 6) < t ) /* multiply by 64 to make a byte count */
-	msb++;
-    msb += t >> 26;
-    t = lsb;
-    if( (lsb = t + hd->count) < t ) /* add the count */
-	msb++;
-    t = lsb;
-    if( (lsb = t << 3) < t ) /* multiply by 8 to make a bit count */
-	msb++;
-    msb += t >> 29;
+  t = hd->nblocks;
+  /* multiply by 64 to make a byte count */
+  lsb = t << 6;
+  msb = t >> 26;
+  /* add the count */
+  t = lsb;
+  if( (lsb += hd->count) < t )
+    msb++;
+  /* multiply by 8 to make a bit count */
+  t = lsb;
+  lsb <<= 3;
+  msb <<= 3;
+  msb |= t >> 29;
 
-    if( hd->count < 56 ) { /* enough room */
-	hd->buf[hd->count++] = 0x01; /* pad */
-	while( hd->count < 56 )
-	    hd->buf[hd->count++] = 0;  /* pad */
+  if( hd->count < 56 )  /* enough room */
+    {
+      hd->buf[hd->count++] = pad;
+      while( hd->count < 56 )
+        hd->buf[hd->count++] = 0;  /* pad */
     }
-    else { /* need one extra block */
-	hd->buf[hd->count++] = 0x01; /* pad character */
-	while( hd->count < 64 )
-	    hd->buf[hd->count++] = 0;
-	tiger_update(hd, NULL, 0);  /* flush */;
-	memset(hd->buf, 0, 56 ); /* fill next block with zeroes */
+  else  /* need one extra block */
+    {
+      hd->buf[hd->count++] = pad; /* pad character */
+      while( hd->count < 64 )
+        hd->buf[hd->count++] = 0;
+      tiger_write(hd, NULL, 0);  /* flush */;
+      memset(hd->buf, 0, 56 ); /* fill next block with zeroes */
     }
-    /* append the 64 bit count */
-    hd->buf[56] = lsb	   ;
-    hd->buf[57] = lsb >>  8;
-    hd->buf[58] = lsb >> 16;
-    hd->buf[59] = lsb >> 24;
-    hd->buf[60] = msb	   ;
-    hd->buf[61] = msb >>  8;
-    hd->buf[62] = msb >> 16;
-    hd->buf[63] = msb >> 24;
-    transform( hd, hd->buf );
+  /* append the 64 bit count */
+  hd->buf[56] = lsb	   ;
+  hd->buf[57] = lsb >>  8;
+  hd->buf[58] = lsb >> 16;
+  hd->buf[59] = lsb >> 24;
+  hd->buf[60] = msb	   ;
+  hd->buf[61] = msb >>  8;
+  hd->buf[62] = msb >> 16;
+  hd->buf[63] = msb >> 24;
+  transform( hd, hd->buf );
+  _gcry_burn_stack (21*8+11*sizeof(void*));
 
-    p = hd->buf;
-  #ifdef WORDS_BIGENDIAN
-    #define X(a) do { *(uint64_t *)p = hd->a ; p += 8; } while(0)
-    // Original code - modified by jk to deal with gcc changes
-    //    #define X(a) do { *(u64*)p = hd->##a ; p += 8; } while(0)
-  #else /* little endian */
-    #define X(a) do { *p++ = hd->a >> 56; *p++ = hd->a >> 48; \
-		      *p++ = hd->a >> 40; *p++ = hd->a >> 32; \
-		      *p++ = hd->a >> 24; *p++ = hd->a >> 16; \
-		      *p++ = hd->a >>  8; *p++ = hd->a; } while(0)
-
-    /* Original code - modified by jk to deal with gcc changes
-    #define X(a) do { *p++ = hd->##a >> 56; *p++ = hd->##a >> 48; \
-		      *p++ = hd->##a >> 40; *p++ = hd->##a >> 32; \
-		      *p++ = hd->##a >> 24; *p++ = hd->##a >> 16; \
-		      *p++ = hd->##a >>  8; *p++ = hd->##a; } while(0)
-		      */
-
-  #endif
-    X(a);
-    X(b);
-    X(c);
-  #undef X
-
-    /* unpack the hash */
-    // Modified by jk to produce little endian output like MD5 or SHA-1
-    j=0;
-    for (i=0; i<8; i++)
-      hash[j++] = (hd->a >> 8*i) & 0xff;
-    j=8;
-    for (i=0; i<8; i++)
-      hash[j++] = (hd->b >> 8*i) & 0xff;
-    j=16;
-    for (i=0; i<8; i++)
-      hash[j++] = (hd->c >> 8*i) & 0xff;
-
-
-    /* Original code, produces output in big endian     
-    j=7;
-    for (i=0; i<8; i++)
-      hash[j--] = (hd->a >> 8*i) & 0xff;
-    j=15;
-    for (i=0; i<8; i++)
-      hash[j--] = (hd->b >> 8*i) & 0xff;
-    j=23;
-    for (i=0; i<8; i++)
-      hash[j--] = (hd->c >> 8*i) & 0xff;
-    */
+  p = hd->buf;
+#ifdef WORDS_BIGENDIAN
+#define X(a) do { *(uint64_t*)p = hd->a ; p += 8; } while(0)
+#else /* little endian */
+#define X(a) do { *p++ = hd->a >> 56; *p++ = hd->a >> 48; \
+	          *p++ = hd->a >> 40; *p++ = hd->a >> 32; \
+	          *p++ = hd->a >> 24; *p++ = hd->a >> 16; \
+	          *p++ = hd->a >>  8; *p++ = hd->a;       } while(0)
+#endif
+#define Y(a) do { *p++ = hd->a      ; *p++ = hd->a >> 8;  \
+	          *p++ = hd->a >> 16; *p++ = hd->a >> 24; \
+	          *p++ = hd->a >> 32; *p++ = hd->a >> 40; \
+	          *p++ = hd->a >> 48; *p++ = hd->a >> 56; } while(0)
+  if (hd->variant == 0)
+    {
+      X(a);
+      X(b);
+      X(c);
+    }
+  else
+    {
+      Y(a);
+      Y(b);
+      Y(c);
+    }
+#undef X
+#undef Y
 }
 
+static unsigned char *
+tiger_read( void *context )
+{
+  TIGER_CONTEXT *hd = (TIGER_CONTEXT *)context;
+
+  return hd->buf;
+}
+
+
+
+
+
+// ------------------------------------------------------------------
+// End Libgcrypt code
+// ------------------------------------------------------------------
+
+void hash_init_tiger(void * ctx)
+{
+  // Variant 0, Unknown
+  // tiger_init(ctx)
+
+  // Variant 1, Tiger
+  tiger1_init(ctx);
+
+  // Variant 2, The Tiger2 Hash
+  // http://www.cs.technion.ac.il/~biham/Reports/Tiger/tiger2-test-vectors-nessie-format.dat
+  //  tiger2_init(ctx);
+}
+
+
+void hash_update_tiger(void * ctx, const unsigned char  *buf, size_t len)
+{
+  tiger_write(ctx,buf,len);
+}
+
+
+void hash_final_tiger(void * ctx, unsigned char *sum)
+{
+  tiger_final(ctx);
+  unsigned char * tmp = tiger_read(ctx);
+  memcpy(sum,tmp,64);
+}
