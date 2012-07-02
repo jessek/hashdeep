@@ -143,8 +143,19 @@ void MD5Final(unsigned char digest[16], context_md5_t *ctx)
     byteReverse(ctx->in, 14);
 
     /* Append length in bits and transform */
-    ((uint32_t *) ctx->in)[14] = ctx->bits[0];
-    ((uint32_t *) ctx->in)[15] = ctx->bits[1];
+
+    // the two lines below generated this error:
+    // "md5.c:147:5: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]"
+
+    //((uint32_t *) ctx->in)[14] = ctx->bits[0];
+    //((uint32_t *) ctx->in)[15] = ctx->bits[1];
+
+    // We will manually expand the cast into two statements to make
+    // the compiler happy...
+
+    uint32_t *ctxin = (uint32_t *)ctx->in; 
+    ctxin[14] = ctx->bits[0];
+    ctxin[15] = ctx->bits[1];
 
     MD5Transform(ctx->buf, (uint32_t *) ctx->in);
     byteReverse((unsigned char *) ctx->buf, 4);
