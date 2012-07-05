@@ -1,3 +1,8 @@
+2012-07-05  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* man/md5deep.1: Clarified quiet mode, -q.
+	* configure.ac: Version bump to 4.3
+
 2012-06-29  Simson Garfinkel  <simsong@imac3.local>
 
 	* src/md5.c (MD5Final): updated md5.c code to remove compiler warning dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]"
