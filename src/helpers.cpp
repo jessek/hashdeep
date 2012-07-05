@@ -17,17 +17,20 @@
 // Remove the newlines, if any. Works on both DOS and *nix newlines
 void chop_line(char *s)
 {
-    while(true){
-	size_t pos = strlen(s);
-	if(pos>0){
-	    if(s[pos-1]=='\r' || s[pos-1]=='\n'){
-		s[pos-1]='\000';
-		continue;
-	    }
-	    return;
-	}
-	if(pos==0) break;
+  while(true)
+  {
+    size_t pos = strlen(s);
+    if (pos>0)
+    {
+      if (s[pos-1]=='\r' || s[pos-1]=='\n')
+      {
+	s[pos-1]='\000';
+	continue;
+      }
+      return;
     }
+    if(pos==0) break;
+  }
 }
 
 
