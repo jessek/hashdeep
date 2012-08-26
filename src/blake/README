@@ -1,0 +1,17 @@
+
+C implementation of BLAKE
+
+$ make
+
+and use as
+
+$ ./blake224 [file1] [file2] ... 
+$ ./blake256 [file1] [file2] ... 
+$ ./blake384 [file1] [file2] ... 
+$ ./blake512 [file1] [file2] ... 
+
+
+jeanphilippe.aumasson@gmail.com
+June 5, 2012
+================================================================
+2012 aug 25 - slg - modified for hashdeep
