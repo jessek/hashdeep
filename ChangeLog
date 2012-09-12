@@ -1,3 +1,7 @@
+2012-09-12  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* man/md5deep.1, hashdeep.1: Typos
+
 2012-07-05  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* man/md5deep.1: Clarified quiet mode, -q.
