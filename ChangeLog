@@ -1,3 +1,7 @@
+2012-10-12  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* src/threadpool.cpp: Renamed ERR function to avoid conflicts on SunOS and derivates.
+
 2012-09-12  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* man/md5deep.1, hashdeep.1: Typos

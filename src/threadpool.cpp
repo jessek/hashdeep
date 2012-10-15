@@ -83,11 +83,15 @@ int threadpool::numCPU()
 }
 
 /*
- * ERR prints an error message, gets it out and then quits.
+ * ERR_QUIT prints an error message, gets it out and then quits.
+ * It used to be 'ERR', but this created a conflict on some SunOS
+ * and SunOS derivatives. See 
+ * http://dtrace.org/blogs/rm/2011/03/14/a-trip-down-into-sysregset-h/
+ * for an example. On such systems 'ERR' is defined as '13'.
  */
 
-void ERR(int val,const char *msg) __attribute__ ((__noreturn__));
-void ERR(int val,const char *msg)
+void ERR_QUIT(int val,const char *msg) __attribute__ ((__noreturn__));
+void ERR_QUIT(int val,const char *msg)
 {
     std::cerr << msg << "\n";
     std::cerr.flush();
@@ -131,8 +135,8 @@ threadpool::threadpool(int numworkers_)
 {
     numworkers		= numworkers_;
     freethreads		= numworkers;
-    if(pthread_cond_init(&TOMAIN,NULL))   ERR(1,"pthread_cond_init #1 failed");
-    if(pthread_cond_init(&TOWORKER,NULL)) ERR(1,"pthread_cond_init #2 failed");
+    if(pthread_cond_init(&TOMAIN,NULL))   ERR_QUIT(1,"pthread_cond_init #1 failed");
+    if(pthread_cond_init(&TOWORKER,NULL)) ERR_QUIT(1,"pthread_cond_init #2 failed");
 
     // lock while I create the threads
     M.lock();
@@ -188,7 +192,7 @@ void threadpool::schedule_work(file_data_hasher_t *fdht)
     while(freethreads==0){
 	// wait until a thread is free (doesn't matter which)
 	if(pthread_cond_wait(&TOMAIN,&M.mutex)){
-	    ERR(1,"threadpool::schedule_work pthread_cond_wait failed");
+	    ERR_QUIT(1,"threadpool::schedule_work pthread_cond_wait failed");
 	}
     }
     work_queue.push(fdht); 
