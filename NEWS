@@ -1,8 +1,11 @@
-** Changes in version 4.3 (RBF DATE)
-
-* New Features
+** Changes in version 4.3 (24 Oct 2012)
 
 * Bug Fixes
+
+      Fixed check for endian-ness, affecting hash generation on
+      big-endian platforms.
+
+      Fixed minor bugs related to OpenSolaris.
 
 
 

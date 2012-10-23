@@ -91,7 +91,7 @@ typedef struct _ENCASE_HASH_HEADER {
 #define HASH_STRING_LENGTH   (hashes[opt_md5deep_mode_algorithm].bit_length/4)
 
 /****************************************************************
- *** SUpport
+ *** Support Functions
  ****************************************************************/
 
 // Find the index of the next comma in the string str starting at index start.

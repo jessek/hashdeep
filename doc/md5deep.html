@@ -154,57 +154,58 @@ bytes (about 9.3GB) the program displays 9999999999 for the size.
 
 <dt><b>-q</b> </dt>
 <dd>Quiet
-mode. File names are omitted from the output. 
+mode. File names are omitted from the output. Each hash is still followed
+by two spaces before the newline. 
 <p> </dd>
 
 <dt><b>-Z</b> </dt>
-<dd>Produces output in Triage
-format. Each line contans the file&rsquo;s size, a tab, a hash of the first 512
-bytes, a tab, the hash of the complete file, a tab, and the file name. These
-values are intended in increasing order of specificity. That is, two files
-with different sizes cannot possibly match. This is a fast comparison and
-should be done first. Next, two files  with different partial hashes cannot
-possibly match. This is often  faster than hashing the whole file. Finally,
-if those two pieces align, then it&rsquo;s worth reading and hashing the entire
-file. 
+<dd>Produces output in Triage format. Each
+line contans the file&rsquo;s size, a tab, a hash of the first 512 bytes, a tab,
+the hash of the complete file, a tab, and the file name. These values are
+intended in increasing order of specificity. That is, two files with different
+sizes cannot possibly match. This is a fast comparison and should be done
+first. Next, two files  with different partial hashes cannot possibly match.
+This is often  faster than hashing the whole file. Finally, if those two
+pieces align, then it&rsquo;s worth reading and hashing the entire file. 
 <p> </dd>
 
 <dt><b>-0</b> </dt>
-<dd>Uses a NULL character (/0) to terminate each line instead of a
-newline. Useful for processing filenames with strange characters. 
+<dd>Uses
+a NULL character (/0) to terminate each line instead of a newline. Useful
+for processing filenames with strange characters. 
 <p> </dd>
 
 <dt><b>-l</b> </dt>
-<dd>Enables
-relative file paths. Instead of printing the absolute path for each file,
-displays the relative file path as indicated on the command  line. This
-flag may not be used in conjunction with the -b flag. 
+<dd>Enables relative file
+paths. Instead of printing the absolute path for each file, displays the
+relative file path as indicated on the command  line. This flag may not
+be used in conjunction with the -b flag. 
 <p> </dd>
 
 <dt><b>-b</b> </dt>
-<dd>Enables bare mode.
-Strips any leading directory information from  displayed filenames. This
-flag may not be used in conjunction with the -l flag. 
+<dd>Enables bare mode. Strips any
+leading directory information from  displayed filenames. This flag may not
+be used in conjunction with the -l flag. 
 <p> </dd>
 
 <dt><b>-k</b> </dt>
-<dd>Enables asterisk
-mode. An asterisk is inserted in lieu of a second space between the filename
-and the hash, just like md5sum in  its binary (-b) mode. 
+<dd>Enables asterisk mode. An asterisk
+is inserted in lieu of a second space between the filename and the hash,
+just like md5sum in  its binary (-b) mode. 
 <p> </dd>
 
 <dt><b>-c</b> </dt>
-<dd>Enables comma
-separated values output, or CSV mode. This mode has the side effect of removing
-the 10 digit size limitation from -z mode. Also note that asterisks from
--k mode are not displayed when in CSV mode. 
+<dd>Enables comma separated values
+output, or CSV mode. This mode has the side effect of removing the 10 digit
+size limitation from -z mode. Also note that asterisks from -k mode are not
+displayed when in CSV mode. 
 <p> </dd>
 
 <dt><b>-o</b> &lt;bcpflsd&gt; </dt>
-<dd>Enables expert mode.
-Allows the user specify which (and only which) types of files are processed.
-Directory processing is still controlled with the -r flag. The expert mode
-options allowed are: <br>
+<dd>Enables expert mode. Allows the user
+specify which (and only which) types of files are processed. Directory processing
+is still controlled with the -r flag. The expert mode options allowed are:
+<br>
 f - Regular files <br>
 b - Block Devices <br>
 c - Character Devices <br>
@@ -311,7 +312,7 @@ not a bug.  If you need to do this, use the <a href='find.1'><b>find</b>(1)</a>
 <h2><a name='sect7' href='#toc7'>Reporting Bugs</a></h2>
 We
 take all bug reports <i>very</i> seriously. Any bug that jeopardizes the forensic
-integrity of this program could have serious consequenses on  people&rsquo;s lives.
+integrity of this program could have serious consequences on  people&rsquo;s lives.
 When submitting a bug report, please include a description of the problem,
 how you found it, and your contact information. <p>
 Send bug reports to the
