@@ -3,7 +3,7 @@
 #
 
 AC_PREREQ(2.57)
-AC_INIT([MD5DEEP],[4.3],[research@jessekornblum.com])
+AC_INIT([MD5DEEP],[4.3-001],[research@jessekornblum.com])
 AC_CONFIG_FILES([Makefile src/Makefile man/Makefile tests/Makefile tests/testfiles/Makefile ])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -174,8 +174,8 @@ AC_HEADER_TIME
 AC_CHECK_HEADERS([sys/cdefs.h sys/resource.h pwd.h sys/utsname.h])
 AC_CHECK_FUNCS([localtime_r getuid gethostname getwpuid getrusage])
 
-# Don't think we need this anymore.
-# AC_C_BIGENDIAN
+# There are still users on big-endian operating systems out there!
+AC_C_BIGENDIAN
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
