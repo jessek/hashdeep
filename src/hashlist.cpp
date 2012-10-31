@@ -254,9 +254,12 @@ void hashlist::dump_hashlist()
 uint64_t hashlist::total_matched()
 {
     uint64_t total = 0;
-    for(hashlist::const_iterator it = begin(); it!=end(); it++){
-	if( (*it)->matched_file_number > 0) total++;
+    for(hashlist::const_iterator it = begin(); it!=end(); it++)
+    {
+      if ( (*it)->matched_file_number > 0) 
+	  total++;
     }
+
     return total;
 }
 

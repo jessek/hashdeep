@@ -1,3 +1,11 @@
+** Changes in version 4.4 (RBF DATE)
+
+* Bug Fixes
+
+      Added checks against user errors on Hashdeep command line
+
+
+
 ** Changes in version 4.3 (24 Oct 2012)
 
 * Bug Fixes

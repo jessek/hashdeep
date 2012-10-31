@@ -617,14 +617,24 @@ void display::finalize_matching()
     uint64_t total_matched = known.total_matched();
     unlock();
 
-    if (total_matched!=known_size()){
-	return_code.add(status_t::STATUS_UNUSED_HASHES); // were there any unmatched?
+    if (total_matched != known_size())
+    {
+      // were there any unmatched?
+      return_code.add(status_t::STATUS_UNUSED_HASHES); 
     }
-    if (total_matched==0){
-	return_code.add(status_t::STATUS_INPUT_DID_NOT_MATCH); // were they all unmatched?
+
+    // RBF - Implement check for Input Did not Match
+    /*
+    if (this->match.unknown)
+    {
+      return_code.add(status_t::STATUS_INPUT_DID_NOT_MATCH);
     }
-    if (mode_not_matched){	// should we display those that were not matched?
-	compute_unused(true,"");
+    */
+
+    if (mode_not_matched)
+    {	
+      // should we display those that were not matched?
+      compute_unused(true,"");
     }
 }
 

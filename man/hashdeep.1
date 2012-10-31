@@ -1,4 +1,4 @@
-.TH HASHDEEP "1" "v4.3 \- 24 Oct 2012" "AFOSI" "United States Air Force"
+.TH HASHDEEP "1" "v4.4 \- RBF DATE 2012" "AFOSI" "United States Air Force"
 
 .SH NAME
 hashdeep \- Compute, compare, or audit multiple message digests
@@ -258,7 +258,33 @@ tab completition or an asterisk (e.g. md5deep -m *.txt where there is
 only one file with a .txt extension).
 
 .SH RETURN VALUE
-Returns zero on success, one on error. 
+Returns a bit-wise value based on the success of the operation and the
+status of any matching operations.
+.PP
+.TP
+0
+Success. Note that the program considers itself successful even when it
+encounters read errors, permission denied errors, or finds directories
+when not in recursive mode.
+.TP
+1
+Unused hashes. Under any of the matching modes, returns this 
+value if one or more of the
+known hashes was not matched by any of the input files.
+.TP
+2
+Unmatched inputs. Under any of the matching modes, returns this value
+if one or more of the input values did not match any of the known hashes. 
+.TP
+64
+User error, such as trying to do both positive and negative matching at 
+the same time. 
+.TP
+128
+Internal error, such as memory corruption or uncaught cycle.
+All internal errors should
+be reported to the developer! See the section "Reporting Bugs" below.
+
 
 .SH AUTHOR
 hashdeep was written by Jesse Kornblum, research@jessekornblum.com,

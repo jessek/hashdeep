@@ -588,7 +588,7 @@ public:
 	size_threshold(0),
 	piecewise_size(0),	
 	primary_function(primary_compute){
-    }
+	}
 
     /* These variables are read-only after threading starts */
     bool	mode_triage;
@@ -851,14 +851,15 @@ public:;
     int		usage_count;
     bool	opt_enable_mac_cc;
     tstring	generate_filename(const tstring &input);
-    void	usage();
+    void	hashdeep_usage();
     std::string	make_banner();
     void	md5deep_usage();
-    void	check_flags_okay();
+    void	hashdeep_check_flags_okay();
     void	check_wow64();
     void	md5deep_check_flags_okay();
     int		hashdeep_process_command_line(int argc,char **argv);
     void	md5deep_check_matching_modes();
+    void        hashdeep_check_matching_modes();
     int		md5deep_process_command_line(int argc,char **argv);
 #ifdef _WIN32
     int		prepare_windows_command_line();

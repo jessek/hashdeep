@@ -293,19 +293,36 @@ bool state::is_junction_point(const std::wstring &fn)
       // but we may want to display a message just in case.
       // TODO: Maybe have the option to follow symbolic links?
       status = true;
-      
-      if (IO_REPARSE_TAG_MOUNT_POINT == FindFileData.dwReserved0) 
+
+      // Tag values come from 
+      // http://msdn.microsoft.com/en-us/library/dd541667(prot.20).aspx
+
+      switch (FindFileData.dwReserved0)
       {
+      case IO_REPARSE_TAG_MOUNT_POINT:
 	ocb.error_filename(fn,"Junction point, skipping");
-      } 
-      else if (IO_REPARSE_TAG_SYMLINK == FindFileData.dwReserved0) 
-      {
+	break;
+
+      case IO_REPARSE_TAG_SYMLINK:
 	ocb.error_filename(fn,"Symbolic link, skipping");
-      } 
-      else 
-      {
-	ocb.error_filename(fn,"Unknown reparse point 0x%"PRIx32", skipping",
+	break;
+
+      case IO_REPARSE_TAG_SIS:
+	// RBF - Should we parse SIS files? 
+
+	// Single Instance Storage
+	// "is a system's ability to keep one copy of content that multiple users or computers share"
+	// http://blogs.technet.com/b/filecab/archive/2006/02/03/single-instance-store-sis-in-windows-storage-server-r2.aspx
+
+	ocb.error_filename(fn,"Single Instance Storage pointer, skipping");
+	break;
+
+      default:
+	ocb.error_filename(fn,
+			   "Unknown reparse point 0x%"PRIx32", skipping",
 			   FindFileData.dwReserved0);
+	ocb.error_filename(fn,"Please report this to the developers!");
+
       }
     }
     

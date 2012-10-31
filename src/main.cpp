@@ -128,7 +128,7 @@ tstring state::generate_filename(const tstring &input)
 
 // So that the usage message fits in a standard DOS window, this
 // function should produce no more than 22 lines of text.
-void state::usage()
+void state::hashdeep_usage()
 {
   if (1 == usage_count)
   {
@@ -245,7 +245,7 @@ void state::md5deep_usage(void)
 	ocb.status("               f=regular file; l=symlink; s=socket; d=door e=Windows PE");
 	ocb.status("-D <num>  - set debug level to nn");
     }
-    if(usage_count==3){			// -hhh
+    if (usage_count==3){			// -hhh
 	ocb.status("sizeof(off_t)= %d",sizeof(off_t));
 #ifdef HAVE_PTHREAD
 	ocb.status("HAVE_PTHREAD");
@@ -260,7 +260,7 @@ void state::md5deep_usage(void)
 }
 
 
-void state::check_flags_okay()
+void state::hashdeep_check_flags_okay()
 {
   sanity_check(
 	       (((ocb.primary_function & primary_match) ||
@@ -585,6 +585,11 @@ void state::setup_expert_mode(char *arg)
     }
 }
 
+void state::hashdeep_check_matching_modes()
+{
+  sanity_check((not (primary_compute == ocb.primary_function)),
+	       "Multiple processing modes specified.");
+}
 
 
 
@@ -594,25 +599,40 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
   int i;
   
   while ((i=getopt(argc_,argv_,"abc:CdeF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
-    switch (i) {
-    case 'a': ocb.primary_function = primary_audit;      break;
-    case 'C': opt_enable_mac_cc = true; break;
-    case 'd': ocb.xml_open(stdout);	break;
-    case 'f': opt_input_list = optarg;	break;
-    case 'o':
-      mode_expert=true; 
-      setup_expert_mode(optarg);
-      break;
+    switch (i) 
+      {
+      case 'a': 
+	hashdeep_check_matching_modes();
+	ocb.primary_function = primary_audit;      
+	break;
+
+      case 'C': 
+	opt_enable_mac_cc = true; 
+	break;
+
+      case 'd': 
+	ocb.xml_open(stdout);	
+	break;
+
+      case 'f': 
+	opt_input_list = optarg;	
+	break;
+
+      case 'o':
+	mode_expert=true; 
+	setup_expert_mode(optarg);
+	break;
 
     case 'I': 
 	ocb.mode_size_all=true;
-      // Note no break here;
+	// falls through
     case 'i':
 	ocb.mode_size = true;
 	ocb.size_threshold = find_block_size(optarg);
-	if (ocb.size_threshold==0) {
-	    ocb.error("Requested size threshold implies not hashing anything");
-	    exit(status_t::STATUS_USER_ERROR);
+	if (ocb.size_threshold==0) 
+	{
+	  ocb.error("Requested size threshold implies not hashing anything");
+	  exit(status_t::STATUS_USER_ERROR);
 	}
 	break;
 
@@ -625,12 +645,21 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
       algorithm_t::enable_hashing_algorithms(optarg);
       break;
       
-    case 'M': ocb.opt_display_hash=true;
-	/* intentional fall through */
-    case 'm': ocb.primary_function = primary_match;      break;
-    case 'X': ocb.opt_display_hash=true;
-	/* intentional fall through */
-    case 'x': ocb.primary_function = primary_match_neg;  break;
+    case 'M': 
+      ocb.opt_display_hash = true;
+      // falls through
+    case 'm':
+      hashdeep_check_matching_modes();
+      ocb.primary_function = primary_match;      
+      break;
+
+    case 'X': 
+      ocb.opt_display_hash=true;
+      // falls through
+    case 'x': 
+      hashdeep_check_matching_modes();
+      ocb.primary_function = primary_match_neg;  
+      break;
       
       // TODO: Add -t mode to hashdeep
       //    case 't': mode |= mode_timestamp;    break;
@@ -697,7 +726,7 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
 
     case 'h':
 	usage_count++;
-	usage();
+	hashdeep_usage();
 	did_usage = true;
 	break;
       
@@ -710,7 +739,7 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
   
   if(did_usage ) exit(EXIT_SUCCESS);
 
-  check_flags_okay();
+  hashdeep_check_flags_okay();
   return FALSE;
 }
 
@@ -989,7 +1018,7 @@ int state::md5deep_process_command_line(int argc_, char **argv_)
 	case 'f': opt_input_list = optarg;	break;
 	case 'I':
 	    ocb.mode_size_all=true;
-	    // Note that there is no break here
+	    // falls through
 	case 'i':
 	    ocb.mode_size=true;
 	    ocb.size_threshold = find_block_size(optarg);
@@ -1156,7 +1185,7 @@ uint64_t state::find_block_size(std::string input_str)
     uint64_t multiplier = 1;
     char last_char = input_str[input_str.size()-1];
 
-    // There are deliberately no break statements in this switch
+    // All cases fall through in this switch statement
     switch (tolower(last_char)) {
     case 'e':
 	multiplier *= 1024;    
@@ -1355,14 +1384,16 @@ int state::main(int _argc,char **_argv)
     if(ocb.tp) ocb.tp->wait_till_all_free();
 #endif
 
-    if(opt_debug>2){
-	std::cout << "\ndump hashlist after matching:\n";
-	ocb.dump_hashlist();
+    if (opt_debug>2)
+    {
+      std::cout << "\ndump hashlist after matching:\n";
+      ocb.dump_hashlist();
     }
 
-    /* If we were auditing, display the audit results */
-    if (ocb.primary_function == primary_audit){
-	ocb.display_audit_results();
+    // If we were auditing, display the audit results
+    if (ocb.primary_function == primary_audit)
+    {
+      ocb.display_audit_results();
     }
   
     /* We only have to worry about checking for unused hashes if one 
@@ -1371,8 +1402,12 @@ int state::main(int _argc,char **_argv)
      * also sets our return values in terms of inputs not being matched
      * or known hashes not being used
      */
-    if (ocb.opt_mode_match || ocb.opt_mode_match_neg){
-	ocb.finalize_matching();
+    if (ocb.opt_mode_match or 
+	ocb.opt_mode_match_neg or
+	(primary_match == ocb.primary_function) or
+	(primary_match_neg == ocb.primary_function))
+    {
+      ocb.finalize_matching();
     }
 
     /* If we were generating DFXML, finish the job */

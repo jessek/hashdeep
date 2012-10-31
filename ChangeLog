@@ -1,3 +1,10 @@
+2012-10-30  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* main.cpp: Converting break statements which fall through to consistent style.
+	* main.cpp: Added checks in hashdeep against user errors on command line
+	* dig.cpp: Adding specific message regarding SIS reparse points.
+	* blake: Removed code which won't be used
+
 2012-10-22  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* configure.ac: Uncommented check for big endian systems.
