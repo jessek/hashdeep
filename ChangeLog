@@ -1,3 +1,7 @@
+2012-11-09  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* man/hashdeep.1: Clarified Unicode statements
+
 2012-10-30  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* main.cpp: Converting break statements which fall through to consistent style.
