@@ -1,5 +1,9 @@
 ** Changes in version 4.4 (RBF DATE)
 
+* New Features
+
+      Added SHA3 hashes with sha3deep
+
 * Bug Fixes
 
       Added checks against user errors on Hashdeep command line

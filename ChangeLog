@@ -1,3 +1,10 @@
+2012-11-10  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* src/Makefile.am: Added sha3deep
+	* src/main.h: Added SHA3 defines
+	* src/main.cpp: Added SHA3 code
+	* src/common.h: Increased max size of context structure for SHA-3
+
 2012-11-09  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* man/hashdeep.1: Clarified Unicode statements

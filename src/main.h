@@ -62,22 +62,28 @@ typedef enum {
   alg_sha256, 
   alg_tiger,
   alg_whirlpool, 
+  alg_sha3,
   
-  /* alg_unknown must always be last in this list. It's used
-     as a loop terminator in many functions. */
+  // alg_unknown must always be last in this list. It's used
+  // as a loop terminator in many functions.
   alg_unknown 
 } hashid_t;
 
-inline std::ostream & operator << (std::ostream &os,const hashid_t &h) {
-    switch(h){
-    case alg_md5:       os << "alg_md5" ; break ;
-    case alg_sha1:      os << "alg_sha1" ; break ;
-    case alg_sha256:    os << "alg_sha256" ; break ;
-    case alg_tiger:     os << "alg_tige" ; break ;
-    case alg_whirlpool: os << "alg_whirlpool" ; break ;
-    case alg_unknown:   os << "alg_unknown" ; break ;
-    }
-    return os;
+inline std::ostream & operator << (std::ostream &os,const hashid_t &h) 
+{
+  switch (h)
+  {
+  case alg_md5:       os << "alg_md5" ; break ;
+  case alg_sha1:      os << "alg_sha1" ; break ;
+  case alg_sha256:    os << "alg_sha256" ; break ;
+    // RBF - This is "alg_tige" not "alg_tiger". Is that ok?
+  case alg_tiger:     os << "alg_tige" ; break ;
+  case alg_whirlpool: os << "alg_whirlpool" ; break ;
+  case alg_sha3:      os << "alg_sha3" ; break ;
+  case alg_unknown:   os << "alg_unknown" ; break ;
+  }
+
+  return os;
 }
 
 #define NUM_ALGORITHMS  alg_unknown
@@ -88,6 +94,7 @@ inline std::ostream & operator << (std::ostream &os,const hashid_t &h) {
 #define DEFAULT_ENABLE_SHA256      TRUE
 #define DEFAULT_ENABLE_TIGER       FALSE
 #define DEFAULT_ENABLE_WHIRLPOOL   FALSE
+#define DEFAULT_ENABLE_SHA3        FALSE
 
 class iomode {
 public:;

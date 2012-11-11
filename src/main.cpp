@@ -25,6 +25,7 @@
 #include "md5.h"
 #include "sha1.h"
 #include "sha256.h"
+#include "sha3.h"
 #include "tiger.h"
 #include "whirlpool.h"
 
@@ -444,6 +445,15 @@ void algorithm_t::load_hashing_algorithms()
 #endif
     add_algorithm(alg_tiger,     "tiger",     192, hash_init_tiger,     hash_update_tiger,     hash_final_tiger,     DEFAULT_ENABLE_TIGER);
     add_algorithm(alg_whirlpool, "whirlpool", 512, hash_init_whirlpool, hash_update_whirlpool, hash_final_whirlpool, DEFAULT_ENABLE_WHIRLPOOL);
+
+    // RBF - Add SHA3 here
+    add_algorithm(alg_sha3,
+		  "sha3",
+		  256,
+		  hash_init_sha3,
+		  hash_update_sha3,
+		  hash_final_sha3,
+		  DEFAULT_ENABLE_SHA3);
 }
 
 
@@ -501,7 +511,8 @@ int algorithm_t::algorithms_in_use_count()
 }
 
 
-/* C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c */
+// C++ string splitting code from 
+// http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss(s);
     std::string item;
@@ -524,38 +535,44 @@ void lowercase(std::string &s)
 }
 
 
-/*
- * Set inuse for each of the algorithms in the argument.
- */
+//
+// Set inuse for each of the algorithms in the argument.
+//
 void algorithm_t::enable_hashing_algorithms(std::string var)
 {
-    /* convert name to lowercase and remove any dashes */
-    std::transform(var.begin(), var.end(), var.begin(), ::tolower);
-
-    /* Split on the commas */
-    std::vector<std::string>algs = split(var,',');
-
-    for(std::vector<std::string>::const_iterator it = algs.begin();it!=algs.end();it++){
-	hashid_t id = get_hashid_for_name(*it);
-	if(id==alg_unknown){
-	    /* Check to see if *i is "all" */
-	    if(*it == "all"){
-		for(int j=0;j<NUM_ALGORITHMS;j++){
-		    hashes[j].inuse = TRUE;
-		}
-		return;
-	    }
-	    /* No idea what this algorithm is. */
-	    fprintf(stderr,
-		    "%s: Unknown algorithm: %s%s", 
-		    progname.c_str(), 
-		    (*it).c_str(),
-		    NEWLINE);
-	    try_msg();
-	    exit(EXIT_FAILURE);
+  // convert name to lowercase and remove any dashes 
+  std::transform(var.begin(), var.end(), var.begin(), ::tolower);
+  
+  // Split on the commas
+  std::vector<std::string>algs = split(var,',');
+  
+  for (std::vector<std::string>::const_iterator it = algs.begin();it!=algs.end();it++)
+  {
+    hashid_t id = get_hashid_for_name(*it);
+    if (id==alg_unknown) 
+    {
+      // Did the user specify to compute all hash algorithms?
+      if (*it == "all")
+      {
+	for (int j=0 ; j<NUM_ALGORITHMS ; j++)
+	{
+	  hashes[j].inuse = TRUE;
 	}
-	hashes[id].inuse = TRUE;
+	return;
+      }
+
+      // No idea what this algorithm is. 
+      fprintf(stderr,
+	      "%s: Unknown algorithm: %s%s", 
+	      progname.c_str(), 
+	      (*it).c_str(),
+	      NEWLINE);
+      try_msg();
+      exit(EXIT_FAILURE);
     }
+
+    hashes[id].inuse = TRUE;
+  }
 }
 
 
@@ -1221,19 +1238,21 @@ uint64_t state::find_block_size(std::string input_str)
 
 int main(int argc, char **argv)
 {
-    /* Because the main() function can handle wchar_t arguments on Win32,
-     * we need a way to reference those values. Thus we make a duplciate
-     * of the argc and argv values.
-     */ 
+  // Because the main() function can handle wchar_t arguments on Win32,
+  // we need a way to reference those values. Thus we make a duplciate
+  // of the argc and argv values.
 
-    // Initialize the plugable algorithm system and create the state object!
+  // Initialize the plugable algorithm system and create the state object!
+  
+  // Be sure that we were compiled correctly
+  assert(sizeof(off_t)==8);
 
-    assert(sizeof(off_t)==8);		// be sure that we were compiled correctly
-    algorithm_t::load_hashing_algorithms();		
+  algorithm_t::load_hashing_algorithms();		
 
-    state *s = new state();
-    exit(s->main(argc,argv));
+  state *s = new state();
+  exit(s->main(argc,argv));
 }
+
 
 int state::main(int _argc,char **_argv)
 {
@@ -1262,41 +1281,53 @@ int state::main(int _argc,char **_argv)
     size_t delim = progname.rfind(DIR_SEPARATOR);
     if(delim!=std::string::npos) progname.erase(0,delim+1);
 
-    /* Convert progname to lower case */
+    // Convert progname to lower case 
     std::transform(progname.begin(), progname.end(), progname.begin(), ::tolower);
     std::string algname = progname.substr(0,progname.find("deep"));
-    if(algname=="hash"){			// we are hashdeep
-	hashdeep_process_command_line(_argc,_argv);
-    } else {
-	algorithm_t::clear_algorithms_inuse();
-	char buf[256];
-	strcpy(buf,algname.c_str());
-	algorithm_t::enable_hashing_algorithms(buf);
-	for(int i=0;i<NUM_ALGORITHMS;++i){
-	    if(hashes[i].inuse){
-		md5deep_mode = true;
-		opt_md5deep_mode_algorithm = hashes[i].id;
-		break;
-	    }
+
+    if (algname=="hash")
+    {
+      // We were called as "hashdeep"
+      hashdeep_process_command_line(_argc,_argv);
+    } 
+    else 
+    {
+      // We were called as "[somethingelse]deep". Figure out which 
+      // algorithm and if we support that something else
+
+      algorithm_t::clear_algorithms_inuse();
+      char buf[256];
+      strcpy(buf,algname.c_str());
+      algorithm_t::enable_hashing_algorithms(buf);
+      for (int i=0;i<NUM_ALGORITHMS;++i)
+      {
+	if (hashes[i].inuse)
+	{
+	  md5deep_mode = true;
+	  opt_md5deep_mode_algorithm = hashes[i].id;
+	  break;
 	}
-	if(!md5deep_mode){
-	    cerr << progname << ": unknown hash: " <<algname << "\n";
-	    exit(1);
-	}
-	md5deep_process_command_line(_argc,_argv);
+      }
+      
+      if (not md5deep_mode)
+      {
+	cerr << progname << ": unknown hash: " <<algname << "\n";
+	exit(1);
+      }
+      md5deep_process_command_line(_argc,_argv);
     }
 
-
-    if(opt_debug==1){
-	printf("self-test...\n");
-	state::dig_self_test();
+    if (opt_debug==1)
+    {
+      printf("self-test...\n");
+      state::dig_self_test();
     }
+    
 
-
-    /* See if we can open a regular file output, if requested */
-    /* Set up the DFXML output if requested */
+    // See if we can open a regular file output, if requested 
+    // Set up the DFXML output if requested
     ocb.dfxml_startup(_argc,_argv);
-   
+    
 #ifdef _WIN32
     if (prepare_windows_command_line()){
 	ocb.fatal_error("Unable to process command line arguments");
