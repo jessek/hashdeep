@@ -11,9 +11,10 @@
 #include <new>
 #include <iostream>
 
-/* Add a fi to the hash list.
- * Be sure that the hash is all lower case, because that's what we use internally.
- */
+/// Add a fi to the hash list.
+///
+/// Be sure that the hash is all lower case, because that's what we 
+/// use internally.
 void hashlist::hashmap::add_file(file_data_t *fi,int alg_num)
 {
     if (fi->hash_hex[alg_num].size())
@@ -110,9 +111,10 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,
 				     fdht->file_name,
 				     fdht->file_number);
     
-    if (!matched)
+    if (not matched)
     {
-      continue;			// no match
+      // No match
+      continue;
     }
 
     if (matched_) 
@@ -121,16 +123,18 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,
     // Verify that all of the other hash functions for *it match fdt as well,
     // but only for the cases when we have a hash for both the master file
     // and the target file. 
-    for (int j=0;j<NUM_ALGORITHMS;j++)
+    for (int j=0 ; j<NUM_ALGORITHMS ; j++)
     {
-      if (hashes[j].inuse && j!=alg and
+      if (hashes[j].inuse and
+	  j != alg and
 	  fdht->hash_hex[j].size() and
 	  matched->hash_hex[j].size())
       {
 	if (fdht->hash_hex[j] != matched->hash_hex[j])
 	{
 	  // We have found a hash collision for one algorithm, but not all
-	  // of them. That is, MD5(A) == MD5(B), but SHA1(A) != SHA1(B).
+	  // of them. For example, MD5(A) == MD5(B), but SHA1(A) != SHA1(B).
+	  // See http://www.win.tue.nl/hashclash/ for a program to create these.
 	  return status_partial_match;
 	}
       }
@@ -155,7 +159,6 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,
     }
     else
     {
-      // RBF - Expand case insentitivity to regular matching modes?
       if (strcasecmp(fdht->file_name.c_str(), matched->file_name.c_str()))
 	return status_file_name_mismatch;
     }
@@ -171,11 +174,13 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,
 
 
 
-/**
- * Returns the file type of a given input file.
- * fn is provided so that error messages can be printed.
- */
-hashlist::hashfile_format hashlist::identify_format(class display *ocb,const std::string &fn,FILE *handle)
+///
+/// Returns the file type of a given input file.
+/// fn is provided so that error messages can be printed.
+///
+hashlist::hashfile_format hashlist::identify_format(class display *ocb,
+						    const std::string &fn,
+						    FILE *handle)
 {
     char buf[MAX_STRING_LENGTH];
 
@@ -265,17 +270,18 @@ void hashlist::enable_hashing_algorithms_from_hashdeep_file(class display *ocb,c
 void hashlist::dump_hashlist()
 {
     std::cout << "md5,sha1,bytes,filename   matched\n";
-    for(hashlist::const_iterator it = begin(); it!=end(); it++){
-	std::cout << (*it)->hash_hex[alg_md5] << "," << (*it)->hash_hex[alg_sha1] << ","
-		  << (*it)->file_bytes << "," << (*it)->file_name
-		  << "\tmatched=" << (*it)->matched_file_number << "\n";
+    for (hashlist::const_iterator it = begin(); it!=end(); it++)
+    {
+      std::cout << (*it)->hash_hex[alg_md5] << "," << (*it)->hash_hex[alg_sha1] << ","
+		<< (*it)->file_bytes << "," << (*it)->file_name
+		<< "\tmatched=" << (*it)->matched_file_number << "\n";
     }
 }
 
 uint64_t hashlist::total_matched()
 {
     uint64_t total = 0;
-    for(hashlist::const_iterator it = begin(); it!=end(); it++)
+    for (hashlist::const_iterator it = begin(); it!=end(); it++)
     {
       if ( (*it)->matched_file_number > 0) 
 	  total++;
@@ -415,15 +421,16 @@ hashlist::load_hash_file(display *ocb,const std::string &fn)
  */
 const char *hashlist::searchstatus_to_str(searchstatus_t val)
 {
-    switch (val) {
-    case searchstatus_ok:           return "ok";
-    case status_match:              return "complete match";
-    case status_partial_match:      return "partial match";
-    case status_file_size_mismatch: return "file size mismatch";
-    case status_file_name_mismatch: return "file name mismatch";
-    case status_no_match: return "no match"; 
+    switch (val) 
+      {
+      case searchstatus_ok:           return "ok";
+      case status_match:              return "complete match";
+      case status_partial_match:      return "partial match";
+      case status_file_size_mismatch: return "file size mismatch";
+      case status_file_name_mismatch: return "file name mismatch";
+      case status_no_match:           return "no match"; 
 	
-    default:
+      default:
 	return "unknown";
     }      
 }

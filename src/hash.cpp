@@ -42,11 +42,12 @@ static int file_fatal_error()
     return FALSE;
 }
 
-static std::string make_stars(int count)
+static std::string make_stars(size_t count)
 {
     std::string ret;
-    for(int i=0;i<count;i++){
-	ret.push_back('*');
+    for (size_t i = 0 ; i < count ; i++)
+    {
+      ret.push_back('*');
     }
     return ret;
 }
@@ -286,24 +287,37 @@ void file_data_hasher_t::hash()
 	    ocb->fatal_error("hash.cpp: iomode setting invalid (%d)",ocb->opt_iomode);
 	}
 
-	/*
-	 * If this file is above the size threshold set by the user, skip it
-	 * and set the hash to be stars
-	 */
-	if ((ocb->mode_size) && (fdht->stat_bytes > ocb->size_threshold)) {
-	    if (ocb->mode_size_all) {
-		for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) {
-		    if (hashes[i].inuse){
-			fdht->hash_hex[i] = make_stars(hashes[i].bit_length/4);
-		    }
-		}
-		if(md5deep_mode){
-		    fdht->ocb->md5deep_display_hash(fdht,0); // no hash
-		} else {
-		    fdht->ocb->display_hash(fdht,0);
-		}
+	// If this file is above the size threshold set by the user, skip it
+	// and set the hash to be stars
+	if ((ocb->mode_size) and (fdht->stat_bytes > ocb->size_threshold)) 
+	{
+	  if (ocb->mode_size_all) 
+	  {
+	    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i) 
+	    {
+	      if (hashes[i].inuse)
+	      {
+		fdht->hash_hex[i] = make_stars(hashes[i].bit_length/4);
+	      }
 	    }
-	    return ;			// close will happend when the fdht is killed
+
+	    if (md5deep_mode)
+	    {
+	      fdht->ocb->md5deep_display_hash(fdht,0); // no hash
+	    } 
+	    else 
+	    {
+	      // RBF - This line causes a CRASH. The function display_hash
+	      // RBF - accesses fields in the second argument, which is supposed
+	      // RBF - to be a pointer, without checking whether the pointer
+	      // RBF - is valid or not.
+	      // RBF - Replicate with ./hashdeep -I 1 *
+	      fdht->ocb->display_hash(fdht,0);
+	    }
+	  }
+
+	  // close will happend when the fdht is killed
+	  return ;
 	}
     }
 

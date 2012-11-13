@@ -738,11 +738,13 @@ void  display::md5deep_display_hash(file_data_hasher_t *fdht,const hash_context_
 /*
  * Externally called to display a simple hash
  */
-void display::display_hash_simple(file_data_hasher_t *fdht,const hash_context_obj *hc)
+void display::display_hash_simple(file_data_hasher_t *fdht,
+				  const hash_context_obj *hc)
 {
-    if(this->dfxml){
-	fdht->compute_dfxml(opt_show_matched,hc);
-	return;
+    if (this->dfxml)
+    {
+      fdht->compute_dfxml(opt_show_matched,hc);
+      return;
     }
 
     /* Old comment:
@@ -766,10 +768,12 @@ void display::display_hash_simple(file_data_hasher_t *fdht,const hash_context_ob
 
     line << hc->read_len << ",";
 
-    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
-	if (hashes[i].inuse){
-	    line << fdht->hash_hex[i] << ",";
-	}
+    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)
+    {
+      if (hashes[i].inuse)
+      {
+	line << fdht->hash_hex[i] << ",";
+      }
     }
     line << fmt_filename(fdht);
     if(fdht->ocb->piecewise_size > 0){

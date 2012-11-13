@@ -157,7 +157,7 @@ void state::hashdeep_usage()
     ocb.status("-s        - silent mode. Suppress all error messages");
     ocb.status("-b        - prints only the bare name of files; all path information is omitted");
     ocb.status("-l        - print relative paths for filenames");
-    ocb.status("-i        - only process files smaller than the given threshold");
+    ocb.status("-i/-I     - only process files smaller than the given threshold");
     ocb.status("-o        - only process certain types of files. See README/manpage");
     ocb.status("-v        - verbose mode. Use again to be more verbose");
     ocb.status("-d        - output in DFXML; -W FILE - write to FILE.");
@@ -174,6 +174,7 @@ void state::hashdeep_usage()
     ocb.status("-V        - display version number and exit");
     ocb.status("-0        - use a NUL (\\0) for newline.");
     ocb.status("-u        - escape Unicode");
+    ocb.status("-E        - Use case insensitive matching for filenames in audit mode");
     ocb.status("-B        - verbose mode; repeat for more verbosity");
     ocb.status("-C        - OS X only --- use Common Crypto hash functions");
     ocb.status("-Fb       - I/O mode buffered; -Fu unbuffered; -Fm memory-mapped");
@@ -446,7 +447,6 @@ void algorithm_t::load_hashing_algorithms()
     add_algorithm(alg_tiger,     "tiger",     192, hash_init_tiger,     hash_update_tiger,     hash_final_tiger,     DEFAULT_ENABLE_TIGER);
     add_algorithm(alg_whirlpool, "whirlpool", 512, hash_init_whirlpool, hash_update_whirlpool, hash_final_whirlpool, DEFAULT_ENABLE_WHIRLPOOL);
 
-    // RBF - Add SHA3 here
     add_algorithm(alg_sha3,
 		  "sha3",
 		  256,
@@ -641,7 +641,6 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
       break;
       
     case 'I':
-      // RBF - Document -I mode in hashdeep usage menu (-hh mode)
       ocb.mode_size_all=true;
       // falls through
     case 'i':
@@ -742,7 +741,6 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
     case 'u': ocb.opt_unicode_escape = true;break;
     case 'j': ocb.opt_threadcount = atoi(optarg); break;
     case 'F': ocb.opt_iomode = iomode::toiomode(optarg);break;
-      // RBF - Document -E mode in hashdeep. Add to md5deep?
     case 'E': ocb.opt_case_sensitive = false; break;
 
     case 'h':
@@ -751,7 +749,7 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
 	did_usage = true;
 	break;
       
-    case 'D': opt_debug = atoi(optarg);break;
+    case 'D': opt_debug = atoi(optarg); break;
     default:
       try_msg();
       exit(EXIT_FAILURE);
@@ -1038,6 +1036,7 @@ int state::md5deep_process_command_line(int argc_, char **argv_)
 	case 'd': ocb.xml_open(stdout);		break;
 	case 'f': opt_input_list = optarg;	break;
 	case 'I':
+	  // RBF - Document -I mode for hashdeep man page
 	    ocb.mode_size_all=true;
 	    // falls through
 	case 'i':

@@ -9,7 +9,7 @@ hashdeep \- Compute, compare, or audit multiple message digests
 .br
 .B hashdeep
 [-c <alg1>[,<alg2>]] [-k <file>] [-i <size>] [\-f <file>] 
-[\-o <fbcplsde>] [-amxwMXrespblvv] [\-F<bum>] [\-j <num>] [\fBFILES\fR]
+[\-o <fbcplsde>] [-amxwMXreEspblvv] [\-F<bum>] [\-j <num>] [\fBFILES\fR]
 
 
 .SH DESCRIPTION
@@ -134,6 +134,11 @@ remaining for each file being processed. Time estimates for files
 larger than 4GB are not available on Windows. This mode may not be
 used with th \-p mode.
 
+.TP
+\fB\-E\fR
+When in audit mode, performs case insensitive matching of filenames.
+For example, \\foo\\bar will match to \\Foo\\BAR. This can be important
+on Windows systems, where filenames are case insensitive.
 
 .TP
 \fB\-i <size> \fR
