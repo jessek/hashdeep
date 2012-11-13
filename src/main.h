@@ -457,7 +457,7 @@ public:;
      * look up a fdt by hash code(s) and return if it is present or not.
      * optionally return a pointer to it as well.
      */
-    searchstatus_t	search(const file_data_hasher_t *fdht, file_data_t ** matched) ; 
+    searchstatus_t	search(const file_data_hasher_t *fdht, file_data_t ** matched, bool case_sensitive) ; 
     uint64_t		total_matched(); // return the total matched from all calls to search()
 
     /****************************************************************/
@@ -564,39 +564,40 @@ class display {
     class audit_stats	match;		// for the audit mode
     status_t		return_code;	// prevously returned by hash() and dig().
 
-public:
-    display():
-	out(&std::cout),
-	banner_displayed(0),dfxml(0),
-	mode_triage(false),
-	mode_not_matched(false),mode_quiet(false),mode_timestamp(false),
-	mode_barename(false),
-	mode_size(false),mode_size_all(false),
-	opt_silent(false),
-	opt_verbose(0),
-	opt_estimate(false),
-	opt_relative(false),
-	opt_unicode_escape(false),
-	opt_mode_match(false),
-	opt_mode_match_neg(false),
-	opt_csv(false),
-	opt_asterisk(false),
-	opt_zero(false),
-	opt_display_size(false),
-	opt_display_hash(false),
-	opt_show_matched(false),
-	opt_iomode(iomode::buffered),	// by default, use buffered
+ public:
+ display():
+    out(&std::cout),
+      banner_displayed(0),dfxml(0),
+      mode_triage(false),
+      mode_not_matched(false),mode_quiet(false),mode_timestamp(false),
+      mode_barename(false),
+      mode_size(false),mode_size_all(false),
+      opt_silent(false),
+      opt_verbose(0),
+      opt_estimate(false),
+      opt_relative(false),
+      opt_unicode_escape(false),
+      opt_mode_match(false),
+      opt_mode_match_neg(false),
+      opt_csv(false),
+      opt_asterisk(false),
+      opt_zero(false),
+      opt_display_size(false),
+      opt_display_hash(false),
+      opt_show_matched(false),
+      opt_case_sensitive(true),
+      opt_iomode(iomode::buffered),	// by default, use buffered
 #ifdef HAVE_PTHREAD
-	opt_threadcount(threadpool::numCPU()),
-	tp(0),
+      opt_threadcount(threadpool::numCPU()),
+      tp(0),
 #else
-	opt_threadcount(0),
+      opt_threadcount(0),
 #endif
-	size_threshold(0),
-	piecewise_size(0),	
-	primary_function(primary_compute){
-	}
-
+      size_threshold(0),
+      piecewise_size(0),	
+      primary_function(primary_compute){
+      }
+    
     /* These variables are read-only after threading starts */
     bool	mode_triage;
     bool	mode_not_matched;
@@ -619,6 +620,7 @@ public:
     bool	opt_display_size;
     bool	opt_display_hash;
     bool	opt_show_matched;
+    bool        opt_case_sensitive;
     int		opt_iomode;
     int		opt_threadcount;
 
@@ -842,7 +844,7 @@ public:;
     char	**argv;
 #endif
 
-    /* configuration and output */
+    // configuration and output
     display	ocb;		// output control block
 
     // Which filetypes this algorithm supports and their position in the file

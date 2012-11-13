@@ -1,3 +1,7 @@
+2012-11-12  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* src/hashlist.cpp: Added experimental mode for case insensitive matching. Also changes in main.cpp, main.h, and display.cpp
+
 2012-11-10  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* src/Makefile.am: Added sha3deep

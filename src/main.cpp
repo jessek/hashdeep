@@ -615,44 +615,45 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
     bool did_usage = false;
   int i;
   
-  while ((i=getopt(argc_,argv_,"abc:CdeF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
+  while ((i=getopt(argc_,argv_,"abc:CdeEF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
     switch (i) 
-      {
-      case 'a': 
-	hashdeep_check_matching_modes();
-	ocb.primary_function = primary_audit;      
-	break;
-
-      case 'C': 
-	opt_enable_mac_cc = true; 
-	break;
-
-      case 'd': 
-	ocb.xml_open(stdout);	
-	break;
-
-      case 'f': 
-	opt_input_list = optarg;	
-	break;
-
-      case 'o':
-	mode_expert=true; 
-	setup_expert_mode(optarg);
-	break;
-
-    case 'I': 
-	ocb.mode_size_all=true;
-	// falls through
+    {
+    case 'a': 
+      hashdeep_check_matching_modes();
+      ocb.primary_function = primary_audit;      
+      break;
+      
+    case 'C': 
+      opt_enable_mac_cc = true; 
+      break;
+      
+    case 'd': 
+      ocb.xml_open(stdout);	
+      break;
+      
+    case 'f': 
+      opt_input_list = optarg;	
+      break;
+      
+    case 'o':
+      mode_expert=true; 
+      setup_expert_mode(optarg);
+      break;
+      
+    case 'I':
+      // RBF - Document -I mode in hashdeep usage menu (-hh mode)
+      ocb.mode_size_all=true;
+      // falls through
     case 'i':
-	ocb.mode_size = true;
-	ocb.size_threshold = find_block_size(optarg);
-	if (ocb.size_threshold==0) 
-	{
-	  ocb.error("Requested size threshold implies not hashing anything");
-	  exit(status_t::STATUS_USER_ERROR);
-	}
-	break;
-
+      ocb.mode_size = true;
+      ocb.size_threshold = find_block_size(optarg);
+      if (ocb.size_threshold==0) 
+      {
+	ocb.error("Requested size threshold implies not hashing anything");
+	exit(status_t::STATUS_USER_ERROR);
+      }
+      break;
+      
     case 'c': 
       ocb.primary_function = primary_compute;
       /* Before we parse which algorithms we're using now, we have 
@@ -686,6 +687,7 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
     case 'e': ocb.opt_estimate = true;	break;
     case 'r': mode_recursive=true;	break;
     case 's': ocb.opt_silent = true;	break;
+
       
     case 'p':
 	ocb.piecewise_size = find_block_size(optarg);
@@ -740,6 +742,8 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
     case 'u': ocb.opt_unicode_escape = true;break;
     case 'j': ocb.opt_threadcount = atoi(optarg); break;
     case 'F': ocb.opt_iomode = iomode::toiomode(optarg);break;
+      // RBF - Document -E mode in hashdeep. Add to md5deep?
+    case 'E': ocb.opt_case_sensitive = false; break;
 
     case 'h':
 	usage_count++;

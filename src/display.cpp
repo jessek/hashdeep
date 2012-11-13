@@ -451,8 +451,9 @@ std::string display::fmt_size(const file_data_t *fdt) const
 }
 
 
-/* The old display_match_result from md5deep */
-void display::md5deep_display_match_result(file_data_hasher_t *fdht,const hash_context_obj *hc)
+// The old display_match_result from md5deep 
+void display::md5deep_display_match_result(file_data_hasher_t *fdht,
+					   const hash_context_obj *hc)
 {  
     lock();
     const file_data_t *fs = known.find_hash(opt_md5deep_mode_algorithm,
@@ -510,7 +511,9 @@ void display::display_match_result(file_data_hasher_t *fdht,const hash_context_o
     int should_display = (primary_match_neg == primary_function);
     
     lock();				// protects the search and the printing
-    hashlist::searchstatus_t m = known.search(fdht,&matched_fdt);
+    hashlist::searchstatus_t m = known.search(fdht,
+					      &matched_fdt,
+					      opt_case_sensitive);
     unlock();
 
     std::stringstream line1;
@@ -568,7 +571,9 @@ int display::audit_update(file_data_hasher_t *fdht)
 {
     file_data_t *matched_fdht=0;
     lock();				// protects the search and the printing
-    hashlist::searchstatus_t m = known.search(fdht,&matched_fdht);
+    hashlist::searchstatus_t m = known.search(fdht,
+					      &matched_fdht,
+					      opt_case_sensitive);
     unlock();
     std::string line;
     switch(m){
