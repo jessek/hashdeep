@@ -1,5 +1,9 @@
-// Original source:
-// https://lwn.net/Articles/518415/
+// This code was written by Dr. Markku-Juhani O. Saarinen
+// who graciously donated it to the public domain.
+// See http://www.mjos.fi/dist/readable_keccak.tgz for the 
+// original source code.
+
+// Modifications made by Jesse Kornblum.
 // $Id$
 
 #include "sha3.h"
