@@ -1,3 +1,7 @@
+2012-11-29  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* src/dig.cpp: Experimental change to parse single instance storage (SIS) junction points.
+
 2012-11-12  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* src/hashlist.cpp: Added experimental mode for case insensitive matching. Also changes in main.cpp, main.h, and display.cpp

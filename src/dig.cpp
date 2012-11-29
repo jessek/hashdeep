@@ -289,9 +289,8 @@ bool state::is_junction_point(const std::wstring &fn)
   {
     if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)    
     {
-      // We're going to skip this reparse point no matter what,
-      // but we may want to display a message just in case.
-      // TODO: Maybe have the option to follow symbolic links?
+      // We're probably going to skip this reparse point, 
+      // but not always. (See the logic below.)
       status = true;
 
       // Tag values come from 
@@ -304,17 +303,15 @@ bool state::is_junction_point(const std::wstring &fn)
 	break;
 
       case IO_REPARSE_TAG_SYMLINK:
+	// TODO: Maybe have the option to follow symbolic links?
 	ocb.error_filename(fn,"Symbolic link, skipping");
 	break;
 
       case IO_REPARSE_TAG_SIS:
-	// RBF - Should we parse SIS files? 
-
 	// Single Instance Storage
 	// "is a system's ability to keep one copy of content that multiple users or computers share"
 	// http://blogs.technet.com/b/filecab/archive/2006/02/03/single-instance-store-sis-in-windows-storage-server-r2.aspx
-
-	ocb.error_filename(fn,"Single Instance Storage pointer, skipping");
+	status = false;
 	break;
 
       default:
@@ -330,8 +327,11 @@ bool state::is_junction_point(const std::wstring &fn)
     // if it fails.
     FindClose(hFind);
   }
+
   return status;
 }
+
+
 // This is experimental code for reparse point process
 // We don't use it yet, but I don't want to delete it
 // until I know what I'm doing. (jk 1 Mar 2009)
