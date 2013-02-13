@@ -269,6 +269,7 @@ do
    ###
    ### HERE IT IS:
    ###
+
    $cmd 2>test$i.err | sed s+$BASE/++ \
         | sed s+"## C:[^ ]*>"+"## C:>"+ | sed s+"C:[^> ]*hashdeep"+C:/hashdeep+ | sort  > test$i.out
    ###
@@ -280,10 +281,15 @@ do
 
      # extra addition for test 47
      if [ $i = 47 ]; then
-       echo "   Input files examined: 0" >> ref/test$i.out
-       echo "  Known files expecting: 0" >> ref/test$i.out
-       sort ref/test$i.out > ref/test$i.out2
-       mv ref/test$i.out2 ref/test$i.out
+       if grep 'Input files examined' ref/test$i.out ; then
+         echo Fixup for test 47 no longer required
+       else
+         echo Applying fixup for test 47
+         echo "   Input files examined: 0" >> ref/test$i.out
+         echo "  Known files expecting: 0" >> ref/test$i.out
+         sort ref/test$i.out > ref/test$i.out2
+         mv ref/test$i.out2 ref/test$i.out
+       fi
      fi
 
      echo ok
