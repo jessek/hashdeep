@@ -32,7 +32,7 @@ For historical reasons, the program has different options and features
 when run with the names "hashdeep" and "md5deep."
 
 hashdeep has a feature called "audit" which:
-> * Can also use a list of known hashes to audit a set of FILES. Errors
+> \* Can also use a list of known hashes to audit a set of FILES. Errors
 >   are reported to standard error. If no FILES are specified, reads from
 >   standard input.
 >
@@ -65,8 +65,8 @@ Windows-based systems have one set of API calls for ASCII-based
 filenames and another set for filenames encoded as UCS-2, which
 "produces a fixed-length format by simply using the code point as the
 16-bit code unit and produces exactly the same result as UTF-16 for
-63,488 code points in the range 0-0xFFFF" according to wikipedia.
-(http://en.wikipedia.org/wiki/UTF-16/UCS-2) But wikipedia disputes the
+63,488 code points in the range 0-0xFFFF" according to [wikipedia]
+(http://en.wikipedia.org/wiki/UTF-16/UCS-2). But wikipedia disputes the
 factual accuracy of this statement on the talk page. it's pretty clear
 that nobody is entirely sure that Windows actually does, and Windows
 itself may not be consistent.
@@ -87,11 +87,11 @@ Fortunately, we never really need to convert back.
 Notice that on Windows the files hashed can have unicode characters
 but the file with the hashes must have an ASCII name.
 
-COMPILING FOR WINDOWS:
-	  -D_UNICODE causes TCHAR to be defined as 'wchar_t'.
+* COMPILING FOR WINDOWS:
+	  * -D_UNICODE causes TCHAR to be defined as 'wchar_t'.
 
-COMPILING FOR POSIX:
-	  -D_UNICODE is not defined, causing TCHAR to be defined as 'char'.
+* COMPILING FOR POSIX:
+	  * -D_UNICODE is not defined, causing TCHAR to be defined as 'char'.
 
 Previously, win32 functions were controlled with #ifdef statements, like this:
 
@@ -161,11 +161,14 @@ http://www.cs.technion.ac.il/~biham/Reports/Tiger/
 The Whirlpool algorithm is defined at:
 http://planeta.terra.com.br/informatica/paulobarreto/WhirlpoolPage.html
 
-================================================================
-Theory of operation.
+## Theory of Operation
 
-main.cpp    - sets up the system.
-dig.cpp     - iterates through the individual directories.
- 	    - calls hash_file() in hash.cpp for each file to hash
-hash.cpp    - performs the hashing of each file.
-display.cpp - stores/displays the results.
+* main.cpp
+  * sets up the system
+* dig.cpp
+  * iterates through the individual directories
+  * calls hash_file() in hash.cpp for each file to hash
+* hash.cpp
+  * performs the hashing of each file
+* display.cpp
+  * stores/displays the results
