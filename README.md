@@ -87,11 +87,11 @@ Fortunately, we never really need to convert back.
 Notice that on Windows the files hashed can have unicode characters
 but the file with the hashes must have an ASCII name.
 
-* COMPILING FOR WINDOWS:
-	  * -D_UNICODE causes TCHAR to be defined as 'wchar_t'.
+COMPILING FOR WINDOWS:
+> -D_UNICODE causes TCHAR to be defined as 'wchar_t'.
 
-* COMPILING FOR POSIX:
-	  * -D_UNICODE is not defined, causing TCHAR to be defined as 'char'.
+COMPILING FOR POSIX:
+> -D_UNICODE is not defined, causing TCHAR to be defined as 'char'.
 
 Previously, win32 functions were controlled with #ifdef statements, like this:
 
