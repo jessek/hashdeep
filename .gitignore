@@ -1,1 +1,24 @@
+# Autoconf and OS X files
 .DS_Store
+*.o
+*~
+*Makefile
+*Makefile.in
+config.*
+aclocal.m4
+autom4te.cache
+.deps
+configure
+stamp-h1
+stamp-h
+test-driver
+
+# Goals
+src/md5deep
+src/hashdeep
+src/sha1deep
+src/sha256deep
+src/whirlpooldeep
+src/tigerdeep
+src/sha3deep
+
