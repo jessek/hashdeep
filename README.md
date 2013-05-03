@@ -10,11 +10,14 @@ See the file [NEWS](NEWS) for a list of changes between releases.
 See the file [COPYING](COPYING) for information about the licensing for this program.
 
 See the file [INSTALL](INSTALL) for (generic) compilation and installation
-instructions. Here's the short version:
+instructions. Here's the short version that should just work in many cases:
 
->$ ./configure
->$ make
->$ make install
+```shell
+sh bootstrap.sh # runs autoconf, automake
+./configure
+make
+make install
+```
 
 Note that you must be normally root to install to the default location.
 The sudo command is helpful for doing so. You can specify an alternate
