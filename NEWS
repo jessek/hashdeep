@@ -4,6 +4,8 @@
 
       Added SHA3 hashes with sha3deep
 
+      Added case insensitive auditing with -E mode
+
 * Bug Fixes
 
       Added checks against user errors on Hashdeep command line
