@@ -1,3 +1,7 @@
+2013-05-07  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* configure.ac: Added patch from dago to check for MAP_FILE
+
 2012-11-29  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* src/dig.cpp: Experimental change to parse single instance storage (SIS) junction points.
