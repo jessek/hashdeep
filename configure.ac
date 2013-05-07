@@ -138,7 +138,8 @@ AC_CHECK_HEADERS([libgen.h fcntl.h limits.h inttypes.h malloc.h stdint.h stdlib.
 			   CommonCrypto/CommonDigest.h
 			   ])
 
-
+# Definition of MAP_FILE is missing e.g. on Solaris
+AC_CHECK_DECLS([MAP_FILE])
 
 # These functions not available everywhere
 AC_CHECK_FUNCS([_gmtime64_s _gmtime64 gmtime_r mmap usleep mkstemp vasprintf getrusage getprogname isxdigit])
