@@ -274,7 +274,11 @@ void file_data_hasher_t::hash()
 		return;
 	    }
 #ifdef HAVE_MMAP
-	    fdht->base = (uint8_t *)mmap(0,fdht->stat_bytes,PROT_READ,MAP_FILE|MAP_SHARED,fd,0);
+	    fdht->base = (uint8_t *)mmap(0,fdht->stat_bytes,PROT_READ,
+#if HAVE_DECL_MAP_FILE
+		MAP_FILE|
+#endif
+		MAP_SHARED,fd,0);
 	    if(fdht->base>0){		
 		/* mmap is successful, so set the bounds.
 		 * if it is not successful, we default to reading the fd
