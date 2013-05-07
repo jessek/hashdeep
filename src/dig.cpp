@@ -753,16 +753,30 @@ void state::dig_win32(const std::wstring &fn)
 	return ;
     }
 
-    // Filenames without wildcards can be processed by the
-    // normal recursion code.
+    // Short filenames and filenames without wildcards can be processed
+    // by the normal recursion code.
+    size_t length = fn.size();
     size_t asterisk = fn.find(L'*');
     size_t question  = fn.find(fn,L'?');
-    if (asterisk==std::wstring::npos && question==std::wstring::npos){
+    if (length < PATH_MAX and 
+	asterisk==std::wstring::npos and 
+	question==std::wstring::npos)
+    {
 	dig_normal(fn);
 	return;
     }
   
-    hFind = FindFirstFile(fn.c_str(), &FindFileData);
+    // If the string doesn't begin with the Extended Length Path prefix,
+    // we should add it. See
+    // http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
+    // for details.
+    std::wstring extended_fn;
+    if (fn.find(L"\\\\?\\") != 0) 
+      extended_fn = std::wstring(L"\\\\?\\") + fn;
+    else
+      extended_fn = fn;
+
+    hFind = FindFirstFile(extended_fn.c_str(), &FindFileData);
     if (INVALID_HANDLE_VALUE == hFind)  {
 	ocb.error_filename(fn,"No such file or directory");
 	return;
@@ -771,50 +785,56 @@ void state::dig_win32(const std::wstring &fn)
 #define FATAL_ERROR_UNK(A) if (NULL == A) fatal_error("%s: %s", progname.c_str(), strerror(errno));
 #define FATAL_ERROR_MEM(A) if (NULL == A) fatal_error("%s: Out of memory",progname.c_str());
   
-    tstring dirname = win32_dirname(fn);
-    if(dirname.size()>0) dirname += _TEXT(DIR_SEPARATOR);
+    tstring dirname = win32_dirname(extended_fn);
+    if (dirname.size()>0) 
+      dirname += _TEXT(DIR_SEPARATOR);
   
     int rc = 1;
-    while (rc!=0)  {
-	if (!(is_special_dir(FindFileData.cFileName)))    {
-	    // The filename we've found doesn't include any path information.
-	    // We have to add it back in manually. Thankfully Windows doesn't
-	    // allow wildcards in the early part of the path. For example,
-	    // we will never see:  c:\bin\*\tools 
-	    //
-	    // Because the wildcard is always in the last part of the input
-	    // (e.g. c:\bin\*.exe) we can use the original dirname, combined
-	    // with the filename we've found, to make the new filename. 
-      
-	    std::wstring new_fn;
-
-	    new_fn = dirname + FindFileData.cFileName;
-	    if (!ocb.opt_relative) {
-		new_fn = global::get_realpath(new_fn);
-	    }
-      
-	    if (!(is_junction_point(new_fn))) dig_normal(new_fn); 
+    while (rc!=0)  
+    {
+      if (not (is_special_dir(FindFileData.cFileName)))    
+      {
+	// The filename we've found doesn't include any path information.
+	// We have to add it back in manually. Thankfully Windows doesn't
+	// allow wildcards in the early part of the path. For example,
+	// we will never see:  c:\bin\*\tools 
+	//
+	// Because the wildcard is always in the last part of the input
+	// (e.g. c:\bin\*.exe) we can use the original dirname, combined
+	// with the filename we've found, to make the new filename. 
+	
+	std::wstring new_fn;
+	    
+	new_fn = dirname + FindFileData.cFileName;
+	if (!ocb.opt_relative) {
+	  new_fn = global::get_realpath(new_fn);
 	}
+      
+	if (!(is_junction_point(new_fn))) dig_normal(new_fn); 
+      }
     
-	rc = FindNextFile(hFind, &FindFileData);
+      rc = FindNextFile(hFind, &FindFileData);
     }
   
     // rc now equals zero, we can't find the next file
 
-    if (ERROR_NO_MORE_FILES != GetLastError())  {
-	// The Windows API for getting an intelligible error message
-	// is beserk. Rather than play their silly games, we 
-	// acknowledge that an unknown error occured and hope we
-	// can continue.
-	ocb.error_filename(fn,"Unknown error while expanding wildcard");
-	return;
+    if (ERROR_NO_MORE_FILES != GetLastError())  
+    {
+      // The Windows API for getting an intelligible error message
+      // is beserk. Rather than play their silly games, we 
+      // acknowledge that an unknown error occured and hope we
+      // can continue.
+      ocb.error_filename(fn,"Unknown error while expanding wildcard");
+      return;
     }
   
     rc = FindClose(hFind);
-    if (0 == rc)  {
-	ocb.error_filename(fn,"Unknown error while cleaning up wildcard expansion");
+    if (0 == rc)
+    {
+      ocb.error_filename(fn,"Unknown error while cleaning up wildcard expansion");
     }
-    if(opt_debug) ocb.status("state::dig_win32(%s)",global::make_utf8(fn).c_str());
+    if (opt_debug) 
+      ocb.status("state::dig_win32(%s)",global::make_utf8(fn).c_str());
 }
 #endif
 
