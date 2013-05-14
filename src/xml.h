@@ -177,7 +177,7 @@ public:
 
 	time_t t = time(0);
 	char buf[32];
-	strftime(buf,sizeof(buf),"%FT%TZ",gmtime(&t));
+	strftime(buf,sizeof(buf),"%Y-%m-%dT%H:%M:%SZ",gmtime(&t));
 	xmlout("start_time",buf);
 	pop();			// <execution_environment>
     }
