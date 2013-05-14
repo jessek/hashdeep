@@ -837,7 +837,7 @@ void display::dfxml_timeout(const std::string &tag,const timestamp_t &val)
 {
     char buf[256];
     struct tm tm;
-    strftime(buf,sizeof(buf),"%FT%TZ",portable_gmtime(&tm,&val));
+    strftime(buf,sizeof(buf),"%Y-%m-%dT%H:%M:%SZ",portable_gmtime(&tm,&val));
     dfxml->xmlout(tag,buf);
 }
 
