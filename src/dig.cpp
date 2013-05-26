@@ -745,27 +745,16 @@ void state::dig_win32(const std::wstring &fn)
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind;
 
-    if(opt_debug) ocb.status("*** state::dig_win32(%s)",
-			     global::make_utf8(fn).c_str());
+    if (opt_debug) 
+      ocb.status("*** state::dig_win32(%s)",
+		 global::make_utf8(fn).c_str());
 
-    if (is_win32_device_file(fn)){
-	ocb.hash_file(fn);
-	return ;
-    }
-
-    // Short filenames and filenames without wildcards can be processed
-    // by the normal recursion code.
-    size_t length = fn.size();
-    size_t asterisk = fn.find(L'*');
-    size_t question  = fn.find(fn,L'?');
-    if (length < PATH_MAX and 
-	asterisk==std::wstring::npos and 
-	question==std::wstring::npos)
+    if (is_win32_device_file(fn))
     {
-	dig_normal(fn);
+	ocb.hash_file(fn);
 	return;
     }
-  
+
     // If the string doesn't begin with the Extended Length Path prefix,
     // we should add it. See
     // http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
@@ -777,21 +766,20 @@ void state::dig_win32(const std::wstring &fn)
       extended_fn = fn;
 
     hFind = FindFirstFile(extended_fn.c_str(), &FindFileData);
-    if (INVALID_HANDLE_VALUE == hFind)  {
-	ocb.error_filename(fn,"No such file or directory");
-	return;
+    if (INVALID_HANDLE_VALUE == hFind)
+    {
+      ocb.error_filename(fn,"No such file or directory");
+      return;
     }
   
 #define FATAL_ERROR_UNK(A) if (NULL == A) fatal_error("%s: %s", progname.c_str(), strerror(errno));
 #define FATAL_ERROR_MEM(A) if (NULL == A) fatal_error("%s: Out of memory",progname.c_str());
   
     tstring dirname = win32_dirname(extended_fn);
-    if (dirname.size()>0) 
+    if (dirname.size() > 0) 
       dirname += _TEXT(DIR_SEPARATOR);
   
-    int rc = 1;
-    while (rc!=0)  
-    {
+    do {
       if (not (is_special_dir(FindFileData.cFileName)))    
       {
 	// The filename we've found doesn't include any path information.
@@ -806,15 +794,14 @@ void state::dig_win32(const std::wstring &fn)
 	std::wstring new_fn;
 	    
 	new_fn = dirname + FindFileData.cFileName;
-	if (!ocb.opt_relative) {
+	if (not ocb.opt_relative) {
 	  new_fn = global::get_realpath(new_fn);
 	}
       
-	if (!(is_junction_point(new_fn))) dig_normal(new_fn); 
+	if (not (is_junction_point(new_fn))) 
+	  dig_normal(new_fn); 
       }
-    
-      rc = FindNextFile(hFind, &FindFileData);
-    }
+    } while (FindNextFile(hFind, &FindFileData) != 0);
   
     // rc now equals zero, we can't find the next file
 
