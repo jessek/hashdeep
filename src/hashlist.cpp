@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 /** hashlist.cpp
  * Implements a list of hashes for local database, searching, etc.
@@ -13,7 +13,7 @@
 
 /// Add a fi to the hash list.
 ///
-/// Be sure that the hash is all lower case, because that's what we 
+/// Be sure that the hash is all lower case, because that's what we
 /// use internally.
 void hashlist::hashmap::add_file(file_data_t *fi,int alg_num)
 {
@@ -22,7 +22,7 @@ void hashlist::hashmap::add_file(file_data_t *fi,int alg_num)
       std::string hexhash = fi->hash_hex[alg_num];
       for (std::string::iterator it = hexhash.begin();it!=hexhash.end();it++)
       {
-	if (isupper(*it)) 
+	if (isupper(*it))
 	  *it = tolower(*it);
       }
       insert(std::pair<std::string,file_data_t *>(hexhash,fi));
@@ -36,14 +36,14 @@ void hashlist::hashmap::add_file(file_data_t *fi,int alg_num)
  * Object will be modified if there is a match.
  */
 void hashlist::add_fdt(file_data_t *fi)
-{ 
+{
     push_back(fi);			// retain our copy
     for(int i=0;i<NUM_ALGORITHMS;i++){	// and add for each algorithm
 	hashmaps[i].add_file(fi,i); // and point to the back
     };
 }
 
-/** 
+/**
  * search for a hash with an (optional) given filename.
  * Return the first hash that matches the filename.
  * If nothing matches the filename, return the first hash that matches.
@@ -55,14 +55,14 @@ file_data_t *hashlist::find_hash(hashid_t alg,
 				 const std::string &file_name,
 				 uint64_t file_number)
 {
-    if(opt_debug>2) 
-      std::cerr << "find_hash alg=" << alg << " hash_hex=" << hash_hex << 
+    if(opt_debug>2)
+      std::cerr << "find_hash alg=" << alg << " hash_hex=" << hash_hex <<
 	" fn=" << file_name << " file_number=" << file_number;
     std::pair<hashmap::iterator,hashmap::iterator> match;
     match = this->hashmaps[alg].equal_range(hash_hex);
     if (match.first==match.second)
     {
-      if (opt_debug>2) 
+      if (opt_debug>2)
 	std::cerr << " RETURNS 0\n";
       return 0; // nothing found
     }
@@ -71,18 +71,18 @@ file_data_t *hashlist::find_hash(hashid_t alg,
     {
       if ((*it).second->file_name == file_name)
       {
-	if (file_number) 
+	if (file_number)
 	  (*it).second->matched_file_number = file_number;
-	if (opt_debug) 
+	if (opt_debug)
 	  std::cerr << " RETURNS EXACT MATCH " << file_number << "\n";
 	return (*it).second;
       }
     }
 
     // No exact matches; return the first match
-    if (file_number) 
+    if (file_number)
       (*match.first).second->matched_file_number = file_number;
-    if (opt_debug) 
+    if (opt_debug)
       std::cerr << " RETURNS FIRST MATCH " << file_number << "\n";
     return (*match.first).second;
 }
@@ -97,32 +97,32 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,
 					  bool case_sensitive)
 {
   // Iterate through each of the hashes in the haslist until we find a match.
-  for (int alg = 0 ; alg < NUM_ALGORITHMS ; ++alg)  
+  for (int alg = 0 ; alg < NUM_ALGORITHMS ; ++alg)
   {
     // Only search hash functions that are in use and hashes that are in the fdt
     if (hashes[alg].inuse==0 || fdht->hash_hex[alg].size()==0)
     {
       continue;
     }
-    
-    // Find the best match using find_hash 
+
+    // Find the best match using find_hash
     file_data_t *matched = find_hash((hashid_t)alg,
 				     fdht->hash_hex[alg],
 				     fdht->file_name,
 				     fdht->file_number);
-    
+
     if (not matched)
     {
       // No match
       continue;
     }
 
-    if (matched_) 
+    if (matched_)
       *matched_ = matched; // note the match
-    
+
     // Verify that all of the other hash functions for *it match fdt as well,
     // but only for the cases when we have a hash for both the master file
-    // and the target file. 
+    // and the target file.
     for (int j=0 ; j<NUM_ALGORITHMS ; j++)
     {
       if (hashes[j].inuse and
@@ -163,7 +163,7 @@ hashlist::searchstatus_t hashlist::search(const file_data_hasher_t *fdht,
 	return status_file_name_mismatch;
     }
 
-    // If we get here, then all of the hash matches for all of the 
+    // If we get here, then all of the hash matches for all of the
     // algorithms have been checked and found to be equal if present.
     return status_match;
   }
@@ -184,7 +184,7 @@ hashlist::hashfile_format hashlist::identify_format(class display *ocb,
 {
     char buf[MAX_STRING_LENGTH];
 
-    // Find the header 
+    // Find the header
     if ((fgets(buf,MAX_STRING_LENGTH,handle)) == NULL) {
 	return file_unknown;
     }
@@ -203,7 +203,7 @@ hashlist::hashfile_format hashlist::identify_format(class display *ocb,
     chop_line(buf);
 
     // We don't use STRINGS_EQUAL here because we only care about
-    // the first ten characters for right now. 
+    // the first ten characters for right now.
     if (strncasecmp("%%%% size,",buf,10))  {
 	return file_unknown;
     }
@@ -211,11 +211,11 @@ hashlist::hashfile_format hashlist::identify_format(class display *ocb,
     /**
      * Remember previously loaded hashes.
      */
-    std::string previously_enabled_algorithms = last_enabled_algorithms; 
-    
-    // Skip the "%%%% size," when parsing the list of hashes 
+    std::string previously_enabled_algorithms = last_enabled_algorithms;
+
+    // Skip the "%%%% size," when parsing the list of hashes
     enable_hashing_algorithms_from_hashdeep_file(ocb,fn,buf + 10);
-    
+
 
     // If the set of hashes now in use doesn't match those previously in use,
     // give a warning.
@@ -235,16 +235,16 @@ hashlist::hashfile_format hashlist::identify_format(class display *ocb,
 
 void hashlist::enable_hashing_algorithms_from_hashdeep_file(class display *ocb,const std::string &fn,std::string val)
 {
-    // The first position is always the file size, so we start with an 
+    // The first position is always the file size, so we start with an
     // the first position of one.
-    uint8_t num_columns = 1;		
-  
+    uint8_t num_columns = 1;
+
     last_enabled_algorithms = val;
     std::vector<std::string> algs = split(val,',');
     for(std::vector<std::string>::iterator it = algs.begin(); it!=algs.end(); it++){
 	std::string name = *it;
 	lowercase(name);
-	if(name=="filename") 
+	if(name=="filename")
   {
     // Special value to denote the filename
     filename_column = num_columns;
@@ -258,7 +258,7 @@ void hashlist::enable_hashing_algorithms_from_hashdeep_file(class display *ocb,c
 	    }
 	    exit(EXIT_FAILURE);
 	}
-	    
+
 	/* Found a known algorithm */
 	hashes[id].inuse = TRUE;
 	hash_column[num_columns] = id;
@@ -283,7 +283,7 @@ uint64_t hashlist::total_matched()
     uint64_t total = 0;
     for (hashlist::const_iterator it = begin(); it!=end(); it++)
     {
-      if ( (*it)->matched_file_number > 0) 
+      if ( (*it)->matched_file_number > 0)
 	  total++;
     }
 
@@ -295,7 +295,7 @@ uint64_t hashlist::total_matched()
 // Loads a file of known hashes.
 // First identifies the file type, then reads the file.
  //
-hashlist::loadstatus_t 
+hashlist::loadstatus_t
 hashlist::load_hash_file(display *ocb,const std::string &fn)
 {
   loadstatus_t status = loadstatus_ok;
@@ -304,15 +304,15 @@ hashlist::load_hash_file(display *ocb,const std::string &fn)
   FILE *hl_handle = fopen(fn.c_str(),"rb");
   if (NULL == hl_handle)
   {
-    if (ocb) 
+    if (ocb)
       ocb->error("%s: %s", fn.c_str(), strerror(errno));
     return status_file_error;
   }
-  
+
   type = identify_format(ocb,fn,hl_handle);
   if (file_unknown == type)
   {
-    if (ocb) 
+    if (ocb)
       ocb->error("%s: Unable to identify file format", fn.c_str());
     fclose(hl_handle);
     hl_handle = 0;
@@ -327,11 +327,11 @@ hashlist::load_hash_file(display *ocb,const std::string &fn)
   uint64_t line_number = 2;
 
   // TODO: Read the line directly into a std::string
-  char line[MAX_STRING_LENGTH];	
-  while (fgets(line,MAX_STRING_LENGTH,hl_handle)) 
+  char line[MAX_STRING_LENGTH];
+  while (fgets(line,MAX_STRING_LENGTH,hl_handle))
   {
-    line_number++;			
-    
+    line_number++;
+
     // Lines starting with a pound sign are comments and can be ignored
     if ('#' == line[0])
       continue;
@@ -339,13 +339,13 @@ hashlist::load_hash_file(display *ocb,const std::string &fn)
     // C++ typically fails with a bad_alloc, but you can make it return null
     // http://www.cplusplus.com/reference/std/new/bad_alloc/
     // http://www.cplusplus.com/reference/std/new/nothrow/
-    file_data_t *t = new (std::nothrow) file_data_t(); 
+    file_data_t *t = new (std::nothrow) file_data_t();
     if (NULL == t)
     {
       ocb->fatal_error("%s: Out of memory in line %"PRIu64,
 		       fn.c_str(), line_number);
     }
-    
+
     chop_line(line);
     record_valid = true;
 
@@ -354,9 +354,30 @@ hashlist::load_hash_file(display *ocb,const std::string &fn)
     std::vector<std::string> fields = split(line_as_string,',');
 
     size_t column_number;
+    // The offset of the current word within this line. Used for filenames.
+    size_t offset_in_line = 0;
     for (column_number=0 ; column_number<fields.size() ; column_number++)
     {
       std::string word = fields[column_number];
+
+      if (column_number == filename_column)
+      {
+	// If the filename contained commas, it was split
+	// incorrectly by the 'split' statememt above. The filename
+	// will be split across more than one column.
+	// To be safe, we grab everything from where this field starts
+	// to the end of the line, and call that the 'filename'.
+	// (This also avoids a problem
+	// when the filename is the same as one of the hashes, which
+	// happens now and again.)
+	t->file_name = line_as_string.substr(offset_in_line, std::string::npos);
+
+	// This should be the last column, so we break out now.
+	break;
+      }
+
+      // The extra +1 is for the comma
+      offset_in_line += word.size() + 1;
 
       // The first column should always be the file size
       if (0 == column_number)
@@ -365,30 +386,12 @@ hashlist::load_hash_file(display *ocb,const std::string &fn)
 	continue;
       }
 
-      if (column_number == filename_column)
-      {
-	// If the filename contained commas, it was split 
-	// incorrectly by the 'split' statememt above. The filename
-	// will be split across more than one column.
-	// As such we need to 'find' everything
-	// in the string starting with the current location.
-	// The result should be closer to the end of the string than
-	// the start, so we can use rfind. (This also avoids a problem
-	// when the filename is the same as one of the hashes, which
-	// happens now and again.)
-	size_t start = line_as_string.rfind(word);
-	t->file_name = line_as_string.substr(start,std::string::npos);
-
-	// This should be the last column, so we break out now.
-	break;
-      }
-
       // All other columns should contain a valid hash in hex
       if ( !algorithm_t::valid_hash(hash_column[column_number],word))
       {
-	if (ocb) 
+	if (ocb)
 	  ocb->error("%s: Invalid %s hash in line %"PRIu64,
-		     fn.c_str(), 
+		     fn.c_str(),
 		     hashes[hash_column[column_number]].name.c_str(),
 		     line_number);
 	contains_bad_lines = true;
@@ -396,13 +399,13 @@ hashlist::load_hash_file(display *ocb,const std::string &fn)
 	// Break out (done = true) and then process the next line
 	break;
       }
-      
+
       // Convert the hash to a std::string and save it
       lowercase(word);
       t->hash_hex[hash_column[column_number]] = word;
     }
 
-    if (record_valid) 
+    if (record_valid)
       add_fdt(t);
   }
 
@@ -411,7 +414,7 @@ hashlist::load_hash_file(display *ocb,const std::string &fn)
 
   if (contains_bad_lines)
     return status_contains_bad_hashes;
-    
+
   return status;
 }
 
@@ -421,18 +424,18 @@ hashlist::load_hash_file(display *ocb,const std::string &fn)
  */
 const char *hashlist::searchstatus_to_str(searchstatus_t val)
 {
-    switch (val) 
+    switch (val)
       {
       case searchstatus_ok:           return "ok";
       case status_match:              return "complete match";
       case status_partial_match:      return "partial match";
       case status_file_size_mismatch: return "file size mismatch";
       case status_file_name_mismatch: return "file name mismatch";
-      case status_no_match:           return "no match"; 
-	
+      case status_no_match:           return "no match";
+
       default:
 	return "unknown";
-    }      
+    }
 }
 
 
