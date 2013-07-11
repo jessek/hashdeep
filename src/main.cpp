@@ -1,7 +1,7 @@
 /*
- * 
+ *
  *  $Id$
- * 
+ *
  * This is the main() function and support functions for hashdeep and md5deep.
  *
  * This is a work of the US Government. In accordance with 17 USC 105,
@@ -41,10 +41,10 @@ std::string progname;
 "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
 
 
-#ifdef _WIN32 
+#ifdef _WIN32
 // This can't go in main.h or we get multiple definitions of it
-// Allows us to open standard input in binary mode by default 
-// See http://gnuwin32.sourceforge.net/compile.html for more 
+// Allows us to open standard input in binary mode by default
+// See http://gnuwin32.sourceforge.net/compile.html for more
 int _CRT_fmode = _O_BINARY;
 #endif
 
@@ -70,9 +70,9 @@ static void try_msg(void)
 
 void state::sanity_check(int condition, const char *msg)
 {
-  if (condition) 
+  if (condition)
   {
-    if (!ocb.opt_silent) 
+    if (!ocb.opt_silent)
     {
       ocb.error("%s",msg);
       try_msg();
@@ -93,7 +93,7 @@ static int is_absolute_path(const tstring &fn)
 /**
  * return the full pathname for a filename.
  */
- 
+
 tstring state::generate_filename(const tstring &input)
 {
     if ((ocb.opt_relative) || is_absolute_path(input)){
@@ -109,13 +109,13 @@ tstring state::generate_filename(const tstring &input)
     memset(fn,0,sizeof(fn));
     _wfullpath(fn,input.c_str(),PATH_MAX);
     return tstring(fn);
-#else	  
+#else
     char buf[PATH_MAX+1];
     std::string cwd = global::getcwd();
     if (cwd=="") {
 	// If we can't get the current working directory, we're not
 	// going to be able to build the relative path to this file anyway.
-	// So we just call realpath and make the best of things 
+	// So we just call realpath and make the best of things
 	if (realpath(input.c_str(),buf)==0){
 	    ocb.internal_error("Error calling realpath in generate_filename");
 	}
@@ -143,7 +143,7 @@ void state::hashdeep_usage()
     {
       fprintf(stdout,"%s%s",hashes[i].name.c_str(),(i+1<NUM_ALGORITHMS) ? "," : NEWLINE);
     }
-	
+
     ocb.status("-p <size> - piecewise mode. Files are broken into blocks for hashing");
     ocb.status("-r        - recursive mode. All subdirectories are traversed");
     ocb.status("-d        - output in DFXML (Digital Forensics XML)");
@@ -165,12 +165,13 @@ void state::hashdeep_usage()
     ocb.status("-j <num>  - use num threads (default %d)",threadpool::numCPU());
 #else
     ocb.status("-j <num>  - ignored (compiled without pthreads)");
-#endif	
+#endif
   }
 
   // -hh makes us more verbose
   if (2 == usage_count)
-  {			
+  {
+    ocb.status("-f <file> - Use file as a list of files to process.");
     ocb.status("-V        - display version number and exit");
     ocb.status("-0        - use a NUL (\\0) for newline.");
     ocb.status("-u        - escape Unicode");
@@ -183,7 +184,7 @@ void state::hashdeep_usage()
     ocb.status("               f=regular file; l=symlink; s=socket; d=door e=Windows PE");
     ocb.status("-D <num>  - set debug level");
   }
-  
+
   /// -hhh mode includes debugging information.
   if (3 == usage_count)
   {
@@ -202,8 +203,8 @@ void state::hashdeep_usage()
 
 
 // So that the usage message fits in a standard DOS window, this
-// function should produce no more than 22 lines of text. 
-void state::md5deep_usage(void) 
+// function should produce no more than 22 lines of text.
+void state::md5deep_usage(void)
 {
     if(usage_count==1){
 	ocb.status("%s version %s by %s.",progname.c_str(),VERSION,AUTHOR);
@@ -230,7 +231,7 @@ void state::md5deep_usage(void)
 	ocb.status("-j <num>  - use num threads (default %d)",threadpool::numCPU());
 #else
 	ocb.status("-j <num>  - ignored (compiled without pthreads)");
-#endif	
+#endif
 	ocb.status("-Z - triage mode;   -h - help;   -hh - full help");
     }
     if(usage_count==2){			// -hh
@@ -274,7 +275,7 @@ void state::hashdeep_check_flags_okay()
   sanity_check(
 	       (ocb.opt_relative) && (ocb.mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive.");
-  
+
   /* Additional sanity checks will go here as needed... */
 }
 
@@ -290,8 +291,8 @@ algorithm_t     hashes[NUM_ALGORITHMS];		// which hash algorithms are available 
  */
 void algorithm_t::add_algorithm(
 	      hashid_t pos,
-	      const char *name, 
-	      uint16_t bits, 
+	      const char *name,
+	      uint16_t bits,
 	      void ( *func_init)(void *ctx),
 	      void ( *func_update)(void *ctx, const unsigned char *buf, size_t buflen),
 	      void ( *func_finalize)(void *ctx, unsigned char *),
@@ -357,7 +358,7 @@ void cc_sha1_init(void * ctx)
 	hash_init_sha1(ctx);
     }
 }
-    
+
 void cc_sha256_init(void * ctx)
 {
     if(opt_enable_mac_cc){
@@ -384,7 +385,7 @@ void cc_sha1_update(void *ctx, const unsigned char *buf, size_t len)
 	hash_update_sha1(ctx,buf,len);
     }
 }
-    
+
 void cc_sha256_update(void *ctx, const unsigned char *buf, size_t len)
 {
     if(opt_enable_mac_cc){
@@ -431,7 +432,7 @@ void cc_sha256_final(void *ctx, unsigned char *digest)
 void algorithm_t::load_hashing_algorithms()
 {
     /* The DEFAULT_ENABLE variables are in main.h */
-#if defined(HAVE_CC_SHA1_INIT) 
+#if defined(HAVE_CC_SHA1_INIT)
     /* Use the Apple's validated Common Crypto for SHA1 and SHA256 */
     assert(sizeof(struct CC_MD5state_st)<MAX_ALGORITHM_CONTEXT_SIZE);
     assert(sizeof(struct CC_SHA1state_st)<MAX_ALGORITHM_CONTEXT_SIZE);
@@ -466,7 +467,7 @@ hashid_t algorithm_t::get_hashid_for_name(string name)
     /* convert name to lowercase and remove any dashes */
     lowercase(name);
     size_t dash;
-    while((dash=name.find("-")) != string::npos){ 
+    while((dash=name.find("-")) != string::npos){
 	name.replace(dash,1,"");
     }
     for(int i=0;i<NUM_ALGORITHMS;i++){
@@ -477,7 +478,7 @@ hashid_t algorithm_t::get_hashid_for_name(string name)
 
 void algorithm_t::clear_algorithms_inuse()
 {
-  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  { 
+  for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
       hashes[i].inuse = false;
   }
 }
@@ -501,18 +502,18 @@ bool algorithm_t::valid_hash(hashid_t alg, const std::string &buf)
 }
 
 
-int algorithm_t::algorithms_in_use_count() 
+int algorithm_t::algorithms_in_use_count()
 {
     int count = 0;
-    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  { 
+    for (int i = 0 ; i < NUM_ALGORITHMS ; ++i)  {
 	if(hashes[i].inuse) count++;
     }
     return count;
 }
 
 
-// C++ string splitting code from 
-// http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c 
+// C++ string splitting code from
+// http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss(s);
     std::string item;
@@ -540,16 +541,16 @@ void lowercase(std::string &s)
 //
 void algorithm_t::enable_hashing_algorithms(std::string var)
 {
-  // convert name to lowercase and remove any dashes 
+  // convert name to lowercase and remove any dashes
   std::transform(var.begin(), var.end(), var.begin(), ::tolower);
-  
+
   // Split on the commas
   std::vector<std::string>algs = split(var,',');
-  
+
   for (std::vector<std::string>::const_iterator it = algs.begin();it!=algs.end();it++)
   {
     hashid_t id = get_hashid_for_name(*it);
-    if (id==alg_unknown) 
+    if (id==alg_unknown)
     {
       // Did the user specify to compute all hash algorithms?
       if (*it == "all")
@@ -561,10 +562,10 @@ void algorithm_t::enable_hashing_algorithms(std::string var)
 	return;
       }
 
-      // No idea what this algorithm is. 
+      // No idea what this algorithm is.
       fprintf(stderr,
-	      "%s: Unknown algorithm: %s%s", 
-	      progname.c_str(), 
+	      "%s: Unknown algorithm: %s%s",
+	      progname.c_str(),
 	      (*it).c_str(),
 	      NEWLINE);
       try_msg();
@@ -614,70 +615,70 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
 {
     bool did_usage = false;
   int i;
-  
+
   while ((i=getopt(argc_,argv_,"abc:CdeEF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
-    switch (i) 
+    switch (i)
     {
-    case 'a': 
+    case 'a':
       hashdeep_check_matching_modes();
-      ocb.primary_function = primary_audit;      
+      ocb.primary_function = primary_audit;
       break;
-      
-    case 'C': 
-      opt_enable_mac_cc = true; 
+
+    case 'C':
+      opt_enable_mac_cc = true;
       break;
-      
-    case 'd': 
-      ocb.xml_open(stdout);	
+
+    case 'd':
+      ocb.xml_open(stdout);
       break;
-      
-    case 'f': 
-      opt_input_list = optarg;	
+
+    case 'f':
+      opt_input_list = optarg;
       break;
-      
+
     case 'o':
-      mode_expert=true; 
+      mode_expert=true;
       setup_expert_mode(optarg);
       break;
-      
+
     case 'I':
       ocb.mode_size_all=true;
       // falls through
     case 'i':
       ocb.mode_size = true;
       ocb.size_threshold = find_block_size(optarg);
-      if (ocb.size_threshold==0) 
+      if (ocb.size_threshold==0)
       {
 	ocb.error("Requested size threshold implies not hashing anything");
 	exit(status_t::STATUS_USER_ERROR);
       }
       break;
-      
-    case 'c': 
+
+    case 'c':
       ocb.primary_function = primary_compute;
-      /* Before we parse which algorithms we're using now, we have 
+      /* Before we parse which algorithms we're using now, we have
        * to erase the default (or previously entered) values
        */
       algorithm_t::clear_algorithms_inuse();
       algorithm_t::enable_hashing_algorithms(optarg);
       break;
-      
-    case 'M': 
+
+    case 'M':
       ocb.opt_display_hash = true;
       // falls through
     case 'm':
       hashdeep_check_matching_modes();
-      ocb.primary_function = primary_match;      
+      ocb.primary_function = primary_match;
       break;
 
-    case 'X': 
+    case 'X':
       ocb.opt_display_hash=true;
       // falls through
-    case 'x': 
+    case 'x':
       hashdeep_check_matching_modes();
-      ocb.primary_function = primary_match_neg;  
+      ocb.primary_function = primary_match_neg;
       break;
-      
+
       // TODO: Add -t mode to hashdeep
       //    case 't': mode |= mode_timestamp;    break;
 
@@ -687,55 +688,55 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
     case 'r': mode_recursive=true;	break;
     case 's': ocb.opt_silent = true;	break;
 
-      
+
     case 'p':
 	ocb.piecewise_size = find_block_size(optarg);
       if (ocb.piecewise_size==0)
 	  ocb.fatal_error("Piecewise blocks of zero bytes are impossible");
-      
+
       break;
-      
+
     case 'w': ocb.opt_show_matched = true;    break; // displays which known hash generated a match
-      
+
     case 'k':
 	switch (ocb.load_hash_file(optarg)) {
-	case hashlist::loadstatus_ok: 
+	case hashlist::loadstatus_ok:
 	    if(opt_debug){
 		ocb.error("%s: Match file loaded %d known hash values.",
 				optarg,ocb.known_size());
 	    }
 	    break;
-	  
+
       case hashlist::status_contains_no_hashes:
 	  /* Trying to load an empty file is fine, but we shouldn't
 	     change hashes_loaded */
 	  break;
-	  
+
       case hashlist::status_contains_bad_hashes:
 	  ocb.error("%s: contains some bad hashes, using anyway",optarg);
 	  break;
-	  
+
       case hashlist::status_unknown_filetype:
       case hashlist::status_file_error:
 	  /* The loading code has already printed an error */
 	    break;
-	    
+
 	default:
 	    ocb.error("%s: unknown error, skipping%s", optarg, NEWLINE);
 	  break;
 	}
       break;
-      
+
     case 'v':
       ++ocb.opt_verbose;
       if (ocb.opt_verbose > INSANELY_VERBOSE)
 	ocb.error("User request for insane verbosity denied");
       break;
-      
+
     case 'V':
       ocb.status("%s", VERSION);
       exit(EXIT_SUCCESS);
-	  
+
     case 'W': ocb.set_outfilename(optarg); break;
     case '0': ocb.opt_zero = true; break;
     case 'u': ocb.opt_unicode_escape = true;break;
@@ -748,14 +749,14 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
 	hashdeep_usage();
 	did_usage = true;
 	break;
-      
+
     case 'D': opt_debug = atoi(optarg); break;
     default:
       try_msg();
       exit(EXIT_FAILURE);
-    }            
+    }
   }
-  
+
   if(did_usage ) exit(EXIT_SUCCESS);
 
   hashdeep_check_flags_okay();
@@ -775,7 +776,7 @@ int state::prepare_windows_command_line()
 #endif
 
 class uni32str:public vector<uint32_t> {};
-    
+
 std::string global::escape_utf8(const std::string &utf8)
 {
     uni32str utf32_line;
@@ -798,7 +799,7 @@ std::string global::escape_utf8(const std::string &utf8)
  * We only need make_utf8 on windows because on POSIX systems
  * all filenames are assumed to be UTF8.
  */
-std::string global::make_utf8(const tstring &str) 
+std::string global::make_utf8(const tstring &str)
 {
     if(str.size()==0) return std::string(); // nothing to convert
 
@@ -823,7 +824,7 @@ std::string global::make_utf8(const tstring &str)
 	return std::string("");		// nothing to return
     }
     buf[len] = 0;			// be sure it is null-terminated
-    std::string s2(buf);		// Make a STL string 
+    std::string s2(buf);		// Make a STL string
     delete [] buf;			// Delete the buffern
     return s2;				// return the string
 }
@@ -843,7 +844,7 @@ tstring global::getcwd()
     memset(buf,0,sizeof(buf));
     ::getcwd(buf,sizeof(buf));
     return std::string(buf);
-#endif    
+#endif
 }
 
 
@@ -853,7 +854,7 @@ tstring global::getcwd()
 {
     std::string path;
     typedef std::pair<dev_t, ino_t> file_id;
-    
+
     bool success = false;
     int start_fd = open(".", O_RDONLY); //Keep track of start directory, so can jump back to it later
     if (start_fd == -1) {
@@ -866,15 +867,15 @@ tstring global::getcwd()
 	if (!stat("/", &sb)){ //Get info for root directory, so we can determine when we hit it
 	    std::vector<std::string> path_components;
 	    file_id root_id(sb.st_dev, sb.st_ino);
-		
+
 	    // while we are not at the root, keep going up...
-	    while (current_id != root_id){ 
+	    while (current_id != root_id){
 		bool pushed = false;
 		if (!chdir("..")){ 		    //Keep recursing towards root each iteration
 		    DIR *dir = opendir(".");
 		    if (dir) {
 			dirent *entry;
-			while ((entry = readdir(dir))){ 
+			while ((entry = readdir(dir))){
 			    //We loop through each entry trying to find where we came from
 			    if (strcmp(entry->d_name,".")==0) continue; // ignore .
 			    if (strcmp(entry->d_name,"..")==0) continue;
@@ -922,7 +923,7 @@ tstring global::getcwd()
 /* Return the canonicalized absolute pathname in UTF-8 on Windows and POSIX systems */
 tstring global::get_realpath(const tstring &fn)
 {
-#ifdef _WIN32    
+#ifdef _WIN32
     /*
      * expand a relative path to the full path.
      * http://msdn.microsoft.com/en-us/library/506720ff(v=vs.80).aspx
@@ -970,12 +971,12 @@ void state::check_wow64()
     // If this system doesn't have the function IsWow64Process then
     // it's definitely not running under WoW64.
     if (NULL == fnIsWow64Process) return;
-    
+
     if (! fnIsWow64Process(GetCurrentProcess(), &result))  {
 	// The function failed? WTF? Well, let's not worry about it.
 	return;
     }
-    
+
     if (result) {
 	ocb.error("WARNING: You are running a 32-bit program on a 64-bit system.");
 	ocb.error("You probably want to use the 64-bit version of this program.");
@@ -998,19 +999,19 @@ void state::md5deep_check_flags_okay()
 
   sanity_check((ocb.opt_relative) && (ocb.mode_barename),
 	       "Relative paths and bare filenames are mutally exclusive.");
-  
+
   sanity_check((ocb.piecewise_size>0) && (ocb.opt_display_size),
 	       "Piecewise mode and file size display is just plain silly.");
 
 
   /* If we try to display non-matching files but haven't initialized the
      list of matching files in the first place, bad things will happen. */
-  sanity_check((ocb.mode_not_matched) && 
+  sanity_check((ocb.mode_not_matched) &&
 	       ! ((ocb.opt_mode_match) || (ocb.opt_mode_match_neg)),
 	       "Matching or negative matching must be enabled to display non-matching files.");
 
-  sanity_check(ocb.opt_show_matched && 
-	       ! ((ocb.opt_mode_match) || (ocb.opt_mode_match_neg)), 
+  sanity_check(ocb.opt_show_matched &&
+	       ! ((ocb.opt_mode_match) || (ocb.opt_mode_match_neg)),
 	       "Matching or negative matching must be enabled to display which file matched.");
 }
 
@@ -1029,7 +1030,7 @@ int state::md5deep_process_command_line(int argc_, char **argv_)
 
     while ((i = getopt(argc_,
 		       argv_,
-		       "A:a:bcCdeF:f:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) { 
+		       "A:a:bcCdeF:f:I:i:M:X:x:m:o:tnwzsSp:rhvV0lkqZW:D:uj:")) != -1) {
 	switch (i) {
 	case 'C': opt_enable_mac_cc = true; break;
 	case 'D': opt_debug = atoi(optarg);	break;
@@ -1076,11 +1077,11 @@ int state::md5deep_process_command_line(int argc_, char **argv_)
 	    md5deep_add_hash(optarg,optarg);
 	    break;
 
-	case 'o': 
-	    mode_expert=true; 
+	case 'o':
+	    mode_expert=true;
 	    setup_expert_mode(optarg);
 	    break;
-      
+
 	case 'M':			// match mode
 	    ocb.opt_display_hash=true;
 	    /* Intentional fall through */
@@ -1112,7 +1113,7 @@ int state::md5deep_process_command_line(int argc_, char **argv_)
 	case 'r': mode_recursive = true;	break;
 	case 'k': ocb.opt_asterisk = true;      break;
 	case 'b': ocb.mode_barename=true;	break;
-      
+
 	case 'l': ocb.opt_relative = true;      break;
 	case 'q': ocb.mode_quiet = true;	break;
 	case 'W': ocb.set_outfilename(optarg);	break;
@@ -1146,7 +1147,7 @@ int state::md5deep_process_command_line(int argc_, char **argv_)
 
 
 /****************************************************************/
-/* Make the UTF8 banner in case we need it 
+/* Make the UTF8 banner in case we need it
  * Only hashdeep has a header.
  */
 std::string state::make_banner()
@@ -1159,7 +1160,7 @@ std::string state::make_banner()
 	if (hashes[i].inuse){
 	    utf8_banner += hashes[i].name + std::string(",");
 	}
-    }  
+    }
     utf8_banner += std::string("filename") + NEWLINE;
     utf8_banner += "## Invoked from: " + global::make_utf8(global::getcwd()) + NEWLINE;
     utf8_banner += "## ";
@@ -1174,17 +1175,17 @@ std::string state::make_banner()
 
     // Accounts for '## ', command prompt, and space before first argument
     size_t bytes_written = 8;
-	
+
     for (int largc = 0 ; largc < this->argc ; ++largc) {
 	utf8_banner += " ";
 	bytes_written++;
-	
+
 	// We are going to print the string. It's either ASCII or UTF16
 	// convert it to a tstring and then to UTF8 string.
 	tstring arg_t = tstring(this->argv[largc]);
 	std::string arg_utf8 = global::make_utf8(arg_t);
 	size_t current_bytes = arg_utf8.size();
-    
+
 	// The extra 32 bytes is a fudge factor
 	if (current_bytes + bytes_written + 32 > MAX_STRING_LENGTH) {
 	    utf8_banner += std::string(NEWLINE) + "## ";
@@ -1208,13 +1209,13 @@ uint64_t state::find_block_size(std::string input_str)
     // All cases fall through in this switch statement
     switch (tolower(last_char)) {
     case 'e':
-	multiplier *= 1024;    
+	multiplier *= 1024;
     case 'p':
-	multiplier *= 1024;    
+	multiplier *= 1024;
     case 't':
-	multiplier *= 1024;    
+	multiplier *= 1024;
     case 'g':
-	multiplier *= 1024;    
+	multiplier *= 1024;
     case 'm':
 	multiplier *= 1024;
     case 'k':
@@ -1229,7 +1230,7 @@ uint64_t state::find_block_size(std::string input_str)
     case '5':case '6':case '7':case '8':case '9':
 	break;
     }
-    
+
 #ifdef __HPUX
     return (strtoumax ( input_str.c_str(), (char**)0, 10) * multiplier);
 #else
@@ -1246,11 +1247,11 @@ int main(int argc, char **argv)
   // of the argc and argv values.
 
   // Initialize the plugable algorithm system and create the state object!
-  
+
   // Be sure that we were compiled correctly
   assert(sizeof(off_t)==8);
 
-  algorithm_t::load_hashing_algorithms();		
+  algorithm_t::load_hashing_algorithms();
 
   state *s = new state();
   exit(s->main(argc,argv));
@@ -1276,7 +1277,7 @@ int state::main(int _argc,char **_argv)
 #endif
 
 #ifdef HAVE_PTHREAD
-    threadpool::win32_init();			// 
+    threadpool::win32_init();			//
     ocb.opt_threadcount = threadpool::numCPU(); // be sure it's set
 #endif
 
@@ -1284,7 +1285,7 @@ int state::main(int _argc,char **_argv)
     size_t delim = progname.rfind(DIR_SEPARATOR);
     if(delim!=std::string::npos) progname.erase(0,delim+1);
 
-    // Convert progname to lower case 
+    // Convert progname to lower case
     std::transform(progname.begin(), progname.end(), progname.begin(), ::tolower);
     std::string algname = progname.substr(0,progname.find("deep"));
 
@@ -1292,10 +1293,10 @@ int state::main(int _argc,char **_argv)
     {
       // We were called as "hashdeep"
       hashdeep_process_command_line(_argc,_argv);
-    } 
-    else 
+    }
+    else
     {
-      // We were called as "[somethingelse]deep". Figure out which 
+      // We were called as "[somethingelse]deep". Figure out which
       // algorithm and if we support that something else
 
       algorithm_t::clear_algorithms_inuse();
@@ -1311,7 +1312,7 @@ int state::main(int _argc,char **_argv)
 	  break;
 	}
       }
-      
+
       if (not md5deep_mode)
       {
 	cerr << progname << ": unknown hash: " <<algname << "\n";
@@ -1325,12 +1326,12 @@ int state::main(int _argc,char **_argv)
       printf("self-test...\n");
       state::dig_self_test();
     }
-    
 
-    // See if we can open a regular file output, if requested 
+
+    // See if we can open a regular file output, if requested
     // Set up the DFXML output if requested
     ocb.dfxml_startup(_argc,_argv);
-    
+
 #ifdef _WIN32
     if (prepare_windows_command_line()){
 	ocb.fatal_error("Unable to process command line arguments");
@@ -1396,7 +1397,7 @@ int state::main(int _argc,char **_argv)
      * or directory we're supposed to process. If there's nothing
      * specified, we should hash standard input
      */
-    
+
     if (optind == argc && opt_input_list==""){
 	if(ocb.mode_triage){
 	    ocb.fatal_error("Processing stdin not supported in Triage mode");
@@ -1412,7 +1413,7 @@ int state::main(int _argc,char **_argv)
 #endif
 	}
     }
-  
+
     /* If we are multi-threading, wait for all threads to finish */
 #ifdef HAVE_PTHREAD
     if(ocb.tp) ocb.tp->wait_till_all_free();
@@ -1429,14 +1430,14 @@ int state::main(int _argc,char **_argv)
     {
       ocb.display_audit_results();
     }
-  
-    /* We only have to worry about checking for unused hashes if one 
+
+    /* We only have to worry about checking for unused hashes if one
      * of the matching modes was enabled. We let the display_not_matched
      * function determine if it needs to display anything. The function
      * also sets our return values in terms of inputs not being matched
      * or known hashes not being used
      */
-    if (ocb.opt_mode_match or 
+    if (ocb.opt_mode_match or
 	ocb.opt_mode_match_neg or
 	(primary_match == ocb.primary_function) or
 	(primary_match_neg == ocb.primary_function))
@@ -1463,7 +1464,7 @@ int state::main(int _argc,char **_argv)
      *
      * http://msdn.microsoft.com/en-us/library/ms682658(v=vs.85).aspx
      */
-#if defined(_WIN32) 
+#if defined(_WIN32)
     TerminateProcess(GetCurrentProcess(),ocb.get_return_code());
 #endif
     return ocb.get_return_code();
