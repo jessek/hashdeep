@@ -22,3 +22,8 @@ src/whirlpooldeep
 src/tigerdeep
 src/sha3deep
 
+md5deep-?.?-beta*.tar.gz
+md5deep-?.?.?.tar.gz
+md5deep-?.?-*.zip
+src/*.exe
+tests/testfiles/testfiles.zip
