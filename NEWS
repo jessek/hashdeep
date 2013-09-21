@@ -1,8 +1,6 @@
-** Changes in version 4.4 (RBF DATE)
+** Changes in version 4.4 (23 Sep 2013)
 
 * New Features
-
-      Added SHA3 hashes with sha3deep
 
       Added case insensitive auditing with -E mode
 
@@ -11,6 +9,8 @@
       Added checks against user errors on Hashdeep command line
 
       Fixed bug for known filenames with the directory in the filename
+
+      Fixed bug for double dots in the filename
 
 
 

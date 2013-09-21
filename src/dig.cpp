@@ -430,27 +430,29 @@ static void remove_single_dirs(tstring &fn)
 }
 
 
-// Removes all "../" references from the absolute path fn 
-// If string contains f/d/e/../a replace it with f/d/a/
+/// Removes all "../" references from the absolute path fn 
+/// If string contains f/d/e/../a replace it with f/d/a/
+static void remove_double_dirs(tstring &fn) {
+  tstring search;
+  search.push_back(DIR_SEPARATOR);
+  search.push_back('.');
+  search.push_back('.');
+  search.push_back(DIR_SEPARATOR);
+  
+  while (true) {
+    size_t loc = fn.find(search);
+    if (loc == tstring::npos) 
+      break;
 
-static void remove_double_dirs(tstring &fn)
-{
-    tstring search;
-    search.push_back(DIR_SEPARATOR);
-    search.push_back('.');
-    search.push_back('.');
-    search.push_back(DIR_SEPARATOR);
+    // See if there is another dir separator before the /../ we just
+    // found.
+    size_t before = fn.rfind(DIR_SEPARATOR, loc-1);
+    if (before == tstring::npos) 
+      break;
 
-    while(true){
-	size_t loc = fn.rfind(search);
-	if(loc==tstring::npos) break;
-	/* See if there is another dir separator */
-	size_t before = fn.rfind(DIR_SEPARATOR,loc-1);
-	if(before==tstring::npos) break;
-
-	/* Now delete all between before+1 and loc+3 */
-	fn.erase(fn.begin()+before+1,fn.begin()+loc+4);
-    }
+    // Now delete all between before+1 and loc+3
+    fn.erase(fn.begin()+before+1, fn.begin()+loc+4);
+  }
 }
 
 
@@ -698,8 +700,7 @@ bool state::should_hash(const tstring &fn)
 }
 
 // Search through a directory and its subdirectory for files to hash 
-void state::dig_normal(const tstring &fn_)
-{
+void state::dig_normal(const tstring &fn_) {
   // local copy will be modified
   tstring fn(fn_);			
   if (opt_debug) 
