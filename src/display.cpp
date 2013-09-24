@@ -812,15 +812,13 @@ void display::dfxml_startup(int argc,char **argv)
 {
     if(dfxml){
 	lock();
-	dfxml->push("dfxml","xmloutputversion='1.0'");
-	dfxml->push("metadata",
-		       "\n  xmlns='http://md5deep.sourceforge.net/md5deep/' "
+	dfxml->push("dfxml",
+		       "\n  xmlns='http://www.forensicswiki.org/wiki/Category:Digital_Forensics_XML' "
+		       "\n  xmlns:deep='http://md5deep.sourceforge.net/md5deep/' "
 		       "\n  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
-		       "\n  xmlns:dc='http://purl.org/dc/elements/1.1/'" );
-	dfxml->xmlout("dc:type","Hash List","",false);
-	dfxml->pop();
-	dfxml->add_DFXML_creator(PACKAGE_NAME,PACKAGE_VERSION,XML::make_command_line(argc,argv));
-	dfxml->push("configuration");
+		       "\n  xmlns:dc='http://purl.org/dc/elements/1.1/' "
+		       "version='1.0'");
+	dfxml->push("deep:configuration");
 	dfxml->push("algorithms");
 	for(int i=0;i<NUM_ALGORITHMS;i++){
 	    dfxml->make_indent();
@@ -829,6 +827,10 @@ void display::dfxml_startup(int argc,char **argv)
 	}
 	dfxml->pop();			// algorithms
 	dfxml->pop();			// configuration
+	dfxml->push("metadata", "");
+	dfxml->xmlout("dc:type","Hash List","",false);
+	dfxml->pop();
+	dfxml->add_DFXML_creator(PACKAGE_NAME,PACKAGE_VERSION,XML::make_command_line(argc,argv));
 	unlock();
     }
 }
@@ -854,8 +856,8 @@ void display::dfxml_write(file_data_hasher_t *fdht)
 	dfxml->push("fileobject",attrs);
 	dfxml->xmlout("filename",fdht->file_name);
 	dfxml->xmlout("filesize",(int64_t)fdht->stat_bytes);
-	if(fdht->ctime) dfxml_timeout("ctime",fdht->ctime);
 	if(fdht->mtime) dfxml_timeout("mtime",fdht->mtime);
+	if(fdht->ctime) dfxml_timeout("ctime",fdht->ctime);
 	if(fdht->atime) dfxml_timeout("atime",fdht->atime);
 	dfxml->writexml(fdht->dfxml_hash.str());
 	dfxml->pop();
