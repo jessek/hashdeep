@@ -1,3 +1,7 @@
+2013-12-04  Jesse Kornblum  <research@jessekornblum.com>:
+
+	* src/dig.cpp: Support deduplication reparse points, issue 307.
+
 2013-09-21  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* src/dig.cpp: Fixed issue 301 re: removing double dots from path

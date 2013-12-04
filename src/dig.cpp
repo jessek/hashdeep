@@ -307,6 +307,16 @@ bool state::is_junction_point(const std::wstring &fn)
 	ocb.error_filename(fn,"Symbolic link, skipping");
 	break;
 
+	// TODO: Use label for deduplication reparse point 
+	//         when the compiler supports it
+	//      case IO_REPARSE_TAG_DEDUP:
+      case 0x80000013:
+	// This is the reparse point for Data Deduplication
+	// See http://blogs.technet.com/b/filecab/archive/2012/05/21/introduction-to-data-deduplication-in-windows-server-2012.aspx
+	// Unfortunately the compiler doesn't have this value defined yet.
+	status = false;
+	break;
+
       case IO_REPARSE_TAG_SIS:
 	// Single Instance Storage
 	// "is a system's ability to keep one copy of content that multiple users or computers share"
