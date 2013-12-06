@@ -5,6 +5,7 @@
 *Makefile
 *Makefile.in
 config.*
+compile
 aclocal.m4
 autom4te.cache
 .deps
