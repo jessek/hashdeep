@@ -1,6 +1,3 @@
-
-/* $Id$ */
-
 #include "main.h"
 
 void hash_context_obj::multihash_initialize()
@@ -49,9 +46,6 @@ void hash_context_obj::multihash_finalize(std::string dest[])
 	    }
 	}
     }
-
-    // old code
-    //this->file_size = this->bytes_read;
 }
 
 

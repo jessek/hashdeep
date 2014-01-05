@@ -1,7 +1,5 @@
 /*
  *
- *  $Id$
- *
  * This is the main() function and support functions for hashdeep and md5deep.
  *
  * This is a work of the US Government. In accordance with 17 USC 105,

@@ -78,7 +78,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 {
     /* Shortcut; If no hash algorithms are specified, just advance the pointer and return */
     if(algorithm_t::algorithms_in_use_count()==0){
-	eof = true;			// read everything
+	eof = true;			// read everything (because we are not hashing)
 	return true;			// done hashing
     }
 
