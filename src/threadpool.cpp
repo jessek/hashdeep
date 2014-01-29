@@ -105,8 +105,8 @@ void threadpool::win32_init()
 #ifdef WIN32
     static bool initialized = false;
     if(initialized==false){
-	pthread_win32_process_attach_np();
-	pthread_win32_thread_attach_np();
+//	pthread_win32_process_attach_np();
+//	pthread_win32_thread_attach_np();
 	initialized=true;
     }
 #endif
@@ -161,8 +161,8 @@ threadpool::~threadpool()
     pthread_cond_destroy(&TOWORKER);
 
 #ifdef WIN32
-    pthread_win32_process_detach_np();
-    pthread_win32_thread_detach_np();
+//    pthread_win32_process_detach_np();
+//    pthread_win32_thread_detach_np();
 #endif
 
 

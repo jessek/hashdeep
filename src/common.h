@@ -213,9 +213,9 @@ inline bool STRINGS_EQUAL(const std::string &a,const std::string &b)
  * work for some reasons for mingw, so we use this.
  */
 #ifndef _TCHAR_DEFINED
-#define TCHAR wchar_t
-#define _TCHAR wchar_t
-#define _TCHAR_DEFINED
+//#define TCHAR wchar_t
+//#define _TCHAR wchar_t
+//#define _TCHAR_DEFINED
 #endif
 
 #include <windows.h>

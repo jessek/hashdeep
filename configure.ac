@@ -33,7 +33,7 @@ case $host in
      ;;
 
   *-*-mingw32*)   
-     LIBS="-lws2_32 -lgdi32 $LIBS"  # previously had -liberty 
+     LIBS="-lws2_32 -lgdi32 -lpthread $LIBS"  # previously had -liberty 
      CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -DHAVE_STRUCT_TIMESPEC $CPPFLAGS"
      CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
      CXXFLAGS="$CXXFLAGS --static"
