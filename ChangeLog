@@ -4,6 +4,10 @@
 2013-12-04  Jesse Kornblum  <research@jessekornblum.com>:
 	* src/dig.cpp: Support deduplication reparse points, issue 307.
 
+2013-10-11  Basic  <simsong@Mucha.local>
+
+	* src/multihash.cpp (hash_context_obj::multihash_finalize): removed old code that was commented out.
+
 2013-09-21  Jesse Kornblum  <research@jessekornblum.com>:
 
 	* src/dig.cpp: Fixed issue 301 re: removing double dots from path
