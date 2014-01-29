@@ -1,5 +1,7 @@
-2013-12-04  Jesse Kornblum  <research@jessekornblum.com>:
+2014-01-29  Jesse Kornblum  <research@jessekornblum.com>:
+	* Updated date for version 4.4 release.
 
+2013-12-04  Jesse Kornblum  <research@jessekornblum.com>:
 	* src/dig.cpp: Support deduplication reparse points, issue 307.
 
 2013-09-21  Jesse Kornblum  <research@jessekornblum.com>:
