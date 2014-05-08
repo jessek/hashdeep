@@ -53,11 +53,11 @@ fi
 
 echo Attempting to install both DLL and static version of all mingw libraries
 echo At this point we will keep going even if there is an error...
-INST="autoconf automake gcc gc-c++ "
+INST="autoconf automake gcc gcc-c++ "
 for M in mingw32 mingw64 ; do
   # For these install both DLL and static
   for lib in zlib gettext boost cairo pixman freetype fontconfig \
-      bzip2 expat pthreads libgnurx libxml2 iconv openssl ; do
+      bzip2 expat winpthreads libgnurx libxml2 iconv openssl ; do
     INST+=" ${M}-${lib} ${M}-${lib}-static"
   done
 done 
