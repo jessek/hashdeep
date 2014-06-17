@@ -112,7 +112,6 @@ int file_metadata_t::stat(const tstring &fn,
 	FILE *f = _tfopen(fn.c_str(),_TEXT("rb"));
 	if(f){
 		m->size = find_file_size(f,&ocb);
-                std::cout << "m->size = " << m->size << "\n";
 		fclose(f); f = 0;
 	}
   }
