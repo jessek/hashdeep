@@ -101,7 +101,20 @@ int file_metadata_t::stat(const tstring &fn,
   m->fileid.ino = sb.st_ino;
 #endif
   m->nlink      = sb.st_nlink;
-  m->size       = sb.st_size;
+  if(sb.st_size!=0){
+	m->size       = sb.st_size;
+  } else {
+	/*
+	 * The stat() function does not return file size for raw devices.
+	 * If we have no file size, try to use the find_file_size function,
+	 * which calls ioctl.
+	 */
+	FILE *f = _tfopen(fn.c_str(),_TEXT("rb"));
+	if(f){
+		m->size = find_file_size(f,&ocb);
+		fclose(f); f = 0;
+	}
+  }
   m->ctime      = sb.st_ctime;
   m->mtime      = sb.st_mtime;
   m->atime      = sb.st_atime;
