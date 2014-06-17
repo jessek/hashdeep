@@ -37,7 +37,7 @@ void chop_line(char *s)
 
 // Return the size, in bytes of an open file stream. On error, return 0 
 #ifndef _WIN32
-#if defined (__LINUX__)
+#if defined(__LINUX__) || defined(linux)
 
 off_t find_file_size(FILE *f,class display *ocb) 
 {
