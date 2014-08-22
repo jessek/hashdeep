@@ -71,7 +71,7 @@ WARNINGS_TO_TEST="-MD -D_FORTIFY_SOURCE=2 -Wpointer-arith -Wmissing-declarations
 
 if test $mingw = "no" ; then
   # add the warnings we don't want to do on mingw
-  $WARNINGS_TO_TEST="$WARNINGS_TO_TEST -Wall -Wstrict-prototypes  -Weffc++"
+  WARNINGS_TO_TEST="$WARNINGS_TO_TEST -Wall -Wstrict-prototypes  -Weffc++"
 fi
 
 for option in $WARNINGS_TO_TEST
@@ -105,7 +105,7 @@ WARNINGS_TO_TEST="-Wall -MD -D_FORTIFY_SOURCE=2 -Wpointer-arith \
 
 if test $mingw = "no" ; then
   # add the warnings we don't want to do on mingw
-  $WARNINGS_TO_TEST="$WARNINGS_TO_TEST  -Weffc++"
+  WARNINGS_TO_TEST="$WARNINGS_TO_TEST  -Weffc++"
 fi
 
 for option in $WARNINGS_TO_TEST
