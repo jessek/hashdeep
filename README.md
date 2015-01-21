@@ -34,26 +34,24 @@ project's homepage, [https://github.com/jessek/hashdeep](https://github.com/jess
 For historical reasons, the program has different options and features
 when run with the names "hashdeep" and "md5deep."
 
-hashdeep has a feature called "audit" which:
-> \* Can also use a list of known hashes to audit a set of FILES. Errors
->   are reported to standard error. If no FILES are specified, reads from
->   standard input.
->
-> -a Audit mode. Each input file is compared against the set of knowns. An
->    audit is said to pass if each input file is matched against exactly
->    one file in set of knowns. Any collisions, new files, or missing files
->    will make the audit fail. Using this flag alone produces a message,
->    either "Audit passed" or "Audit Failed".
->
->    -v - prints the number of files in each category
->    -v -v = prints all discrepancies
->    -v -v -v = prints the results for every file examined and every known file.
->
-> -k <file> - The -k option must be used to load the audit file
+hashdeep has a feature called "audit" which can use a list of known hashes to audit a set of FILES.
+Errors are reported to standard error. If no FILES are specified, reads from standard input.
+
+    -a Audit mode. Each input file is compared against the set of knowns. An
+       audit is said to pass if each input file is matched against exactly
+       one file in set of knowns. Any collisions, new files, or missing files
+       will make the audit fail. Using this flag alone produces a message,
+       either "Audit passed" or "Audit Failed".
+       -v = prints the number of files in each category
+       -v -v = prints all discrepancies
+       -v -v -v = prints the results for every file examined and every known file.
+    
+    -k <file> - The -k option must be used to load the audit file
 
 To perform an audit:
->  hashdeep -r dir  > /tmp/auditfile            # Generate the audit file
->  hashdeep -a k /tmp/auditfile -r dir          # test the audit
+
+    hashdeep -r dir  > /tmp/auditfile            # Generate the audit file
+    hashdeep -a k /tmp/auditfile -r dir          # test the audit
 
 Notice that the audit is performed with a standard hashdeep output
 file. (Internally, the audit is computed as part of the hashing process.)
