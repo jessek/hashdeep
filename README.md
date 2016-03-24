@@ -1,4 +1,4 @@
-This is md5deep, a set of cross-platform tools to computer hashes, or
+This is md5deep, a set of cross-platform tools to compute hashes, or
 message digests, for any number of files while optionally recursively
 digging through the directory structure.  It can also take a list of known
 hashes and display the filenames of input files whose hashes either do or
