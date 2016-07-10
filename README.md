@@ -73,7 +73,7 @@ that nobody is entirely sure that Windows actually does, and Windows
 itself may not be consistent.
 
 Version 3 of this program addressed this issue by using the TCHAR
-variable to hold filenames on Windowa dn by refusing to print them,
+variable to hold filenames on Windows and refusing to print them,
 priting a "?" instead. Version 4 of this program translates TCHAR
 strings to std::string strings at the soonest opportunity using the
 [Windows function WideCharToMultiByte]
