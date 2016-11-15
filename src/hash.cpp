@@ -279,7 +279,7 @@ void file_data_hasher_t::hash()
 		MAP_FILE|
 #endif
 		MAP_SHARED,fd,0);
-	    if(fdht->base>0){		
+	    if(fdht->base != (void *) -1){
 		/* mmap is successful, so set the bounds.
 		 * if it is not successful, we default to reading the fd
 		 */
