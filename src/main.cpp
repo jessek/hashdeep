@@ -26,7 +26,6 @@
 //#include "sha3.h"
 #include "tiger.h"
 #include "whirlpool.h"
-#include "null.h"
 
 using namespace std;
 
