@@ -283,12 +283,12 @@ do
      tr -d \\r < test$i.out > ref/test$i.out
      tr -d \\r < test$i.err > ref/test$i.err
 
-     # extra addition for test 47
+     # extra addition for test 50
      if [ $i = 47 ]; then
        if grep 'Input files examined' ref/test$i.out ; then
-         echo Fixup for test 47 no longer required
+         echo Fixup for test 50 no longer required
        else
-         echo Applying fixup for test 47
+         echo Applying fixup for test 50
          echo "   Input files examined: 0" >> ref/test$i.out
          echo "  Known files expecting: 0" >> ref/test$i.out
          sort ref/test$i.out > ref/test$i.out2
