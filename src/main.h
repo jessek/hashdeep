@@ -62,6 +62,7 @@ typedef enum {
   alg_sha256, 
   alg_tiger,
   alg_whirlpool, 
+  alg_null, 
   alg_sha3,
   
   // alg_unknown must always be last in this list. It's used
@@ -78,6 +79,7 @@ inline std::ostream & operator << (std::ostream &os,const hashid_t &h)
   case alg_sha256:    os << "alg_sha256" ; break ;
   case alg_tiger:     os << "alg_tiger" ; break ;
   case alg_whirlpool: os << "alg_whirlpool" ; break ;
+  case alg_null:      os << "alg_null" ; break ;
   case alg_sha3:      os << "alg_sha3" ; break ;
   case alg_unknown:   os << "alg_unknown" ; break ;
   }
@@ -93,6 +95,7 @@ inline std::ostream & operator << (std::ostream &os,const hashid_t &h)
 #define DEFAULT_ENABLE_SHA256      TRUE
 #define DEFAULT_ENABLE_TIGER       FALSE
 #define DEFAULT_ENABLE_WHIRLPOOL   FALSE
+#define DEFAULT_ENABLE_NULL   FALSE
 #define DEFAULT_ENABLE_SHA3        FALSE
 
 class iomode {
