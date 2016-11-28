@@ -26,6 +26,7 @@
 //#include "sha3.h"
 #include "tiger.h"
 #include "whirlpool.h"
+#include "null.h"
 
 using namespace std;
 
@@ -445,6 +446,7 @@ void algorithm_t::load_hashing_algorithms()
 #endif
     add_algorithm(alg_tiger,     "tiger",     192, hash_init_tiger,     hash_update_tiger,     hash_final_tiger,     DEFAULT_ENABLE_TIGER);
     add_algorithm(alg_whirlpool, "whirlpool", 512, hash_init_whirlpool, hash_update_whirlpool, hash_final_whirlpool, DEFAULT_ENABLE_WHIRLPOOL);
+    add_algorithm(alg_null,      "null",      0,   hash_init_null,      hash_update_null,    hash_final_null,      DEFAULT_ENABLE_NULL);
 
     //add_algorithm(alg_sha3,
     //		  "sha3",
