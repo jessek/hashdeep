@@ -41,6 +41,7 @@ win64:
 	mv src/sha256deep.exe    src/sha256deep64.exe
 	mv src/tigerdeep.exe     src/tigerdeep64.exe
 	mv src/whirlpooldeep.exe src/whirlpooldeep64.exe
+	mv src/nulldeep.exe      src/nulldeep64.exe
 	mv src/hashdeep.exe     src/hashdeep64.exe
 
 strip32:
