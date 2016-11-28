@@ -95,7 +95,7 @@ inline std::ostream & operator << (std::ostream &os,const hashid_t &h)
 #define DEFAULT_ENABLE_SHA256      TRUE
 #define DEFAULT_ENABLE_TIGER       FALSE
 #define DEFAULT_ENABLE_WHIRLPOOL   FALSE
-#define DEFAULT_ENABLE_NULL   FALSE
+#define DEFAULT_ENABLE_NULL        FALSE
 #define DEFAULT_ENABLE_SHA3        FALSE
 
 class iomode {
