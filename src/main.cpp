@@ -23,7 +23,7 @@
 #include "md5.h"
 #include "sha1.h"
 #include "sha256.h"
-//#include "sha3.h"
+#include "sha3.h"
 #include "tiger.h"
 #include "whirlpool.h"
 
@@ -446,13 +446,13 @@ void algorithm_t::load_hashing_algorithms()
     add_algorithm(alg_tiger,     "tiger",     192, hash_init_tiger,     hash_update_tiger,     hash_final_tiger,     DEFAULT_ENABLE_TIGER);
     add_algorithm(alg_whirlpool, "whirlpool", 512, hash_init_whirlpool, hash_update_whirlpool, hash_final_whirlpool, DEFAULT_ENABLE_WHIRLPOOL);
 
-    //add_algorithm(alg_sha3,
-    //		  "sha3",
-    //256,
-    //hash_init_sha3,
-    //hash_update_sha3,
-    //hash_final_sha3,
-    //	  DEFAULT_ENABLE_SHA3);
+    add_algorithm(alg_sha3,
+		  "sha3",
+		  384,
+		  hash_init_sha3,
+		  hash_update_sha3,
+		  hash_final_sha3,
+		  DEFAULT_ENABLE_SHA3);
 }
 
 

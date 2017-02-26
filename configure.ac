@@ -3,7 +3,7 @@
 #
 
 AC_PREREQ(2.57)
-AC_INIT([MD5DEEP],[4.4],[research@jessekornblum.com])
+AC_INIT([MD5DEEP],[4.5-beta1],[research@jessekornblum.com])
 AC_CONFIG_FILES([Makefile src/Makefile man/Makefile tests/Makefile tests/testfiles/Makefile ])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -28,18 +28,18 @@ AC_PROG_INSTALL
 
 mingw="no"
 case $host in
-  *-*-*linux*-*) 
+  *-*-*linux*-*)
      AC_DEFINE([__LINUX__],1,[Linux operating system functions])
      ;;
 
-  *-*-mingw32*)   
-     LIBS="-lws2_32 -lgdi32 -lpthread $LIBS"  # previously had -liberty 
+  *-*-mingw32*)
+     LIBS="-lws2_32 -lgdi32 -lpthread $LIBS"  # previously had -liberty
      CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -DHAVE_STRUCT_TIMESPEC $CPPFLAGS"
      CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
      CXXFLAGS="$CXXFLAGS --static"
      AC_DEFINE([MINGW],1,[We are cross-compiling with MINGW])
      mingw="yes"
-     ;;		 		     
+     ;;
 esac
 
 
@@ -94,7 +94,7 @@ unset option
 # -Waggregate-return -- aggregate returns are GOOD; they simplify code design
 # We can use these warnings after ZLIB gets upgraded:
 # -Wundef  --- causes problems with zlib
-# -Wcast-qual 
+# -Wcast-qual
 # -Wmissing-format-attribute  - can't get this one right
 AC_LANG_PUSH(C++)
 WARNINGS_TO_TEST="-Wall -MD -D_FORTIFY_SOURCE=2 -Wpointer-arith \
@@ -121,7 +121,7 @@ do
   unset SAVE_CXXFLAGS
 done
 unset option
-AC_LANG_POP()    
+AC_LANG_POP()
 #
 ################################################################
 
@@ -152,9 +152,9 @@ AC_CHECK_HEADERS([sys/mount.h],[],[],
 [#ifdef HAVE_SYS_TYPES_H
  # include <sys/types.h>
  #endif
- #ifdef HAVE_SYS_PARAM_H                                                     
- # include <sys/param.h>                           
- #endif])                    
+ #ifdef HAVE_SYS_PARAM_H
+ # include <sys/param.h>
+ #endif])
 
 # http://www.gnu.org/s/hello/manual/autoconf/Particular-Headers.html
 #
@@ -251,7 +251,7 @@ fi
 
 if test "${with_noopt}" = "yes" ; then
   AC_MSG_NOTICE([XXXXXXXX DROPPING OPTIMIZATION FLAGS XXXXXXXX])
-  CFLAGS=`echo "$CFLAGS" | sed s/-O[[0-9]]// | sed s/-fast//`             # note the double quoting! 
+  CFLAGS=`echo "$CFLAGS" | sed s/-O[[0-9]]// | sed s/-fast//`             # note the double quoting!
   CXXFLAGS=`echo "$CXXFLAGS" | sed s/-O[[0-9]]// | sed s/-fast//`
 fi
 
