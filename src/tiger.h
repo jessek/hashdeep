@@ -13,11 +13,7 @@
  */
 
 /* $Id$ */
-
-#ifndef __TIGER_H
-#define __TIGER_H
-
-
+#pragma once
 
 __BEGIN_DECLS
 
@@ -28,5 +24,3 @@ void hash_final_tiger(void * ctx, unsigned char *sum);
 #define context_tiger_t TIGER_CONTEXT
 
 __END_DECLS
-
-#endif /* ifndef __TIGER_H */

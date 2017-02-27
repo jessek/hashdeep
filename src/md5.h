@@ -1,4 +1,3 @@
-
 /* MD5DEEP - md5.h
  *
  * By Jesse Kornblum
@@ -13,12 +12,9 @@
  */
 
 /* $Id$ */
-
-#ifndef __MD5_H
-#define __MD5_H
-
+#pragma once
 #include "common.h"
-// -------------------------------------------------------------- 
+// --------------------------------------------------------------
 // After this is the algorithm itself. You shouldn't change these
 
 __BEGIN_DECLS
@@ -29,7 +25,7 @@ typedef struct {
   unsigned char in[64];
 } context_md5_t;
 
-// This is needed to make RSAREF happy on some MS-DOS compilers 
+// This is needed to make RSAREF happy on some MS-DOS compilers
 typedef context_md5_t MD5_CTX;
 
 void MD5Init(context_md5_t *ctx);
@@ -42,5 +38,3 @@ void hash_update_md5(void *ctx, const unsigned char *buf, size_t len);
 void hash_final_md5(void *ctx, unsigned char *digest);
 
 __END_DECLS
-
-#endif /* ifndef __MD5_H */

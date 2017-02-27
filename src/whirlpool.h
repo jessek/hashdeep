@@ -1,8 +1,6 @@
 
 /* $Id$ */
-
-#ifndef __WHIRLPOOL_H
-#define __WHIRLPOOL_H
+#pragma once
 
 #include "common.h"
 __BEGIN_DECLS
@@ -16,7 +14,7 @@ __BEGIN_DECLS
 #include <limits.h>
 
 /* Definition of minimum-width integer types
- * 
+ *
  * u8   -> unsigned integer type, at least 8 bits, equivalent to unsigned char
  * u16  -> unsigned integer type, at least 16 bits
  * u32  -> unsigned integer type, at least 32 bits
@@ -157,5 +155,3 @@ void hash_final_whirlpool(void * ctx, unsigned char *digest);
 #endif   /* PORTABLE_C__ */
 
 __END_DECLS
-
-#endif   /* __WHIRLPOOL_H */

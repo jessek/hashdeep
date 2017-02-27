@@ -13,9 +13,7 @@
  */
 
 /* $Id$ */
-
-#ifndef _SHA256_H
-#define _SHA256_H
+#pragma once
 
 #include "common.h"
 
@@ -37,5 +35,3 @@ void hash_update_sha256(void * ctx, const unsigned char *buf, size_t len);
 void hash_final_sha256(void * ctx, unsigned char *digest);
 
 __END_DECLS
-
-#endif /* sha256.h */

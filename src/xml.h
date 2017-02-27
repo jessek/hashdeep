@@ -4,9 +4,7 @@
  *
  * Pubic Domain.
  */
-
-#ifndef _XML_H_
-#define _XML_H_
+#pragma once
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -81,7 +79,7 @@ public:
 	return command_line;
     }
 
-    XML();			
+    XML();
     XML(FILE *out);
 
     void set_outFILE(FILE *out);	  // writes to this FILE without a DTD
@@ -91,7 +89,7 @@ public:
 
     static std::string xmlescape(const std::string &xml);
     static std::string xmlstrip(const std::string &xml);
-    
+
     void open();			// opens the output file
     void close();			// writes the output to the file
     void writexml(const std::string &xml); // writes formatted xml with indentation
@@ -166,7 +164,7 @@ public:
 	    }
 	}
 #endif
-#endif	
+#endif
 	xmlout("command_line", command_line); // quote it!
 #ifdef HAVE_GETUID
 	xmlprintf("uid","","%d",getuid());
@@ -223,6 +221,4 @@ public:
 #endif
     }
 };
-#endif
-
 #endif

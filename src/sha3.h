@@ -1,5 +1,8 @@
-// $Id$
-
+/**
+ * SHA-3 implementation as part of Hashdeep
+ *
+ * $Id$
+ */
 #pragma once
 
 #ifdef __cplusplus
@@ -13,4 +16,3 @@ void hash_final_sha3(void * ctx, unsigned char *sum);
 #ifdef __cplusplus
 }
 #endif
-

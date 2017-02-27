@@ -1,9 +1,7 @@
 /****************************************************************
  *** THREADING SUPPORT
  ****************************************************************/
-
-#ifndef THREADPOOL_H
-#define THREADPOOL_H
+#pragma once
 
 #include <stdio.h>
 #include <pthread.h>
@@ -75,4 +73,3 @@ public:
     void *run();
     void do_work(class file_data_hasher_t *); // must delete fdht when done
 };
-#endif

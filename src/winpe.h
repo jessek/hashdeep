@@ -11,6 +11,7 @@
 //
 // $Id$
 //
+#pragma once
 
 #include "main.h"
 
