@@ -59,7 +59,7 @@ Errors are reported to standard error. If no FILES are specified, reads from sta
 To perform an audit:
 
     hashdeep -r dir  > /tmp/auditfile            # Generate the audit file
-    hashdeep -a k /tmp/auditfile -r dir          # test the audit
+    hashdeep -a -k /tmp/auditfile -r dir          # test the audit
 
 Notice that the audit is performed with a standard hashdeep output
 file. (Internally, the audit is computed as part of the hashing process.)
