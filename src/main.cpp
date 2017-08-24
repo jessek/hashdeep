@@ -422,7 +422,20 @@ void cc_sha256_final(void *ctx, unsigned char *digest)
 }
 #endif
 
+/*
+ * Why aren't these gotten from null.c?
+ */
+void hash_init_null(void * ctx)
+{
+}
 
+void hash_update_null(void * ctx, const unsigned char *buf, size_t len)
+{
+}
+
+void hash_final_null(void * ctx, unsigned char *digest)
+{
+}
 
 /*
  * Load the hashing algorithms array.
@@ -445,6 +458,7 @@ void algorithm_t::load_hashing_algorithms()
 #endif
     add_algorithm(alg_tiger,     "tiger",     192, hash_init_tiger,     hash_update_tiger,     hash_final_tiger,     DEFAULT_ENABLE_TIGER);
     add_algorithm(alg_whirlpool, "whirlpool", 512, hash_init_whirlpool, hash_update_whirlpool, hash_final_whirlpool, DEFAULT_ENABLE_WHIRLPOOL);
+    add_algorithm(alg_null,      "null",      0,   hash_init_null,      hash_update_null,      hash_final_null,      DEFAULT_ENABLE_NULL);
 
     //add_algorithm(alg_sha3,
     //		  "sha3",

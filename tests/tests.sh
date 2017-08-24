@@ -211,36 +211,40 @@ do
     30) cmd="$BASE/whirlpooldeep$EXE -r $HTMP	" ;;
     31) cmd="$BASE/whirlpooldeep$EXE -p512 -r $HTMP " ;;
 
-    32) cmd="$BASE/hashdeep$EXE -r   $HTMP	" ;;
-    33) cmd="$BASE/hashdeep$EXE -p512 -r $HTMP	" ;;
+    32) cmd="$BASE/nulldeep$EXE -r $HTMP	" ;;
+    33) cmd="$BASE/nulldeep$EXE -p512 -r $HTMP " ;;
 
-    34) cmd="$BASE/hashdeep$EXE -m -k hashlist-hashdeep-partial.txt $HTMP/*.txt  " ;;
-    35) cmd="$BASE/hashdeep$EXE -M -k hashlist-hashdeep-partial.txt $HTMP/*.txt  " ;;
-    36) cmd="$BASE/hashdeep$EXE -w -m -k hashlist-hashdeep-partial.txt $HTMP/*.txt  " ;;
-    37) cmd="$BASE/hashdeep$EXE -x -k hashlist-hashdeep-partial.txt $HTMP/*.txt  " ;;
-    38) cmd="$BASE/hashdeep$EXE -x -w -k hashlist-hashdeep-partial.txt $HTMP/*.txt  " ;;
-    39) cmd="$BASE/hashdeep$EXE -r -a -k hashlist-hashdeep-full.txt $HTMP " ;;
-    40) cmd="$BASE/hashdeep$EXE -v -r -a -k hashlist-hashdeep-full.txt $HTMP "  ;;
-    41) cmd="$BASE/hashdeep$EXE   /dev/null		";;
+    34) cmd="$BASE/hashdeep$EXE -r   $HTMP	" ;;
+    35) cmd="$BASE/hashdeep$EXE -p512 -r $HTMP	" ;;
+
+    36) cmd="$BASE/hashdeep$EXE -m -k hashlist-hashdeep-partial.txt $HTMP/*.txt  " ;;
+    37) cmd="$BASE/hashdeep$EXE -M -k hashlist-hashdeep-partial.txt $HTMP/*.txt  " ;;
+    38) cmd="$BASE/hashdeep$EXE -w -m -k hashlist-hashdeep-partial.txt $HTMP/*.txt  " ;;
+    39) cmd="$BASE/hashdeep$EXE -x -k hashlist-hashdeep-partial.txt $HTMP/*.txt  " ;;
+    40) cmd="$BASE/hashdeep$EXE -x -w -k hashlist-hashdeep-partial.txt $HTMP/*.txt  " ;;
+    41) cmd="$BASE/hashdeep$EXE -r -a -k hashlist-hashdeep-full.txt $HTMP " ;;
+    42) cmd="$BASE/hashdeep$EXE -v -r -a -k hashlist-hashdeep-full.txt $HTMP "  ;;
+    43) cmd="$BASE/hashdeep$EXE   /dev/null		";;
 
      # The stdin tests
 
-    42) cmd="echo README.txt | $BASE/hashdeep$EXE"      ;;
-    43) cmd="echo README.txt | $BASE/md5deep$EXE"       ;;
-    44) cmd="echo README.txt | $BASE/sha1deep$EXE"      ;;
-    45) cmd="echo README.txt | $BASE/sha256deep$EXE"    ;;
-    46) cmd="echo README.txt | $BASE/whirlpooldeep$EXE" ;;
+    44) cmd="echo README.txt | $BASE/hashdeep$EXE"      ;;
+    45) cmd="echo README.txt | $BASE/md5deep$EXE"       ;;
+    46) cmd="echo README.txt | $BASE/sha1deep$EXE"      ;;
+    47) cmd="echo README.txt | $BASE/sha256deep$EXE"    ;;
+    48) cmd="echo README.txt | $BASE/whirlpooldeep$EXE" ;;
+    49) cmd="echo README.txt | $BASE/nulldeep$EXE" ;;
 
      # Additional tests as errors are discovered
-    47) cmd="$BASE/hashdeep$EXE -vvvbak known1 -k known2 foo bar moo cow"      ;;
+    50) cmd="$BASE/hashdeep$EXE -vvvbak known1 -k known2 foo bar moo cow"      ;;
 
      # BSD style hashes, iLook hashes.
      # iLook has different behavior with the algorithms, so we test with all
-    48) cmd="$BASE/md5deep$EXE -Sm $TESTFILES_DIR/bsd-hashes.txt -r $HTMP" ;;
-    49) cmd="$BASE/md5deep$EXE -m $TESTFILES_DIR/ilookv4.hsh -r $HTMP" ;;
-    50) cmd="$BASE/sha1deep$EXE -m $TESTFILES_DIR/ilookv4.hsh -r $HTMP" ;;
-    51) cmd="$BASE/md5deep$EXE -m $TESTFILES_DIR/nsrlfile.txt  -r $HTMP" ;;
-    52) cmd="$BASE/sha1deep$EXE -m $TESTFILES_DIR/nsrlfile.txt -r $HTMP" ;;
+    51) cmd="$BASE/md5deep$EXE -Sm $TESTFILES_DIR/bsd-hashes.txt -r $HTMP" ;;
+    52) cmd="$BASE/md5deep$EXE -m $TESTFILES_DIR/ilookv4.hsh -r $HTMP" ;;
+    53) cmd="$BASE/sha1deep$EXE -m $TESTFILES_DIR/ilookv4.hsh -r $HTMP" ;;
+    54) cmd="$BASE/md5deep$EXE -m $TESTFILES_DIR/nsrlfile.txt  -r $HTMP" ;;
+    55) cmd="$BASE/sha1deep$EXE -m $TESTFILES_DIR/nsrlfile.txt -r $HTMP" ;;
        
 
    esac
@@ -279,12 +283,12 @@ do
      tr -d \\r < test$i.out > ref/test$i.out
      tr -d \\r < test$i.err > ref/test$i.err
 
-     # extra addition for test 47
+     # extra addition for test 50
      if [ $i = 47 ]; then
        if grep 'Input files examined' ref/test$i.out ; then
-         echo Fixup for test 47 no longer required
+         echo Fixup for test 50 no longer required
        else
-         echo Applying fixup for test 47
+         echo Applying fixup for test 50
          echo "   Input files examined: 0" >> ref/test$i.out
          echo "  Known files expecting: 0" >> ref/test$i.out
          sort ref/test$i.out > ref/test$i.out2
