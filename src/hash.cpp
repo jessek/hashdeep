@@ -91,6 +91,17 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
     hc1->read_offset = request_start;
     hc1->read_len    = 0;		// so far
 
+    unsigned char *readlink_buffer = 0;
+    bool const request_larger_than_buffer = request_len > file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE;
+    if (ocb->opt_readlink && file_is_symlink) {
+#ifndef _WIN32
+        if (request_larger_than_buffer) {
+            readlink_buffer = (unsigned char*)malloc(request_len);
+            readlink(file_name_to_hash.c_str(), (char*)readlink_buffer, request_len);
+        }
+#endif
+    }
+
     while (request_len>0){
 	// Clear the buffer in case we hit an error and need to pad the hash 
 	// The use of MD5DEEP_IDEAL_BLOCK_SIZE means that we loop even for memory-mapped
@@ -107,10 +118,21 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 
 	ssize_t current_read_bytes = 0;	// read the data into buffer
 
-	if(this->handle){
+    if (ocb->opt_readlink && file_is_symlink) {
+#ifndef _WIN32
+        if (request_larger_than_buffer) {
+            memcpy(buffer_, readlink_buffer + hc1->read_len, toread);
+        }
+        else {
+            readlink(file_name_to_hash.c_str(), (char*)buffer_, toread);
+        }
+        current_read_bytes = toread;
+#endif
+    }
+    else if(this->handle){
 	    current_read_bytes = fread(buffer_, 1, toread, this->handle);
 	} else {
-	    assert(this->fd!=0);
+        assert(this->fd!=-1);
 	    if(this->base){
 		buffer = this->base + request_start;
 		current_read_bytes = min(toread,this->bounds - request_start); // can't read more than this
@@ -169,6 +191,12 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 	request_start += toread;
 	request_len   -= toread;
     }
+
+    if (readlink_buffer) {
+        free(readlink_buffer);
+        readlink_buffer = 0;
+    }
+
     if (ocb->opt_estimate) ocb->clear_realtime_stats();
     if (this->file_bytes == this->stat_bytes) this->eof = true; // end of the file
     return true;			// done hashing!
@@ -201,6 +229,8 @@ void file_data_hasher_t::hash()
 {
     file_data_hasher_t *fdht = this;
 
+    bool const readlink_this_file = ocb->opt_readlink && fdht->file_is_symlink;
+
     /*
      * If the handle is set, we are probably hashing stdin.
      * If not, figure out file size and full file name for the handle
@@ -211,7 +241,7 @@ void file_data_hasher_t::hash()
 	//state::file_type(fdht->file_name_to_hash,ocb,&fdht->stat_bytes,
 	//&fdht->ctime,&fdht->mtime,&fdht->atime);
 	file_metadata_t m;
-	file_metadata_t::stat(fdht->file_name_to_hash,&m,*ocb);
+    file_metadata_t::stat(fdht->file_name_to_hash,&m,*ocb,fdht->file_is_symlink);
 	fdht->stat_bytes = m.size;
 	fdht->ctime      = m.ctime;
 	fdht->mtime      = m.mtime;
@@ -238,7 +268,11 @@ void file_data_hasher_t::hash()
 	    }
 	}
 
-	switch(ocb->opt_iomode){
+    if (readlink_this_file) {
+        assert(fdht->fd == -1);
+        assert(fdht->handle == 0);
+    }
+    else switch(ocb->opt_iomode){
 	case iomode::buffered:
 	    assert(fdht->handle==0);
 
@@ -360,7 +394,7 @@ void file_data_hasher_t::hash()
 	 */
 	fdht->file_bytes = 0;
 	if(fdht->handle) fseeko(fdht->handle, 0, SEEK_SET);
-	if(fdht->fd){
+    if(fdht->fd != -1){
 	    lseek(this->fd,0,SEEK_SET);
 	}
 	fdht->eof = false;		// 
@@ -381,7 +415,7 @@ void file_data_hasher_t::hash()
     while (fdht->eof==false)  {
 	
 	uint64_t request_len = fdht->stat_bytes; // by default, hash the file
-	if ( fdht->ocb->piecewise_size>0 )  {
+    if ( !readlink_this_file && fdht->ocb->piecewise_size>0 )  {
 	    request_len = fdht->ocb->piecewise_size;
 	}
 
@@ -467,10 +501,13 @@ void worker::do_work(file_data_hasher_t *fdht)
  * 2 - hash the fdht
  * 3 - record it in stdout using display.
  */
-void display::hash_file(const tstring &fn)
+void display::hash_file(const tstring &fn, file_types const type)
 {
     file_data_hasher_t *fdht = new file_data_hasher_t(this);
     fdht->file_name_to_hash = fn;
+    if (type == stat_symlink) {
+        fdht->file_is_symlink = true;
+    }
 
     /**
      * If we are using a thread pool, hash in another thread
