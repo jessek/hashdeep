@@ -614,7 +614,11 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
     bool did_usage = false;
   int i;
 
-  while ((i=getopt(argc_,argv_,"abc:CdeEF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:")) != -1)  {
+  while ((i=getopt(argc_,argv_,"abc:CdeEF:f:o:I:i:MmXxtlk:rsp:wvVhW:0D:uj:"
+#ifndef _WIN32
+        "R"
+#endif
+  )) != -1)  {
     switch (i)
     {
     case 'a':
@@ -683,6 +687,9 @@ int state::hashdeep_process_command_line(int argc_, char **argv_)
     case 'b': ocb.mode_barename=true;   break;
     case 'l': ocb.opt_relative=true;    break;
     case 'e': ocb.opt_estimate = true;	break;
+#ifndef _WIN32
+    case 'R': ocb.opt_readlink = true;  break;
+#endif
     case 'r': mode_recursive=true;	break;
     case 's': ocb.opt_silent = true;	break;
 

@@ -220,7 +220,7 @@ public:
     static file_types decode_file_type(const struct __stat64 &sb);
 
     // stat a file, print an error and return -1 if it fails, otherwise return 0
-    static int stat(const filename_t &path,file_metadata_t *m,class display &ocb); 
+    static int stat(const filename_t &path,file_metadata_t *m,class display &ocb, bool is_symlink = false);
     class fileid_t {				      // uniquely defines a file on this system
     public:
 	fileid_t():dev(0),ino(0){};
@@ -296,6 +296,7 @@ public:
     }
     static const size_t MD5DEEP_IDEAL_BLOCK_SIZE = 8192;
     file_data_hasher_t(class display *ocb_):
+    file_is_symlink(false),
 	ocb(ocb_),			// where we put results
 	handle(0),
 	fd(-1),
@@ -322,6 +323,7 @@ public:
 
     /* The actual file to hash */
     filename_t file_name_to_hash;
+    bool file_is_symlink;
 
     /* Where the results go */
     class display *ocb;
@@ -585,6 +587,7 @@ class display {
       opt_display_hash(false),
       opt_show_matched(false),
       opt_case_sensitive(true),
+      opt_readlink(false),
       opt_iomode(iomode::buffered),	// by default, use buffered
 #ifdef HAVE_PTHREAD
       opt_threadcount(threadpool::numCPU()),
@@ -620,6 +623,7 @@ class display {
     bool	opt_display_hash;
     bool	opt_show_matched;
     bool        opt_case_sensitive;
+    bool    opt_readlink;
     int		opt_iomode;
     int		opt_threadcount;
 
@@ -755,7 +759,7 @@ class display {
     void	finalize_matching();
 
     /* hash.cpp: Actually trigger the hashing. */
-    void	hash_file(const tstring &file_name);
+    void	hash_file(const tstring &file_name, file_types type);
     void	hash_stdin();
     void	dump_hashlist(){ lock(); known.dump_hashlist(); unlock(); }
 };
@@ -794,7 +798,7 @@ public:;
 
  state():mode_recursive(false),	// do we recurse?
       mode_warn_only(false),	// for loading hash files
-      
+
       // these determine which files get hashed
       mode_expert(false),
       mode_regular(false),
@@ -904,7 +908,7 @@ public:;
     bool	should_hash_symlink(const tstring &fn,file_types *link_type);
     bool        should_hash_winpe(const tstring &fn);
     bool	should_hash_expert(const tstring &fn, file_types type);
-    bool	should_hash(const tstring &fn);
+    bool	should_hash(const tstring &fn, file_types &type);
 
     /* file_type returns the file type of a string.
      * If an error is found and ocb is provided, send the error to ocb.

@@ -75,10 +75,19 @@ file_types file_metadata_t::decode_file_type(const struct __stat64 &sb)
  */
 int file_metadata_t::stat(const tstring &fn,
 			  file_metadata_t *m,
-			  class display &ocb)
+              class display &ocb,
+              bool const is_symlink)
 {
   struct __stat64 sb;
-  if (::TSTAT(fn.c_str(),&sb)) 
+  if (ocb.opt_readlink && is_symlink)
+  {
+    if (::TLSTAT(fn.c_str(),&sb))
+    {
+      ocb.error_filename(fn,"%s",strerror(errno));
+      return -1;
+    }
+  }
+  else if (::TSTAT(fn.c_str(),&sb))
   {
     ocb.error_filename(fn,"%s",strerror(errno));
     return -1;
@@ -565,6 +574,13 @@ void state::process_dir(const tstring &fn)
 bool state::should_hash_symlink(const tstring &fn, file_types *link_type)
 {
     /**
+     * When readlink option is set, all symlinks are to be hashed.
+     */
+    if (ocb.opt_readlink) {
+        return true;
+    }
+
+    /**
      * We must look at what this symlink points to before we process it.
      * The file_type() function uses lstat to examine the file.
      * Here we use the normal stat to examine what this symlink points to.
@@ -694,9 +710,11 @@ bool state::should_hash_expert(const tstring &fn, file_types type)
  * but if it is called with a directory it recursively hashes it.
  */
 
-bool state::should_hash(const tstring &fn)
+bool state::should_hash(const tstring &fn, file_types &_type)
 {
     file_types type = state::file_type(fn,&ocb,0,0,0,0);
+
+    _type = type;
   
     if (mode_expert) 
       return should_hash_expert(fn,type);
@@ -735,8 +753,9 @@ void state::dig_normal(const tstring &fn_) {
 #endif
   if (opt_debug) 
     ocb.status("*** cleaned:%s",global::make_utf8(fn).c_str());
-  if (should_hash(fn))
-    ocb.hash_file(fn);
+  file_types type;
+  if (should_hash(fn, type))
+    ocb.hash_file(fn, type);
 }
 
 

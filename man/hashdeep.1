@@ -226,6 +226,11 @@ open(). Specifying \fB-Fm\fR will use memory-mapped I/O which will be
 faster on some platforms, but which (currently) will not work with
 files that produce I/O errors.
 
+.TP
+\fB-R\fR
+Don't follow symlinks, instead hash the output of readlink. (Not available on
+Windows)
+
 
 
 .TP
