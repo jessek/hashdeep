@@ -92,9 +92,10 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
     hc1->read_len    = 0;		// so far
 
     unsigned char *readlink_buffer = 0;
+    bool const request_larger_than_buffer = request_len > file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE;
     if (ocb->opt_readlink && file_is_symlink) {
 #ifndef _WIN32
-        if (request_len > file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE) {
+        if (request_larger_than_buffer) {
             readlink_buffer = (unsigned char*)malloc(request_len);
             readlink(file_name_to_hash.c_str(), (char*)readlink_buffer, request_len);
         }
@@ -119,7 +120,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
 
     if (ocb->opt_readlink && file_is_symlink) {
 #ifndef _WIN32
-        if (request_len > file_data_hasher_t::MD5DEEP_IDEAL_BLOCK_SIZE) {
+        if (request_larger_than_buffer) {
             memcpy(buffer_, readlink_buffer + hc1->read_len, toread);
         }
         else {
