@@ -124,7 +124,7 @@ bool file_data_hasher_t::compute_hash(uint64_t request_start,uint64_t request_le
     
 	// If an error occured, display a message and see if we need to quit.
 	if ((current_read_bytes<0) || (this->handle && ferror(this->handle))){
-	    ocb->error_filename(this->file_name,"error at offset %"PRIu64": %s",
+	    ocb->error_filename(this->file_name,"error at offset %" PRIu64 ": %s",
 				request_start, strerror(errno));
 	   
 	    if (file_fatal_error()){
