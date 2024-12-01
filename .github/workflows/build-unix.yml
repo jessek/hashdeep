@@ -1,0 +1,196 @@
+name: "Build"
+
+# For docker container comparable to Linux build worker:
+#   docker run -it docker.io/library/ubuntu:22.04 bash
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    timeout-minutes: 30
+    name: ${{matrix.prefix}} ${{ matrix.os }} ${{ matrix.arch }} ${{ matrix.linkage }} ${{ matrix.compiler }} ${{ matrix.suffix }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: "macos"
+            arch: "arm64"
+            linkage: "shared"
+            compiler: "gcc"
+            runner: "macos-latest"
+            configure_opts: ""
+            codecov: "yes"
+            prefix: "CODECOV"
+            address_sanitizer: "yes"
+            keep_artifacts: "no"
+
+          - os: "linux"
+            arch: "x86_64"
+            linkage: "shared"
+            compiler: "gcc"
+            runner: "ubuntu-22.04"
+            configure_opts: "CFLAGS=-Werror CXXFLAGS=-Werror"
+            codecov: "no"
+            prefix:
+            address_sanitizer: "yes"
+            keep_artifacts: "yes"
+            suffix: "(with artifacts)"
+
+          - os: "linux"
+            arch: "x86_64"
+            linkage: "shared"
+            compiler: "clang"
+            runner: "ubuntu-22.04"
+            configure_opts: "CC=clang CXX=clang++ CFLAGS=-Werror CXXFLAGS=-Werror"
+            codecov: "no"
+            prefix: ""
+            address_sanitizer: "yes"
+            keep_artifacts: "no"
+
+          - os: "mingw"
+            arch: "x86_64"
+            linkage: "shared"
+            compiler: "gcc"
+            runner: "ubuntu-22.04"
+            configure_opts: "--host=x86_64-w64-mingw32 --target=x86_64-w64-mingw32"
+            winearch: 'win64'
+            winepath: 'Z:\usr\lib\gcc\x86_64-w64-mingw32\10-posix'
+            wineprefix: '/home/runner/.wine64'
+            codecov: "no"
+            prefix: ""
+            address_sanitizer: "no"
+            keep_artifacts: "no"
+
+          - os: "mingw"
+            arch: "i686"
+            linkage: "shared"
+            compiler: "gcc"
+            runner: "ubuntu-22.04"
+            configure_opts:   "--host=i686-w64-mingw32 --target=i686-w64-mingw32"
+            winearch: 'win32'
+            winepath: 'Z:\usr\lib\gcc\i686-w64-mingw32\10-posix'
+            wineprefix: '/home/runner/.wine32'
+            codecov: "no"
+            prefix: ""
+            address_sanitizer: "no"
+            keep_artifacts: "no"
+
+    steps:
+      - name: Determine number of cores
+        id: cores
+        run: |
+          if [ ${{ startsWith(matrix.runner, 'macos') }} = true ]; then
+            CORES=$(sysctl -n hw.logicalcpu)
+          elif [ ${{ matrix.os == 'mingw' }} = true ]; then
+            # mingw exhausts the memory if too many jobs run concurrently
+            CORES=2
+          else
+            CORES=$(nproc)
+          fi
+          echo "cores=$CORES" >>$GITHUB_OUTPUT
+          echo "Using $CORES cores"
+
+      - name: Install MacOS packages
+        if: ${{ matrix.os == 'macos' }}
+        run: |
+          brew update
+          brew install libtool autoconf automake libtool libewf libmagic
+
+      - name: Install Linux packages
+        if: ${{ matrix.os == 'linux' }}
+        run: |
+          sudo apt update
+          sudo apt install -y autoconf automake g++ libssl-dev libtool make pkg-config zlib1g-dev
+
+      - name: Install Mingw packages and setup for cross-compiling
+        if: ${{ matrix.os == 'mingw' }}
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt update
+          sudo apt install autoconf automake libtool make pkg-config mingw-w64 mingw-w64-tools libz-mingw-w64-dev wine32 wine64
+          sudo update-alternatives --set ${{ matrix.arch }}-w64-mingw32-g++ /usr/bin/${{ matrix.arch }}-w64-mingw32-g++-posix
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: ${{ matrix.os == 'mingw' && 1 || 0 }}
+
+      - name: Run bootstrap
+        run: |
+          ./bootstrap
+
+      - name: Run configure
+        run: |
+          ./configure ${{ matrix.configure_opts }}
+
+      - name: Run make
+        run: |
+          make -j${{ steps.cores.outputs.cores }} check VERBOSE=1 TESTS=
+
+      - name: Run make check on Mac/Linux
+        if: ${{ matrix.os != 'mingw' }}
+        run: |
+          make -j${{ steps.cores.outputs.cores }} check VERBOSE=1 || result=1 ; for i in $(find test -name '*.log') ; do printf '\n%79s\n' | tr ' ' '=' ; echo "$i" ; cat "$i" ; done ; exit $result
+
+      - name: Run make check on Mingw
+        if: ${{ matrix.os == 'mingw' }}
+        env:
+          WINEARCH: ${{ matrix.winearch }}
+          WINEPATH: ${{ matrix.winepath }}
+          WINEPREFIX: ${{ matrix.wineprefix }}
+        run: |
+          make -j${{ steps.cores.outputs.cores }} check VERBOSE=1 LOG_COMPILER=scripts/wine_wrapper.sh || result=1 ; for i in $(find test -name '*.log') ; do printf '\n%79s\n' | tr ' ' '=' ; echo "$i" ; cat "$i" ; done ; exit $result
+
+      - name: Clean up
+        if: ${{ matrix.os != 'mingw' }}
+        run: |
+          make distclean
+
+      - name: Clean up
+        if: ${{ matrix.os != 'mingw' }}
+        run: |
+          make distclean
+
+      - name: Run configure for codecov
+        if: ${{ matrix.codecov == 'yes' }}
+        run: |
+          ./configure ${{ matrix.configure_opts }} CFLAGS='-g -O0 -fprofile-arcs -ftest-coverage' CXXFLAGS='-g -O0 -fprofile-arcs -ftest-coverage'
+
+      - name: Run make for codecov
+        if: ${{ matrix.codecov == 'yes' }}
+        run: |
+          make check
+
+      - name: Upload codecov report
+        if: ${{ matrix.codecov == 'yes' }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          gcov $(find . -name '*.gcda')
+          bash <(curl -s https://codecov.io/bash) -B develop
+
+      - name: Create any artifacts that we need to keep
+        if: ${{ matrix.keep_artifacts == 'yes' }}
+        run: |
+          ./configure ${{ matrix.configure_opts }} CFLAGS='-O2' CXXFLAGS='-O2'
+          mkdir executables
+          find . -print
+          echo move something into executables/
+
+      - name: Keep artifacts
+        if: ${{ matrix.keep_artifacts == 'yes' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: executables
+          path: |
+            executables/*
+          retention-days: 15
