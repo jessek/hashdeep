@@ -126,7 +126,7 @@ jobs:
 
       - name: Run bootstrap
         run: |
-          ./bootstrap
+          ./bootstrap.sh
 
       - name: Run configure
         run: |
