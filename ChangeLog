@@ -1,3 +1,6 @@
+2025-09-17  Jesse Kornblum  <jessekornblum@gmail.com>:
+	* Started version 5 rewrite in Rust.
+
 2014-01-29  Jesse Kornblum  <research@jessekornblum.com>:
 	* Updated date for version 4.4 release.
 
