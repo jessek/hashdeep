@@ -29,12 +29,21 @@ impl HashAlgorithm {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct HashResult {
     filename: String,
     size: u64,
     #[serde(flatten)]
     algorithm_hash: std::collections::HashMap<String, String>,
+}
+
+#[derive(Debug)]
+struct ProcessState<'a> {
+    recursive_mode: bool,
+    algorithm: &'a HashAlgorithm,
+    json_mode: bool,
+    single_filesystem: bool,
+    results: &'a mut Vec<HashResult>,
 }
 
 fn compute_hash(file_path: &Path, algorithm: &HashAlgorithm) -> Result<String, std::io::Error> {
@@ -127,14 +136,7 @@ fn output_hash_result(
     }
 }
 
-fn process(
-    arg: &String,
-    recursive_mode: bool,
-    algorithm: &HashAlgorithm,
-    json_mode: bool,
-    single_filesystem: bool,
-    results: &mut Vec<HashResult>,
-) {
+fn process(arg: &String, state: &mut ProcessState) {
     let path = Path::new(arg);
 
     // Get metadata to determine file type
@@ -148,9 +150,9 @@ fn process(
 
     if metadata.is_file() {
         // It's a regular file
-        match compute_hash(path, algorithm) {
+        match compute_hash(path, state.algorithm) {
             Ok(hash) => {
-                output_hash_result(path, &hash, algorithm, json_mode, results);
+                output_hash_result(path, &hash, state.algorithm, state.json_mode, state.results);
             }
             Err(e) => {
                 eprintln!(
@@ -163,9 +165,9 @@ fn process(
         }
     } else if metadata.is_dir() {
         // It's a directory
-        if recursive_mode {
+        if state.recursive_mode {
             // Walk the directory tree recursively
-            let walker = if single_filesystem {
+            let walker = if state.single_filesystem {
                 WalkDir::new(path).same_file_system(true)
             } else {
                 WalkDir::new(path)
@@ -175,14 +177,14 @@ fn process(
                 match entry {
                     Ok(entry) => {
                         if entry.file_type().is_file() {
-                            match compute_hash(entry.path(), algorithm) {
+                            match compute_hash(entry.path(), state.algorithm) {
                                 Ok(hash) => {
                                     output_hash_result(
                                         entry.path(),
                                         &hash,
-                                        algorithm,
-                                        json_mode,
-                                        results,
+                                        state.algorithm,
+                                        state.json_mode,
+                                        state.results,
                                     );
                                 }
                                 Err(e) => {
@@ -243,7 +245,11 @@ fn main() {
                         "xxhash" => algorithm = HashAlgorithm::Xxhash,
                         "blake3" => algorithm = HashAlgorithm::Blake3,
                         _ => {
-                            eprintln!("{}: Invalid algorithm '{}'. Valid options are: md5, sha1, sha256, xxhash, blake3", env!("CARGO_PKG_NAME"), args[i + 1]);
+                            eprintln!(
+                                "{}: Invalid algorithm '{}'. Valid options are: md5, sha1, sha256, xxhash, blake3",
+                                env!("CARGO_PKG_NAME"),
+                                args[i + 1]
+                            );
                             return;
                         }
                     }
@@ -265,20 +271,54 @@ fn main() {
 
     // Collect non-flag arguments
     let mut file_args = Vec::new();
-    for (i, arg) in args.iter().enumerate() {
+    let mut file_arg_from_file: Option<String> = None;
+    let mut i = 0;
+    while i < args.len() {
+        let arg = &args[i];
+        if arg == "-f" && i + 1 < args.len() {
+            file_arg_from_file = Some(args[i + 1].clone());
+            i += 2;
+            continue;
+        }
         if i == 0 {
-            // Skip the program name
+            i += 1;
             continue;
         }
         // Skip flag arguments
         if arg == "-r" || arg == "-c" || arg == "-j" || arg == "-x" {
+            i += 1;
             continue;
         }
         // Skip algorithm arguments (they follow -c)
         if i > 1 && args[i - 1] == "-c" {
+            i += 1;
             continue;
         }
-        file_args.push(arg);
+        file_args.push(arg.clone());
+        i += 1;
+    }
+
+    // If -f was provided, read arguments from the file
+    if let Some(filename) = file_arg_from_file {
+        match std::fs::read_to_string(&filename) {
+            Ok(contents) => {
+                for line in contents.lines() {
+                    let trimmed = line.trim();
+                    if !trimmed.is_empty() {
+                        file_args.push(trimmed.to_string());
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!(
+                    "{}: Error reading argument file '{}': {}",
+                    env!("CARGO_PKG_NAME"),
+                    filename,
+                    e
+                );
+                return;
+            }
+        }
     }
 
     let mut results = Vec::new();
@@ -313,12 +353,14 @@ fn main() {
         // Process each file argument
         for arg in file_args {
             process(
-                arg,
-                recursive_mode,
-                &algorithm,
-                json_mode,
-                single_filesystem,
-                &mut results,
+                &arg,
+                &mut ProcessState {
+                    recursive_mode,
+                    algorithm: &algorithm,
+                    json_mode,
+                    single_filesystem,
+                    results: &mut results,
+                },
             );
         }
     }
