@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use sha1::Digest as Sha1Digest;
 use std::env;
 use std::fs;
@@ -11,6 +12,25 @@ enum HashAlgorithm {
     Sha1,
     Sha256,
     Xxhash,
+}
+
+impl HashAlgorithm {
+    fn as_str(&self) -> &'static str {
+        match self {
+            HashAlgorithm::Md5 => "md5",
+            HashAlgorithm::Sha1 => "sha1",
+            HashAlgorithm::Sha256 => "sha256",
+            HashAlgorithm::Xxhash => "xxhash",
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct HashResult {
+    filename: String,
+    size: u64,
+    #[serde(flatten)]
+    algorithm_hash: std::collections::HashMap<String, String>,
 }
 
 fn compute_hash(file_path: &Path, algorithm: &HashAlgorithm) -> Result<String, std::io::Error> {
@@ -40,7 +60,36 @@ fn compute_hash(file_path: &Path, algorithm: &HashAlgorithm) -> Result<String, s
     Ok(hash)
 }
 
-fn process(arg: &String, recursive_mode: bool, algorithm: &HashAlgorithm) {
+fn output_hash_result(
+    file_path: &Path,
+    hash: &str,
+    algorithm: &HashAlgorithm,
+    json_mode: bool,
+    results: &mut Vec<HashResult>,
+) {
+    if json_mode {
+        let metadata = fs::metadata(file_path).unwrap();
+        let mut algorithm_hash = std::collections::HashMap::new();
+        algorithm_hash.insert(algorithm.as_str().to_string(), hash.to_string());
+
+        let result = HashResult {
+            filename: file_path.display().to_string(),
+            size: metadata.len(),
+            algorithm_hash,
+        };
+        results.push(result);
+    } else {
+        println!("{}  {}", hash, file_path.display());
+    }
+}
+
+fn process(
+    arg: &String,
+    recursive_mode: bool,
+    algorithm: &HashAlgorithm,
+    json_mode: bool,
+    results: &mut Vec<HashResult>,
+) {
     let path = Path::new(arg);
 
     // Get metadata to determine file type
@@ -56,7 +105,7 @@ fn process(arg: &String, recursive_mode: bool, algorithm: &HashAlgorithm) {
         // It's a regular file
         match compute_hash(path, algorithm) {
             Ok(hash) => {
-                println!("{}  {}", hash, arg);
+                output_hash_result(path, &hash, algorithm, json_mode, results);
             }
             Err(e) => {
                 eprintln!(
@@ -77,7 +126,13 @@ fn process(arg: &String, recursive_mode: bool, algorithm: &HashAlgorithm) {
                         if entry.file_type().is_file() {
                             match compute_hash(entry.path(), algorithm) {
                                 Ok(hash) => {
-                                    println!("{}  {}", hash, entry.path().display());
+                                    output_hash_result(
+                                        entry.path(),
+                                        &hash,
+                                        algorithm,
+                                        json_mode,
+                                        results,
+                                    );
                                 }
                                 Err(e) => {
                                     eprintln!(
@@ -107,6 +162,7 @@ fn process(arg: &String, recursive_mode: bool, algorithm: &HashAlgorithm) {
 fn main() {
     let args: Vec<String> = env::args().collect();
     let mut recursive_mode = false;
+    let mut json_mode = false;
     let mut algorithm = HashAlgorithm::Md5; // Default to MD5
     let mut i = 1;
 
@@ -119,6 +175,9 @@ fn main() {
             }
             "-r" => {
                 recursive_mode = true;
+            }
+            "-j" => {
+                json_mode = true;
             }
             "-c" => {
                 if i + 1 < args.len() {
@@ -149,19 +208,25 @@ fn main() {
     }
 
     // Process each non-flag argument
+    let mut results = Vec::new();
     for (i, arg) in args.iter().enumerate() {
         if i == 0 {
             // Skip the program name
             continue;
         }
         // Skip flag arguments
-        if arg == "-r" || arg == "-c" {
+        if arg == "-r" || arg == "-c" || arg == "-j" {
             continue;
         }
         // Skip algorithm arguments (they follow -c)
         if i > 1 && args[i - 1] == "-c" {
             continue;
         }
-        process(arg, recursive_mode, &algorithm);
+        process(arg, recursive_mode, &algorithm, json_mode, &mut results);
+    }
+
+    // Output JSON array if in JSON mode
+    if json_mode {
+        println!("{}", serde_json::to_string_pretty(&results).unwrap());
     }
 }
