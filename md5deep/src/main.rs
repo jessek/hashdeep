@@ -43,17 +43,11 @@ fn compute_hash(file_path: &Path, algorithm: &HashAlgorithm) -> Result<String, s
 fn process(arg: &String, recursive_mode: bool, algorithm: &HashAlgorithm) {
     let path = Path::new(arg);
 
-    // Check if the path exists
-    if !path.exists() {
-        eprintln!("Error: '{}' does not exist", arg);
-        return;
-    }
-
     // Get metadata to determine file type
     let metadata = match fs::metadata(path) {
         Ok(meta) => meta,
         Err(e) => {
-            eprintln!("Error reading '{}': {}", arg, e);
+            eprintln!("{}: {}", arg, e);
             return;
         }
     };
@@ -65,13 +59,17 @@ fn process(arg: &String, recursive_mode: bool, algorithm: &HashAlgorithm) {
                 println!("{}  {}", hash, arg);
             }
             Err(e) => {
-                eprintln!("Error computing hash for '{}': {}", arg, e);
+                eprintln!(
+                    "{}: Error computing hash for '{}': {}",
+                    env!("CARGO_PKG_NAME"),
+                    arg,
+                    e
+                );
             }
         }
     } else if metadata.is_dir() {
         // It's a directory
         if recursive_mode {
-            println!("Directory: {} (recursive mode)", arg);
             // Walk the directory tree recursively
             for entry in WalkDir::new(path) {
                 match entry {
@@ -83,7 +81,8 @@ fn process(arg: &String, recursive_mode: bool, algorithm: &HashAlgorithm) {
                                 }
                                 Err(e) => {
                                     eprintln!(
-                                        "Error computing hash for '{}': {}",
+                                        "{}: Error computing hash for '{}': {}",
+                                        env!("CARGO_PKG_NAME"),
                                         entry.path().display(),
                                         e
                                     );
@@ -97,10 +96,7 @@ fn process(arg: &String, recursive_mode: bool, algorithm: &HashAlgorithm) {
                 }
             }
         } else {
-            eprintln!(
-                "Error: '{}' is a directory. Use -r flag for recursive mode.",
-                arg
-            );
+            eprintln!("{}: Is a directory", arg);
         }
     } else {
         // It's neither a file nor a directory (e.g., symlink, device, etc.)
@@ -132,13 +128,16 @@ fn main() {
                         "sha256" => algorithm = HashAlgorithm::Sha256,
                         "xxhash" => algorithm = HashAlgorithm::Xxhash,
                         _ => {
-                            eprintln!("Error: Invalid algorithm '{}'. Valid options are: md5, sha1, sha256, xxhash", args[i + 1]);
+                            eprintln!("{}: Invalid algorithm '{}'. Valid options are: md5, sha1, sha256, xxhash", env!("CARGO_PKG_NAME"), args[i + 1]);
                             return;
                         }
                     }
                     i += 1; // Skip the algorithm argument
                 } else {
-                    eprintln!("Error: -c flag requires an algorithm name");
+                    eprintln!(
+                        "{}: -c flag requires an algorithm name",
+                        env!("CARGO_PKG_NAME")
+                    );
                     return;
                 }
             }
