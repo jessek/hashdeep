@@ -62,68 +62,31 @@ fn output_hash_result(
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let mut recursive_mode = false;
-    let mut json_mode = false;
-    let mut single_filesystem = false;
-    let mut algorithm = HashAlgorithm::Md5; // Default to MD5
-    let mut i = 1;
-
-    // Parse command line arguments
-    while i < args.len() {
-        match args[i].as_str() {
-            "-v" => {
-                println!("{}", env!("CARGO_PKG_VERSION"));
-                return;
-            }
-            "-r" => {
-                recursive_mode = true;
-            }
-            "-j" => {
-                json_mode = true;
-            }
-            "-x" => {
-                single_filesystem = true;
-            }
-            "-c" => {
-                if i + 1 < args.len() {
-                    match args[i + 1].as_str() {
-                        "md5" => algorithm = HashAlgorithm::Md5,
-                        "sha1" => algorithm = HashAlgorithm::Sha1,
-                        "sha256" => algorithm = HashAlgorithm::Sha256,
-                        "xxhash" => algorithm = HashAlgorithm::Xxhash,
-                        "blake3" => algorithm = HashAlgorithm::Blake3,
-                        _ => {
-                            eprintln!(
-                                "{}: Invalid algorithm '{}'. Valid options are: md5, sha1, sha256, xxhash, blake3",
-                                env!("CARGO_PKG_NAME"),
-                                args[i + 1]
-                            );
-                            return;
-                        }
-                    }
-                    i += 1; // Skip the algorithm argument
-                } else {
-                    eprintln!(
-                        "{}: -c flag requires an algorithm name",
-                        env!("CARGO_PKG_NAME")
-                    );
-                    return;
-                }
-            }
-            _ => {
-                // This is a regular argument, not a flag
-            }
-        }
-        i += 1;
+    if args.contains(&"-v".to_string()) || args.contains(&"--version".to_string()) {
+        println!("{}", env!("CARGO_PKG_VERSION"));
+        return;
+    }
+    if args.len() == 1 || args.contains(&"--help".to_string()) || args.contains(&"-h".to_string()) {
+        println!("Usage: {} [options] [files...]\n", args[0]);
+        println!("Options:");
+        println!("  -r, --recursive         Recursively process directories");
+        println!(
+            "  -c, --algorithm <alg>   Select hash algorithm: md5, sha1, sha256, xxhash, blake3"
+        );
+        println!("  -j, --json              Output in JSON format");
+        println!("  -x, --one-filesystem    Only process files on the same filesystem");
+        println!("  -f, --filelist <file>   Read file arguments from <file>, one per line");
+        println!("  -v, --version           Show version information");
+        println!("  -h, --help              Show this help message");
+        return;
     }
 
-    // Collect non-flag arguments
     let mut file_args = Vec::new();
     let mut file_arg_from_file: Option<String> = None;
     let mut i = 0;
     while i < args.len() {
         let arg = &args[i];
-        if arg == "-f" && i + 1 < args.len() {
+        if (arg == "-f" || arg == "--filelist") && i + 1 < args.len() {
             file_arg_from_file = Some(args[i + 1].clone());
             i += 2;
             continue;
@@ -133,12 +96,18 @@ fn main() {
             continue;
         }
         // Skip flag arguments
-        if arg == "-r" || arg == "-c" || arg == "-j" || arg == "-x" {
+        if arg == "-r"
+            || arg == "--recursive"
+            || arg == "-j"
+            || arg == "--json"
+            || arg == "-x"
+            || arg == "--one-filesystem"
+        {
             i += 1;
             continue;
         }
-        // Skip algorithm arguments (they follow -c)
-        if i > 1 && args[i - 1] == "-c" {
+        // Skip algorithm arguments (they follow -c or --algorithm)
+        if i > 1 && (args[i - 1] == "-c" || args[i - 1] == "--algorithm") {
             i += 1;
             continue;
         }
@@ -146,7 +115,7 @@ fn main() {
         i += 1;
     }
 
-    // If -f was provided, read arguments from the file
+    // If -f/--filelist was provided, read arguments from the file
     if let Some(filename) = file_arg_from_file {
         match std::fs::read_to_string(&filename) {
             Ok(contents) => {
@@ -167,6 +136,38 @@ fn main() {
                 return;
             }
         }
+    }
+
+    // Parse flags
+    let recursive_mode =
+        args.contains(&"-r".to_string()) || args.contains(&"--recursive".to_string());
+    let json_mode = args.contains(&"-j".to_string()) || args.contains(&"--json".to_string());
+    let single_filesystem =
+        args.contains(&"-x".to_string()) || args.contains(&"--one-filesystem".to_string());
+    let mut algorithm = HashAlgorithm::Md5;
+    let mut i = 0;
+    while i < args.len() {
+        if args[i] == "-c" || args[i] == "--algorithm" {
+            if i + 1 < args.len() {
+                match args[i + 1].as_str() {
+                    "md5" => algorithm = HashAlgorithm::Md5,
+                    "sha1" => algorithm = HashAlgorithm::Sha1,
+                    "sha256" => algorithm = HashAlgorithm::Sha256,
+                    "xxhash" => algorithm = HashAlgorithm::Xxhash,
+                    "blake3" => algorithm = HashAlgorithm::Blake3,
+                    _ => {
+                        eprintln!(
+                            "{}: Invalid algorithm '{}'. Valid options are: md5, sha1, sha256, xxhash, blake3",
+                            env!("CARGO_PKG_NAME"),
+                            args[i + 1]
+                        );
+                        return;
+                    }
+                }
+                i += 1;
+            }
+        }
+        i += 1;
     }
 
     let mut results = Vec::new();
