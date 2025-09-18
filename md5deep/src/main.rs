@@ -88,6 +88,7 @@ fn process(
     recursive_mode: bool,
     algorithm: &HashAlgorithm,
     json_mode: bool,
+    single_filesystem: bool,
     results: &mut Vec<HashResult>,
 ) {
     let path = Path::new(arg);
@@ -120,7 +121,13 @@ fn process(
         // It's a directory
         if recursive_mode {
             // Walk the directory tree recursively
-            for entry in WalkDir::new(path) {
+            let walker = if single_filesystem {
+                WalkDir::new(path).same_file_system(true)
+            } else {
+                WalkDir::new(path)
+            };
+
+            for entry in walker {
                 match entry {
                     Ok(entry) => {
                         if entry.file_type().is_file() {
@@ -163,6 +170,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let mut recursive_mode = false;
     let mut json_mode = false;
+    let mut single_filesystem = false;
     let mut algorithm = HashAlgorithm::Md5; // Default to MD5
     let mut i = 1;
 
@@ -178,6 +186,9 @@ fn main() {
             }
             "-j" => {
                 json_mode = true;
+            }
+            "-x" => {
+                single_filesystem = true;
             }
             "-c" => {
                 if i + 1 < args.len() {
@@ -215,18 +226,25 @@ fn main() {
             continue;
         }
         // Skip flag arguments
-        if arg == "-r" || arg == "-c" || arg == "-j" {
+        if arg == "-r" || arg == "-c" || arg == "-j" || arg == "-x" {
             continue;
         }
         // Skip algorithm arguments (they follow -c)
         if i > 1 && args[i - 1] == "-c" {
             continue;
         }
-        process(arg, recursive_mode, &algorithm, json_mode, &mut results);
+        process(
+            arg,
+            recursive_mode,
+            &algorithm,
+            json_mode,
+            single_filesystem,
+            &mut results,
+        );
     }
 
     // Output JSON array if in JSON mode
     if json_mode {
-        println!("{}", serde_json::to_string_pretty(&results).unwrap());
+        println!("{}", serde_json::to_string(&results).unwrap());
     }
 }
