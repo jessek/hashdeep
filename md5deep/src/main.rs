@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use sha1::Digest as Sha1Digest;
 use std::env;
 use std::fs;
+use std::io::{self, Read};
 use std::path::Path;
 use walkdir::WalkDir;
 use xxhash_rust::xxh3::xxh3_64;
@@ -38,6 +39,40 @@ struct HashResult {
 
 fn compute_hash(file_path: &Path, algorithm: &HashAlgorithm) -> Result<String, std::io::Error> {
     let contents = fs::read(file_path)?;
+
+    let hash = match algorithm {
+        HashAlgorithm::Md5 => {
+            let digest = md5::compute(&contents);
+            format!("{:x}", digest)
+        }
+        HashAlgorithm::Sha1 => {
+            let mut hasher = sha1::Sha1::new();
+            hasher.update(&contents);
+            format!("{:x}", hasher.finalize())
+        }
+        HashAlgorithm::Sha256 => {
+            let mut hasher = sha2::Sha256::new();
+            hasher.update(&contents);
+            format!("{:x}", hasher.finalize())
+        }
+        HashAlgorithm::Xxhash => {
+            let hash = xxh3_64(&contents);
+            format!("{:x}", hash)
+        }
+        HashAlgorithm::Blake3 => {
+            let mut hasher = Hasher::new();
+            hasher.update(&contents);
+            let hash = hasher.finalize();
+            format!("{}", hash.to_hex())
+        }
+    };
+
+    Ok(hash)
+}
+
+fn compute_hash_stdin(algorithm: &HashAlgorithm) -> Result<String, std::io::Error> {
+    let mut contents = Vec::new();
+    io::stdin().read_to_end(&mut contents)?;
 
     let hash = match algorithm {
         HashAlgorithm::Md5 => {
@@ -228,8 +263,8 @@ fn main() {
         i += 1;
     }
 
-    // Process each non-flag argument
-    let mut results = Vec::new();
+    // Collect non-flag arguments
+    let mut file_args = Vec::new();
     for (i, arg) in args.iter().enumerate() {
         if i == 0 {
             // Skip the program name
@@ -243,14 +278,49 @@ fn main() {
         if i > 1 && args[i - 1] == "-c" {
             continue;
         }
-        process(
-            arg,
-            recursive_mode,
-            &algorithm,
-            json_mode,
-            single_filesystem,
-            &mut results,
-        );
+        file_args.push(arg);
+    }
+
+    let mut results = Vec::new();
+
+    // If no file arguments provided, process stdin
+    if file_args.is_empty() {
+        match compute_hash_stdin(&algorithm) {
+            Ok(hash) => {
+                if json_mode {
+                    let mut algorithm_hash = std::collections::HashMap::new();
+                    algorithm_hash.insert(algorithm.as_str().to_string(), hash.to_string());
+
+                    let result = HashResult {
+                        filename: "<stdin>".to_string(),
+                        size: 0, // We don't know the size of stdin
+                        algorithm_hash,
+                    };
+                    results.push(result);
+                } else {
+                    println!("{}  -", hash);
+                }
+            }
+            Err(e) => {
+                eprintln!(
+                    "{}: Error computing hash for stdin: {}",
+                    env!("CARGO_PKG_NAME"),
+                    e
+                );
+            }
+        }
+    } else {
+        // Process each file argument
+        for arg in file_args {
+            process(
+                arg,
+                recursive_mode,
+                &algorithm,
+                json_mode,
+                single_filesystem,
+                &mut results,
+            );
+        }
     }
 
     // Output JSON array if in JSON mode
