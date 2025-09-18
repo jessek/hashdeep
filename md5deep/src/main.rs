@@ -1,12 +1,12 @@
-use blake3::Hasher;
 use serde::{Deserialize, Serialize};
-use sha1::Digest as Sha1Digest;
 use std::env;
 use std::fs;
-use std::io::{self, Read};
 use std::path::Path;
-use walkdir::WalkDir;
-use xxhash_rust::xxh3::xxh3_64;
+
+mod hash;
+use hash::compute_hash_stdin;
+mod process;
+use process::{ProcessState, process};
 
 #[derive(Debug, Clone)]
 enum HashAlgorithm {
@@ -37,82 +37,6 @@ struct HashResult {
     algorithm_hash: std::collections::HashMap<String, String>,
 }
 
-#[derive(Debug)]
-struct ProcessState<'a> {
-    recursive_mode: bool,
-    algorithm: &'a HashAlgorithm,
-    json_mode: bool,
-    single_filesystem: bool,
-    results: &'a mut Vec<HashResult>,
-}
-
-fn compute_hash(file_path: &Path, algorithm: &HashAlgorithm) -> Result<String, std::io::Error> {
-    let contents = fs::read(file_path)?;
-
-    let hash = match algorithm {
-        HashAlgorithm::Md5 => {
-            let digest = md5::compute(&contents);
-            format!("{:x}", digest)
-        }
-        HashAlgorithm::Sha1 => {
-            let mut hasher = sha1::Sha1::new();
-            hasher.update(&contents);
-            format!("{:x}", hasher.finalize())
-        }
-        HashAlgorithm::Sha256 => {
-            let mut hasher = sha2::Sha256::new();
-            hasher.update(&contents);
-            format!("{:x}", hasher.finalize())
-        }
-        HashAlgorithm::Xxhash => {
-            let hash = xxh3_64(&contents);
-            format!("{:x}", hash)
-        }
-        HashAlgorithm::Blake3 => {
-            let mut hasher = Hasher::new();
-            hasher.update(&contents);
-            let hash = hasher.finalize();
-            format!("{}", hash.to_hex())
-        }
-    };
-
-    Ok(hash)
-}
-
-fn compute_hash_stdin(algorithm: &HashAlgorithm) -> Result<String, std::io::Error> {
-    let mut contents = Vec::new();
-    io::stdin().read_to_end(&mut contents)?;
-
-    let hash = match algorithm {
-        HashAlgorithm::Md5 => {
-            let digest = md5::compute(&contents);
-            format!("{:x}", digest)
-        }
-        HashAlgorithm::Sha1 => {
-            let mut hasher = sha1::Sha1::new();
-            hasher.update(&contents);
-            format!("{:x}", hasher.finalize())
-        }
-        HashAlgorithm::Sha256 => {
-            let mut hasher = sha2::Sha256::new();
-            hasher.update(&contents);
-            format!("{:x}", hasher.finalize())
-        }
-        HashAlgorithm::Xxhash => {
-            let hash = xxh3_64(&contents);
-            format!("{:x}", hash)
-        }
-        HashAlgorithm::Blake3 => {
-            let mut hasher = Hasher::new();
-            hasher.update(&contents);
-            let hash = hasher.finalize();
-            format!("{}", hash.to_hex())
-        }
-    };
-
-    Ok(hash)
-}
-
 fn output_hash_result(
     file_path: &Path,
     hash: &str,
@@ -133,82 +57,6 @@ fn output_hash_result(
         results.push(result);
     } else {
         println!("{}  {}", hash, file_path.display());
-    }
-}
-
-fn process(arg: &String, state: &mut ProcessState) {
-    let path = Path::new(arg);
-
-    // Get metadata to determine file type
-    let metadata = match fs::metadata(path) {
-        Ok(meta) => meta,
-        Err(e) => {
-            eprintln!("{}: {}", arg, e);
-            return;
-        }
-    };
-
-    if metadata.is_file() {
-        // It's a regular file
-        match compute_hash(path, state.algorithm) {
-            Ok(hash) => {
-                output_hash_result(path, &hash, state.algorithm, state.json_mode, state.results);
-            }
-            Err(e) => {
-                eprintln!(
-                    "{}: Error computing hash for '{}': {}",
-                    env!("CARGO_PKG_NAME"),
-                    arg,
-                    e
-                );
-            }
-        }
-    } else if metadata.is_dir() {
-        // It's a directory
-        if state.recursive_mode {
-            // Walk the directory tree recursively
-            let walker = if state.single_filesystem {
-                WalkDir::new(path).same_file_system(true)
-            } else {
-                WalkDir::new(path)
-            };
-
-            for entry in walker {
-                match entry {
-                    Ok(entry) => {
-                        if entry.file_type().is_file() {
-                            match compute_hash(entry.path(), state.algorithm) {
-                                Ok(hash) => {
-                                    output_hash_result(
-                                        entry.path(),
-                                        &hash,
-                                        state.algorithm,
-                                        state.json_mode,
-                                        state.results,
-                                    );
-                                }
-                                Err(e) => {
-                                    eprintln!(
-                                        "{}: Error computing hash for '{}': {}",
-                                        env!("CARGO_PKG_NAME"),
-                                        entry.path().display(),
-                                        e
-                                    );
-                                }
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        eprintln!("Error accessing entry: {}", e);
-                    }
-                }
-            }
-        } else {
-            eprintln!("{}: Is a directory", arg);
-        }
-    } else {
-        // It's neither a file nor a directory (e.g., symlink, device, etc.)
-        println!("Special file: {}", arg);
     }
 }
 
