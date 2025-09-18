@@ -62,23 +62,25 @@ fn output_hash_result(
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if args.contains(&"-v".to_string()) || args.contains(&"--version".to_string()) {
-        println!("{}", env!("CARGO_PKG_VERSION"));
-        return;
-    }
-    if args.len() == 1 || args.contains(&"--help".to_string()) || args.contains(&"-h".to_string()) {
-        println!("Usage: {} [options] [files...]\n", args[0]);
-        println!("Options:");
-        println!("  -r, --recursive         Recursively process directories");
-        println!(
-            "  -c, --algorithm <alg>   Select hash algorithm: md5, sha1, sha256, xxhash, blake3"
-        );
-        println!("  -j, --json              Output in JSON format");
-        println!("  -x, --one-filesystem    Only process files on the same filesystem");
-        println!("  -f, --filelist <file>   Read file arguments from <file>, one per line");
-        println!("  -v, --version           Show version information");
-        println!("  -h, --help              Show this help message");
-        return;
+    for arg in &args[1..] {
+        if arg == "-v" || arg == "--version" {
+            println!("{}", env!("CARGO_PKG_VERSION"));
+            return;
+        }
+        if arg == "-h" || arg == "--help" {
+            println!("Usage: {} [options] [files...]\n", args[0]);
+            println!("Options:");
+            println!("  -r, --recursive         Recursively process directories");
+            println!(
+                "  -c, --algorithm <alg>   Select hash algorithm: md5, sha1, sha256, xxhash, blake3"
+            );
+            println!("  -j, --json              Output in JSON format");
+            println!("  -x, --one-filesystem    Only process files on the same filesystem");
+            println!("  -f, --filelist <file>   Read file arguments from <file>, one per line");
+            println!("  -v, --version           Show version information");
+            println!("  -h, --help              Show this help message");
+            return;
+        }
     }
 
     let mut file_args = Vec::new();
