@@ -1,3 +1,4 @@
+use blake3::Hasher;
 use serde::{Deserialize, Serialize};
 use sha1::Digest as Sha1Digest;
 use std::env;
@@ -12,6 +13,7 @@ enum HashAlgorithm {
     Sha1,
     Sha256,
     Xxhash,
+    Blake3,
 }
 
 impl HashAlgorithm {
@@ -21,6 +23,7 @@ impl HashAlgorithm {
             HashAlgorithm::Sha1 => "sha1",
             HashAlgorithm::Sha256 => "sha256",
             HashAlgorithm::Xxhash => "xxhash",
+            HashAlgorithm::Blake3 => "blake3",
         }
     }
 }
@@ -54,6 +57,12 @@ fn compute_hash(file_path: &Path, algorithm: &HashAlgorithm) -> Result<String, s
         HashAlgorithm::Xxhash => {
             let hash = xxh3_64(&contents);
             format!("{:x}", hash)
+        }
+        HashAlgorithm::Blake3 => {
+            let mut hasher = Hasher::new();
+            hasher.update(&contents);
+            let hash = hasher.finalize();
+            format!("{}", hash.to_hex())
         }
     };
 
@@ -197,8 +206,9 @@ fn main() {
                         "sha1" => algorithm = HashAlgorithm::Sha1,
                         "sha256" => algorithm = HashAlgorithm::Sha256,
                         "xxhash" => algorithm = HashAlgorithm::Xxhash,
+                        "blake3" => algorithm = HashAlgorithm::Blake3,
                         _ => {
-                            eprintln!("{}: Invalid algorithm '{}'. Valid options are: md5, sha1, sha256, xxhash", env!("CARGO_PKG_NAME"), args[i + 1]);
+                            eprintln!("{}: Invalid algorithm '{}'. Valid options are: md5, sha1, sha256, xxhash, blake3", env!("CARGO_PKG_NAME"), args[i + 1]);
                             return;
                         }
                     }
