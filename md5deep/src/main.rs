@@ -9,7 +9,7 @@ use hash::compute_hash_stdin;
 mod process;
 use process::{ProcessState, process, process_with_matching};
 mod r#match;
-use r#match::{KnownHash, KnownHashes};
+use r#match::KnownHashes;
 
 #[derive(Debug, Clone, clap::ValueEnum)]
 enum HashAlgorithm {
@@ -49,9 +49,13 @@ struct Args {
     #[arg(short = 'f', long = "filelist")]
     filelist: Option<String>,
 
-    /// Read known hashes from file for matching
+    /// Read known hashes from file for matching (only print filenames of matches)
     #[arg(short = 'm', long = "matching")]
     matching: Option<String>,
+
+    /// Read known hashes from file for matching (detailed output: hash, filename, match source)
+    #[arg(short = 'M', long = "matching-detail")]
+    matching_detail: Option<String>,
 }
 
 impl HashAlgorithm {
@@ -97,39 +101,6 @@ fn output_hash_result(
     }
 }
 
-fn output_matching_result(
-    file_path: &Path,
-    hash: &str,
-    algorithm: &HashAlgorithm,
-    known_hash: &KnownHash,
-    json_mode: bool,
-    results: &mut Vec<HashResult>,
-) {
-    if json_mode {
-        let metadata = fs::metadata(file_path).unwrap();
-        let mut algorithm_hash = std::collections::HashMap::new();
-        algorithm_hash.insert(algorithm.as_str().to_string(), hash.to_string());
-
-        let result = HashResult {
-            filename: file_path.display().to_string(),
-            size: metadata.len(),
-            algorithm_hash,
-        };
-        results.push(result);
-    } else {
-        if let Some(known_filename) = &known_hash.filename {
-            println!(
-                "{}  {}  MATCH: {}",
-                hash,
-                file_path.display(),
-                known_filename
-            );
-        } else {
-            println!("{}  {}  MATCH", hash, file_path.display());
-        }
-    }
-}
-
 fn main() {
     let args = Args::parse();
 
@@ -159,9 +130,22 @@ fn main() {
     }
 
     // Load known hashes if matching mode is enabled
-    let known_hashes = if let Some(matching_file) = &args.matching {
+    let (known_hashes, matching_mode_detail) = if let Some(matching_file) = &args.matching_detail {
         match KnownHashes::load_from_file(matching_file) {
-            Ok(hashes) => Some(hashes),
+            Ok(hashes) => (Some(hashes), true),
+            Err(e) => {
+                eprintln!(
+                    "{}: Error loading known hashes from '{}': {}",
+                    env!("CARGO_PKG_NAME"),
+                    matching_file,
+                    e
+                );
+                return;
+            }
+        }
+    } else if let Some(matching_file) = &args.matching {
+        match KnownHashes::load_from_file(matching_file) {
+            Ok(hashes) => (Some(hashes), false),
             Err(e) => {
                 eprintln!(
                     "{}: Error loading known hashes from '{}': {}",
@@ -173,7 +157,7 @@ fn main() {
             }
         }
     } else {
-        None
+        (None, false)
     };
 
     let mut results = Vec::new();
@@ -183,18 +167,18 @@ fn main() {
         match compute_hash_stdin(&args.algorithm) {
             Ok(hash) => {
                 if let Some(ref known_hashes) = known_hashes {
-                    // Check for matches in known hashes
                     if let Some(known_hash) =
                         known_hashes.find_match(&hash, args.algorithm.as_str())
                     {
-                        output_matching_result(
-                            &Path::new("-"),
-                            &hash,
-                            &args.algorithm,
-                            known_hash,
-                            args.json,
-                            &mut results,
-                        );
+                        if matching_mode_detail {
+                            if let Some(known_filename) = &known_hash.filename {
+                                println!("{}  <stdin>  MATCH: {}", hash, known_filename);
+                            } else {
+                                println!("{}  <stdin>  MATCH", hash);
+                            }
+                        } else {
+                            println!("<stdin>");
+                        }
                     }
                 } else if args.json {
                     let mut algorithm_hash = std::collections::HashMap::new();
@@ -202,12 +186,15 @@ fn main() {
 
                     let result = HashResult {
                         filename: "<stdin>".to_string(),
-                        size: 0, // We don't know the size of stdin
+                        size: 0,
                         algorithm_hash,
                     };
                     results.push(result);
+                    // Print JSON output for stdin
+                    println!("{}", serde_json::to_string(&results).unwrap());
                 } else {
-                    println!("{}  -", hash);
+                    // Print only the hash for stdin, no filename
+                    println!("{}", hash);
                 }
             }
             Err(e) => {
@@ -218,11 +205,11 @@ fn main() {
                 );
             }
         }
+        return;
     } else {
         // Process each file argument
         for arg in file_args {
             if let Some(ref known_hashes) = known_hashes {
-                // In matching mode, we need to compute hash and check for matches
                 process_with_matching(
                     &arg,
                     &mut ProcessState {
@@ -233,6 +220,7 @@ fn main() {
                         results: &mut results,
                     },
                     known_hashes,
+                    matching_mode_detail,
                 );
             } else {
                 // Normal processing without matching

@@ -96,7 +96,12 @@ pub fn process(arg: &String, state: &mut ProcessState) {
     }
 }
 
-pub fn process_with_matching(path: &str, state: &mut ProcessState, known_hashes: &KnownHashes) {
+pub fn process_with_matching(
+    path: &str,
+    state: &mut ProcessState,
+    known_hashes: &KnownHashes,
+    matching_mode_detail: bool,
+) {
     let path = Path::new(path);
 
     if path.is_file() {
@@ -105,14 +110,17 @@ pub fn process_with_matching(path: &str, state: &mut ProcessState, known_hashes:
             Ok(hash) => {
                 // Check for matches in known hashes
                 if let Some(known_hash) = known_hashes.find_match(&hash, state.algorithm.as_str()) {
-                    crate::output_matching_result(
-                        path,
-                        &hash,
-                        state.algorithm,
-                        known_hash,
-                        state.json_mode,
-                        state.results,
-                    );
+                    if matching_mode_detail {
+                        // Detailed output: hash, filename, match source
+                        if let Some(known_filename) = &known_hash.filename {
+                            println!("{}  {}  MATCH: {}", hash, path.display(), known_filename);
+                        } else {
+                            println!("{}  {}  MATCH", hash, path.display());
+                        }
+                    } else {
+                        // Only print filename
+                        println!("{}", path.display());
+                    }
                 }
             }
             Err(e) => {
@@ -141,14 +149,20 @@ pub fn process_with_matching(path: &str, state: &mut ProcessState, known_hashes:
                                 if let Some(known_hash) =
                                     known_hashes.find_match(&hash, state.algorithm.as_str())
                                 {
-                                    crate::output_matching_result(
-                                        file_path,
-                                        &hash,
-                                        state.algorithm,
-                                        known_hash,
-                                        state.json_mode,
-                                        state.results,
-                                    );
+                                    if matching_mode_detail {
+                                        if let Some(known_filename) = &known_hash.filename {
+                                            println!(
+                                                "{}  {}  MATCH: {}",
+                                                hash,
+                                                file_path.display(),
+                                                known_filename
+                                            );
+                                        } else {
+                                            println!("{}  {}  MATCH", hash, file_path.display());
+                                        }
+                                    } else {
+                                        println!("{}", file_path.display());
+                                    }
                                 }
                             }
                             Err(e) => {
