@@ -1,3 +1,4 @@
+use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
@@ -6,15 +7,50 @@ use std::path::Path;
 mod hash;
 use hash::compute_hash_stdin;
 mod process;
-use process::{ProcessState, process};
+use process::{ProcessState, process, process_with_matching};
+mod r#match;
+use r#match::{KnownHash, KnownHashes};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, clap::ValueEnum)]
 enum HashAlgorithm {
     Md5,
     Sha1,
     Sha256,
     Xxhash,
     Blake3,
+}
+
+#[derive(Parser)]
+#[command(name = "md5deep")]
+#[command(version = env!("CARGO_PKG_VERSION"))]
+#[command(about = "A tool for computing cryptographic hashes of files")]
+struct Args {
+    /// Files or directories to process
+    files: Vec<String>,
+
+    /// Recursively process directories
+    #[arg(short = 'r', long = "recursive")]
+    recursive: bool,
+
+    /// Select hash algorithm
+    #[arg(short = 'c', long = "algorithm", default_value = "md5")]
+    algorithm: HashAlgorithm,
+
+    /// Output in JSON format
+    #[arg(short = 'j', long = "json")]
+    json: bool,
+
+    /// Only process files on the same filesystem
+    #[arg(short = 'x', long = "one-filesystem")]
+    one_filesystem: bool,
+
+    /// Read file arguments from file, one per line
+    #[arg(short = 'f', long = "filelist")]
+    filelist: Option<String>,
+
+    /// Read known hashes from file for matching
+    #[arg(short = 'm', long = "matching")]
+    matching: Option<String>,
 }
 
 impl HashAlgorithm {
@@ -36,6 +72,7 @@ struct HashResult {
     #[serde(flatten)]
     algorithm_hash: std::collections::HashMap<String, String>,
 }
+
 
 fn output_hash_result(
     file_path: &Path,
@@ -60,65 +97,43 @@ fn output_hash_result(
     }
 }
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    for arg in &args[1..] {
-        if arg == "-v" || arg == "--version" {
-            println!("{}", env!("CARGO_PKG_VERSION"));
-            return;
-        }
-        if arg == "-h" || arg == "--help" {
-            println!("Usage: {} [options] [files...]\n", args[0]);
-            println!("Options:");
-            println!("  -r, --recursive         Recursively process directories");
-            println!(
-                "  -c, --algorithm <alg>   Select hash algorithm: md5, sha1, sha256, xxhash, blake3"
-            );
-            println!("  -j, --json              Output in JSON format");
-            println!("  -x, --one-filesystem    Only process files on the same filesystem");
-            println!("  -f, --filelist <file>   Read file arguments from <file>, one per line");
-            println!("  -v, --version           Show version information");
-            println!("  -h, --help              Show this help message");
-            return;
-        }
-    }
 
-    let mut file_args = Vec::new();
-    let mut file_arg_from_file: Option<String> = None;
-    let mut i = 0;
-    while i < args.len() {
-        let arg = &args[i];
-        if (arg == "-f" || arg == "--filelist") && i + 1 < args.len() {
-            file_arg_from_file = Some(args[i + 1].clone());
-            i += 2;
-            continue;
+fn output_matching_result(
+    file_path: &Path,
+    hash: &str,
+    algorithm: &HashAlgorithm,
+    known_hash: &KnownHash,
+    json_mode: bool,
+    results: &mut Vec<HashResult>,
+) {
+    if json_mode {
+        let metadata = fs::metadata(file_path).unwrap();
+        let mut algorithm_hash = std::collections::HashMap::new();
+        algorithm_hash.insert(algorithm.as_str().to_string(), hash.to_string());
+
+        let result = HashResult {
+            filename: file_path.display().to_string(),
+            size: metadata.len(),
+            algorithm_hash,
+        };
+        results.push(result);
+    } else {
+        if let Some(known_filename) = &known_hash.filename {
+            println!("{}  {}  MATCH: {}", hash, file_path.display(), known_filename);
+        } else {
+            println!("{}  {}  MATCH", hash, file_path.display());
         }
-        if i == 0 {
-            i += 1;
-            continue;
-        }
-        // Skip flag arguments
-        if arg == "-r"
-            || arg == "--recursive"
-            || arg == "-j"
-            || arg == "--json"
-            || arg == "-x"
-            || arg == "--one-filesystem"
-        {
-            i += 1;
-            continue;
-        }
-        // Skip algorithm arguments (they follow -c or --algorithm)
-        if i > 1 && (args[i - 1] == "-c" || args[i - 1] == "--algorithm") {
-            i += 1;
-            continue;
-        }
-        file_args.push(arg.clone());
-        i += 1;
     }
+}
+
+
+fn main() {
+    let args = Args::parse();
+
+    let mut file_args = args.files;
 
     // If -f/--filelist was provided, read arguments from the file
-    if let Some(filename) = file_arg_from_file {
+    if let Some(filename) = args.filelist {
         match std::fs::read_to_string(&filename) {
             Ok(contents) => {
                 for line in contents.lines() {
@@ -140,47 +155,45 @@ fn main() {
         }
     }
 
-    // Parse flags
-    let recursive_mode =
-        args.contains(&"-r".to_string()) || args.contains(&"--recursive".to_string());
-    let json_mode = args.contains(&"-j".to_string()) || args.contains(&"--json".to_string());
-    let single_filesystem =
-        args.contains(&"-x".to_string()) || args.contains(&"--one-filesystem".to_string());
-    let mut algorithm = HashAlgorithm::Md5;
-    let mut i = 0;
-    while i < args.len() {
-        if args[i] == "-c" || args[i] == "--algorithm" {
-            if i + 1 < args.len() {
-                match args[i + 1].as_str() {
-                    "md5" => algorithm = HashAlgorithm::Md5,
-                    "sha1" => algorithm = HashAlgorithm::Sha1,
-                    "sha256" => algorithm = HashAlgorithm::Sha256,
-                    "xxhash" => algorithm = HashAlgorithm::Xxhash,
-                    "blake3" => algorithm = HashAlgorithm::Blake3,
-                    _ => {
-                        eprintln!(
-                            "{}: Invalid algorithm '{}'. Valid options are: md5, sha1, sha256, xxhash, blake3",
-                            env!("CARGO_PKG_NAME"),
-                            args[i + 1]
-                        );
-                        return;
-                    }
-                }
-                i += 1;
+    // Load known hashes if matching mode is enabled
+    let known_hashes = if let Some(matching_file) = &args.matching {
+        match KnownHashes::load_from_file(matching_file) {
+            Ok(hashes) => Some(hashes),
+            Err(e) => {
+                eprintln!(
+                    "{}: Error loading known hashes from '{}': {}",
+                    env!("CARGO_PKG_NAME"),
+                    matching_file,
+                    e
+                );
+                return;
             }
         }
-        i += 1;
-    }
+    } else {
+        None
+    };
 
     let mut results = Vec::new();
 
     // If no file arguments provided, process stdin
     if file_args.is_empty() {
-        match compute_hash_stdin(&algorithm) {
+        match compute_hash_stdin(&args.algorithm) {
             Ok(hash) => {
-                if json_mode {
+                if let Some(ref known_hashes) = known_hashes {
+                    // Check for matches in known hashes
+                    if let Some(known_hash) = known_hashes.find_match(&hash, args.algorithm.as_str()) {
+                        output_matching_result(
+                            &Path::new("-"),
+                            &hash,
+                            &args.algorithm,
+                            known_hash,
+                            args.json,
+                            &mut results,
+                        );
+                    }
+                } else if args.json {
                     let mut algorithm_hash = std::collections::HashMap::new();
-                    algorithm_hash.insert(algorithm.as_str().to_string(), hash.to_string());
+                    algorithm_hash.insert(args.algorithm.as_str().to_string(), hash.to_string());
 
                     let result = HashResult {
                         filename: "<stdin>".to_string(),
@@ -203,21 +216,37 @@ fn main() {
     } else {
         // Process each file argument
         for arg in file_args {
-            process(
-                &arg,
-                &mut ProcessState {
-                    recursive_mode,
-                    algorithm: &algorithm,
-                    json_mode,
-                    single_filesystem,
-                    results: &mut results,
-                },
-            );
+            if let Some(ref known_hashes) = known_hashes {
+                // In matching mode, we need to compute hash and check for matches
+                process_with_matching(
+                    &arg,
+                    &mut ProcessState {
+                        recursive_mode: args.recursive,
+                        algorithm: &args.algorithm,
+                        json_mode: args.json,
+                        single_filesystem: args.one_filesystem,
+                        results: &mut results,
+                    },
+                    known_hashes,
+                );
+            } else {
+                // Normal processing without matching
+                process(
+                    &arg,
+                    &mut ProcessState {
+                        recursive_mode: args.recursive,
+                        algorithm: &args.algorithm,
+                        json_mode: args.json,
+                        single_filesystem: args.one_filesystem,
+                        results: &mut results,
+                    },
+                );
+            }
         }
     }
 
     // Output JSON array if in JSON mode
-    if json_mode {
+    if args.json {
         println!("{}", serde_json::to_string(&results).unwrap());
     }
 }
