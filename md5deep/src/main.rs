@@ -24,6 +24,7 @@ enum HashAlgorithm {
 #[command(name = "md5deep")]
 #[command(version = env!("CARGO_PKG_VERSION"))]
 #[command(about = "A tool for computing cryptographic hashes of files")]
+#[command(author = "Jesse Kornblum <jessekornblum@gmail.com>")]
 struct Args {
     /// Files or directories to process
     files: Vec<String>,
@@ -73,7 +74,6 @@ struct HashResult {
     algorithm_hash: std::collections::HashMap<String, String>,
 }
 
-
 fn output_hash_result(
     file_path: &Path,
     hash: &str,
@@ -97,7 +97,6 @@ fn output_hash_result(
     }
 }
 
-
 fn output_matching_result(
     file_path: &Path,
     hash: &str,
@@ -119,13 +118,17 @@ fn output_matching_result(
         results.push(result);
     } else {
         if let Some(known_filename) = &known_hash.filename {
-            println!("{}  {}  MATCH: {}", hash, file_path.display(), known_filename);
+            println!(
+                "{}  {}  MATCH: {}",
+                hash,
+                file_path.display(),
+                known_filename
+            );
         } else {
             println!("{}  {}  MATCH", hash, file_path.display());
         }
     }
 }
-
 
 fn main() {
     let args = Args::parse();
@@ -181,7 +184,9 @@ fn main() {
             Ok(hash) => {
                 if let Some(ref known_hashes) = known_hashes {
                     // Check for matches in known hashes
-                    if let Some(known_hash) = known_hashes.find_match(&hash, args.algorithm.as_str()) {
+                    if let Some(known_hash) =
+                        known_hashes.find_match(&hash, args.algorithm.as_str())
+                    {
                         output_matching_result(
                             &Path::new("-"),
                             &hash,

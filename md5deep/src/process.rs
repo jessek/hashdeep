@@ -96,11 +96,7 @@ pub fn process(arg: &String, state: &mut ProcessState) {
     }
 }
 
-pub fn process_with_matching(
-    path: &str,
-    state: &mut ProcessState,
-    known_hashes: &KnownHashes,
-) {
+pub fn process_with_matching(path: &str, state: &mut ProcessState, known_hashes: &KnownHashes) {
     let path = Path::new(path);
 
     if path.is_file() {
@@ -142,7 +138,9 @@ pub fn process_with_matching(
                         match compute_hash(file_path, state.algorithm) {
                             Ok(hash) => {
                                 // Check for matches in known hashes
-                                if let Some(known_hash) = known_hashes.find_match(&hash, state.algorithm.as_str()) {
+                                if let Some(known_hash) =
+                                    known_hashes.find_match(&hash, state.algorithm.as_str())
+                                {
                                     crate::output_matching_result(
                                         file_path,
                                         &hash,
@@ -168,7 +166,9 @@ pub fn process_with_matching(
                     eprintln!(
                         "{}: Error accessing '{}': {}",
                         env!("CARGO_PKG_NAME"),
-                        e.path().map(|p| p.display().to_string()).unwrap_or_else(|| "unknown".to_string()),
+                        e.path()
+                            .map(|p| p.display().to_string())
+                            .unwrap_or_else(|| "unknown".to_string()),
                         e
                     );
                 }
