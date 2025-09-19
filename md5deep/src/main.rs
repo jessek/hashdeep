@@ -56,6 +56,10 @@ struct Args {
     /// Read known hashes from file for matching (detailed output: hash, filename, match source)
     #[arg(short = 'M', long = "matching-detail")]
     matching_detail: Option<String>,
+
+    /// Quiet mode: omit filename in output
+    #[arg(short = 'q', long = "quiet")]
+    quiet: bool,
 }
 
 impl HashAlgorithm {
@@ -72,7 +76,8 @@ impl HashAlgorithm {
 
 #[derive(Serialize, Deserialize, Debug)]
 struct HashResult {
-    filename: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    filename: Option<String>,
     size: u64,
     #[serde(flatten)]
     algorithm_hash: std::collections::HashMap<String, String>,
@@ -84,6 +89,7 @@ fn output_hash_result(
     algorithm: &HashAlgorithm,
     json_mode: bool,
     results: &mut Vec<HashResult>,
+    quiet: bool,
 ) {
     if json_mode {
         let metadata = fs::metadata(file_path).unwrap();
@@ -91,13 +97,21 @@ fn output_hash_result(
         algorithm_hash.insert(algorithm.as_str().to_string(), hash.to_string());
 
         let result = HashResult {
-            filename: file_path.display().to_string(),
+            filename: if quiet {
+                None
+            } else {
+                Some(file_path.display().to_string())
+            },
             size: metadata.len(),
             algorithm_hash,
         };
         results.push(result);
     } else {
-        println!("{}  {}", hash, file_path.display());
+        if quiet {
+            println!("{}", hash);
+        } else {
+            println!("{}  {}", hash, file_path.display());
+        }
     }
 }
 
@@ -172,9 +186,17 @@ fn main() {
                     {
                         if matching_mode_detail {
                             if let Some(known_filename) = &known_hash.filename {
-                                println!("{}  <stdin>  MATCH: {}", hash, known_filename);
+                                if args.quiet {
+                                    println!("{}", hash);
+                                } else {
+                                    println!("{}  <stdin>  MATCH: {}", hash, known_filename);
+                                }
                             } else {
-                                println!("{}  <stdin>  MATCH", hash);
+                                if args.quiet {
+                                    println!("{}", hash);
+                                } else {
+                                    println!("{}  <stdin>  MATCH", hash);
+                                }
                             }
                         } else {
                             println!("<stdin>");
@@ -185,7 +207,11 @@ fn main() {
                     algorithm_hash.insert(args.algorithm.as_str().to_string(), hash.to_string());
 
                     let result = HashResult {
-                        filename: "<stdin>".to_string(),
+                        filename: if args.quiet {
+                            None
+                        } else {
+                            Some("<stdin>".to_string())
+                        },
                         size: 0,
                         algorithm_hash,
                     };
@@ -218,6 +244,7 @@ fn main() {
                         json_mode: args.json,
                         single_filesystem: args.one_filesystem,
                         results: &mut results,
+                        quiet: args.quiet,
                     },
                     known_hashes,
                     matching_mode_detail,
@@ -232,6 +259,7 @@ fn main() {
                         json_mode: args.json,
                         single_filesystem: args.one_filesystem,
                         results: &mut results,
+                        quiet: args.quiet,
                     },
                 );
             }

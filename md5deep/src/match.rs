@@ -38,7 +38,7 @@ impl KnownHashes {
             for (algorithm, hash) in hash_result.algorithm_hash {
                 let known_hash = KnownHash {
                     hash,
-                    filename: Some(hash_result.filename.clone()),
+                    filename: hash_result.filename.clone(),
                 };
                 known_hashes
                     .hashes

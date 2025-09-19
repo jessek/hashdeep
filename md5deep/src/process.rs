@@ -1,5 +1,5 @@
+use crate::HashAlgorithm;
 use crate::hash::compute_hash;
-use crate::{HashAlgorithm, HashResult};
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
@@ -12,7 +12,8 @@ pub struct ProcessState<'a> {
     pub algorithm: &'a HashAlgorithm,
     pub json_mode: bool,
     pub single_filesystem: bool,
-    pub results: &'a mut Vec<HashResult>,
+    pub results: &'a mut Vec<crate::HashResult>,
+    pub quiet: bool,
 }
 
 pub fn process(arg: &String, state: &mut ProcessState) {
@@ -31,13 +32,20 @@ pub fn process(arg: &String, state: &mut ProcessState) {
         // It's a regular file
         match compute_hash(path, state.algorithm) {
             Ok(hash) => {
-                crate::output_hash_result(
-                    path,
-                    &hash,
-                    state.algorithm,
-                    state.json_mode,
-                    state.results,
-                );
+                if state.json_mode {
+                    crate::output_hash_result(
+                        path,
+                        &hash,
+                        state.algorithm,
+                        state.json_mode,
+                        state.results,
+                        state.quiet,
+                    );
+                } else if state.quiet {
+                    println!("{}", hash);
+                } else {
+                    println!("{}  {}", hash, path.display());
+                }
             }
             Err(e) => {
                 eprintln!(
@@ -64,13 +72,20 @@ pub fn process(arg: &String, state: &mut ProcessState) {
                         if entry_path.is_file() {
                             match compute_hash(entry_path, state.algorithm) {
                                 Ok(hash) => {
-                                    crate::output_hash_result(
-                                        entry_path,
-                                        &hash,
-                                        state.algorithm,
-                                        state.json_mode,
-                                        state.results,
-                                    );
+                                    if state.json_mode {
+                                        crate::output_hash_result(
+                                            entry_path,
+                                            &hash,
+                                            state.algorithm,
+                                            state.json_mode,
+                                            state.results,
+                                            state.quiet,
+                                        );
+                                    } else if state.quiet {
+                                        println!("{}", hash);
+                                    } else {
+                                        println!("{}  {}", hash, entry_path.display());
+                                    }
                                 }
                                 Err(e) => {
                                     eprintln!(
@@ -113,9 +128,17 @@ pub fn process_with_matching(
                     if matching_mode_detail {
                         // Detailed output: hash, filename, match source
                         if let Some(known_filename) = &known_hash.filename {
-                            println!("{}  {}  MATCH: {}", hash, path.display(), known_filename);
+                            if state.quiet {
+                                println!("{}", hash);
+                            } else {
+                                println!("{}  {}  MATCH: {}", hash, path.display(), known_filename);
+                            }
                         } else {
-                            println!("{}  {}  MATCH", hash, path.display());
+                            if state.quiet {
+                                println!("{}", hash);
+                            } else {
+                                println!("{}  {}  MATCH", hash, path.display());
+                            }
                         }
                     } else {
                         // Only print filename
@@ -151,14 +174,26 @@ pub fn process_with_matching(
                                 {
                                     if matching_mode_detail {
                                         if let Some(known_filename) = &known_hash.filename {
-                                            println!(
-                                                "{}  {}  MATCH: {}",
-                                                hash,
-                                                file_path.display(),
-                                                known_filename
-                                            );
+                                            if state.quiet {
+                                                println!("{}", hash);
+                                            } else {
+                                                println!(
+                                                    "{}  {}  MATCH: {}",
+                                                    hash,
+                                                    file_path.display(),
+                                                    known_filename
+                                                );
+                                            }
                                         } else {
-                                            println!("{}  {}  MATCH", hash, file_path.display());
+                                            if state.quiet {
+                                                println!("{}", hash);
+                                            } else {
+                                                println!(
+                                                    "{}  {}  MATCH",
+                                                    hash,
+                                                    file_path.display()
+                                                );
+                                            }
                                         }
                                     } else {
                                         println!("{}", file_path.display());
