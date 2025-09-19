@@ -124,21 +124,13 @@ pub fn process_with_matching(
         match compute_hash(path, state.algorithm) {
             Ok(hash) => {
                 // Check for matches in known hashes
-                if let Some(known_hash) = known_hashes.find_match(&hash, state.algorithm.as_str()) {
+                if let Some(_known_hash) = known_hashes.find_match(&hash, state.algorithm.as_str())
+                {
                     if matching_mode_detail {
-                        // Detailed output: hash, filename, match source
-                        if let Some(known_filename) = &known_hash.filename {
-                            if state.quiet {
-                                println!("{}", hash);
-                            } else {
-                                println!("{}  {}  MATCH: {}", hash, path.display(), known_filename);
-                            }
+                        if state.quiet {
+                            println!("{}", hash);
                         } else {
-                            if state.quiet {
-                                println!("{}", hash);
-                            } else {
-                                println!("{}  {}  MATCH", hash, path.display());
-                            }
+                            println!("{}  {}", hash, path.display());
                         }
                     } else {
                         // Only print filename
