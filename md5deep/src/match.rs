@@ -72,12 +72,12 @@ impl KnownHashes {
             // We need to determine the algorithm based on hash length
             // This is a simple heuristic - in practice, you might want to be more sophisticated
             let algorithm = match hash.len() {
+                16 => "xxhash".to_string(),
                 32 => "md5".to_string(),
                 40 => "sha1".to_string(),
                 // @nocommit - Resolve conflict between sha256 and blake3
                 64 => "sha256".to_string(), // Both sha256 and blake3 are 64 chars, default to sha256
-                16 => "xxhash".to_string(),
-                _ => "md5".to_string(), // Default to md5 for unknown lengths
+                _ => "md5".to_string(),     // Default to md5 for unknown lengths
             };
 
             let known_hash = KnownHash { hash, filename };
