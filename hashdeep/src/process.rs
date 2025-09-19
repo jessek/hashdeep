@@ -1,5 +1,5 @@
-use crate::HashAlgorithm;
 use crate::hash::compute_hash;
+use crate::HashAlgorithm;
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
@@ -81,10 +81,10 @@ pub fn process(arg: &String, state: &mut ProcessState) {
                 }
             }
         } else {
-            eprintln!("{}: is a directory (use -r to process recursively)", arg);
+            eprintln!("{}: Is a directory", arg);
         }
     } else {
-        eprintln!("{}: is not a regular file or directory", arg);
+        eprintln!("{}: Is not a regular file or directory", arg);
     }
 }
 
