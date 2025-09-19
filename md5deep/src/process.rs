@@ -68,35 +68,12 @@ pub fn process(arg: &String, state: &mut ProcessState) {
             for entry in walker {
                 match entry {
                     Ok(entry) => {
-                        let entry_path = entry.path();
-                        if entry_path.is_file() {
-                            match compute_hash(entry_path, state.algorithm) {
-                                Ok(hash) => {
-                                    if state.json_mode {
-                                        crate::output_hash_result(
-                                            entry_path,
-                                            &hash,
-                                            state.algorithm,
-                                            state.json_mode,
-                                            state.results,
-                                            state.quiet,
-                                        );
-                                    } else if state.quiet {
-                                        println!("{}", hash);
-                                    } else {
-                                        println!("{}  {}", hash, entry_path.display());
-                                    }
-                                }
-                                Err(e) => {
-                                    eprintln!(
-                                        "{}: Error computing hash for '{}': {}",
-                                        env!("CARGO_PKG_NAME"),
-                                        entry_path.display(),
-                                        e
-                                    );
-                                }
-                            }
+                        // The first entry is the directory itself, so we skip it
+                        if entry.path() == path {
+                            continue;
                         }
+                        let entry_path_str = entry.path().display().to_string();
+                        process(&entry_path_str, state);
                     }
                     Err(e) => {
                         eprintln!("{}: Error reading directory entry: {}", arg, e);
