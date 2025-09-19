@@ -21,7 +21,7 @@ enum HashAlgorithm {
 }
 
 #[derive(Parser)]
-#[command(name = "md5deep")]
+#[command(name = "hashdeep")]
 #[command(version = env!("CARGO_PKG_VERSION"))]
 #[command(about = "A tool for computing cryptographic hashes of files")]
 #[command(author = "Jesse Kornblum <jessekornblum@gmail.com>")]
