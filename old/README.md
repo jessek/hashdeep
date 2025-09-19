@@ -1,3 +1,9 @@
+# Legacy Code
+
+This directory contains the old version 4 of md5deep and hashdeep. This code is no longer supported.
+
+## md5deep
+
 This is md5deep, a set of cross-platform tools to compute hashes, or
 message digests, for any number of files while optionally recursively
 digging through the directory structure.  It can also take a list of known
