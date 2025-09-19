@@ -1,5 +1,5 @@
-use crate::hash::compute_hash;
 use crate::HashAlgorithm;
+use crate::hash::compute_hash;
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
@@ -110,7 +110,6 @@ pub fn process_with_matching(
                             println!("{}  {}", hash, path.display());
                         }
                     } else {
-                        // Only print filename
                         println!("{}", path.display());
                     }
                 }
@@ -138,31 +137,14 @@ pub fn process_with_matching(
                         match compute_hash(file_path, state.algorithm) {
                             Ok(hash) => {
                                 // Check for matches in known hashes
-                                if let Some(known_hash) =
+                                if let Some(_known_hash) =
                                     known_hashes.find_match(&hash, state.algorithm.as_str())
                                 {
                                     if matching_mode_detail {
-                                        if let Some(known_filename) = &known_hash.filename {
-                                            if state.quiet {
-                                                println!("{}", hash);
-                                            } else {
-                                                println!(
-                                                    "{}  {}  MATCH: {}",
-                                                    hash,
-                                                    file_path.display(),
-                                                    known_filename
-                                                );
-                                            }
+                                        if state.quiet {
+                                            println!("{}", hash);
                                         } else {
-                                            if state.quiet {
-                                                println!("{}", hash);
-                                            } else {
-                                                println!(
-                                                    "{}  {}  MATCH",
-                                                    hash,
-                                                    file_path.display()
-                                                );
-                                            }
+                                            println!("{}  {}  MATCH", hash, file_path.display());
                                         }
                                     } else {
                                         println!("{}", file_path.display());
@@ -200,7 +182,7 @@ pub fn process_with_matching(
         );
     } else {
         eprintln!(
-            "{}: '{}': Is a directory (use -r for recursive processing)",
+            "{}: '{}': Is a directory",
             env!("CARGO_PKG_NAME"),
             path.display()
         );
