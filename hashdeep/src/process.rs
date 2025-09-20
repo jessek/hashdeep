@@ -1,5 +1,6 @@
 use crate::HashAlgorithm;
 use crate::hash::compute_hash;
+use recursive::recursive;
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
@@ -17,6 +18,7 @@ pub struct ProcessState<'a> {
     pub max_size: Option<u64>,
 }
 
+#[recursive]
 pub fn process(arg: &String, state: &mut ProcessState) {
     let path = Path::new(arg);
 
