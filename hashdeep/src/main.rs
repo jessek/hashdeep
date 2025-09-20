@@ -60,6 +60,10 @@ struct Args {
     /// Quiet mode: omit filename in output
     #[arg(short = 'q', long = "quiet")]
     quiet: bool,
+
+    /// Limit processing to files no larger than this size (in bytes)
+    #[arg(short = 's', long = "size")]
+    max_size: Option<i64>,
 }
 
 impl HashAlgorithm {
@@ -117,6 +121,14 @@ fn output_hash_result(
 
 fn main() {
     let args = Args::parse();
+
+    // Validate max_size
+    if let Some(size) = args.max_size {
+        if size < 0 {
+            eprintln!("{}: Error: --size must be >= 0", env!("CARGO_PKG_NAME"));
+            std::process::exit(1);
+        }
+    }
 
     let mut file_args = args.files;
 
@@ -245,6 +257,7 @@ fn main() {
                         single_filesystem: args.one_filesystem,
                         results: &mut results,
                         quiet: args.quiet,
+                        max_size: args.max_size.map(|s| s as u64),
                     },
                     known_hashes,
                     matching_mode_detail,
@@ -260,6 +273,7 @@ fn main() {
                         single_filesystem: args.one_filesystem,
                         results: &mut results,
                         quiet: args.quiet,
+                        max_size: args.max_size.map(|s| s as u64),
                     },
                 );
             }

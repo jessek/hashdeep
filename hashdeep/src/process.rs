@@ -14,6 +14,7 @@ pub struct ProcessState<'a> {
     pub single_filesystem: bool,
     pub results: &'a mut Vec<crate::HashResult>,
     pub quiet: bool,
+    pub max_size: Option<u64>,
 }
 
 pub fn process(arg: &String, state: &mut ProcessState) {
@@ -29,6 +30,19 @@ pub fn process(arg: &String, state: &mut ProcessState) {
     };
 
     if metadata.is_file() {
+        // Check file size limit
+        if let Some(max_size) = state.max_size {
+            if metadata.len() > max_size {
+                eprintln!(
+                    "{}: Skipping '{}': file size {} exceeds limit {} bytes",
+                    env!("CARGO_PKG_NAME"),
+                    arg,
+                    metadata.len(),
+                    max_size
+                );
+                return;
+            }
+        }
         // It's a regular file
         match compute_hash(path, state.algorithm) {
             Ok(hash) => {
@@ -97,6 +111,21 @@ pub fn process_with_matching(
     let path = Path::new(path);
 
     if path.is_file() {
+        // Check file size limit
+        if let Some(max_size) = state.max_size {
+            if let Ok(metadata) = fs::metadata(path) {
+                if metadata.len() > max_size {
+                    eprintln!(
+                        "{}: Skipping '{}': file size {} exceeds limit {} bytes",
+                        env!("CARGO_PKG_NAME"),
+                        path.display(),
+                        metadata.len(),
+                        max_size
+                    );
+                    return;
+                }
+            }
+        }
         // Compute hash for the file
         match compute_hash(path, state.algorithm) {
             Ok(hash) => {
@@ -133,6 +162,21 @@ pub fn process_with_matching(
             match entry {
                 Ok(entry) => {
                     if entry.file_type().is_file() {
+                        // Check file size limit
+                        if let Some(max_size) = state.max_size {
+                            if let Ok(metadata) = fs::metadata(entry.path()) {
+                                if metadata.len() > max_size {
+                                    eprintln!(
+                                        "{}: Skipping '{}': file size {} exceeds limit {} bytes",
+                                        env!("CARGO_PKG_NAME"),
+                                        entry.path().display(),
+                                        metadata.len(),
+                                        max_size
+                                    );
+                                    continue;
+                                }
+                            }
+                        }
                         let file_path = entry.path();
                         match compute_hash(file_path, state.algorithm) {
                             Ok(hash) => {
